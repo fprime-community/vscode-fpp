@@ -9,7 +9,9 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
     private locs = new Set<string>();
     private locsFile?: vscode.Uri;
 
-    private locsNew: vscode.LanguageStatusItem;
+    private availableLocs = new Set<string>();
+
+    private locsSelect: vscode.LanguageStatusItem;
     private locsReload: vscode.LanguageStatusItem;
 
     private loadingProject: boolean = false;
@@ -17,11 +19,11 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
     constructor(selector: vscode.DocumentSelector) {
         super(selector);
 
-        this.locsNew = vscode.languages.createLanguageStatusItem(
+        this.locsSelect = vscode.languages.createLanguageStatusItem(
             'fpp.locsNew',
             this.documentSelector
         );
-        this.locsNew.name = "FPP Project Status";
+        this.locsSelect.name = "FPP Project Status";
 
         this.locsReload = vscode.languages.createLanguageStatusItem(
             'fpp.locsReload',
@@ -35,9 +37,9 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
 
     private refreshLanguageStatus() {
         if (!this.locsFile) {
-            this.locsNew.text = "No `locs.fpp` file file loaded";
-            this.locsNew.command = { title: "Load", command: "fpp.open" };
-            this.locsNew.severity = vscode.LanguageStatusSeverity.Warning;
+            this.locsSelect.text = "No `locs.fpp` file file loaded";
+            this.locsSelect.command = { title: "Select", command: "fpp.select" };
+            this.locsSelect.severity = vscode.LanguageStatusSeverity.Warning;
 
             // Don't show this language item right now
             this.locsReload.selector = { scheme: 'INVALID', language: 'INVALID' };
@@ -46,9 +48,9 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
             this.locsReload.detail = undefined;
             this.locsReload.text = "";
         } else {
-            this.locsNew.text = "FPP Project Loaded";
-            this.locsNew.command = { title: "Close", command: "fpp.close" };
-            this.locsNew.severity = vscode.LanguageStatusSeverity.Information;
+            this.locsSelect.text = "FPP Project Loaded";
+            this.locsSelect.command = { title: "Select", command: "fpp.select" };
+            this.locsSelect.severity = vscode.LanguageStatusSeverity.Information;
 
             this.locsReload.selector = this.documentSelector;
             this.locsReload.command = { title: "Reload", command: "fpp.reload" };
@@ -198,8 +200,8 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
         } catch (e) {
             console.error(e);
             vscode.window.showErrorMessage(`Failed to load locs.fpp: ${e}`);
-            this.locsNew.text = "Locs load failed";
-            this.locsNew.severity = vscode.LanguageStatusSeverity.Error;
+            this.locsSelect.text = "Locs load failed";
+            this.locsSelect.severity = vscode.LanguageStatusSeverity.Error;
         } finally {
             this.locsReload.busy = false;
         }
@@ -214,7 +216,7 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
             this.locsFile = locsFile;
 
             this.refreshLanguageStatus();
-            this.locsNew.busy = true;
+            this.locsSelect.busy = true;
 
             try {
                 await vscode.window.withProgress({
@@ -225,10 +227,10 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
             } catch (e) {
                 console.error(e);
                 vscode.window.showErrorMessage(`Failed to load locs.fpp: ${e}`);
-                this.locsNew.text = "Locs load failed";
-                this.locsNew.severity = vscode.LanguageStatusSeverity.Error;
+                this.locsSelect.text = "Locs load failed";
+                this.locsSelect.severity = vscode.LanguageStatusSeverity.Error;
             } finally {
-                this.locsNew.busy = false;
+                this.locsSelect.busy = false;
             }
         }
     }
@@ -236,7 +238,7 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
     dispose() {
         super.dispose();
         this.locs.clear();
-        this.locsNew.dispose();
+        this.locsSelect.dispose();
         this.locsReload.dispose();
     }
 }

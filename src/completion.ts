@@ -376,7 +376,6 @@ export function getCandidates(
                 parser
             };
         } else {
-            console.log(e);
             throw e;
         }
     }

@@ -481,9 +481,6 @@ export class DeclCollector extends MemberTraverser {
 
     generalPortInstanceDecl(ast: Fpp.GeneralPortInstanceDecl, scope: Fpp.QualifiedIdentifier): void {
         const portName = MemberTraverser.flat(scope, ast.name);
-        if (ast.name.value === 'send') {
-            console.log(portName, ast);
-        }
 
         if (ast.kind.isOutput) {
             this.generalOutputPortDecl.set(portName, ast);

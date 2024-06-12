@@ -11,7 +11,7 @@
         "url": "https://github.com/fprime-community/vscode-fpp",
         "type": "git"
     },
-    "version": "1.0.7",
+    "version": "1.0.8",
     "icon": "fprime-logo.png",
     "engines": {
         "vscode": "^1.78.0"
@@ -26,6 +26,10 @@
             {
                 "command": "fpp.reload",
                 "title": "FPP: Reload Project"
+            },
+            {
+                "command": "fpp.select",
+                "title": "FPP: Select Locs file inside workspace"
             },
             {
                 "command": "fpp.close",
@@ -68,6 +72,27 @@
                     "name": "FPP Components"
                 }
             ]
+        },
+        "configuration": {
+            "title": "FPP",
+            "type": "object",
+            "properties": {
+                "fpp.locsSearch": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "markdownDescription": "Glob patterns in order of priority to search for an `locs.fpp` on project startup if no other locs is selected",
+                    "default": [
+                        "**/build-fprime-automatic-native/locs.fpp",
+                        "**/build-fprime-*/locs.fpp"
+                    ]
+                },
+                "fpp.locsExclude": {
+                    "type": "string",
+                    "markdownDescription": "Glob pattern path to exclude from `locs.fpp` search"
+                }
+            }
         }
     },
     "scripts": {
