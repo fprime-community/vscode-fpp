@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.0.8] - 2024-06-12
 
-- Added ability to configure search paths for FPP locs and select from locs found in project
+- Configure FPP locs search paths and select from locs found in project
 
 ## [1.0.7] - 2024-03-18
 
