@@ -834,7 +834,7 @@ export function activate(context: vscode.ExtensionContext) {
                             label: relPath,
                             uri,
                             isOpen: false,
-                            picked: currentLocs === relPath
+                            description: currentLocs === uri.path ? '(Active)' : undefined
                         } as LocsQuickPickFile);
                     }
 
