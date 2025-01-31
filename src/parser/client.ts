@@ -121,7 +121,6 @@ export class FppWorker extends Worker implements vscode.Disposable {
 
         const nextItem = this.queue.pop();
         if (nextItem) {
-            this.pending.delete(nextItem.filename);
             this.inProgress = nextItem;
             this.postMessage({
                 path: nextItem.filename,
@@ -151,7 +150,6 @@ export class FppWorker extends Worker implements vscode.Disposable {
                 const idx = this.queue.findIndex(v => v.filename === key);
                 if (idx >= 0) {
                     this.queue.splice(idx);
-                    this.pending.delete(key);
                 }
             }
         });
@@ -179,7 +177,9 @@ export class FppWorker extends Worker implements vscode.Disposable {
             });
 
             this.pending.set(key, promise);
-            return promise;
+            return promise.finally(() => {
+                this.pending.delete(key);
+            });
         }
     }
 }

@@ -554,6 +554,7 @@ export class FppAnnotator extends MemberTraverser {
             )
         );
 
+        this.clear(vscode.Uri.file(ast.include.value).path);
         super.includeStmt(ast, scope);
     }
 

@@ -11,7 +11,7 @@
         "url": "https://github.com/fprime-community/vscode-fpp",
         "type": "git"
     },
-    "version": "1.0.12",
+    "version": "1.0.13",
     "icon": "fprime-logo.png",
     "engines": {
         "vscode": "^1.78.0"
@@ -30,10 +30,6 @@
             {
                 "command": "fpp.select",
                 "title": "FPP: Select Locs file inside workspace"
-            },
-            {
-                "command": "fpp.useWorkspace",
-                "title": "FPP: Scan entire workspace instead of locs file"
             },
             {
                 "command": "fpp.close",

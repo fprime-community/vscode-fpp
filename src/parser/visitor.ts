@@ -38,7 +38,12 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
     constructor(
         private readonly sourceStack: readonly string[],
         private scope: Fpp.QualifiedIdentifier,
-        private readonly onInclude: (path: string, pathStack: readonly string[], scope: Fpp.QualifiedIdentifier, context: IncludeContext) => Promise<[IncludeProduct, Fpp.TranslationUnit<Fpp.Member>]>,
+        private readonly onInclude: (
+            path: string,
+            pathStack: readonly string[],
+            scope: Fpp.QualifiedIdentifier,
+            context: IncludeContext
+        ) => Promise<[IncludeProduct, Fpp.TranslationUnit<Fpp.Member>]>,
     ) {
         super();
         this.source = this.sourceStack[this.sourceStack.length - 1];
@@ -62,11 +67,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
                 product.errors = product.errors.concat(singleProduct.errors);
 
                 for (const [key, ranges] of singleProduct.ranges) {
-                    if (!product.ranges.has(key)) {
-                        product.ranges.set(key, ranges);
-                    } else {
-                        console.error("Found duplicate ranges for ", key);
-                    }
+                    product.ranges.set(key, ranges);
                 }
 
             } catch (e) {
@@ -643,24 +644,28 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
                 kind = this.keywordsT([commandK.symbol, regK.symbol], "commandReg");
             } else if (respK) {
                 kind = this.keywordsT([commandK.symbol, respK.symbol], "commandResp");
-            } else {
+            } else if (recvK) {
                 return {
                     location: this.loc(ctx),
-                    kind: this.keywordsT([commandK.symbol, recvK?.symbol].filter(v => v !== undefined), "commandRecv"),
+                    kind: this.keywordsT([commandK.symbol, recvK.symbol], "commandRecv"),
                     isOutput: false,
                     isSpecial: true
                 };
+            } else {
+                return this.error();
             }
         } else if (paramK) {
             if (getK) {
                 kind = this.keywordsT([paramK.symbol, getK.symbol], "paramGet");
+            } else if (setK) {
+                kind = this.keywordsT([paramK.symbol, setK.symbol], "paramSet");
             } else {
-                kind = this.keywordsT([paramK.symbol, setK?.symbol].filter(v => v !== undefined), "paramSet");
+                return this.error();
             }
         } else if (telemetryK) {
             kind = this.keywordT<"telemetry">(telemetryK.symbol);
-        } else if (textK) {
-            kind = this.keywordsT([textK.symbol, eventK?.symbol].filter(v => v !== undefined), "textEvent");
+        } else if (textK && eventK) {
+            kind = this.keywordsT([textK.symbol, eventK.symbol], "textEvent");
         } else if (eventK) {
             kind = this.keywordT<"event">(eventK.symbol);
         } else if (timeK && getK) {

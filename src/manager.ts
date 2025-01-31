@@ -45,6 +45,7 @@ export abstract class FppProjectManager {
     readonly decl: DeclCollector = new DeclCollector();
 
     private asts = new Map<string, FppMessage>();
+    private fppiVersions = new Map<string, number>();
     private annotations = new Map<string, FppAnnotator>();
     private worker = new FppWorker();
     private syntaxListener: DiangosicManager;
@@ -161,6 +162,8 @@ export abstract class FppProjectManager {
         const parentFiles = this.parentFiles.get(document.path);
 
         if (parentFiles && parentFiles.size > 0) {
+            const isOldFppi = (this.fppiVersions.get(document.path) ?? -10) >= document.version;
+
             this.syntaxListener.flush(document.path);
             this.syntaxListener.flush(document.path);
 
@@ -174,10 +177,11 @@ export abstract class FppProjectManager {
                     getTextSub: () => [document.getText(), document.path]
                 }, token, {
                     ...options,
-                    forceReparse: true
+                    forceReparse: !isOldFppi
                 });
             }
 
+            this.fppiVersions.set(document.path, document.version);
             return out;
         } else if (path.extname(document.path) === ".fppi") {
             this.syntaxListener.flush(document.path);
