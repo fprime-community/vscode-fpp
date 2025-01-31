@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.13] - 2025-01-31
+
+- Fixed a bug that caused reparse requests to overlap and cancel each other. That meant only their initial project load would actually parse the file, any subsequent changes were not parsed.
+
 ## [1.0.12] - 2025-01-31
 
 - Added a second project scanning mode for loading all .fpp files in workspace
