@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 
 import * as fs from 'fs/promises';
+import * as path from 'path';
+
 import { TextDecoder } from 'util';
 
 import { FppAnnotator } from "./annotator";
@@ -159,6 +161,9 @@ export abstract class FppProjectManager {
         const parentFiles = this.parentFiles.get(document.path);
 
         if (parentFiles && parentFiles.size > 0) {
+            this.syntaxListener.flush(document.path);
+            this.syntaxListener.flush(document.path);
+
             let out!: FppMessage;
             for (const parentFile of parentFiles) {
                 const [version, text] = await this.getTextOf(vscode.Uri.file(parentFile));
@@ -174,6 +179,31 @@ export abstract class FppProjectManager {
             }
 
             return out;
+        } else if (path.extname(document.path) === ".fppi") {
+            this.syntaxListener.flush(document.path);
+            this.syntaxListener.flush(document.path);
+            this.syntaxListener.emit(vscode.Uri.file(document.path), new vscode.Diagnostic(
+                new vscode.Range(0, 0, 0, 0),
+                ".fppi has no parent .fpp"
+            ));
+            this.syntaxListener.flush(document.path);
+
+            return FppMessage.deserialize({
+                ast: {
+                    location: {
+                        source: document.path,
+                        start: { line: 0, column: 0 },
+                        end: { line: 0, column: 0 },
+                    },
+                    type: "TranslationUnit",
+                    members: [],
+                    dependencies: [],
+                },
+                path: document.path,
+                ranges: [],
+                syntaxErrors: [],
+                version: -1,
+            });
         } else {
             return await this.parseImpl2(document, token, options ?? {});
         }

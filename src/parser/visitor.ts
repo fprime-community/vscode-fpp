@@ -646,7 +646,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             } else {
                 return {
                     location: this.loc(ctx),
-                    kind: this.keywordsT([commandK.symbol, recvK!.symbol], "commandRecv"),
+                    kind: this.keywordsT([commandK.symbol, recvK?.symbol].filter(v => v !== undefined), "commandRecv"),
                     isOutput: false,
                     isSpecial: true
                 };
@@ -655,16 +655,18 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             if (getK) {
                 kind = this.keywordsT([paramK.symbol, getK.symbol], "paramGet");
             } else {
-                kind = this.keywordsT([paramK.symbol, setK!.symbol], "paramSet");
+                kind = this.keywordsT([paramK.symbol, setK?.symbol].filter(v => v !== undefined), "paramSet");
             }
         } else if (telemetryK) {
             kind = this.keywordT<"telemetry">(telemetryK.symbol);
         } else if (textK) {
-            kind = this.keywordsT([textK.symbol, eventK!.symbol], "textEvent");
+            kind = this.keywordsT([textK.symbol, eventK?.symbol].filter(v => v !== undefined), "textEvent");
         } else if (eventK) {
             kind = this.keywordT<"event">(eventK.symbol);
+        } else if (timeK && getK) {
+            kind = this.keywordsT([timeK.symbol, getK.symbol], "timeGet");
         } else {
-            kind = this.keywordsT([timeK!.symbol, getK!.symbol], "timeGet");
+            return this.error();
         }
 
         return {

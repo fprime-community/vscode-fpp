@@ -22,3 +22,9 @@ export interface IFppWorkerRequest {
     text: string;
     subText?: [string, string]
 }
+
+export type IFPPResponse = (
+    | { code: "error", msg: string }
+    | { code: "success", msg: IFppMessage }
+    | { code: "startup" }
+);

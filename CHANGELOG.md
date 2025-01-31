@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.12] - 2025-01-31
+
+- Added a second project scanning mode for loading all .fpp files in workspace
+- Cleaned up parse queuing
+- Cleaned up some issues with .fppi parenting
+- Fixed some edge case parsing errors with special ports
+
 ## [1.0.11] - 2025-01-29
 
 - Fixed scoping sematics of state machine states

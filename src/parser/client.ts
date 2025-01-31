@@ -4,7 +4,7 @@ import path from 'path';
 import { Worker } from 'worker_threads';
 
 import * as Fpp from './ast';
-import { IFppMessage, IFppWorkerRequest } from './message';
+import { IFppMessage, IFPPResponse, IFppWorkerRequest } from './message';
 import { RangeAssociator } from '../associator';
 import { RangeRuleAssociation } from './common';
 
@@ -15,11 +15,11 @@ export interface DocumentOrFile {
     getTextSub?(): [string, string];
 }
 
-interface PendingParse {
-    key: string;
+interface ParseRequest {
+    filename: string;
     document: DocumentOrFile;
-    resolve: ((msg: FppMessage) => void)[];
-    reject: ((err?: string) => void)[];
+    resolve?: (msg: FppMessage) => void;
+    reject?: (err: any) => void;
 }
 
 export class FppMessage {
@@ -56,13 +56,11 @@ export class FppMessage {
 export class FppWorker extends Worker implements vscode.Disposable {
     private readonly readyPromise: Promise<void>;
 
-    private inProgress?: PendingParse;
+    private inProgress?: ParseRequest;
     private wasCancelled: boolean;
 
-    private readonly pending = new Map<string, PendingParse>();
-    private readonly promises = new Map<string, Promise<FppMessage>>();
-
-    private readonly queue: string[] = [];
+    private readonly pending = new Map<string, Promise<FppMessage>>();
+    private readonly queue: ParseRequest[] = [];
 
     private readyResolve?: () => void;
 
@@ -75,7 +73,7 @@ export class FppWorker extends Worker implements vscode.Disposable {
             this.readyResolve = resolve;
         });
 
-        this.on('message', (rawMsg: { code: "error", msg: string } | { code: "success", msg: IFppMessage } | { code: "startup" }) => {
+        this.on('message', (rawMsg: IFPPResponse) => {
             if (rawMsg.code === "startup") {
                 this.readyResolve?.();
                 this.readyResolve = undefined;
@@ -89,12 +87,12 @@ export class FppWorker extends Worker implements vscode.Disposable {
             if (!this.wasCancelled) {
                 if (rawMsg.code === "success") {
                     const msg = FppMessage.deserialize(rawMsg.msg);
-                    this.inProgress.resolve.map(v => v(msg));
+                    this.inProgress.resolve?.(msg);
                 } else {
-                    this.inProgress.reject.map(v => v(rawMsg.msg));
+                    this.inProgress.reject?.(rawMsg.msg);
                 }
             } else {
-                this.inProgress.reject.map(v => v());
+                this.inProgress.reject?.(null);
             }
 
             this.inProgress = undefined;
@@ -107,6 +105,7 @@ export class FppWorker extends Worker implements vscode.Disposable {
         });
 
         this.on('error', (err) => {
+            console.error(err);
             vscode.window.showErrorMessage(`FPP worker ran into an error: ${err}`);
         });
     }
@@ -122,20 +121,14 @@ export class FppWorker extends Worker implements vscode.Disposable {
 
         const nextItem = this.queue.pop();
         if (nextItem) {
-            const parsing = this.pending.get(nextItem);
-            if (!parsing) {
-                console.error(`File ${nextItem} does not have a pending parse structure`);
-            } else {
-                this.pending.delete(nextItem);
-                this.promises.delete(nextItem);
-                this.inProgress = parsing;
-                this.postMessage({
-                    path: nextItem,
-                    version: parsing.document.version,
-                    text: parsing.document.getText(),
-                    subText: parsing.document.getTextSub?.()
-                } as IFppWorkerRequest);
-            }
+            this.pending.delete(nextItem.filename);
+            this.inProgress = nextItem;
+            this.postMessage({
+                path: nextItem.filename,
+                version: nextItem.document.version,
+                text: nextItem.document.getText(),
+                subText: nextItem.document.getTextSub?.()
+            } satisfies IFppWorkerRequest);
         }
     }
 
@@ -145,47 +138,47 @@ export class FppWorker extends Worker implements vscode.Disposable {
 
     parse(document: DocumentOrFile, token?: vscode.CancellationToken): Promise<FppMessage> {
         const key = document.path;
-        if (this.inProgress?.key === key && this.inProgress.document.version < document.version) {
+        if (this.inProgress?.filename === key && this.inProgress.document.version < document.version) {
             this.wasCancelled = true;
         }
 
         // TODO(tumbar) Find out if the cancellation is done when typing fast
         // Does it happen before or after the new parse request is sent?
         token?.onCancellationRequested(() => {
-            if (this.inProgress?.key === key) {
+            if (this.inProgress?.filename === key) {
                 this.wasCancelled = true;
             } else {
-                const idx = this.queue.indexOf(key);
+                const idx = this.queue.findIndex(v => v.filename === key);
                 if (idx >= 0) {
                     this.queue.splice(idx);
                     this.pending.delete(key);
-                    this.promises.delete(key);
                 }
             }
         });
 
         const pending = this.pending.get(key);
         if (pending) {
-            if (document.version > pending.document.version) {
-                pending.document = document;
+            // Update the document if the parse is still pending
+            const request = this.queue.find(v => v.filename === key);
+            if (request) {
+                request.document = document;
             }
 
-            return new Promise<FppMessage>((resolve, reject) => {
-                pending.resolve.push(resolve);
-                pending.reject.push(reject);
-            });
+            return pending;
         } else {
             const promise = new Promise<FppMessage>((resolve, reject) => {
-                this.pending.set(key, { key, document, resolve: [resolve], reject: [reject] });
+                const request: ParseRequest = {
+                    filename: key,
+                    document,
+                    resolve,
+                    reject
+                };
 
-                if (!this.queue.includes(key)) {
-                    this.queue.push(key);
-                }
-
+                this.queue.push(request);
                 this.scheduleNext();
             });
 
-            this.promises.set(key, promise);
+            this.pending.set(key, promise);
             return promise;
         }
     }

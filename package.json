@@ -32,6 +32,10 @@
                 "title": "FPP: Select Locs file inside workspace"
             },
             {
+                "command": "fpp.useWorkspace",
+                "title": "FPP: Scan entire workspace instead of locs file"
+            },
+            {
                 "command": "fpp.close",
                 "title": "FPP: Close Project"
             },

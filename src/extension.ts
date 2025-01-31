@@ -17,7 +17,7 @@ import { ComponentsProvider } from './dictionary';
 import { ConsolidatingItem, ConsolidatingTree } from './consolidate';
 import { isKeyword } from './keywords';
 import { generateSignature, signaturesDefinitions } from './signature';
-import { locs, LocsQuickPickFile, LocsQuickPickItem } from './locs';
+import { locs, LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from './locs';
 
 
 function documentSymbolKind(type: SymbolType): vscode.SymbolKind | undefined {
@@ -101,23 +101,22 @@ class FppExtension implements
         this.project.ready().then(async () => {
             // Check if a locs file is already selected by this workspace
             const filePath = locs(this.context);
-            let file = filePath ? vscode.Uri.file(filePath) : undefined;
+            let projectPromise: Promise<void>;
+            if (filePath === "*") {
+                projectPromise = this.setProjectScanWorkspace();
+            } else {
+                let file = filePath ? vscode.Uri.file(filePath) : undefined;
 
-            if (!file) {
-                // Attempt to glob search for locs file
-                file = await this.searchForLocs();
-            }
+                if (!file) {
+                    // Attempt to glob search for locs file
+                    file = await this.searchForLocs();
+                }
 
-            if (!file) {
-                vscode.window.showWarningMessage('No fpp.locs is loaded', 'Open').then((value) => {
-                    if (value === "Open") {
-                        vscode.commands.executeCommand('fpp.open');
-                    }
-                });
+                projectPromise = this.setProjectLocs(file);
             }
 
             // Don't allow the language providers interfere with the project loading
-            this.setProject(file)
+            projectPromise
                 .finally(() => {
                     this.subscriptions = [
                         // Update the internal ast on document change
@@ -317,9 +316,14 @@ class FppExtension implements
         return this.project.ready();
     }
 
-    async setProject(locsFile: vscode.Uri | undefined) {
+    async setProjectLocs(locsFile: vscode.Uri | undefined) {
         await this.context.workspaceState.update('fpp.locsFile', locsFile?.path);
-        await this.project.set(locsFile);
+        await this.project.locsFile(locsFile);
+    }
+
+    async setProjectScanWorkspace() {
+        await this.context.workspaceState.update('fpp.locsFile', '*');
+        await this.project.workspaceScan();
     }
 
     reload() {
@@ -795,7 +799,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (!file) {
                 return vscode.commands.executeCommand('fpp.open');
             } else {
-                return extension.setProject(file);
+                return extension.setProjectLocs(file);
             }
         }),
         vscode.commands.registerCommand('fpp.select', () => {
@@ -811,7 +815,12 @@ export function activate(context: vscode.ExtensionContext) {
                         {
                             kind: vscode.QuickPickItemKind.Default,
                             label: '$(open) Open',
-                            isOpen: true
+                            locsKind: LocsQuickPickType.locsOpenDialog
+                        },
+                        {
+                            kind: vscode.QuickPickItemKind.Default,
+                            label: 'Scan entire workspace for .fpp files',
+                            locsKind: LocsQuickPickType.workspaceScan
                         },
                         {
                             kind: vscode.QuickPickItemKind.Separator,
@@ -833,7 +842,7 @@ export function activate(context: vscode.ExtensionContext) {
                             kind: vscode.QuickPickItemKind.Default,
                             label: relPath,
                             uri,
-                            isOpen: false,
+                            locsKind: LocsQuickPickType.locsFile,
                             description: currentLocs === uri.path ? '(Active)' : undefined
                         } as LocsQuickPickFile);
                     }
@@ -846,16 +855,22 @@ export function activate(context: vscode.ExtensionContext) {
                 }
             ).then((picked) => {
                 if (picked?.kind === vscode.QuickPickItemKind.Default) {
-                    if (picked.isOpen) {
-                        vscode.commands.executeCommand('fpp.open');
-                    } else {
-                        extension.setProject(picked.uri);
+                    switch (picked.locsKind) {
+                        case LocsQuickPickType.locsOpenDialog:
+                            vscode.commands.executeCommand('fpp.open');
+                            break;
+                        case LocsQuickPickType.locsFile:
+                            extension.setProjectLocs(picked.uri);
+                            break;
+                        case LocsQuickPickType.workspaceScan:
+                            extension.setProjectScanWorkspace();
+                            break;
                     }
                 }
             });
         }),
         vscode.commands.registerCommand('fpp.close', async () => {
-            await extension.setProject(undefined);
+            await extension.setProjectLocs(undefined);
         }),
         vscode.commands.registerCommand('fpp.open', () => {
             const currentLocs = locs(context);
@@ -870,14 +885,14 @@ export function activate(context: vscode.ExtensionContext) {
                 title: "Open 'locs.fpp' files in build directory"
             }).then((value) => {
                 if (value) {
-                    extension.setProject(value[0]);
+                    extension.setProjectLocs(value[0]);
                 }
             });
         }),
         Settings.onLocsSearchChanged(() => {
             // Don't re-scan if a locs file is already loaded
             if (!locs(context)) {
-                extension.searchForLocs().then((f) => extension.setProject(f));
+                extension.searchForLocs().then((f) => extension.setProjectLocs(f));
             }
         })
     );
