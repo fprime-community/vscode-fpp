@@ -18,8 +18,8 @@ export interface DocumentOrFile {
 interface ParseRequest {
     filename: string;
     document: DocumentOrFile;
-    resolve?: (msg: FppMessage) => void;
-    reject?: (err: any) => void;
+    resolve: (msg: FppMessage) => void;
+    reject: (err: any) => void;
 }
 
 export class FppMessage {
@@ -87,12 +87,12 @@ export class FppWorker extends Worker implements vscode.Disposable {
             if (!this.wasCancelled) {
                 if (rawMsg.code === "success") {
                     const msg = FppMessage.deserialize(rawMsg.msg);
-                    this.inProgress.resolve?.(msg);
+                    this.inProgress.resolve(msg);
                 } else {
-                    this.inProgress.reject?.(rawMsg.msg);
+                    this.inProgress.reject(rawMsg.msg);
                 }
             } else {
-                this.inProgress.reject?.(null);
+                this.inProgress.reject(null);
             }
 
             this.inProgress = undefined;
@@ -149,7 +149,7 @@ export class FppWorker extends Worker implements vscode.Disposable {
             } else {
                 const idx = this.queue.findIndex(v => v.filename === key);
                 if (idx >= 0) {
-                    this.queue.splice(idx);
+                    this.queue.splice(idx)[0]?.reject(new Error("cancelled"));
                 }
             }
         });
@@ -165,14 +165,12 @@ export class FppWorker extends Worker implements vscode.Disposable {
             return pending;
         } else {
             const promise = new Promise<FppMessage>((resolve, reject) => {
-                const request: ParseRequest = {
+                this.queue.push({
                     filename: key,
                     document,
                     resolve,
                     reject
-                };
-
-                this.queue.push(request);
+                });
                 this.scheduleNext();
             });
 
