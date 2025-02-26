@@ -270,7 +270,7 @@ export interface StateMachineInstance extends Decl {
 export interface ArrayDecl extends Decl {
     type: "ArrayDecl";
     fppType: TypeName;
-    default_?: ArrayExpr;
+    default_?: Expr;
     size: Expr;
     format?: StringLiteral;
 }
@@ -390,6 +390,8 @@ export interface SpecialPortInstanceDecl extends Decl {
     type: "SpecialPortInstanceDecl";
     kind: SpecialPortKind;
     fppType: undefined;
+    priority?: Expr;
+    queueFullBehavior?: QueueFullBehavior;
 }
 
 export type PortInstanceDecl = GeneralPortInstanceDecl | SpecialPortInstanceDecl;

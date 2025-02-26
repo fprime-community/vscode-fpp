@@ -1,21 +1,28 @@
 import * as vscode from 'vscode';
 
 import {
-    ANTLRErrorListener,
+    ErrorListener,
     CharStreams,
     CommonTokenStream,
     ParserRuleContext,
     RecognitionException,
     Recognizer,
     Token,
-    TokenSource
-} from 'antlr4ts';
+    Lexer,
+    ATN,
+    ATNConfigSet,
+    ATNState,
+    RuleTransition,
+    ParseTreeVisitor
+} from 'antlr4';
 
-import { FppLexer } from './grammar/FppLexer';
-import { ComponentDeclContext, FppParser, ModuleDeclContext, StateMachineDefContext } from './grammar/FppParser';
-import { ATN, ATNConfigSet, ATNState, RuleTransition } from 'antlr4ts/atn';
-import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor';
-import { FppVisitor } from './grammar/FppVisitor';
+import FppLexer from './grammar/FppLexer';
+import FppVisitor from './grammar/FppVisitor';
+import FppParser, {
+    ComponentDeclContext,
+    ModuleDeclContext,
+    StateMachineDefContext
+} from './grammar/FppParser';
 
 class AtCursor {
     constructor(
@@ -43,15 +50,15 @@ interface BasicParser {
     ctx: ParserRuleContext;
 }
 
-class CandidateListener extends CommonTokenStream implements ANTLRErrorListener<Token> {
+class CandidateListener extends CommonTokenStream implements ErrorListener<Token> {
     lookAheadsAtCursor: AtCursor[] = [];
     atCursorReported = false;
 
     constructor(
         readonly caretOffset: number,
-        tokenSource: TokenSource, channel?: number
+        lexer: Lexer
     ) {
-        super(tokenSource, channel);
+        super(lexer);
     }
 
     private parser!: BasicParser;
@@ -78,7 +85,7 @@ class CandidateListener extends CommonTokenStream implements ANTLRErrorListener<
     }
 
     syntaxError(
-        recognizer: Recognizer<Token, any>,
+        recognizer: Recognizer<any>,
         offendingSymbol: Token | undefined,
         line: number, charPositionInLine: number,
         msg: string,
@@ -113,28 +120,28 @@ class CandidateListener extends CommonTokenStream implements ANTLRErrorListener<
  * This is the default visitor
  * Should pull all rules through the parser
  */
-class BasicVisitor extends AbstractParseTreeVisitor<void> implements FppVisitor<void> {
+class BasicVisitor extends ParseTreeVisitor<void> implements FppVisitor<void> {
     protected defaultResult(): void { }
 
     scope: string[] = [];
 
     visitComponentDecl(ctx: ComponentDeclContext) {
         const oldScope = this.scope;
-        this.scope = [...oldScope, ctx.IDENTIFIER().text];
+        this.scope = [...oldScope, ctx.IDENTIFIER().getText()];
         super.visitChildren(ctx);
         this.scope = oldScope;
     }
 
     visitModuleDecl(ctx: ModuleDeclContext) {
         const oldScope = this.scope;
-        this.scope = [...oldScope, ctx.IDENTIFIER().text];
+        this.scope = [...oldScope, ctx.IDENTIFIER().getText()];
         super.visitChildren(ctx);
         this.scope = oldScope;
     }
 
     visitStateMachineDef(ctx: StateMachineDefContext) {
         const oldScope = this.scope;
-        this.scope = [...oldScope, ctx.IDENTIFIER().text];
+        this.scope = [...oldScope, ctx.IDENTIFIER().getText()];
         super.visitChildren(ctx);
         this.scope = oldScope;
     }
@@ -150,7 +157,7 @@ class FppParserWrapper extends FppParser {
     }
 
     match(ttype: number): Token {
-        let t = this.currentToken;
+        let t = this.getCurrentToken();
         if (this.tokenStream.lookAheadsAtCursor.length) {
             this.tokenStream.atCursor();
         }
@@ -195,7 +202,7 @@ interface CandidateResult {
 
 function getNextState(atn: ATN, context: ParserRuleContext) {
     const invokingState = atn.states[context.invokingState];
-    for (const transition of invokingState.getTransitions()) {
+    for (const transition of invokingState.stateNumber) {
         if (transition instanceof RuleTransition &&
             transition.target.ruleIndex === context.ruleIndex
         ) {
@@ -243,14 +250,12 @@ function getRuleMetadata(context: ParserRuleContext, state: number, relevantRule
 
     const rules = new Map<number, CompletionRelevantInfo>();
 
-    for (; relevantContext; invokingState = relevantContext.invokingState, relevantContext = relevantContext.parent) {
-        if (relevantContext.ruleIndex === FppParser.RULE_moduleDecl ||
-            relevantContext.ruleIndex === FppParser.RULE_componentDecl ||
-            relevantContext.ruleIndex === FppParser.RULE_stateMachineDef
+    for (; relevantContext; invokingState = relevantContext.invokingState, relevantContext = relevantContext.parentCtx) {
+        if (relevantContext instanceof ModuleDeclContext ||
+            relevantContext instanceof ComponentDeclContext ||
+            relevantContext instanceof StateMachineDefContext
         ) {
-            const declName = (relevantContext as (
-                ModuleDeclContext | ComponentDeclContext | StateMachineDefContext
-            )).tryGetToken(FppParser.IDENTIFIER, 0)?.text;
+            const declName: string | undefined = relevantContext.IDENTIFIER()?.getText();
             if (declName) {
                 scope.push(declName);
             } else {
@@ -364,6 +369,7 @@ export function getCandidates(
     parser.removeErrorListeners();
     parser.addErrorListener(tokenStream);
 
+    parser.symbolicNames
     tokenStream.setParser(parser);
 
     // Run the tokens through the parser

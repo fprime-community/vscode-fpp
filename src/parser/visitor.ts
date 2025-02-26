@@ -1,8 +1,7 @@
 import * as path from 'path';
 
-import { FppVisitor } from '../grammar/FppVisitor';
-import { ParserRuleContext, Token } from "antlr4ts";
-import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor';
+import FppVisitor from '../grammar/FppVisitor';
+import { ParserRuleContext, Token, ParseTreeVisitor, BufferedTokenStream, CommonToken, CommonTokenStream } from "antlr4";
 
 import * as fs from 'fs';
 
@@ -11,7 +10,8 @@ import * as FppParser from '../grammar/FppParser';
 import { IRangeAssociation, RangeAssociator } from '../associator';
 import { RangeRuleAssociation } from './common';
 import { IDiagnostic } from './message';
-import { TerminalNode } from 'antlr4ts/tree/TerminalNode';
+import { TerminalNode } from 'antlr4';
+import FppLexer from '../grammar/FppLexer';
 
 export enum IncludeContext {
     module,
@@ -28,7 +28,7 @@ export interface IncludeProduct {
     errors: IDiagnostic[];
 }
 
-export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements FppVisitor<Fpp.Ast> {
+export class AstVisitor extends ParseTreeVisitor<Fpp.Ast> implements FppVisitor<Fpp.Ast> {
     signature = new RangeAssociator<RangeRuleAssociation>();
 
     private promises: [FppParser.IncludeStmtContext, Promise<IncludeProduct>][] = [];
@@ -36,6 +36,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
     private source: string;
 
     constructor(
+        private tokenStream: CommonTokenStream,
         private readonly sourceStack: readonly string[],
         private scope: Fpp.QualifiedIdentifier,
         private readonly onInclude: (
@@ -114,12 +115,12 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             source: this.source,
             start: {
                 line: ctx.start.line - 1,
-                column: ctx.start.charPositionInLine
+                column: ctx.start.start
             },
             end: {
                 // AST errors cause length to be zero
                 line: (ctx.stop?.line ?? ctx.start.line) - 1,
-                column: ctx.stop ? (ctx.stop.charPositionInLine + (ctx.stop.text?.length ?? 1)) : (ctx.start.charPositionInLine + ctx.text.length)
+                column: ctx.stop ? (ctx.stop.start + (ctx.stop.text?.length ?? 1)) : (ctx.start.start + ctx.getText().length)
             }
         };
     }
@@ -129,11 +130,11 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             source: this.source,
             start: {
                 line: tok.line - 1,
-                column: tok.charPositionInLine
+                column: tok.start
             },
             end: {
                 line: tok.line - 1,
-                column: tok.charPositionInLine + (tok.text?.length ?? 0)
+                column: tok.start + (tok.text?.length ?? 0)
             }
         };
     }
@@ -143,11 +144,11 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             source: this.source,
             start: {
                 line: toks[0].line - 1,
-                column: toks[0].charPositionInLine
+                column: toks[0].start
             },
             end: {
                 line: toks[toks.length - 1].line - 1,
-                column: toks[toks.length - 1].charPositionInLine + (toks[toks.length - 1].text?.length ?? 0)
+                column: toks[toks.length - 1].start + (toks[toks.length - 1].text?.length ?? 0)
             }
         };
     }
@@ -179,11 +180,11 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         else if (ctx instanceof ParserRuleContext) {
             this.signature.add(
                 {
-                    start: { line: ctx.start.line - 1, character: ctx.start.charPositionInLine },
+                    start: { line: ctx.start.line - 1, character: ctx.start.start },
                     end: {
                         line: (ctx.stop ?? ctx.start).line - 1,
-                        character: ctx.stop ? (ctx.stop.charPositionInLine + (ctx.stop.text?.length ?? 1))
-                            : (ctx.start.charPositionInLine + ctx.text.length)
+                        character: ctx.stop ? (ctx.stop.start + (ctx.stop.text?.length ?? 1))
+                            : (ctx.start.start + ctx.getText().length)
                     }
                 }, { rule, param }
             );
@@ -195,11 +196,11 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
 
             this.signature.add(
                 {
-                    start: { line: ctx.line - 1, character: ctx.charPositionInLine },
+                    start: { line: ctx.line - 1, character: ctx.start },
 
                     end: {
                         line: ctx.line - 1 + textLines.length - 1,
-                        character: textLines.length > 1 ? finalLineLen : ctx.charPositionInLine + finalLineLen
+                        character: textLines.length > 1 ? finalLineLen : ctx.start + finalLineLen
                     }
                 }, { rule, param }
             );
@@ -209,7 +210,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
     private keyword<K extends string>(ctx: ParserRuleContext, value?: K): Fpp.Keyword<K> {
         return {
             location: this.loc(ctx),
-            value: value ?? ctx.text as K
+            value: value ?? ctx.getText() as K
         };
     }
 
@@ -249,36 +250,42 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         };
     }
 
-    private static stripAnnotation(e: TerminalNode): string {
-        if (e.text.startsWith("@<")) {
-            return e.text.substring(2).trim(); // @<
+    private static stripAnnotation(e: Token): string {
+        const text = e.text;
+        if (text.startsWith("@<")) {
+            return text.substring(2).trim(); // @<
         } else {
-            return e.text.substring(1).trim(); // @
+            return text.substring(1).trim(); // @
         }
     }
 
-    private annotation(preCtx?: FppParser.PreAnnotationContext, postCtx?: FppParser.PostAnnotationContext, postMultiAnnotation?: FppParser.PostMultiAnnotationContext, rawAnnotation?: TerminalNode): string | undefined {
-        if (!preCtx && !postCtx && !postMultiAnnotation && !rawAnnotation) {
-            return undefined;
+    private preAnnotation(ctx: ParserRuleContext): string | undefined {
+        const preAnnotations = this.tokenStream.getHiddenTokensToLeft(ctx.start.tokenIndex, 2);
+        if (preAnnotations.length > 0) {
+            return;
         }
 
-        let annotations = preCtx?.ANNOTATION().map(AstVisitor.stripAnnotation) ?? [];
+        return preAnnotations.map(AstVisitor.stripAnnotation).join("\n").trim();
+    }
 
-        const post = postCtx?.ANNOTATION();
-        if (post) {
-            annotations.push(AstVisitor.stripAnnotation(post));
+    private annotation(ctx: ParserRuleContext): string | undefined {
+        const preAnnotations = this.tokenStream.getHiddenTokensToLeft(ctx.start.tokenIndex, 2);
+        let postAnnotations: Token[] = [];
+
+        if (ctx.stop) {
+            postAnnotations = this.tokenStream.getHiddenTokensToRight(ctx.stop.tokenIndex);
         }
 
-        const postMulti = postMultiAnnotation?.ANNOTATION();
-        if (postMulti) {
-            annotations.push(...postMulti.map(v => AstVisitor.stripAnnotation(v)));
+        const preAnnotationText = preAnnotations.map(AstVisitor.stripAnnotation);
+        const postAnnotationText = postAnnotations.map(AstVisitor.stripAnnotation);
+
+        const allText = [...preAnnotationText];
+        if (postAnnotationText.length > 0) {
+            allText.push('');
+            allText.push(...postAnnotationText);
         }
 
-        if (rawAnnotation) {
-            annotations.push(AstVisitor.stripAnnotation(rawAnnotation));
-        }
-
-        return annotations.join("\n").trim();
+        return allText.join("\n").trim();
     }
 
     visitProg(ctx: FppParser.ProgContext): Fpp.TranslationUnit {
@@ -291,7 +298,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "TranslationUnit",
             location: this.loc(ctx),
-            members: ctx.moduleMember().map(this.visitModuleMember.bind(this)) as Fpp.ModuleMember[],
+            members: ctx.moduleMember_list().map(this.visitModuleMember.bind(this)) as Fpp.ModuleMember[],
             dependencies: []
         };
     }
@@ -306,7 +313,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "TranslationUnit",
             location: this.loc(ctx),
-            members: ctx.topologyMember().map(this.visitTopologyMember.bind(this)) as Fpp.TopologyMember[],
+            members: ctx.topologyMember_list().map(this.visitTopologyMember.bind(this)) as Fpp.TopologyMember[],
             dependencies: []
         };
     }
@@ -321,7 +328,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "TranslationUnit",
             location: this.loc(ctx),
-            members: ctx.componentMember().map(this.visitComponentMember.bind(this)) as Fpp.ComponentMember[],
+            members: ctx.componentMember_list().map(this.visitComponentMember.bind(this)) as Fpp.ComponentMember[],
             dependencies: []
         };
     }
@@ -361,7 +368,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.TYPE()._symbol, ctx.ruleIndex, "type");
+        this.associate(ctx.TYPE().symbol, ctx.ruleIndex, "type");
         this.associate(ctx._name, ctx.ruleIndex, "name");
 
         return {
@@ -378,16 +385,16 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.TYPE()._symbol, ctx.ruleIndex, "type");
+        this.associate(ctx.TYPE().symbol, ctx.ruleIndex, "type");
         this.associate(ctx._name, ctx.ruleIndex, "name");
-        this.associate(ctx._type, ctx.ruleIndex, "typeName");
+        this.associate(ctx._type_, ctx.ruleIndex, "typeName");
 
         return {
             type: "AliasTypeDecl",
             scope: [...this.scope],
             name: this.identifier(ctx._name),
             location: this.loc(ctx),
-            fppType: this.visitTypeName(ctx._type),
+            fppType: this.visitTypeName(ctx._type_),
         };
     }
 
@@ -399,12 +406,12 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         const default_ = ctx._default_;
         const format = ctx._format;
 
-        this.associate(ctx.ARRAY()._symbol, ctx.ruleIndex, "array");
+        this.associate(ctx.ARRAY().symbol, ctx.ruleIndex, "array");
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._size, ctx.ruleIndex, "sizeExpression");
-        this.associate(ctx._type, ctx.ruleIndex, "typeName");
-        this.associate(ctx.DEFAULT()?._symbol, ctx.ruleIndex, "default");
-        this.associate(ctx.FORMAT()?._symbol, ctx.ruleIndex, "format");
+        this.associate(ctx._type_, ctx.ruleIndex, "typeName");
+        this.associate(ctx.DEFAULT()?.symbol, ctx.ruleIndex, "default");
+        this.associate(ctx.FORMAT()?.symbol, ctx.ruleIndex, "format");
         this.associate(ctx._default_, ctx.ruleIndex, "defaultExpression");
         this.associate(ctx._format, ctx.ruleIndex, "formatLiteral");
 
@@ -413,9 +420,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             scope: [...this.scope],
             name: this.identifier(ctx._name),
             location: this.loc(ctx),
-            fppType: this.visitTypeName(ctx._type),
+            fppType: this.visitTypeName(ctx._type_),
             size: this.visitExpr(ctx._size),
-            default_: default_ ? this.visitArrayExpr(default_) : undefined,
+            default_: default_ ? this.visitExpr(default_) : undefined,
             format: format ? this.stringLiteral(format) : undefined
         };
     }
@@ -448,8 +455,8 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
 
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._size, ctx.ruleIndex, "n");
-        this.associate(ctx._type, ctx.ruleIndex, "type");
-        this.associate(ctx.FORMAT()?._symbol, ctx.ruleIndex, "format");
+        this.associate(ctx._type_, ctx.ruleIndex, "type");
+        this.associate(ctx.FORMAT()?.symbol, ctx.ruleIndex, "format");
         this.associate(ctx._format, ctx.ruleIndex, "formatLiteral");
 
         return {
@@ -457,7 +464,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             scope: [...this.scope],
             type: "StructMemberDecl",
             location: this.loc(ctx),
-            fppType: this.visitTypeName(ctx._type),
+            fppType: this.visitTypeName(ctx._type_),
             size: size ? this.visitExpr(size) : undefined,
             format: format ? this.stringLiteral(format) : undefined,
         };
@@ -469,7 +476,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         }
 
         const out = this.visitStructMember(ctx.structMember());
-        out.annotation = this.annotation(ctx.preAnnotation(), undefined, ctx.postMultiAnnotation());
+        out.annotation = this.annotation(ctx);
         return out;
     }
 
@@ -478,16 +485,16 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.STRUCT()._symbol, ctx.ruleIndex, "struct");
+        this.associate(ctx.STRUCT().symbol, ctx.ruleIndex, "struct");
         this.associate(ctx._name, ctx.ruleIndex, "name");
-        this.associate(ctx.DEFAULT()?._symbol, ctx.ruleIndex, "default");
+        this.associate(ctx.DEFAULT()?.symbol, ctx.ruleIndex, "default");
         this.associate(ctx._default_, ctx.ruleIndex, "defaultExpr");
 
         const lastMember = ctx.structMemberL();
         let members: Fpp.StructMember[];
         if (lastMember) {
             members = [
-                ...ctx.structMemberN().map(v => this.visitStructMember_(v)),
+                ...ctx.structMemberN_list().map(v => this.visitStructMember_(v)),
                 this.visitStructMember_(lastMember)
             ];
         } else {
@@ -530,9 +537,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         this.associate(ctx.COMMAND().symbol, ctx.ruleIndex, "command");
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._params, ctx.ruleIndex, "param-list");
-        this.associate(ctx.OPCODE()?._symbol, ctx.ruleIndex, "opcode");
+        this.associate(ctx.OPCODE()?.symbol, ctx.ruleIndex, "opcode");
         this.associate(ctx._opcode, ctx.ruleIndex, "opcodeExpr");
-        this.associate(ctx.PRIORITY()?._symbol, ctx.ruleIndex, "priority");
+        this.associate(ctx.PRIORITY()?.symbol, ctx.ruleIndex, "priority");
         this.associate(ctx._priority, ctx.ruleIndex, "priorityExpr");
         this.associate(ctx._queueFull, ctx.ruleIndex, "queue-full-behavior");
 
@@ -556,21 +563,21 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
 
         this.associate(ctx.PARAM()?.symbol, ctx.ruleIndex, "param");
         this.associate(ctx._name, ctx.ruleIndex, "name");
-        this.associate(ctx._type, ctx.ruleIndex, "type");
-        this.associate(ctx.DEFAULT()?._symbol, ctx.ruleIndex, "default");
+        this.associate(ctx._type_, ctx.ruleIndex, "type");
+        this.associate(ctx.DEFAULT()?.symbol, ctx.ruleIndex, "default");
         this.associate(ctx._default_, ctx.ruleIndex, "defaultExpr");
-        this.associate(ctx.ID()?._symbol, ctx.ruleIndex, "id");
+        this.associate(ctx.ID()?.symbol, ctx.ruleIndex, "id");
         this.associate(ctx._id, ctx.ruleIndex, "idExpr");
-        this.associate(ctx.SET()?._symbol, ctx.ruleIndex, "set opcode");
+        this.associate(ctx.SET()?.symbol, ctx.ruleIndex, "set opcode");
         if (ctx.SET()) {
-            this.associate(ctx.OPCODE()[0]?._symbol, ctx.ruleIndex, "set opcode");
-            this.associate(ctx.OPCODE()[1]?._symbol, ctx.ruleIndex, "save opcode");
+            this.associate(ctx.OPCODE(0)?.symbol, ctx.ruleIndex, "set opcode");
+            this.associate(ctx.OPCODE(1)?.symbol, ctx.ruleIndex, "save opcode");
         } else {
-            this.associate(ctx.OPCODE()[0]?._symbol, ctx.ruleIndex, "save opcode");
+            this.associate(ctx.OPCODE(0)?.symbol, ctx.ruleIndex, "save opcode");
         }
 
         this.associate(ctx._setOpcode, ctx.ruleIndex, "setOpcode");
-        this.associate(ctx.SAVE()?._symbol, ctx.ruleIndex, "save opcode");
+        this.associate(ctx.SAVE()?.symbol, ctx.ruleIndex, "save opcode");
         this.associate(ctx._saveOpcode, ctx.ruleIndex, "saveOpcode");
 
         return {
@@ -578,7 +585,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             scope: [...this.scope],
             location: this.loc(ctx),
             name: this.identifier(ctx._name),
-            fppType: this.visitTypeName(ctx._type),
+            fppType: this.visitTypeName(ctx._type_),
             default_: ctx._default_ ? this.visitExpr(ctx._default_) : undefined,
             id: ctx._id ? this.visitExpr(ctx._id) : undefined,
             setOpcode: ctx._setOpcode ? this.visitExpr(ctx._setOpcode) : undefined,
@@ -678,7 +685,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             location: this.loc(ctx),
             kind: kind,
             isOutput: true,
-            isSpecial: true
+            isSpecial: true,
         };
     }
 
@@ -706,10 +713,10 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         }
 
         this.associate(ctx._kind, ctx.ruleIndex, "generalPortKind");
-        this.associate(ctx.tryGetToken(FppParser.FppParser.PORT, 0)?._symbol, ctx.ruleIndex, "port");
+        this.associate(ctx.PORT()?.symbol, ctx.ruleIndex, "port");
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._n, ctx.ruleIndex, "portNum");
-        this.associate(ctx._type, ctx.ruleIndex, "port-instance-type");
+        this.associate(ctx._type_, ctx.ruleIndex, "port-instance-type");
         this.associate(ctx.PRIORITY()?.symbol, ctx.ruleIndex, "priority");
         this.associate(ctx._priority, ctx.ruleIndex, "priorityExpr");
         this.associate(ctx._queueFull, ctx.ruleIndex, "queue-full-behavior");
@@ -721,8 +728,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             name: this.identifier(ctx._name),
             kind: this.visitGeneralPortKind(ctx._kind),
             n: ctx._n ? this.visitExpr(ctx._n) : undefined,
-            fppType: this.visitGeneralPortInstanceType_(ctx._type),
-            queueFullBehavior: ctx._queueFull ? this.visitQueueFullBehavior(ctx._queueFull) : undefined
+            fppType: this.visitGeneralPortInstanceType_(ctx._type_),
+            queueFullBehavior: ctx._queueFull ? this.visitQueueFullBehavior(ctx._queueFull) : undefined,
+            priority: ctx._priority ? this.visitExpr(ctx._priority) : undefined,
         };
     }
 
@@ -732,7 +740,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         }
 
         this.associate(ctx.specialPortKind(), ctx.ruleIndex, "specialPortKind");
-        this.associate(ctx.PORT()._symbol, ctx.ruleIndex, "port");
+        this.associate(ctx.PORT().symbol, ctx.ruleIndex, "port");
         this.associate(ctx._name, ctx.ruleIndex, "name");
 
         return {
@@ -741,7 +749,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             fppType: undefined,
             location: this.loc(ctx),
             name: this.identifier(ctx._name),
-            kind: this.visitSpecialPortKind(ctx.specialPortKind())
+            kind: this.visitSpecialPortKind(ctx.specialPortKind()),
+            queueFullBehavior: ctx._queueFull ? this.visitQueueFullBehavior(ctx._queueFull) : undefined,
+            priority: ctx._priority ? this.visitExpr(ctx._priority) : undefined,
         };
     }
 
@@ -770,7 +780,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        return ctx.telemetryLimitExpr().map(this.visitTelemetryLimitExpr.bind(this));
+        return ctx.telemetryLimitExpr_list().map(this.visitTelemetryLimitExpr.bind(this));
     }
 
     visitTelemetryUpdate_(ctx: FppParser.TelemetryUpdateContext): Fpp.Keyword<"always" | "onChange"> {
@@ -790,9 +800,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.TELEMETRY()._symbol, ctx.ruleIndex, "telemetry");
+        this.associate(ctx.TELEMETRY().symbol, ctx.ruleIndex, "telemetry");
         this.associate(ctx._name, ctx.ruleIndex, "name");
-        this.associate(ctx._type, ctx.ruleIndex, "type");
+        this.associate(ctx._type_, ctx.ruleIndex, "type");
         this.associate(ctx.ID()?.symbol, ctx.ruleIndex, "id");
         this.associate(ctx._id, ctx.ruleIndex, "idExpr");
         this.associate(ctx.UPDATE()?.symbol, ctx.ruleIndex, "update");
@@ -809,7 +819,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             scope: [...this.scope],
             location: this.loc(ctx),
             name: this.identifier(ctx._name),
-            fppType: this.visitTypeName(ctx._type),
+            fppType: this.visitTypeName(ctx._type_),
             id: ctx._id ? this.visitExpr(ctx._id) : undefined,
             update: ctx._update ? this.visitTelemetryUpdate_(ctx._update) : undefined,
             format: ctx._format ? this.stringLiteral(ctx._format) : undefined,
@@ -839,7 +849,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         }
 
         const out = this.visitEnumMember(ctx.enumMember());
-        out.annotation = this.annotation(ctx.preAnnotation(), ctx.postAnnotation());
+        out.annotation = this.annotation(ctx);
         return out;
     }
 
@@ -852,7 +862,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         const lastMember = ctx.enumMemberL();
         if (lastMember) {
             members = [
-                ...ctx.enumMemberN().map(this.visitEnumMember_.bind(this)),
+                ...ctx.enumMemberN_list().map(this.visitEnumMember_.bind(this)),
                 this.visitEnumMember_(lastMember)
             ];
         } else {
@@ -864,7 +874,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             scope: [...this.scope],
             location: this.loc(ctx),
             name: this.identifier(ctx._name),
-            fppType: ctx._type ? this.visitPrimitiveType(ctx._type as FppParser.PrimitiveTypeContext) : undefined,
+            fppType: ctx._type_ ? this.visitPrimitiveType(ctx._type_ as FppParser.PrimitiveTypeContext) : undefined,
             members
         };
     }
@@ -914,14 +924,14 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         const format = ctx._format;
         const throttle = ctx._throttle;
 
-        this.associate(ctx.EVENT()._symbol, ctx.ruleIndex, "event");
+        this.associate(ctx.EVENT().symbol, ctx.ruleIndex, "event");
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._params, ctx.ruleIndex, "param-list");
-        this.associate(ctx.SEVERITY()._symbol, ctx.ruleIndex, "severity");
+        this.associate(ctx.SEVERITY().symbol, ctx.ruleIndex, "severity");
         this.associate(ctx.eventSeverity(), ctx.ruleIndex, "severityKeyword");
         this.associate(ctx.ID()?.symbol, ctx.ruleIndex, "id");
         this.associate(ctx._id, ctx.ruleIndex, "idExpr");
-        this.associate(ctx.FORMAT()?._symbol, ctx.ruleIndex, "format");
+        this.associate(ctx.FORMAT()?.symbol, ctx.ruleIndex, "format");
         this.associate(ctx._format, ctx.ruleIndex, "formatLiteral");
         this.associate(ctx.THROTTLE()?.symbol, ctx.ruleIndex, "throttle");
         this.associate(ctx._throttle, ctx.ruleIndex, "throttleExpr");
@@ -998,11 +1008,11 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         const priority = ctx._priority;
         const queueFullBehavior = ctx._queueFull;
 
-        this.associate(ctx.INTERNAL()._symbol, ctx.ruleIndex, "internal");
-        this.associate(ctx.PORT()._symbol, ctx.ruleIndex, "port");
+        this.associate(ctx.INTERNAL().symbol, ctx.ruleIndex, "internal");
+        this.associate(ctx.PORT().symbol, ctx.ruleIndex, "port");
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._params, ctx.ruleIndex, "param-list");
-        this.associate(ctx.PRIORITY()?._symbol, ctx.ruleIndex, "priority");
+        this.associate(ctx.PRIORITY()?.symbol, ctx.ruleIndex, "priority");
         this.associate(ctx._priority, ctx.ruleIndex, "priorityExpr");
         this.associate(ctx._queueFull, ctx.ruleIndex, "queue-full-behavior");
 
@@ -1023,7 +1033,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.tryGetToken(FppParser.FppParser.PHASE, 0)?._symbol, ctx.ruleIndex, "phase");
+        this.associate(ctx.PHASE()?.symbol, ctx.ruleIndex, "phase");
         this.associate(ctx._phaseExpr, ctx.ruleIndex, "phaseExpr");
         this.associate(ctx._code, ctx.ruleIndex, "codeLiteral");
 
@@ -1031,7 +1041,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             location: this.loc(ctx),
             phase: this.visitExpr(ctx._phaseExpr),
             code: this.stringLiteral(ctx._code),
-            annotation: this.annotation(ctx.preAnnotation())
+            annotation: this.preAnnotation(ctx)
         };
     }
 
@@ -1040,12 +1050,12 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.tryGetToken(FppParser.FppParser.PRODUCT, 0)?._symbol, ctx.ruleIndex, "product");
-        this.associate(ctx.tryGetToken(FppParser.FppParser.RECORD, 0)?._symbol, ctx.ruleIndex, "record");
+        this.associate(ctx.getTokens(FppLexer.PRODUCT)[0]?.symbol, ctx.ruleIndex, "product");
+        this.associate(ctx.getTokens(FppLexer.RECORD)[0]?.symbol, ctx.ruleIndex, "record");
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._fppType, ctx.ruleIndex, "type");
-        this.associate(ctx.ARRAY()?._symbol, ctx.ruleIndex, "array");
-        this.associate(ctx.ID()?._symbol, ctx.ruleIndex, "id");
+        this.associate(ctx.ARRAY()?.symbol, ctx.ruleIndex, "array");
+        this.associate(ctx.ID()?.symbol, ctx.ruleIndex, "id");
         this.associate(ctx._id, ctx.ruleIndex, "idExpr");
 
         return {
@@ -1064,10 +1074,10 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.tryGetToken(FppParser.FppParser.PRODUCT, 0)?._symbol, ctx.ruleIndex, "product");
-        this.associate(ctx.tryGetToken(FppParser.FppParser.RECORD, 0)?._symbol, ctx.ruleIndex, "record");
+        this.associate(ctx.PRODUCT()?.symbol, ctx.ruleIndex, "product");
+        this.associate(ctx.CONTAINER()?.symbol, ctx.ruleIndex, "container");
         this.associate(ctx._name, ctx.ruleIndex, "name");
-        this.associate(ctx.ID()?._symbol, ctx.ruleIndex, "id");
+        this.associate(ctx.ID()?.symbol, ctx.ruleIndex, "id");
         this.associate(ctx._id, ctx.ruleIndex, "idExpr");
         this.associate(ctx._priority, ctx.ruleIndex, "dpPriority");
 
@@ -1087,25 +1097,25 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.INSTANCE()._symbol, ctx.ruleIndex, "instance");
+        this.associate(ctx.INSTANCE().symbol, ctx.ruleIndex, "instance");
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._fppType, ctx.ruleIndex, "component");
-        this.associate(ctx.tryGetToken(FppParser.FppParser.BASE, 0)?._symbol, ctx.ruleIndex, "base");
-        this.associate(ctx.tryGetToken(FppParser.FppParser.ID, 0)?._symbol, ctx.ruleIndex, "id");
+        this.associate(ctx.getTokens(FppLexer.BASE)[0]?.symbol, ctx.ruleIndex, "base");
+        this.associate(ctx.getTokens(FppLexer.ID)[0]?.symbol, ctx.ruleIndex, "id");
         this.associate(ctx._base_id, ctx.ruleIndex, "baseIdExpr");
-        this.associate(ctx.TYPE()?._symbol, ctx.ruleIndex, "type");
+        this.associate(ctx.TYPE()?.symbol, ctx.ruleIndex, "type");
         this.associate(ctx._cppType, ctx.ruleIndex, "C++ type");
-        this.associate(ctx.AT()?._symbol, ctx.ruleIndex, "at");
+        this.associate(ctx.AT()?.symbol, ctx.ruleIndex, "at");
         this.associate(ctx._at, ctx.ruleIndex, "includeFile");
-        this.associate(ctx.QUEUE()?._symbol, ctx.ruleIndex, "queue size");
-        this.associate(ctx.SIZE()[0]?.symbol, ctx.ruleIndex, "queue size");
+        this.associate(ctx.QUEUE()?.symbol, ctx.ruleIndex, "queue size");
+        this.associate(ctx.SIZE(0)?.symbol, ctx.ruleIndex, "queue size");
         this.associate(ctx._queueSize, ctx.ruleIndex, "queueSize");
-        this.associate(ctx.STACK()?._symbol, ctx.ruleIndex, "stack size");
-        this.associate(ctx.SIZE()[1]?.symbol, ctx.ruleIndex, "stack size");
+        this.associate(ctx.STACK()?.symbol, ctx.ruleIndex, "stack size");
+        this.associate(ctx.SIZE(0)?.symbol, ctx.ruleIndex, "stack size");
         this.associate(ctx._stackSize, ctx.ruleIndex, "stackSize");
-        this.associate(ctx.PRIORITY()?._symbol, ctx.ruleIndex, "priority");
+        this.associate(ctx.PRIORITY()?.symbol, ctx.ruleIndex, "priority");
         this.associate(ctx._priority, ctx.ruleIndex, "priorityExpr");
-        this.associate(ctx.CPU()?._symbol, ctx.ruleIndex, "cpu");
+        this.associate(ctx.CPU()?.symbol, ctx.ruleIndex, "cpu");
         this.associate(ctx._cpu, ctx.ruleIndex, "cpuExpr");
 
         return {
@@ -1124,7 +1134,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             stackSize: ctx._stackSize ? this.visitExpr(ctx._stackSize) : undefined,
             priority: ctx._priority ? this.visitExpr(ctx._priority) : undefined,
             cpu: ctx._cpu ? this.visitExpr(ctx._cpu) : undefined,
-            init: ctx.initSpecifier().map((v) => this.visitInitSpecifier(v))
+            init: ctx.initSpecifier_list().map((v) => this.visitInitSpecifier(v))
         };
     }
 
@@ -1137,20 +1147,20 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
     }
 
     visitComponentMember(ctx: FppParser.ComponentMemberContext): Fpp.ComponentMember {
-        const out = this.visit(ctx.componentMemberTempl()) as Fpp.ComponentMember;
-        out.annotation = this.annotation(ctx.preAnnotation(), undefined, undefined, ctx.ANNOTATION());
+        const out = this.visitChildren(ctx) as Fpp.ComponentMember;
+        out.annotation = this.annotation(ctx);
         return out;
     }
 
     visitModuleMember(ctx: FppParser.ModuleMemberContext): Fpp.ModuleMember {
-        const out = this.visit(ctx.moduleMemberTempl()) as Fpp.ModuleMember;
-        out.annotation = this.annotation(ctx.preAnnotation(), undefined, undefined, ctx.ANNOTATION());
+        const out = this.visitChildren(ctx) as Fpp.ModuleMember;
+        out.annotation = this.annotation(ctx);
         return out;
     }
 
     visitTopologyMember(ctx: FppParser.TopologyMemberContext): Fpp.TopologyMember {
-        const out = this.visit(ctx.topologyMemberTempl()) as Fpp.TopologyMember;
-        out.annotation = this.annotation(ctx.preAnnotation(), undefined, undefined, ctx.ANNOTATION());
+        const out = this.visitChildren(ctx) as Fpp.TopologyMember;
+        out.annotation = this.annotation(ctx);
         return out;
     }
 
@@ -1167,7 +1177,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         this.scope = [...this.scope, name];
 
         const members: Fpp.ComponentMember[] = [];
-        for (const memberCtx of ctx.componentMember()) {
+        for (const memberCtx of ctx.componentMember_list()) {
             try {
                 members.push(this.visitComponentMember(memberCtx));
             } catch (e) { }
@@ -1193,7 +1203,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.PORT()._symbol, ctx.ruleIndex, "port");
+        this.associate(ctx.PORT().symbol, ctx.ruleIndex, "port");
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._params, ctx.ruleIndex, "param-list");
         this.associate(ctx._returnType, ctx.ruleIndex, "returnType");
@@ -1264,7 +1274,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             fppType: undefined,
             location: this.loc(ctx),
             name: this.identifier(ctx._name),
-            connections: ctx.connection().map(v => this.visitConnection(v))
+            connections: ctx.connection_list().map(v => this.visitConnection(v))
         };
     }
 
@@ -1281,7 +1291,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        return ctx.qualIdent().map(v => this.visitQualIdent_(v));
+        return ctx.qualIdent_list().map(v => this.visitQualIdent_(v));
     }
 
     visitPatternGraphStmt(ctx: FppParser.PatternGraphStmtContext): Fpp.PatternGraphStmt {
@@ -1319,7 +1329,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         this.includeContextStack.push(IncludeContext.topology);
 
         const members: Fpp.TopologyMember[] = [];
-        for (const memberCtx of ctx.topologyMember()) {
+        for (const memberCtx of ctx.topologyMember_list()) {
             try {
                 members.push(this.visitTopologyMember(memberCtx) as Fpp.TopologyMember);
             } catch (e) { }
@@ -1372,7 +1382,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         this.scope = [...this.scope, name];
 
         const members: Fpp.ModuleMember[] = [];
-        for (const memberCtx of ctx.moduleMember()) {
+        for (const memberCtx of ctx.moduleMember_list()) {
             try {
                 members.push(this.visitModuleMember(memberCtx));
             } catch (e) { }
@@ -1400,7 +1410,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             location: this.loc(ctx),
             ref: !!ctx.REF(),
             name: this.identifier(ctx._name),
-            type: this.visitTypeName(ctx._type)
+            type: this.visitTypeName(ctx._type_)
         };
     }
 
@@ -1410,7 +1420,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         }
 
         const out = this.visitFormalParameter(ctx.formalParameter());
-        out.annotation = this.annotation(ctx.preAnnotation(), undefined, ctx.postMultiAnnotation());
+        out.annotation = this.annotation(ctx);
         return out;
     }
 
@@ -1425,7 +1435,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         }
 
         return [
-            ...ctx.formalParameterN().map(v => this.visitFormalParameter_(v)),
+            ...ctx.formalParameterN_list().map(v => this.visitFormalParameter_(v)),
             this.visitFormalParameter_(lastParam)
         ];
     }
@@ -1435,7 +1445,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        return ctx.IDENTIFIER().map(v => this.identifier(v._symbol));
+        return ctx.IDENTIFIER_list().map(v => this.identifier(v.symbol));
     }
 
     visitPrimitiveType(ctx: FppParser.PrimitiveTypeContext): Fpp.TypeName {
@@ -1445,7 +1455,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
 
         return {
             complex: false,
-            type: ctx.getChild(0).text! as Fpp.PrimitiveTypeKey,
+            type: ctx.getChild(0).getText() as Fpp.PrimitiveTypeKey,
             location: this.loc(ctx),
             size: ctx._size ? {
                 type: "IntLiteral",
@@ -1483,7 +1493,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "ArrayExpr",
             location: this.loc(ctx),
-            value: ctx.expr().map((v) => this.visitExpr(v))
+            value: ctx.expr_list().map((v) => this.visitExpr(v))
         };
     }
 
@@ -1507,7 +1517,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "StructExpr",
             location: this.loc(ctx),
-            value: ctx.structAssignment().map(v => this.visitStructAssignment(v))
+            value: ctx.structAssignment_list().map(v => this.visitStructAssignment(v))
         };
     }
 
@@ -1522,17 +1532,17 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         if (ctx.LIT_FLOAT()) {
             return {
                 type: "FloatLiteral",
-                value: parseFloat(ctx.LIT_FLOAT()!.text),
+                value: parseFloat(ctx.LIT_FLOAT().getText()),
                 location: this.loc(ctx)
             };
         } else if (ctx.LIT_INT()) {
             return {
                 type: "IntLiteral",
-                value: parseInt(ctx.LIT_INT()!.text),
+                value: parseInt(ctx.LIT_INT().getText()),
                 location: this.loc(ctx)
             };
         } else if (ctx.LIT_STRING()) {
-            const strLit = this.stringLiteral(ctx.LIT_STRING()!._symbol);
+            const strLit = this.stringLiteral(ctx.LIT_STRING().symbol);
             return {
                 type: "StringLiteral",
                 value: strLit.value,
@@ -1542,7 +1552,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return {
                 type: "BooleanExpr",
                 location: this.loc(ctx),
-                value: ctx.LIT_BOOLEAN()!.text === "true"
+                value: ctx.LIT_BOOLEAN().getText() === "true"
             };
         } else if (ctx.qualIdent()) {
             return {
@@ -1580,9 +1590,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
 
         const ty = ctx.typeName();
 
-        this.associate(ctx.ACTION()._symbol, ctx.ruleIndex, "action");
+        this.associate(ctx.ACTION().symbol, ctx.ruleIndex, "action");
         this.associate(ctx._name, ctx.ruleIndex, "name");
-        this.associate(ctx._type, ctx.ruleIndex, "type");
+        this.associate(ctx._type_, ctx.ruleIndex, "type");
 
         return {
             type: "ActionDef",
@@ -1598,11 +1608,11 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.CHOICE()._symbol, ctx.ruleIndex, "choice");
+        this.associate(ctx.CHOICE().symbol, ctx.ruleIndex, "choice");
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._guard, ctx.ruleIndex, "guard");
         this.associate(ctx._then, ctx.ruleIndex, "thenTransition");
-        this.associate(ctx._else, ctx.ruleIndex, "elseTransition");
+        this.associate(ctx._else_, ctx.ruleIndex, "elseTransition");
 
         return {
             type: "ChoiceDef",
@@ -1612,7 +1622,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             name: this.identifier(ctx._name),
             guard: this.identifier(ctx._guard),
             then: this.visitTransitionExpr(ctx._then),
-            else: this.visitTransitionExpr(ctx._else),
+            else: this.visitTransitionExpr(ctx._else_),
         };
     }
 
@@ -1621,9 +1631,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.GUARD()._symbol, ctx.ruleIndex, "guard");
+        this.associate(ctx.GUARD().symbol, ctx.ruleIndex, "guard");
         this.associate(ctx._name, ctx.ruleIndex, "name");
-        this.associate(ctx._type, ctx.ruleIndex, "type");
+        this.associate(ctx._type_, ctx.ruleIndex, "type");
 
         const ty = ctx.typeName();
 
@@ -1641,9 +1651,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.SIGNAL()._symbol, ctx.ruleIndex, "signal");
+        this.associate(ctx.SIGNAL().symbol, ctx.ruleIndex, "signal");
         this.associate(ctx._name, ctx.ruleIndex, "name");
-        this.associate(ctx._type, ctx.ruleIndex, "type");
+        this.associate(ctx._type_, ctx.ruleIndex, "type");
 
         const ty = ctx.typeName();
 
@@ -1664,7 +1674,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "DoExpr",
             location: this.loc(ctx),
-            actions: ctx.IDENTIFIER().map(v => this.identifier(v._symbol))
+            actions: ctx.IDENTIFIER_list().map(v => this.identifier(v.symbol))
         };
     }
 
@@ -1679,7 +1689,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             type: "TransitionExpr",
             location: this.loc(ctx),
             do: do_ ? this.visitDoExpr(do_) : undefined,
-            state: this.visitQualIdent_(ctx._state)
+            state: this.visitQualIdent_(ctx._state_)
         };
     }
 
@@ -1734,7 +1744,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "StateEntry",
             location: this.loc(ctx),
-            do: this.visitDoExpr(ctx._do),
+            do: this.visitDoExpr(ctx._do_),
         };
     }
 
@@ -1746,13 +1756,13 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "StateExit",
             location: this.loc(ctx),
-            do: this.visitDoExpr(ctx._do),
+            do: this.visitDoExpr(ctx._do_),
         };
     }
 
     visitStateMember(ctx: FppParser.StateMemberContext): Fpp.StateDefMember {
-        const out = this.visit(ctx.stateMemberTempl()) as Fpp.StateDefMember;
-        out.annotation = this.annotation(ctx.preAnnotation(), undefined, undefined, ctx.ANNOTATION());
+        const out = this.visitChildren(ctx) as Fpp.StateDefMember;
+        out.annotation = this.annotation(ctx);
         return out;
     }
 
@@ -1769,7 +1779,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         this.scope = [...this.scope, name];
 
         const members: Fpp.StateDefMember[] = [];
-        for (const memberCtx of ctx.stateMember()) {
+        for (const memberCtx of ctx.stateMember_list()) {
             try {
                 members.push(this.visitStateMember(memberCtx));
             } catch (e) { }
@@ -1789,8 +1799,8 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
     }
 
     visitStateMachineMember(ctx: FppParser.StateMachineMemberContext): Fpp.StateMachineMember {
-        const out = this.visit(ctx.stateMachineMemberTempl()) as Fpp.StateMachineMember;
-        out.annotation = this.annotation(ctx.preAnnotation(), undefined, undefined, ctx.ANNOTATION());
+        const out = this.visitChildren(ctx.stateMachineMemberTempl()) as Fpp.StateMachineMember;
+        out.annotation = this.annotation(ctx);
         return out;
     }
 
@@ -1807,7 +1817,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         this.scope = [...this.scope, name];
 
         const members: Fpp.StateMachineMember[] = [];
-        for (const memberCtx of ctx.stateMachineMember()) {
+        for (const memberCtx of ctx.stateMachineMember_list()) {
             try {
                 members.push(this.visitStateMachineMember(memberCtx));
             } catch (e) { }
@@ -1831,9 +1841,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        this.associate(ctx.STATE()._symbol, ctx.ruleIndex, "state");
-        this.associate(ctx.MACHINE()._symbol, ctx.ruleIndex, "machine");
-        this.associate(ctx.INSTANCE()._symbol, ctx.ruleIndex, "instance");
+        this.associate(ctx.STATE()?.symbol, ctx.ruleIndex, "state");
+        this.associate(ctx.MACHINE()?.symbol, ctx.ruleIndex, "machine");
+        this.associate(ctx.INSTANCE()?.symbol, ctx.ruleIndex, "instance");
         this.associate(ctx._name, ctx.ruleIndex, "name");
         this.associate(ctx._stateMachine, ctx.ruleIndex, "stateMachine");
         this.associate(ctx._priority, ctx.ruleIndex, "priority");

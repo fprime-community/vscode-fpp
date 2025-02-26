@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { FppParser, QualIdentContext } from './grammar/FppParser';
+import FppParser, { QualIdentContext } from './grammar/FppParser';
 
 import * as Fpp from './parser/ast';
 import * as Settings from './settings';
@@ -479,7 +479,7 @@ class FppExtension implements
     ): vscode.CompletionItem[] {
         let writtenSoFar: string = '';
         if (context) {
-            writtenSoFar = context.text.replaceAll(" ", "");
+            writtenSoFar = context.getText().replaceAll(" ", "");
         }
 
         const out: vscode.CompletionItem[] = [];
@@ -580,7 +580,7 @@ class FppExtension implements
                 continue;
             }
 
-            const displayName = candidates.parser.vocabulary.getDisplayName(candidate);
+            const displayName = candidates.parser.ruleNames[candidate];
             if (displayName.startsWith("'")) {
                 keywords.push(displayName.replaceAll("'", ""));
             }
@@ -641,7 +641,7 @@ class FppExtension implements
             const connectionInfo = candidates.rules.get(FppParser.RULE_connection);
             if (connectionInfo) {
                 return out.concat(this.referenceCompletion(
-                    connectionInfo.context.childCount <= 1 ? SymbolType.outputPortInstance : SymbolType.inputPortInstance,
+                    connectionInfo.context.getChildCount() <= 1 ? SymbolType.outputPortInstance : SymbolType.inputPortInstance,
                     qualIdentInfo?.context as QualIdentContext, candidates.scope
                 ));
             }
@@ -717,7 +717,7 @@ class FppExtension implements
         if (!stateMap) {
             return;
         } else if (Array.isArray(stateMap)) {
-            paramName = stateMap[relevant.context.childCount];
+            paramName = stateMap[relevant.context.getChildCount()];
         } else {
             const map = new Map<number, string>();
 

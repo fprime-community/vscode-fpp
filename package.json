@@ -103,10 +103,9 @@
         "compile-worker": "yarn run esbuild-base ./src/parser/worker.ts --outfile=out/worker.js",
         "compile": "yarn run compile-extension && yarn run compile-worker",
         "watch": "tsc -watch -p ./",
-        "antlr": "antlr4ts -visitor src/grammar/Fpp.g4"
+        "antlr": "antlr -Dlanguage=TypeScript -visitor -no-listener src/grammar/Fpp.g4"
     },
     "devDependencies": {
-        "@types/antlr4": "^4.11.2",
         "@types/glob": "^8.0.0",
         "@types/mocha": "^10.0.0",
         "@types/node": "16.x",
@@ -114,8 +113,7 @@
         "@typescript-eslint/eslint-plugin": "^5.42.0",
         "@typescript-eslint/parser": "^5.42.0",
         "@vscode/test-electron": "^2.2.0",
-        "antlr4ts": "^0.5.0-alpha.4",
-        "antlr4ts-cli": "^0.5.0-alpha.4",
+        "antlr4": "^4.13.2",
         "esbuild": "^0.18.5",
         "eslint": "^8.26.0",
         "glob": "^8.0.3",

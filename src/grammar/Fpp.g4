@@ -32,7 +32,7 @@ aliasTypeDecl: TYPE name=IDENTIFIER '=' type=typeName;
 arrayDecl:
     ARRAY name=IDENTIFIER '=' '[' size=expr ']'
     type=typeName
-    (DEFAULT default_=arrayExpr)?
+    (DEFAULT default_=expr)?
     (FORMAT format=LIT_STRING)?
     ;
 
@@ -43,8 +43,8 @@ structMember:
     type=typeName (FORMAT format=LIT_STRING)?
     ;
 
-structMemberN: preAnnotation? structMember (','? postMultiAnnotation | commaDelim);
-structMemberL: preAnnotation? structMember (','? postMultiAnnotation | commaDelim)?;
+structMemberN: structMember (','? commaDelim);
+structMemberL: structMember (','? commaDelim)?;
 structDecl:
     STRUCT name=IDENTIFIER '{'
         NL* (structMemberN* structMemberL)?
@@ -101,11 +101,16 @@ generalPortInstanceDecl:
     queueFull=queueFullBehavior?
     ;
 
-specialPortInstanceDecl: specialPortKind PORT name=IDENTIFIER;
+specialPortInstanceDecl:
+    specialPortKind PORT name=IDENTIFIER
+    (PRIORITY priority=expr)?
+    queueFull=queueFullBehavior?;
 
 telemetryLimitKind: RED | ORANGE | YELLOW;
 telemetryLimitExpr: kind=telemetryLimitKind limit=expr;
-telemetryLimit: '{' NL* (telemetryLimitExpr (commaDelim telemetryLimitExpr)* commaDelim?)? '}';
+telemetryLimit: '{'
+        NL* (telemetryLimitExpr (commaDelim telemetryLimitExpr)* commaDelim?)?
+    '}';
 telemetryUpdate: ALWAYS | ON CHANGE;
 telemetryChannelDecl:
     TELEMETRY name=IDENTIFIER ':' type=typeName
@@ -117,11 +122,15 @@ telemetryChannelDecl:
     ;
 
 actionDef: ACTION name=IDENTIFIER (':' type=typeName)?;
-choiceDef: CHOICE name=IDENTIFIER '{' IF guard=IDENTIFIER then=transitionExpr ELSE else=transitionExpr '}';
+choiceDef: CHOICE name=IDENTIFIER '{'
+        IF guard=IDENTIFIER then=transitionExpr ELSE else=transitionExpr
+    '}';
 guardDef: GUARD name=IDENTIFIER (':' type=typeName)?;
 signalDef: SIGNAL name=IDENTIFIER (':' type=typeName)?;
 
-doExpr: DO '{' NL* (IDENTIFIER (commaDelim IDENTIFIER)*)? commaDelim? '}';
+doExpr: DO '{'
+        NL* (IDENTIFIER (commaDelim IDENTIFIER)*)? commaDelim?
+    '}';
 transitionExpr: do=doExpr? ENTER state=qualIdent;
 initialTransition: INITIAL transition=transitionExpr;
 
@@ -130,7 +139,7 @@ stateTransition: ON signal=IDENTIFIER (IF guard=IDENTIFIER)? transition=transiti
 stateEntry: ENTRY do=doExpr;
 stateExit: EXIT do=doExpr;
 
-stateMemberTempl:
+stateMember:
     initialTransition
     | choiceDef
     | stateDef
@@ -139,7 +148,6 @@ stateMemberTempl:
     | stateExit
     ;
 
-stateMember: preAnnotation? stateMemberTempl ANNOTATION?;
 stateDef: STATE name=IDENTIFIER ('{'
         NL* (stateMember semiDelim)* NL*
     '}')?;
@@ -153,9 +161,11 @@ stateMachineMemberTempl:
     | actionDef
     ;
 
-stateMachineMember: preAnnotation? stateMachineMemberTempl ANNOTATION?;
+stateMachineMember: stateMachineMemberTempl ANNOTATION?;
 stateMachineDef: STATE MACHINE name=IDENTIFIER
-    ('{' NL* (stateMachineMember semiDelim)* NL* '}')?
+    ('{'
+        NL* (stateMachineMember semiDelim)* NL*
+    '}')?
     ;
 
 stateMachineInstance: STATE MACHINE INSTANCE name=IDENTIFIER ':' stateMachine=qualIdent
@@ -164,8 +174,8 @@ stateMachineInstance: STATE MACHINE INSTANCE name=IDENTIFIER ':' stateMachine=qu
     ;
 
 enumMember: name=IDENTIFIER ('=' value=expr)?;
-enumMemberN: preAnnotation? enumMember (','? postAnnotation | commaDelim);
-enumMemberL: preAnnotation? enumMember (','? postAnnotation | commaDelim)?;
+enumMemberN: enumMember (','? commaDelim);
+enumMemberL: enumMember (','? commaDelim)?;
 enumDecl: ENUM name=IDENTIFIER (':' type=intType)?
     '{'
         NL* (enumMemberN* enumMemberL)?
@@ -207,7 +217,7 @@ containerSpecifierDecl:
     PRODUCT CONTAINER name=IDENTIFIER (ID id=expr)? (DEFAULT PRIORITY priority=expr)?
     ;
 
-initSpecifier: preAnnotation? PHASE phaseExpr=expr code=LIT_STRING;
+initSpecifier: PHASE phaseExpr=expr code=LIT_STRING;
 componentInstanceDecl:
     INSTANCE name=IDENTIFIER ':' fppType=qualIdent
     BASE ID base_id=expr
@@ -223,7 +233,7 @@ componentInstanceDecl:
     ;
 
 componentKind: ACTIVE | PASSIVE | QUEUED;
-componentMemberTempl:
+componentMember:
     abstractTypeDecl
     | aliasTypeDecl
     | arrayDecl
@@ -245,8 +255,6 @@ componentMemberTempl:
     | stateMachineDef
     ;
 
-componentMember: preAnnotation? componentMemberTempl ANNOTATION?;
-
 componentDecl:
     kind=componentKind COMPONENT name=IDENTIFIER '{'
         NL* (componentMember semiDelim)* NL*
@@ -260,7 +268,7 @@ portDecl:
 
 componentInstanceSpec: PRIVATE? INSTANCE name=qualIdent;
 connectionNode: node=qualIdent ('[' index=expr ']')?;
-connection: source=connectionNode '->' destination=connectionNode;
+connection: UNMATCHED? source=connectionNode '->' destination=connectionNode;
 directGraphDecl:
     CONNECTIONS name=IDENTIFIER '{'
         NL* (connection commaDelim)* NL*
@@ -283,15 +291,13 @@ patternGraphStmt:
     ;
 
 topologyImportStmt: IMPORT topology=qualIdent;
-topologyMemberTempl:
+topologyMember:
     componentInstanceSpec
     | directGraphDecl
     | patternGraphStmt
     | topologyImportStmt
     | includeStmt
     ;
-
-topologyMember: preAnnotation? topologyMemberTempl ANNOTATION?;
 
 topologyDecl:
     TOPOLOGY name=IDENTIFIER '{'
@@ -311,7 +317,7 @@ locationStmt:
     LOCATE kind=locationKind
     name=qualIdent AT path=LIT_STRING;
 
-moduleMemberTempl:
+moduleMember:
     abstractTypeDecl
     | aliasTypeDecl
     | arrayDecl
@@ -328,8 +334,6 @@ moduleMemberTempl:
     | stateMachineDef
     ;
 
-moduleMember: preAnnotation? moduleMemberTempl ANNOTATION?;
-
 moduleDecl: MODULE name=IDENTIFIER '{'
         NL* (moduleMember semiDelim)* NL*
     '}'
@@ -342,8 +346,8 @@ moduleDecl: MODULE name=IDENTIFIER '{'
 formalParameter: REF? name=IDENTIFIER ':' type=typeName;
 
 // Normal
-formalParameterN: (preAnnotation)? formalParameter (','? postMultiAnnotation | commaDelim);
-formalParamaterL: (preAnnotation)? formalParameter (','? postMultiAnnotation | commaDelim)?;
+formalParameterN: formalParameter (','? commaDelim);
+formalParamaterL: formalParameter (','? commaDelim)?;
 
 formalParameterList: '(' NL* (formalParameterN* formalParamaterL)? ')';
 
@@ -363,7 +367,9 @@ semiDelim: ';' NL* | NL+;
 arrayExpr: '[' NL* (expr (commaDelim expr)*)? ']';
 
 structAssignment: name=IDENTIFIER '=' value=expr;
-structExpr: '{' NL* (structAssignment (commaDelim structAssignment)* commaDelim?)? '}';
+structExpr: '{'
+        NL* (structAssignment (commaDelim structAssignment)* commaDelim?)?
+    '}';
 expr:
     '-' unary=expr
     | left=expr op=('*' | '/') right=expr
@@ -400,10 +406,7 @@ WS: [ \r\t]+ -> skip;
 WS_NL: '\\'~[\n]*[\n] -> skip;
 COMMENT: [#]~[\n]* -> skip;
 
-ANNOTATION: [@]~[\n]*;
-postAnnotation: ANNOTATION NL+;
-postMultiAnnotation: (ANNOTATION NL)* ANNOTATION NL+;
-preAnnotation: (ANNOTATION NL)+;
+ANNOTATION: [@]~[\n]* -> channel(2);
 
 LIT_BOOLEAN: FALSE | TRUE;
 LIT_STRING: LONG_STRING | SHORT_STRING;

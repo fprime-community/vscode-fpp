@@ -60,10 +60,11 @@ sent through the compilers declaration collection in the main thread.
 
 ## Development instructions
 
-To set up dependencies you will need NodeJS and a package manager like `npm` or `yarn`:
+To set up dependencies you will need NodeJS and a package manager like `npm` or `yarn` and `antlr`:
 
-```
+```bash
 $ yarn install
+$ brew install antlr # or use your favorite package manager
 ```
 
 When making a change to the ANTLR definition (`src/grammar/Fpp.g4`), you will need to regenerate

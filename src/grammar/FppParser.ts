@@ -1,33 +1,23 @@
-// Generated from src/grammar/Fpp.g4 by ANTLR 4.9.0-SNAPSHOT
+// Generated from src/grammar/Fpp.g4 by ANTLR 4.13.2
+// noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 
+import {
+	ATN,
+	ATNDeserializer, DecisionState, DFA, FailedPredicateException,
+	RecognitionException, NoViableAltException, BailErrorStrategy,
+	Parser, ParserATNSimulator,
+	RuleContext, ParserRuleContext, PredictionMode, PredictionContextCache,
+	TerminalNode, RuleNode,
+	Token, TokenStream,
+	Interval, IntervalSet
+} from 'antlr4';
+import FppVisitor from "./FppVisitor.js";
 
-import { ATN } from "antlr4ts/atn/ATN";
-import { ATNDeserializer } from "antlr4ts/atn/ATNDeserializer";
-import { FailedPredicateException } from "antlr4ts/FailedPredicateException";
-import { NotNull } from "antlr4ts/Decorators";
-import { NoViableAltException } from "antlr4ts/NoViableAltException";
-import { Override } from "antlr4ts/Decorators";
-import { Parser } from "antlr4ts/Parser";
-import { ParserRuleContext } from "antlr4ts/ParserRuleContext";
-import { ParserATNSimulator } from "antlr4ts/atn/ParserATNSimulator";
-import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
-import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
-import { RecognitionException } from "antlr4ts/RecognitionException";
-import { RuleContext } from "antlr4ts/RuleContext";
-//import { RuleVersion } from "antlr4ts/RuleVersion";
-import { TerminalNode } from "antlr4ts/tree/TerminalNode";
-import { Token } from "antlr4ts/Token";
-import { TokenStream } from "antlr4ts/TokenStream";
-import { Vocabulary } from "antlr4ts/Vocabulary";
-import { VocabularyImpl } from "antlr4ts/VocabularyImpl";
+// for running tests with parameters, TODO: discuss strategy for typed parameters in CI
+// eslint-disable-next-line no-unused-vars
+type int = number;
 
-import * as Utils from "antlr4ts/misc/Utils";
-
-import { FppListener } from "./FppListener";
-import { FppVisitor } from "./FppVisitor";
-
-
-export class FppParser extends Parser {
+export default class FppParser extends Parser {
 	public static readonly T__0 = 1;
 	public static readonly T__1 = 2;
 	public static readonly T__2 = 3;
@@ -159,6 +149,7 @@ export class FppParser extends Parser {
 	public static readonly WITH = 129;
 	public static readonly YELLOW = 130;
 	public static readonly IDENTIFIER = 131;
+	public static override readonly EOF = Token.EOF;
 	public static readonly RULE_prog = 0;
 	public static readonly RULE_progTopology = 1;
 	public static readonly RULE_progComponent = 2;
@@ -195,64 +186,215 @@ export class FppParser extends Parser {
 	public static readonly RULE_stateTransition = 33;
 	public static readonly RULE_stateEntry = 34;
 	public static readonly RULE_stateExit = 35;
-	public static readonly RULE_stateMemberTempl = 36;
-	public static readonly RULE_stateMember = 37;
-	public static readonly RULE_stateDef = 38;
-	public static readonly RULE_stateMachineMemberTempl = 39;
-	public static readonly RULE_stateMachineMember = 40;
-	public static readonly RULE_stateMachineDef = 41;
-	public static readonly RULE_stateMachineInstance = 42;
-	public static readonly RULE_enumMember = 43;
-	public static readonly RULE_enumMemberN = 44;
-	public static readonly RULE_enumMemberL = 45;
-	public static readonly RULE_enumDecl = 46;
-	public static readonly RULE_eventSeverity = 47;
-	public static readonly RULE_eventDecl = 48;
-	public static readonly RULE_includeStmt = 49;
-	public static readonly RULE_matchStmt = 50;
-	public static readonly RULE_internalPortDecl = 51;
-	public static readonly RULE_recordSpecifierDecl = 52;
-	public static readonly RULE_containerSpecifierDecl = 53;
-	public static readonly RULE_initSpecifier = 54;
-	public static readonly RULE_componentInstanceDecl = 55;
-	public static readonly RULE_componentKind = 56;
-	public static readonly RULE_componentMemberTempl = 57;
-	public static readonly RULE_componentMember = 58;
-	public static readonly RULE_componentDecl = 59;
-	public static readonly RULE_portDecl = 60;
-	public static readonly RULE_componentInstanceSpec = 61;
-	public static readonly RULE_connectionNode = 62;
-	public static readonly RULE_connection = 63;
-	public static readonly RULE_directGraphDecl = 64;
-	public static readonly RULE_patternKind = 65;
-	public static readonly RULE_patternGraphSources = 66;
-	public static readonly RULE_patternGraphStmt = 67;
-	public static readonly RULE_topologyImportStmt = 68;
-	public static readonly RULE_topologyMemberTempl = 69;
-	public static readonly RULE_topologyMember = 70;
-	public static readonly RULE_topologyDecl = 71;
-	public static readonly RULE_locationKind = 72;
-	public static readonly RULE_locationStmt = 73;
-	public static readonly RULE_moduleMemberTempl = 74;
-	public static readonly RULE_moduleMember = 75;
-	public static readonly RULE_moduleDecl = 76;
-	public static readonly RULE_formalParameter = 77;
-	public static readonly RULE_formalParameterN = 78;
-	public static readonly RULE_formalParamaterL = 79;
-	public static readonly RULE_formalParameterList = 80;
-	public static readonly RULE_qualIdent = 81;
-	public static readonly RULE_intType = 82;
-	public static readonly RULE_primitiveType = 83;
-	public static readonly RULE_typeName = 84;
-	public static readonly RULE_commaDelim = 85;
-	public static readonly RULE_semiDelim = 86;
-	public static readonly RULE_arrayExpr = 87;
-	public static readonly RULE_structAssignment = 88;
-	public static readonly RULE_structExpr = 89;
-	public static readonly RULE_expr = 90;
-	public static readonly RULE_postAnnotation = 91;
-	public static readonly RULE_postMultiAnnotation = 92;
-	public static readonly RULE_preAnnotation = 93;
+	public static readonly RULE_stateMember = 36;
+	public static readonly RULE_stateDef = 37;
+	public static readonly RULE_stateMachineMemberTempl = 38;
+	public static readonly RULE_stateMachineMember = 39;
+	public static readonly RULE_stateMachineDef = 40;
+	public static readonly RULE_stateMachineInstance = 41;
+	public static readonly RULE_enumMember = 42;
+	public static readonly RULE_enumMemberN = 43;
+	public static readonly RULE_enumMemberL = 44;
+	public static readonly RULE_enumDecl = 45;
+	public static readonly RULE_eventSeverity = 46;
+	public static readonly RULE_eventDecl = 47;
+	public static readonly RULE_includeStmt = 48;
+	public static readonly RULE_matchStmt = 49;
+	public static readonly RULE_internalPortDecl = 50;
+	public static readonly RULE_recordSpecifierDecl = 51;
+	public static readonly RULE_containerSpecifierDecl = 52;
+	public static readonly RULE_initSpecifier = 53;
+	public static readonly RULE_componentInstanceDecl = 54;
+	public static readonly RULE_componentKind = 55;
+	public static readonly RULE_componentMember = 56;
+	public static readonly RULE_componentDecl = 57;
+	public static readonly RULE_portDecl = 58;
+	public static readonly RULE_componentInstanceSpec = 59;
+	public static readonly RULE_connectionNode = 60;
+	public static readonly RULE_connection = 61;
+	public static readonly RULE_directGraphDecl = 62;
+	public static readonly RULE_patternKind = 63;
+	public static readonly RULE_patternGraphSources = 64;
+	public static readonly RULE_patternGraphStmt = 65;
+	public static readonly RULE_topologyImportStmt = 66;
+	public static readonly RULE_topologyMember = 67;
+	public static readonly RULE_topologyDecl = 68;
+	public static readonly RULE_locationKind = 69;
+	public static readonly RULE_locationStmt = 70;
+	public static readonly RULE_moduleMember = 71;
+	public static readonly RULE_moduleDecl = 72;
+	public static readonly RULE_formalParameter = 73;
+	public static readonly RULE_formalParameterN = 74;
+	public static readonly RULE_formalParamaterL = 75;
+	public static readonly RULE_formalParameterList = 76;
+	public static readonly RULE_qualIdent = 77;
+	public static readonly RULE_intType = 78;
+	public static readonly RULE_primitiveType = 79;
+	public static readonly RULE_typeName = 80;
+	public static readonly RULE_commaDelim = 81;
+	public static readonly RULE_semiDelim = 82;
+	public static readonly RULE_arrayExpr = 83;
+	public static readonly RULE_structAssignment = 84;
+	public static readonly RULE_structExpr = 85;
+	public static readonly RULE_expr = 86;
+	public static readonly literalNames: (string | null)[] = [ null, "'='", 
+                                                            "'['", "']'", 
+                                                            "':'", "','", 
+                                                            "'{'", "'}'", 
+                                                            "'->'", "'('", 
+                                                            "')'", "'.'", 
+                                                            "';'", "'-'", 
+                                                            "'*'", "'/'", 
+                                                            "'+'", null, 
+                                                            null, null, 
+                                                            null, null, 
+                                                            null, null, 
+                                                            null, null, 
+                                                            "'F32'", "'F64'", 
+                                                            "'I16'", "'I32'", 
+                                                            "'I64'", "'I8'", 
+                                                            "'U16'", "'U32'", 
+                                                            "'U64'", "'U8'", 
+                                                            "'action'", 
+                                                            "'active'", 
+                                                            "'activity'", 
+                                                            "'always'", 
+                                                            "'array'", "'assert'", 
+                                                            "'async'", "'at'", 
+                                                            "'base'", "'block'", 
+                                                            "'bool'", "'change'", 
+                                                            "'choice'", 
+                                                            "'command'", 
+                                                            "'component'", 
+                                                            "'connections'", 
+                                                            "'constant'", 
+                                                            "'container'", 
+                                                            "'cpu'", "'default'", 
+                                                            "'diagnostic'", 
+                                                            "'do'", "'drop'", 
+                                                            "'else'", "'enter'", 
+                                                            "'entry'", "'enum'", 
+                                                            "'event'", "'exit'", 
+                                                            "'false'", "'fatal'", 
+                                                            "'format'", 
+                                                            "'get'", "'guard'", 
+                                                            "'guarded'", 
+                                                            "'health'", 
+                                                            "'high'", "'hook'", 
+                                                            "'id'", "'if'", 
+                                                            "'import'", 
+                                                            "'include'", 
+                                                            "'initial'", 
+                                                            "'input'", "'instance'", 
+                                                            "'internal'", 
+                                                            "'locate'", 
+                                                            "'low'", "'machine'", 
+                                                            "'match'", "'module'", 
+                                                            "'on'", "'opcode'", 
+                                                            "'orange'", 
+                                                            "'output'", 
+                                                            "'param'", "'passive'", 
+                                                            "'phase'", "'port'", 
+                                                            "'priority'", 
+                                                            "'private'", 
+                                                            "'product'", 
+                                                            "'queue'", "'queued'", 
+                                                            "'record'", 
+                                                            "'recv'", "'red'", 
+                                                            "'ref'", "'reg'", 
+                                                            "'request'", 
+                                                            "'resp'", "'save'", 
+                                                            "'send'", "'serial'", 
+                                                            "'set'", "'severity'", 
+                                                            "'signal'", 
+                                                            "'size'", "'stack'", 
+                                                            "'state'", "'string'", 
+                                                            "'struct'", 
+                                                            "'sync'", "'telemetry'", 
+                                                            "'text'", "'throttle'", 
+                                                            "'time'", "'topology'", 
+                                                            "'true'", "'type'", 
+                                                            "'unmatched'", 
+                                                            "'update'", 
+                                                            "'warning'", 
+                                                            "'with'", "'yellow'" ];
+	public static readonly symbolicNames: (string | null)[] = [ null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, null, 
+                                                             null, "NL", 
+                                                             "WS", "WS_NL", 
+                                                             "COMMENT", 
+                                                             "ANNOTATION", 
+                                                             "LIT_BOOLEAN", 
+                                                             "LIT_STRING", 
+                                                             "LIT_FLOAT", 
+                                                             "LIT_INT", 
+                                                             "F32", "F64", 
+                                                             "I16", "I32", 
+                                                             "I64", "I8", 
+                                                             "U16", "U32", 
+                                                             "U64", "U8", 
+                                                             "ACTION", "ACTIVE", 
+                                                             "ACTIVITY", 
+                                                             "ALWAYS", "ARRAY", 
+                                                             "ASSERT", "ASYNC", 
+                                                             "AT", "BASE", 
+                                                             "BLOCK", "BOOL", 
+                                                             "CHANGE", "CHOICE", 
+                                                             "COMMAND", 
+                                                             "COMPONENT", 
+                                                             "CONNECTIONS", 
+                                                             "CONSTANT", 
+                                                             "CONTAINER", 
+                                                             "CPU", "DEFAULT", 
+                                                             "DIAGNOSTIC", 
+                                                             "DO", "DROP", 
+                                                             "ELSE", "ENTER", 
+                                                             "ENTRY", "ENUM", 
+                                                             "EVENT", "EXIT", 
+                                                             "FALSE", "FATAL", 
+                                                             "FORMAT", "GET", 
+                                                             "GUARD", "GUARDED", 
+                                                             "HEALTH", "HIGH", 
+                                                             "HOOK", "ID", 
+                                                             "IF", "IMPORT", 
+                                                             "INCLUDE", 
+                                                             "INITIAL", 
+                                                             "INPUT", "INSTANCE", 
+                                                             "INTERNAL", 
+                                                             "LOCATE", "LOW", 
+                                                             "MACHINE", 
+                                                             "MATCH", "MODULE", 
+                                                             "ON", "OPCODE", 
+                                                             "ORANGE", "OUTPUT", 
+                                                             "PARAM", "PASSIVE", 
+                                                             "PHASE", "PORT", 
+                                                             "PRIORITY", 
+                                                             "PRIVATE", 
+                                                             "PRODUCT", 
+                                                             "QUEUE", "QUEUED", 
+                                                             "RECORD", "RECV", 
+                                                             "RED", "REF", 
+                                                             "REG", "REQUEST", 
+                                                             "RESP", "SAVE", 
+                                                             "SEND", "SERIAL", 
+                                                             "SET", "SEVERITY", 
+                                                             "SIGNAL", "SIZE", 
+                                                             "STACK", "STATE", 
+                                                             "STRING", "STRUCT", 
+                                                             "SYNC", "TELEMETRY", 
+                                                             "TEXT", "THROTTLE", 
+                                                             "TIME", "TOPOLOGY", 
+                                                             "TRUE", "TYPE", 
+                                                             "UNMATCHED", 
+                                                             "UPDATE", "WARNING", 
+                                                             "WITH", "YELLOW", 
+                                                             "IDENTIFIER" ];
 	// tslint:disable:no-trailing-whitespace
 	public static readonly ruleNames: string[] = [
 		"prog", "progTopology", "progComponent", "abstractTypeDecl", "aliasTypeDecl", 
@@ -262,79 +404,24 @@ export class FppParser extends Parser {
 		"specialPortInstanceDecl", "telemetryLimitKind", "telemetryLimitExpr", 
 		"telemetryLimit", "telemetryUpdate", "telemetryChannelDecl", "actionDef", 
 		"choiceDef", "guardDef", "signalDef", "doExpr", "transitionExpr", "initialTransition", 
-		"transitionOrDoExpr", "stateTransition", "stateEntry", "stateExit", "stateMemberTempl", 
-		"stateMember", "stateDef", "stateMachineMemberTempl", "stateMachineMember", 
-		"stateMachineDef", "stateMachineInstance", "enumMember", "enumMemberN", 
-		"enumMemberL", "enumDecl", "eventSeverity", "eventDecl", "includeStmt", 
-		"matchStmt", "internalPortDecl", "recordSpecifierDecl", "containerSpecifierDecl", 
-		"initSpecifier", "componentInstanceDecl", "componentKind", "componentMemberTempl", 
-		"componentMember", "componentDecl", "portDecl", "componentInstanceSpec", 
+		"transitionOrDoExpr", "stateTransition", "stateEntry", "stateExit", "stateMember", 
+		"stateDef", "stateMachineMemberTempl", "stateMachineMember", "stateMachineDef", 
+		"stateMachineInstance", "enumMember", "enumMemberN", "enumMemberL", "enumDecl", 
+		"eventSeverity", "eventDecl", "includeStmt", "matchStmt", "internalPortDecl", 
+		"recordSpecifierDecl", "containerSpecifierDecl", "initSpecifier", "componentInstanceDecl", 
+		"componentKind", "componentMember", "componentDecl", "portDecl", "componentInstanceSpec", 
 		"connectionNode", "connection", "directGraphDecl", "patternKind", "patternGraphSources", 
-		"patternGraphStmt", "topologyImportStmt", "topologyMemberTempl", "topologyMember", 
-		"topologyDecl", "locationKind", "locationStmt", "moduleMemberTempl", "moduleMember", 
-		"moduleDecl", "formalParameter", "formalParameterN", "formalParamaterL", 
-		"formalParameterList", "qualIdent", "intType", "primitiveType", "typeName", 
-		"commaDelim", "semiDelim", "arrayExpr", "structAssignment", "structExpr", 
-		"expr", "postAnnotation", "postMultiAnnotation", "preAnnotation",
+		"patternGraphStmt", "topologyImportStmt", "topologyMember", "topologyDecl", 
+		"locationKind", "locationStmt", "moduleMember", "moduleDecl", "formalParameter", 
+		"formalParameterN", "formalParamaterL", "formalParameterList", "qualIdent", 
+		"intType", "primitiveType", "typeName", "commaDelim", "semiDelim", "arrayExpr", 
+		"structAssignment", "structExpr", "expr",
 	];
-
-	private static readonly _LITERAL_NAMES: Array<string | undefined> = [
-		undefined, "'='", "'['", "']'", "':'", "','", "'{'", "'}'", "'->'", "'('", 
-		"')'", "'.'", "';'", "'-'", "'*'", "'/'", "'+'", undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		"'F32'", "'F64'", "'I16'", "'I32'", "'I64'", "'I8'", "'U16'", "'U32'", 
-		"'U64'", "'U8'", "'action'", "'active'", "'activity'", "'always'", "'array'", 
-		"'assert'", "'async'", "'at'", "'base'", "'block'", "'bool'", "'change'", 
-		"'choice'", "'command'", "'component'", "'connections'", "'constant'", 
-		"'container'", "'cpu'", "'default'", "'diagnostic'", "'do'", "'drop'", 
-		"'else'", "'enter'", "'entry'", "'enum'", "'event'", "'exit'", "'false'", 
-		"'fatal'", "'format'", "'get'", "'guard'", "'guarded'", "'health'", "'high'", 
-		"'hook'", "'id'", "'if'", "'import'", "'include'", "'initial'", "'input'", 
-		"'instance'", "'internal'", "'locate'", "'low'", "'machine'", "'match'", 
-		"'module'", "'on'", "'opcode'", "'orange'", "'output'", "'param'", "'passive'", 
-		"'phase'", "'port'", "'priority'", "'private'", "'product'", "'queue'", 
-		"'queued'", "'record'", "'recv'", "'red'", "'ref'", "'reg'", "'request'", 
-		"'resp'", "'save'", "'send'", "'serial'", "'set'", "'severity'", "'signal'", 
-		"'size'", "'stack'", "'state'", "'string'", "'struct'", "'sync'", "'telemetry'", 
-		"'text'", "'throttle'", "'time'", "'topology'", "'true'", "'type'", "'unmatched'", 
-		"'update'", "'warning'", "'with'", "'yellow'",
-	];
-	private static readonly _SYMBOLIC_NAMES: Array<string | undefined> = [
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, "NL", "WS", "WS_NL", "COMMENT", "ANNOTATION", 
-		"LIT_BOOLEAN", "LIT_STRING", "LIT_FLOAT", "LIT_INT", "F32", "F64", "I16", 
-		"I32", "I64", "I8", "U16", "U32", "U64", "U8", "ACTION", "ACTIVE", "ACTIVITY", 
-		"ALWAYS", "ARRAY", "ASSERT", "ASYNC", "AT", "BASE", "BLOCK", "BOOL", "CHANGE", 
-		"CHOICE", "COMMAND", "COMPONENT", "CONNECTIONS", "CONSTANT", "CONTAINER", 
-		"CPU", "DEFAULT", "DIAGNOSTIC", "DO", "DROP", "ELSE", "ENTER", "ENTRY", 
-		"ENUM", "EVENT", "EXIT", "FALSE", "FATAL", "FORMAT", "GET", "GUARD", "GUARDED", 
-		"HEALTH", "HIGH", "HOOK", "ID", "IF", "IMPORT", "INCLUDE", "INITIAL", 
-		"INPUT", "INSTANCE", "INTERNAL", "LOCATE", "LOW", "MACHINE", "MATCH", 
-		"MODULE", "ON", "OPCODE", "ORANGE", "OUTPUT", "PARAM", "PASSIVE", "PHASE", 
-		"PORT", "PRIORITY", "PRIVATE", "PRODUCT", "QUEUE", "QUEUED", "RECORD", 
-		"RECV", "RED", "REF", "REG", "REQUEST", "RESP", "SAVE", "SEND", "SERIAL", 
-		"SET", "SEVERITY", "SIGNAL", "SIZE", "STACK", "STATE", "STRING", "STRUCT", 
-		"SYNC", "TELEMETRY", "TEXT", "THROTTLE", "TIME", "TOPOLOGY", "TRUE", "TYPE", 
-		"UNMATCHED", "UPDATE", "WARNING", "WITH", "YELLOW", "IDENTIFIER",
-	];
-	public static readonly VOCABULARY: Vocabulary = new VocabularyImpl(FppParser._LITERAL_NAMES, FppParser._SYMBOLIC_NAMES, []);
-
-	// @Override
-	// @NotNull
-	public get vocabulary(): Vocabulary {
-		return FppParser.VOCABULARY;
-	}
-	// tslint:enable:no-trailing-whitespace
-
-	// @Override
 	public get grammarFileName(): string { return "Fpp.g4"; }
-
-	// @Override
+	public get literalNames(): (string | null)[] { return FppParser.literalNames; }
+	public get symbolicNames(): (string | null)[] { return FppParser.symbolicNames; }
 	public get ruleNames(): string[] { return FppParser.ruleNames; }
-
-	// @Override
-	public get serializedATN(): string { return FppParser._serializedATN; }
+	public get serializedATN(): number[] { return FppParser._serializedATN; }
 
 	protected createFailedPredicateException(predicate?: string, message?: string): FailedPredicateException {
 		return new FailedPredicateException(this, predicate, message);
@@ -342,54 +429,54 @@ export class FppParser extends Parser {
 
 	constructor(input: TokenStream) {
 		super(input);
-		this._interp = new ParserATNSimulator(FppParser._ATN, this);
+		this._interp = new ParserATNSimulator(this, FppParser._ATN, FppParser.DecisionsToDFA, new PredictionContextCache());
 	}
 	// @RuleVersion(0)
 	public prog(): ProgContext {
-		let _localctx: ProgContext = new ProgContext(this._ctx, this.state);
-		this.enterRule(_localctx, 0, FppParser.RULE_prog);
+		let localctx: ProgContext = new ProgContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 0, FppParser.RULE_prog);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 191;
+			this.state = 177;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 0, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 0, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 188;
+					this.state = 174;
 					this.match(FppParser.NL);
 					}
 					}
 				}
-				this.state = 193;
+				this.state = 179;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 0, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 0, this._ctx);
 			}
-			this.state = 201;
+			this.state = 187;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (((((_la - 21)) & ~0x1F) === 0 && ((1 << (_la - 21)) & ((1 << (FppParser.ANNOTATION - 21)) | (1 << (FppParser.ACTIVE - 21)) | (1 << (FppParser.ARRAY - 21)) | (1 << (FppParser.CONSTANT - 21)))) !== 0) || ((((_la - 62)) & ~0x1F) === 0 && ((1 << (_la - 62)) & ((1 << (FppParser.ENUM - 62)) | (1 << (FppParser.INCLUDE - 62)) | (1 << (FppParser.INSTANCE - 62)) | (1 << (FppParser.LOCATE - 62)) | (1 << (FppParser.MODULE - 62)) | (1 << (FppParser.PASSIVE - 62)))) !== 0) || ((((_la - 94)) & ~0x1F) === 0 && ((1 << (_la - 94)) & ((1 << (FppParser.PORT - 94)) | (1 << (FppParser.QUEUED - 94)) | (1 << (FppParser.STATE - 94)) | (1 << (FppParser.STRUCT - 94)) | (1 << (FppParser.TOPOLOGY - 94)) | (1 << (FppParser.TYPE - 94)))) !== 0)) {
+			while (((((_la - 37)) & ~0x1F) === 0 && ((1 << (_la - 37)) & 33587209) !== 0) || ((((_la - 77)) & ~0x1F) === 0 && ((1 << (_la - 77)) & 4358697) !== 0) || ((((_la - 115)) & ~0x1F) === 0 && ((1 << (_la - 115)) & 1285) !== 0)) {
 				{
 				{
-				this.state = 194;
+				this.state = 180;
 				this.moduleMember();
-				this.state = 197;
+				this.state = 183;
 				this._errHandler.sync(this);
 				switch (this._input.LA(1)) {
-				case FppParser.T__11:
-				case FppParser.NL:
+				case 12:
+				case 17:
 					{
-					this.state = 195;
+					this.state = 181;
 					this.semiDelim();
 					}
 					break;
-				case FppParser.EOF:
+				case -1:
 					{
-					this.state = 196;
+					this.state = 182;
 					this.match(FppParser.EOF);
 					}
 					break;
@@ -398,31 +485,31 @@ export class FppParser extends Parser {
 				}
 				}
 				}
-				this.state = 203;
+				this.state = 189;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 207;
+			this.state = 193;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 204;
+				this.state = 190;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 209;
+				this.state = 195;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 210;
+			this.state = 196;
 			this.match(FppParser.EOF);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -432,54 +519,54 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public progTopology(): ProgTopologyContext {
-		let _localctx: ProgTopologyContext = new ProgTopologyContext(this._ctx, this.state);
-		this.enterRule(_localctx, 2, FppParser.RULE_progTopology);
+		let localctx: ProgTopologyContext = new ProgTopologyContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 2, FppParser.RULE_progTopology);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 215;
+			this.state = 201;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 4, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 4, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 212;
+					this.state = 198;
 					this.match(FppParser.NL);
 					}
 					}
 				}
-				this.state = 217;
+				this.state = 203;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 4, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 4, this._ctx);
 			}
-			this.state = 225;
+			this.state = 211;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.ANNOTATION || ((((_la - 49)) & ~0x1F) === 0 && ((1 << (_la - 49)) & ((1 << (FppParser.COMMAND - 49)) | (1 << (FppParser.CONNECTIONS - 49)) | (1 << (FppParser.EVENT - 49)) | (1 << (FppParser.HEALTH - 49)) | (1 << (FppParser.IMPORT - 49)) | (1 << (FppParser.INCLUDE - 49)) | (1 << (FppParser.INSTANCE - 49)))) !== 0) || ((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & ((1 << (FppParser.PARAM - 91)) | (1 << (FppParser.PRIVATE - 91)) | (1 << (FppParser.TELEMETRY - 91)) | (1 << (FppParser.TEXT - 91)) | (1 << (FppParser.TIME - 91)))) !== 0)) {
+			while (((((_la - 49)) & ~0x1F) === 0 && ((1 << (_la - 49)) & 2554347525) !== 0) || ((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 2952790049) !== 0)) {
 				{
 				{
-				this.state = 218;
+				this.state = 204;
 				this.topologyMember();
-				this.state = 221;
+				this.state = 207;
 				this._errHandler.sync(this);
 				switch (this._input.LA(1)) {
-				case FppParser.T__11:
-				case FppParser.NL:
+				case 12:
+				case 17:
 					{
-					this.state = 219;
+					this.state = 205;
 					this.semiDelim();
 					}
 					break;
-				case FppParser.EOF:
+				case -1:
 					{
-					this.state = 220;
+					this.state = 206;
 					this.match(FppParser.EOF);
 					}
 					break;
@@ -488,31 +575,31 @@ export class FppParser extends Parser {
 				}
 				}
 				}
-				this.state = 227;
+				this.state = 213;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 231;
+			this.state = 217;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 228;
+				this.state = 214;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 233;
+				this.state = 219;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 234;
+			this.state = 220;
 			this.match(FppParser.EOF);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -522,54 +609,54 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public progComponent(): ProgComponentContext {
-		let _localctx: ProgComponentContext = new ProgComponentContext(this._ctx, this.state);
-		this.enterRule(_localctx, 4, FppParser.RULE_progComponent);
+		let localctx: ProgComponentContext = new ProgComponentContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 4, FppParser.RULE_progComponent);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 239;
+			this.state = 225;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 8, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 8, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 236;
+					this.state = 222;
 					this.match(FppParser.NL);
 					}
 					}
 				}
-				this.state = 241;
+				this.state = 227;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 8, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 8, this._ctx);
 			}
-			this.state = 249;
+			this.state = 235;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (((((_la - 21)) & ~0x1F) === 0 && ((1 << (_la - 21)) & ((1 << (FppParser.ANNOTATION - 21)) | (1 << (FppParser.ARRAY - 21)) | (1 << (FppParser.ASYNC - 21)) | (1 << (FppParser.COMMAND - 21)) | (1 << (FppParser.CONSTANT - 21)))) !== 0) || ((((_la - 62)) & ~0x1F) === 0 && ((1 << (_la - 62)) & ((1 << (FppParser.ENUM - 62)) | (1 << (FppParser.EVENT - 62)) | (1 << (FppParser.GUARDED - 62)) | (1 << (FppParser.INCLUDE - 62)) | (1 << (FppParser.INTERNAL - 62)) | (1 << (FppParser.MATCH - 62)) | (1 << (FppParser.OUTPUT - 62)) | (1 << (FppParser.PARAM - 62)))) !== 0) || ((((_la - 97)) & ~0x1F) === 0 && ((1 << (_la - 97)) & ((1 << (FppParser.PRODUCT - 97)) | (1 << (FppParser.STATE - 97)) | (1 << (FppParser.STRUCT - 97)) | (1 << (FppParser.SYNC - 97)) | (1 << (FppParser.TELEMETRY - 97)) | (1 << (FppParser.TEXT - 97)) | (1 << (FppParser.TIME - 97)) | (1 << (FppParser.TYPE - 97)))) !== 0)) {
+			while (((((_la - 40)) & ~0x1F) === 0 && ((1 << (_la - 40)) & 1086329349) !== 0) || ((((_la - 77)) & ~0x1F) === 0 && ((1 << (_la - 77)) & 1073425) !== 0) || ((((_la - 115)) & ~0x1F) === 0 && ((1 << (_la - 115)) & 1213) !== 0)) {
 				{
 				{
-				this.state = 242;
+				this.state = 228;
 				this.componentMember();
-				this.state = 245;
+				this.state = 231;
 				this._errHandler.sync(this);
 				switch (this._input.LA(1)) {
-				case FppParser.T__11:
-				case FppParser.NL:
+				case 12:
+				case 17:
 					{
-					this.state = 243;
+					this.state = 229;
 					this.semiDelim();
 					}
 					break;
-				case FppParser.EOF:
+				case -1:
 					{
-					this.state = 244;
+					this.state = 230;
 					this.match(FppParser.EOF);
 					}
 					break;
@@ -578,31 +665,31 @@ export class FppParser extends Parser {
 				}
 				}
 				}
-				this.state = 251;
+				this.state = 237;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 255;
+			this.state = 241;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 252;
+				this.state = 238;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 257;
+				this.state = 243;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 258;
+			this.state = 244;
 			this.match(FppParser.EOF);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -612,24 +699,24 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public abstractTypeDecl(): AbstractTypeDeclContext {
-		let _localctx: AbstractTypeDeclContext = new AbstractTypeDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 6, FppParser.RULE_abstractTypeDecl);
+		let localctx: AbstractTypeDeclContext = new AbstractTypeDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 6, FppParser.RULE_abstractTypeDecl);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 260;
+			this.state = 246;
 			this.match(FppParser.TYPE);
-			this.state = 261;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 247;
+			localctx._name = this.match(FppParser.IDENTIFIER);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -639,28 +726,28 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public aliasTypeDecl(): AliasTypeDeclContext {
-		let _localctx: AliasTypeDeclContext = new AliasTypeDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 8, FppParser.RULE_aliasTypeDecl);
+		let localctx: AliasTypeDeclContext = new AliasTypeDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 8, FppParser.RULE_aliasTypeDecl);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 263;
+			this.state = 249;
 			this.match(FppParser.TYPE);
-			this.state = 264;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 265;
+			this.state = 250;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 251;
 			this.match(FppParser.T__0);
-			this.state = 266;
-			_localctx._type = this.typeName();
+			this.state = 252;
+			localctx._type_ = this.typeName();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -670,51 +757,51 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public arrayDecl(): ArrayDeclContext {
-		let _localctx: ArrayDeclContext = new ArrayDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 10, FppParser.RULE_arrayDecl);
+		let localctx: ArrayDeclContext = new ArrayDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 10, FppParser.RULE_arrayDecl);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 268;
+			this.state = 254;
 			this.match(FppParser.ARRAY);
-			this.state = 269;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 270;
+			this.state = 255;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 256;
 			this.match(FppParser.T__0);
-			this.state = 271;
+			this.state = 257;
 			this.match(FppParser.T__1);
-			this.state = 272;
-			_localctx._size = this.expr(0);
-			this.state = 273;
+			this.state = 258;
+			localctx._size = this.expr(0);
+			this.state = 259;
 			this.match(FppParser.T__2);
-			this.state = 274;
-			_localctx._type = this.typeName();
-			this.state = 277;
+			this.state = 260;
+			localctx._type_ = this.typeName();
+			this.state = 263;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.DEFAULT) {
+			if (_la===55) {
 				{
-				this.state = 275;
+				this.state = 261;
 				this.match(FppParser.DEFAULT);
-				this.state = 276;
-				_localctx._default_ = this.arrayExpr();
+				this.state = 262;
+				localctx._default_ = this.expr(0);
 				}
 			}
 
-			this.state = 281;
+			this.state = 267;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.FORMAT) {
+			if (_la===67) {
 				{
-				this.state = 279;
+				this.state = 265;
 				this.match(FppParser.FORMAT);
-				this.state = 280;
-				_localctx._format = this.match(FppParser.LIT_STRING);
+				this.state = 266;
+				localctx._format = this.match(FppParser.LIT_STRING);
 				}
 			}
 
@@ -722,7 +809,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -732,28 +819,28 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public constantDecl(): ConstantDeclContext {
-		let _localctx: ConstantDeclContext = new ConstantDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 12, FppParser.RULE_constantDecl);
+		let localctx: ConstantDeclContext = new ConstantDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 12, FppParser.RULE_constantDecl);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 283;
+			this.state = 269;
 			this.match(FppParser.CONSTANT);
-			this.state = 284;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 285;
+			this.state = 270;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 271;
 			this.match(FppParser.T__0);
-			this.state = 286;
-			_localctx._value = this.expr(0);
+			this.state = 272;
+			localctx._value = this.expr(0);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -763,45 +850,45 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public structMember(): StructMemberContext {
-		let _localctx: StructMemberContext = new StructMemberContext(this._ctx, this.state);
-		this.enterRule(_localctx, 14, FppParser.RULE_structMember);
+		let localctx: StructMemberContext = new StructMemberContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 14, FppParser.RULE_structMember);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 288;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 289;
+			this.state = 274;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 275;
 			this.match(FppParser.T__3);
-			this.state = 294;
+			this.state = 280;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__1) {
+			if (_la===2) {
 				{
-				this.state = 290;
+				this.state = 276;
 				this.match(FppParser.T__1);
-				this.state = 291;
-				_localctx._size = this.expr(0);
-				this.state = 292;
+				this.state = 277;
+				localctx._size = this.expr(0);
+				this.state = 278;
 				this.match(FppParser.T__2);
 				}
 			}
 
-			this.state = 296;
-			_localctx._type = this.typeName();
-			this.state = 299;
+			this.state = 282;
+			localctx._type_ = this.typeName();
+			this.state = 285;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.FORMAT) {
+			if (_la===67) {
 				{
-				this.state = 297;
+				this.state = 283;
 				this.match(FppParser.FORMAT);
-				this.state = 298;
-				_localctx._format = this.match(FppParser.LIT_STRING);
+				this.state = 284;
+				localctx._format = this.match(FppParser.LIT_STRING);
 				}
 			}
 
@@ -809,7 +896,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -819,60 +906,36 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public structMemberN(): StructMemberNContext {
-		let _localctx: StructMemberNContext = new StructMemberNContext(this._ctx, this.state);
-		this.enterRule(_localctx, 16, FppParser.RULE_structMemberN);
-		let _la: number;
+		let localctx: StructMemberNContext = new StructMemberNContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 16, FppParser.RULE_structMemberN);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 302;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 301;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 304;
+			this.state = 287;
 			this.structMember();
-			this.state = 310;
+			{
+			this.state = 289;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 18, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 16, this._ctx) ) {
 			case 1:
 				{
-				this.state = 306;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				if (_la === FppParser.T__4) {
-					{
-					this.state = 305;
-					this.match(FppParser.T__4);
-					}
-				}
-
-				this.state = 308;
-				this.postMultiAnnotation();
+				this.state = 288;
+				this.match(FppParser.T__4);
 				}
 				break;
-
-			case 2:
-				{
-				this.state = 309;
-				this.commaDelim();
-				}
-				break;
+			}
+			this.state = 291;
+			this.commaDelim();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -882,60 +945,43 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public structMemberL(): StructMemberLContext {
-		let _localctx: StructMemberLContext = new StructMemberLContext(this._ctx, this.state);
-		this.enterRule(_localctx, 18, FppParser.RULE_structMemberL);
+		let localctx: StructMemberLContext = new StructMemberLContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 18, FppParser.RULE_structMemberL);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 313;
+			this.state = 293;
+			this.structMember();
+			this.state = 298;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
+			if (_la===5 || _la===17) {
 				{
-				this.state = 312;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 315;
-			this.structMember();
-			this.state = 321;
-			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 21, this._ctx) ) {
-			case 1:
-				{
-				this.state = 317;
+				this.state = 295;
 				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				if (_la === FppParser.T__4) {
+				switch ( this._interp.adaptivePredict(this._input, 17, this._ctx) ) {
+				case 1:
 					{
-					this.state = 316;
+					this.state = 294;
 					this.match(FppParser.T__4);
 					}
+					break;
 				}
-
-				this.state = 319;
-				this.postMultiAnnotation();
-				}
-				break;
-
-			case 2:
-				{
-				this.state = 320;
+				this.state = 297;
 				this.commaDelim();
 				}
-				break;
 			}
+
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -945,74 +991,74 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public structDecl(): StructDeclContext {
-		let _localctx: StructDeclContext = new StructDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 20, FppParser.RULE_structDecl);
+		let localctx: StructDeclContext = new StructDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 20, FppParser.RULE_structDecl);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 323;
+			this.state = 300;
 			this.match(FppParser.STRUCT);
-			this.state = 324;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 325;
+			this.state = 301;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 302;
 			this.match(FppParser.T__5);
-			this.state = 329;
+			this.state = 306;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 326;
+				this.state = 303;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 331;
+				this.state = 308;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 339;
+			this.state = 316;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION || _la === FppParser.IDENTIFIER) {
+			if (_la===131) {
 				{
-				this.state = 335;
+				this.state = 312;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 23, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 20, this._ctx);
 				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 					if (_alt === 1) {
 						{
 						{
-						this.state = 332;
+						this.state = 309;
 						this.structMemberN();
 						}
 						}
 					}
-					this.state = 337;
+					this.state = 314;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 23, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 20, this._ctx);
 				}
-				this.state = 338;
+				this.state = 315;
 				this.structMemberL();
 				}
 			}
 
-			this.state = 341;
+			this.state = 318;
 			this.match(FppParser.T__6);
-			this.state = 344;
+			this.state = 321;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.DEFAULT) {
+			if (_la===55) {
 				{
-				this.state = 342;
+				this.state = 319;
 				this.match(FppParser.DEFAULT);
-				this.state = 343;
-				_localctx._default_ = this.structExpr();
+				this.state = 320;
+				localctx._default_ = this.structExpr();
 				}
 			}
 
@@ -1020,7 +1066,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1030,33 +1076,30 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public queueFullBehavior(): QueueFullBehaviorContext {
-		let _localctx: QueueFullBehaviorContext = new QueueFullBehaviorContext(this._ctx, this.state);
-		this.enterRule(_localctx, 22, FppParser.RULE_queueFullBehavior);
+		let localctx: QueueFullBehaviorContext = new QueueFullBehaviorContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 22, FppParser.RULE_queueFullBehavior);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 346;
+			this.state = 323;
 			_la = this._input.LA(1);
-			if (!(((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & ((1 << (FppParser.ASSERT - 41)) | (1 << (FppParser.BLOCK - 41)) | (1 << (FppParser.DROP - 41)))) !== 0))) {
+			if(!(((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & 131089) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1066,33 +1109,30 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public commandKind(): CommandKindContext {
-		let _localctx: CommandKindContext = new CommandKindContext(this._ctx, this.state);
-		this.enterRule(_localctx, 24, FppParser.RULE_commandKind);
+		let localctx: CommandKindContext = new CommandKindContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 24, FppParser.RULE_commandKind);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 348;
+			this.state = 325;
 			_la = this._input.LA(1);
-			if (!(_la === FppParser.ASYNC || _la === FppParser.GUARDED || _la === FppParser.SYNC)) {
+			if(!(_la===42 || _la===70 || _la===118)) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1102,63 +1142,63 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public commandDecl(): CommandDeclContext {
-		let _localctx: CommandDeclContext = new CommandDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 26, FppParser.RULE_commandDecl);
+		let localctx: CommandDeclContext = new CommandDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 26, FppParser.RULE_commandDecl);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 350;
-			_localctx._kind = this.commandKind();
-			this.state = 351;
+			this.state = 327;
+			localctx._kind = this.commandKind();
+			this.state = 328;
 			this.match(FppParser.COMMAND);
-			this.state = 352;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 354;
+			this.state = 329;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 331;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__8) {
+			if (_la===9) {
 				{
-				this.state = 353;
-				_localctx._params = this.formalParameterList();
+				this.state = 330;
+				localctx._params = this.formalParameterList();
 				}
 			}
 
-			this.state = 358;
+			this.state = 335;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.OPCODE) {
+			if (_la===88) {
 				{
-				this.state = 356;
+				this.state = 333;
 				this.match(FppParser.OPCODE);
-				this.state = 357;
-				_localctx._opcode = this.expr(0);
+				this.state = 334;
+				localctx._opcode = this.expr(0);
 				}
 			}
 
-			this.state = 362;
+			this.state = 339;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.PRIORITY) {
+			if (_la===95) {
 				{
-				this.state = 360;
+				this.state = 337;
 				this.match(FppParser.PRIORITY);
-				this.state = 361;
-				_localctx._priority = this.expr(0);
+				this.state = 338;
+				localctx._priority = this.expr(0);
 				}
 			}
 
-			this.state = 365;
+			this.state = 342;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & ((1 << (FppParser.ASSERT - 41)) | (1 << (FppParser.BLOCK - 41)) | (1 << (FppParser.DROP - 41)))) !== 0)) {
+			if (((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & 131089) !== 0)) {
 				{
-				this.state = 364;
-				_localctx._queueFull = this.queueFullBehavior();
+				this.state = 341;
+				localctx._queueFull = this.queueFullBehavior();
 				}
 			}
 
@@ -1166,7 +1206,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1176,73 +1216,73 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public paramDecl(): ParamDeclContext {
-		let _localctx: ParamDeclContext = new ParamDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 28, FppParser.RULE_paramDecl);
+		let localctx: ParamDeclContext = new ParamDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 28, FppParser.RULE_paramDecl);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 367;
+			this.state = 344;
 			this.match(FppParser.PARAM);
-			this.state = 368;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 369;
+			this.state = 345;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 346;
 			this.match(FppParser.T__3);
-			this.state = 370;
-			_localctx._type = this.typeName();
-			this.state = 373;
+			this.state = 347;
+			localctx._type_ = this.typeName();
+			this.state = 350;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.DEFAULT) {
+			if (_la===55) {
 				{
-				this.state = 371;
+				this.state = 348;
 				this.match(FppParser.DEFAULT);
-				this.state = 372;
-				_localctx._default_ = this.expr(0);
+				this.state = 349;
+				localctx._default_ = this.expr(0);
 				}
 			}
 
-			this.state = 377;
+			this.state = 354;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ID) {
+			if (_la===74) {
 				{
-				this.state = 375;
+				this.state = 352;
 				this.match(FppParser.ID);
-				this.state = 376;
-				_localctx._id = this.expr(0);
+				this.state = 353;
+				localctx._id = this.expr(0);
 				}
 			}
 
-			this.state = 382;
+			this.state = 359;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.SET) {
+			if (_la===110) {
 				{
-				this.state = 379;
+				this.state = 356;
 				this.match(FppParser.SET);
-				this.state = 380;
+				this.state = 357;
 				this.match(FppParser.OPCODE);
-				this.state = 381;
-				_localctx._setOpcode = this.expr(0);
+				this.state = 358;
+				localctx._setOpcode = this.expr(0);
 				}
 			}
 
-			this.state = 387;
+			this.state = 364;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.SAVE) {
+			if (_la===107) {
 				{
-				this.state = 384;
+				this.state = 361;
 				this.match(FppParser.SAVE);
-				this.state = 385;
+				this.state = 362;
 				this.match(FppParser.OPCODE);
-				this.state = 386;
-				_localctx._saveOpcode = this.expr(0);
+				this.state = 363;
+				localctx._saveOpcode = this.expr(0);
 				}
 			}
 
@@ -1250,7 +1290,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1260,47 +1300,47 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public generalPortKind(): GeneralPortKindContext {
-		let _localctx: GeneralPortKindContext = new GeneralPortKindContext(this._ctx, this.state);
-		this.enterRule(_localctx, 30, FppParser.RULE_generalPortKind);
+		let localctx: GeneralPortKindContext = new GeneralPortKindContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 30, FppParser.RULE_generalPortKind);
 		try {
-			this.state = 396;
+			this.state = 373;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.ASYNC:
-				this.enterOuterAlt(_localctx, 1);
+			case 42:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 389;
+				this.state = 366;
 				this.match(FppParser.ASYNC);
-				this.state = 390;
+				this.state = 367;
 				this.match(FppParser.INPUT);
 				}
 				break;
-			case FppParser.GUARDED:
-				this.enterOuterAlt(_localctx, 2);
+			case 70:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 391;
+				this.state = 368;
 				this.match(FppParser.GUARDED);
-				this.state = 392;
+				this.state = 369;
 				this.match(FppParser.INPUT);
 				}
 				break;
-			case FppParser.SYNC:
-				this.enterOuterAlt(_localctx, 3);
+			case 118:
+				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 393;
+				this.state = 370;
 				this.match(FppParser.SYNC);
-				this.state = 394;
+				this.state = 371;
 				this.match(FppParser.INPUT);
 				}
 				break;
-			case FppParser.OUTPUT:
-				this.enterOuterAlt(_localctx, 4);
+			case 90:
+				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 395;
+				this.state = 372;
 				this.match(FppParser.OUTPUT);
 				}
 				break;
@@ -1310,7 +1350,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1320,149 +1360,137 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public specialPortKind(): SpecialPortKindContext {
-		let _localctx: SpecialPortKindContext = new SpecialPortKindContext(this._ctx, this.state);
-		this.enterRule(_localctx, 32, FppParser.RULE_specialPortKind);
+		let localctx: SpecialPortKindContext = new SpecialPortKindContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 32, FppParser.RULE_specialPortKind);
 		let _la: number;
 		try {
-			this.state = 425;
+			this.state = 402;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 36, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 33, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 398;
+				this.state = 375;
 				this.match(FppParser.COMMAND);
-				this.state = 399;
+				this.state = 376;
 				this.match(FppParser.RECV);
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 400;
+				this.state = 377;
 				this.match(FppParser.COMMAND);
-				this.state = 401;
+				this.state = 378;
 				this.match(FppParser.REG);
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 402;
+				this.state = 379;
 				this.match(FppParser.COMMAND);
-				this.state = 403;
+				this.state = 380;
 				this.match(FppParser.RESP);
 				}
 				break;
-
 			case 4:
-				this.enterOuterAlt(_localctx, 4);
+				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 404;
+				this.state = 381;
 				this.match(FppParser.EVENT);
 				}
 				break;
-
 			case 5:
-				this.enterOuterAlt(_localctx, 5);
+				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 405;
+				this.state = 382;
 				this.match(FppParser.PARAM);
-				this.state = 406;
+				this.state = 383;
 				this.match(FppParser.GET);
 				}
 				break;
-
 			case 6:
-				this.enterOuterAlt(_localctx, 6);
+				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 407;
+				this.state = 384;
 				this.match(FppParser.PARAM);
-				this.state = 408;
+				this.state = 385;
 				this.match(FppParser.SET);
 				}
 				break;
-
 			case 7:
-				this.enterOuterAlt(_localctx, 7);
+				this.enterOuterAlt(localctx, 7);
 				{
-				this.state = 409;
+				this.state = 386;
 				this.match(FppParser.TELEMETRY);
 				}
 				break;
-
 			case 8:
-				this.enterOuterAlt(_localctx, 8);
+				this.enterOuterAlt(localctx, 8);
 				{
-				this.state = 410;
+				this.state = 387;
 				this.match(FppParser.TEXT);
-				this.state = 411;
+				this.state = 388;
 				this.match(FppParser.EVENT);
 				}
 				break;
-
 			case 9:
-				this.enterOuterAlt(_localctx, 9);
+				this.enterOuterAlt(localctx, 9);
 				{
-				this.state = 412;
+				this.state = 389;
 				this.match(FppParser.TIME);
-				this.state = 413;
+				this.state = 390;
 				this.match(FppParser.GET);
 				}
 				break;
-
 			case 10:
-				this.enterOuterAlt(_localctx, 10);
+				this.enterOuterAlt(localctx, 10);
 				{
-				this.state = 414;
+				this.state = 391;
 				this.match(FppParser.PRODUCT);
-				this.state = 415;
+				this.state = 392;
 				this.match(FppParser.GET);
 				}
 				break;
-
 			case 11:
-				this.enterOuterAlt(_localctx, 11);
+				this.enterOuterAlt(localctx, 11);
 				{
-				this.state = 416;
+				this.state = 393;
 				this.match(FppParser.PRODUCT);
-				this.state = 417;
+				this.state = 394;
 				this.match(FppParser.REQUEST);
 				}
 				break;
-
 			case 12:
-				this.enterOuterAlt(_localctx, 12);
+				this.enterOuterAlt(localctx, 12);
 				{
-				this.state = 419;
+				this.state = 396;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === FppParser.ASYNC) {
+				if (_la===42) {
 					{
-					this.state = 418;
+					this.state = 395;
 					this.match(FppParser.ASYNC);
 					}
 				}
 
-				this.state = 421;
+				this.state = 398;
 				this.match(FppParser.PRODUCT);
-				this.state = 422;
+				this.state = 399;
 				this.match(FppParser.RECV);
 				}
 				break;
-
 			case 13:
-				this.enterOuterAlt(_localctx, 13);
+				this.enterOuterAlt(localctx, 13);
 				{
-				this.state = 423;
+				this.state = 400;
 				this.match(FppParser.PRODUCT);
-				this.state = 424;
+				this.state = 401;
 				this.match(FppParser.SEND);
 				}
 				break;
@@ -1470,7 +1498,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1480,27 +1508,27 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public generalPortInstanceType(): GeneralPortInstanceTypeContext {
-		let _localctx: GeneralPortInstanceTypeContext = new GeneralPortInstanceTypeContext(this._ctx, this.state);
-		this.enterRule(_localctx, 34, FppParser.RULE_generalPortInstanceType);
+		let localctx: GeneralPortInstanceTypeContext = new GeneralPortInstanceTypeContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 34, FppParser.RULE_generalPortInstanceType);
 		try {
-			this.state = 429;
+			this.state = 406;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.SERIAL:
-				this.enterOuterAlt(_localctx, 1);
+			case 109:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 427;
+				this.state = 404;
 				this.match(FppParser.SERIAL);
 				}
 				break;
-			case FppParser.IDENTIFIER:
-				this.enterOuterAlt(_localctx, 2);
+			case 131:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 428;
+				this.state = 405;
 				this.qualIdent();
 				}
 				break;
@@ -1510,7 +1538,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1520,59 +1548,59 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public generalPortInstanceDecl(): GeneralPortInstanceDeclContext {
-		let _localctx: GeneralPortInstanceDeclContext = new GeneralPortInstanceDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 36, FppParser.RULE_generalPortInstanceDecl);
+		let localctx: GeneralPortInstanceDeclContext = new GeneralPortInstanceDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 36, FppParser.RULE_generalPortInstanceDecl);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 431;
-			_localctx._kind = this.generalPortKind();
-			this.state = 432;
+			this.state = 408;
+			localctx._kind = this.generalPortKind();
+			this.state = 409;
 			this.match(FppParser.PORT);
-			this.state = 433;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 434;
+			this.state = 410;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 411;
 			this.match(FppParser.T__3);
-			this.state = 439;
+			this.state = 416;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__1) {
+			if (_la===2) {
 				{
-				this.state = 435;
+				this.state = 412;
 				this.match(FppParser.T__1);
-				this.state = 436;
-				_localctx._n = this.expr(0);
-				this.state = 437;
+				this.state = 413;
+				localctx._n = this.expr(0);
+				this.state = 414;
 				this.match(FppParser.T__2);
 				}
 			}
 
-			this.state = 441;
-			_localctx._type = this.generalPortInstanceType();
-			this.state = 444;
+			this.state = 418;
+			localctx._type_ = this.generalPortInstanceType();
+			this.state = 421;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.PRIORITY) {
+			if (_la===95) {
 				{
-				this.state = 442;
+				this.state = 419;
 				this.match(FppParser.PRIORITY);
-				this.state = 443;
-				_localctx._priority = this.expr(0);
+				this.state = 420;
+				localctx._priority = this.expr(0);
 				}
 			}
 
-			this.state = 447;
+			this.state = 424;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & ((1 << (FppParser.ASSERT - 41)) | (1 << (FppParser.BLOCK - 41)) | (1 << (FppParser.DROP - 41)))) !== 0)) {
+			if (((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & 131089) !== 0)) {
 				{
-				this.state = 446;
-				_localctx._queueFull = this.queueFullBehavior();
+				this.state = 423;
+				localctx._queueFull = this.queueFullBehavior();
 				}
 			}
 
@@ -1580,7 +1608,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1590,26 +1618,49 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public specialPortInstanceDecl(): SpecialPortInstanceDeclContext {
-		let _localctx: SpecialPortInstanceDeclContext = new SpecialPortInstanceDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 38, FppParser.RULE_specialPortInstanceDecl);
+		let localctx: SpecialPortInstanceDeclContext = new SpecialPortInstanceDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 38, FppParser.RULE_specialPortInstanceDecl);
+		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 449;
+			this.state = 426;
 			this.specialPortKind();
-			this.state = 450;
+			this.state = 427;
 			this.match(FppParser.PORT);
-			this.state = 451;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 428;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 431;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la===95) {
+				{
+				this.state = 429;
+				this.match(FppParser.PRIORITY);
+				this.state = 430;
+				localctx._priority = this.expr(0);
+				}
+			}
+
+			this.state = 434;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & 131089) !== 0)) {
+				{
+				this.state = 433;
+				localctx._queueFull = this.queueFullBehavior();
+				}
+			}
+
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1619,33 +1670,30 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public telemetryLimitKind(): TelemetryLimitKindContext {
-		let _localctx: TelemetryLimitKindContext = new TelemetryLimitKindContext(this._ctx, this.state);
-		this.enterRule(_localctx, 40, FppParser.RULE_telemetryLimitKind);
+		let localctx: TelemetryLimitKindContext = new TelemetryLimitKindContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 40, FppParser.RULE_telemetryLimitKind);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 453;
+			this.state = 436;
 			_la = this._input.LA(1);
-			if (!(_la === FppParser.ORANGE || _la === FppParser.RED || _la === FppParser.YELLOW)) {
+			if(!(_la===89 || _la===102 || _la===130)) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1655,24 +1703,24 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public telemetryLimitExpr(): TelemetryLimitExprContext {
-		let _localctx: TelemetryLimitExprContext = new TelemetryLimitExprContext(this._ctx, this.state);
-		this.enterRule(_localctx, 42, FppParser.RULE_telemetryLimitExpr);
+		let localctx: TelemetryLimitExprContext = new TelemetryLimitExprContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 42, FppParser.RULE_telemetryLimitExpr);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 455;
-			_localctx._kind = this.telemetryLimitKind();
-			this.state = 456;
-			_localctx._limit = this.expr(0);
+			this.state = 438;
+			localctx._kind = this.telemetryLimitKind();
+			this.state = 439;
+			localctx._limit = this.expr(0);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1682,64 +1730,64 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public telemetryLimit(): TelemetryLimitContext {
-		let _localctx: TelemetryLimitContext = new TelemetryLimitContext(this._ctx, this.state);
-		this.enterRule(_localctx, 44, FppParser.RULE_telemetryLimit);
+		let localctx: TelemetryLimitContext = new TelemetryLimitContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 44, FppParser.RULE_telemetryLimit);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 458;
+			this.state = 441;
 			this.match(FppParser.T__5);
-			this.state = 462;
+			this.state = 445;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 459;
+				this.state = 442;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 464;
+				this.state = 447;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 477;
+			this.state = 460;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ORANGE || _la === FppParser.RED || _la === FppParser.YELLOW) {
+			if (_la===89 || _la===102 || _la===130) {
 				{
-				this.state = 465;
+				this.state = 448;
 				this.telemetryLimitExpr();
-				this.state = 471;
+				this.state = 454;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 42, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 41, this._ctx);
 				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 					if (_alt === 1) {
 						{
 						{
-						this.state = 466;
+						this.state = 449;
 						this.commaDelim();
-						this.state = 467;
+						this.state = 450;
 						this.telemetryLimitExpr();
 						}
 						}
 					}
-					this.state = 473;
+					this.state = 456;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 42, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 41, this._ctx);
 				}
-				this.state = 475;
+				this.state = 458;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === FppParser.T__4 || _la === FppParser.NL) {
+				if (_la===5 || _la===17) {
 					{
-					this.state = 474;
+					this.state = 457;
 					this.commaDelim();
 					}
 				}
@@ -1747,13 +1795,13 @@ export class FppParser extends Parser {
 				}
 			}
 
-			this.state = 479;
+			this.state = 462;
 			this.match(FppParser.T__6);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1763,29 +1811,29 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public telemetryUpdate(): TelemetryUpdateContext {
-		let _localctx: TelemetryUpdateContext = new TelemetryUpdateContext(this._ctx, this.state);
-		this.enterRule(_localctx, 46, FppParser.RULE_telemetryUpdate);
+		let localctx: TelemetryUpdateContext = new TelemetryUpdateContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 46, FppParser.RULE_telemetryUpdate);
 		try {
-			this.state = 484;
+			this.state = 467;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.ALWAYS:
-				this.enterOuterAlt(_localctx, 1);
+			case 39:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 481;
+				this.state = 464;
 				this.match(FppParser.ALWAYS);
 				}
 				break;
-			case FppParser.ON:
-				this.enterOuterAlt(_localctx, 2);
+			case 87:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 482;
+				this.state = 465;
 				this.match(FppParser.ON);
-				this.state = 483;
+				this.state = 466;
 				this.match(FppParser.CHANGE);
 				}
 				break;
@@ -1795,7 +1843,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1805,81 +1853,81 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public telemetryChannelDecl(): TelemetryChannelDeclContext {
-		let _localctx: TelemetryChannelDeclContext = new TelemetryChannelDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 48, FppParser.RULE_telemetryChannelDecl);
+		let localctx: TelemetryChannelDeclContext = new TelemetryChannelDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 48, FppParser.RULE_telemetryChannelDecl);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 486;
+			this.state = 469;
 			this.match(FppParser.TELEMETRY);
-			this.state = 487;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 488;
+			this.state = 470;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 471;
 			this.match(FppParser.T__3);
-			this.state = 489;
-			_localctx._type = this.typeName();
-			this.state = 492;
+			this.state = 472;
+			localctx._type_ = this.typeName();
+			this.state = 475;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ID) {
+			if (_la===74) {
 				{
-				this.state = 490;
+				this.state = 473;
 				this.match(FppParser.ID);
-				this.state = 491;
-				_localctx._id = this.expr(0);
+				this.state = 474;
+				localctx._id = this.expr(0);
 				}
 			}
 
-			this.state = 496;
+			this.state = 479;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.UPDATE) {
+			if (_la===127) {
 				{
-				this.state = 494;
+				this.state = 477;
 				this.match(FppParser.UPDATE);
-				this.state = 495;
-				_localctx._update = this.telemetryUpdate();
+				this.state = 478;
+				localctx._update = this.telemetryUpdate();
 				}
 			}
 
-			this.state = 500;
+			this.state = 483;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.FORMAT) {
+			if (_la===67) {
 				{
-				this.state = 498;
+				this.state = 481;
 				this.match(FppParser.FORMAT);
-				this.state = 499;
-				_localctx._format = this.match(FppParser.LIT_STRING);
+				this.state = 482;
+				localctx._format = this.match(FppParser.LIT_STRING);
 				}
 			}
 
-			this.state = 504;
+			this.state = 487;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.LOW) {
+			if (_la===83) {
 				{
-				this.state = 502;
+				this.state = 485;
 				this.match(FppParser.LOW);
-				this.state = 503;
-				_localctx._low = this.telemetryLimit();
+				this.state = 486;
+				localctx._low = this.telemetryLimit();
 				}
 			}
 
-			this.state = 508;
+			this.state = 491;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.HIGH) {
+			if (_la===72) {
 				{
-				this.state = 506;
+				this.state = 489;
 				this.match(FppParser.HIGH);
-				this.state = 507;
-				_localctx._high = this.telemetryLimit();
+				this.state = 490;
+				localctx._high = this.telemetryLimit();
 				}
 			}
 
@@ -1887,7 +1935,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1897,29 +1945,29 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public actionDef(): ActionDefContext {
-		let _localctx: ActionDefContext = new ActionDefContext(this._ctx, this.state);
-		this.enterRule(_localctx, 50, FppParser.RULE_actionDef);
+		let localctx: ActionDefContext = new ActionDefContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 50, FppParser.RULE_actionDef);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 510;
+			this.state = 493;
 			this.match(FppParser.ACTION);
-			this.state = 511;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 514;
+			this.state = 494;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 497;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__3) {
+			if (_la===4) {
 				{
-				this.state = 512;
+				this.state = 495;
 				this.match(FppParser.T__3);
-				this.state = 513;
-				_localctx._type = this.typeName();
+				this.state = 496;
+				localctx._type_ = this.typeName();
 				}
 			}
 
@@ -1927,7 +1975,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1937,38 +1985,38 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public choiceDef(): ChoiceDefContext {
-		let _localctx: ChoiceDefContext = new ChoiceDefContext(this._ctx, this.state);
-		this.enterRule(_localctx, 52, FppParser.RULE_choiceDef);
+		let localctx: ChoiceDefContext = new ChoiceDefContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 52, FppParser.RULE_choiceDef);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 516;
+			this.state = 499;
 			this.match(FppParser.CHOICE);
-			this.state = 517;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 518;
+			this.state = 500;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 501;
 			this.match(FppParser.T__5);
-			this.state = 519;
+			this.state = 502;
 			this.match(FppParser.IF);
-			this.state = 520;
-			_localctx._guard = this.match(FppParser.IDENTIFIER);
-			this.state = 521;
-			_localctx._then = this.transitionExpr();
-			this.state = 522;
+			this.state = 503;
+			localctx._guard = this.match(FppParser.IDENTIFIER);
+			this.state = 504;
+			localctx._then = this.transitionExpr();
+			this.state = 505;
 			this.match(FppParser.ELSE);
-			this.state = 523;
-			_localctx._else = this.transitionExpr();
-			this.state = 524;
+			this.state = 506;
+			localctx._else_ = this.transitionExpr();
+			this.state = 507;
 			this.match(FppParser.T__6);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -1978,29 +2026,29 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public guardDef(): GuardDefContext {
-		let _localctx: GuardDefContext = new GuardDefContext(this._ctx, this.state);
-		this.enterRule(_localctx, 54, FppParser.RULE_guardDef);
+		let localctx: GuardDefContext = new GuardDefContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 54, FppParser.RULE_guardDef);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 526;
+			this.state = 509;
 			this.match(FppParser.GUARD);
-			this.state = 527;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 530;
+			this.state = 510;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 513;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__3) {
+			if (_la===4) {
 				{
-				this.state = 528;
+				this.state = 511;
 				this.match(FppParser.T__3);
-				this.state = 529;
-				_localctx._type = this.typeName();
+				this.state = 512;
+				localctx._type_ = this.typeName();
 				}
 			}
 
@@ -2008,7 +2056,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2018,29 +2066,29 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public signalDef(): SignalDefContext {
-		let _localctx: SignalDefContext = new SignalDefContext(this._ctx, this.state);
-		this.enterRule(_localctx, 56, FppParser.RULE_signalDef);
+		let localctx: SignalDefContext = new SignalDefContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 56, FppParser.RULE_signalDef);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 532;
+			this.state = 515;
 			this.match(FppParser.SIGNAL);
-			this.state = 533;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 536;
+			this.state = 516;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 519;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__3) {
+			if (_la===4) {
 				{
-				this.state = 534;
+				this.state = 517;
 				this.match(FppParser.T__3);
-				this.state = 535;
-				_localctx._type = this.typeName();
+				this.state = 518;
+				localctx._type_ = this.typeName();
 				}
 			}
 
@@ -2048,7 +2096,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2058,82 +2106,82 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public doExpr(): DoExprContext {
-		let _localctx: DoExprContext = new DoExprContext(this._ctx, this.state);
-		this.enterRule(_localctx, 58, FppParser.RULE_doExpr);
+		let localctx: DoExprContext = new DoExprContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 58, FppParser.RULE_doExpr);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 538;
+			this.state = 521;
 			this.match(FppParser.DO);
-			this.state = 539;
+			this.state = 522;
 			this.match(FppParser.T__5);
-			this.state = 543;
+			this.state = 526;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 54, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 53, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 540;
+					this.state = 523;
 					this.match(FppParser.NL);
 					}
 					}
 				}
-				this.state = 545;
+				this.state = 528;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 54, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 53, this._ctx);
 			}
-			this.state = 555;
+			this.state = 538;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.IDENTIFIER) {
+			if (_la===131) {
 				{
-				this.state = 546;
+				this.state = 529;
 				this.match(FppParser.IDENTIFIER);
-				this.state = 552;
+				this.state = 535;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 55, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 54, this._ctx);
 				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 					if (_alt === 1) {
 						{
 						{
-						this.state = 547;
+						this.state = 530;
 						this.commaDelim();
-						this.state = 548;
+						this.state = 531;
 						this.match(FppParser.IDENTIFIER);
 						}
 						}
 					}
-					this.state = 554;
+					this.state = 537;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 55, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 54, this._ctx);
 				}
 				}
 			}
 
-			this.state = 558;
+			this.state = 541;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__4 || _la === FppParser.NL) {
+			if (_la===5 || _la===17) {
 				{
-				this.state = 557;
+				this.state = 540;
 				this.commaDelim();
 				}
 			}
 
-			this.state = 560;
+			this.state = 543;
 			this.match(FppParser.T__6);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2143,35 +2191,35 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public transitionExpr(): TransitionExprContext {
-		let _localctx: TransitionExprContext = new TransitionExprContext(this._ctx, this.state);
-		this.enterRule(_localctx, 60, FppParser.RULE_transitionExpr);
+		let localctx: TransitionExprContext = new TransitionExprContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 60, FppParser.RULE_transitionExpr);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 563;
+			this.state = 546;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.DO) {
+			if (_la===57) {
 				{
-				this.state = 562;
-				_localctx._do = this.doExpr();
+				this.state = 545;
+				localctx._do_ = this.doExpr();
 				}
 			}
 
-			this.state = 565;
+			this.state = 548;
 			this.match(FppParser.ENTER);
-			this.state = 566;
-			_localctx._state = this.qualIdent();
+			this.state = 549;
+			localctx._state_ = this.qualIdent();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2181,24 +2229,24 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public initialTransition(): InitialTransitionContext {
-		let _localctx: InitialTransitionContext = new InitialTransitionContext(this._ctx, this.state);
-		this.enterRule(_localctx, 62, FppParser.RULE_initialTransition);
+		let localctx: InitialTransitionContext = new InitialTransitionContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 62, FppParser.RULE_initialTransition);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 568;
+			this.state = 551;
 			this.match(FppParser.INITIAL);
-			this.state = 569;
-			_localctx._transition = this.transitionExpr();
+			this.state = 552;
+			localctx._transition = this.transitionExpr();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2208,28 +2256,27 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public transitionOrDoExpr(): TransitionOrDoExprContext {
-		let _localctx: TransitionOrDoExprContext = new TransitionOrDoExprContext(this._ctx, this.state);
-		this.enterRule(_localctx, 64, FppParser.RULE_transitionOrDoExpr);
+		let localctx: TransitionOrDoExprContext = new TransitionOrDoExprContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 64, FppParser.RULE_transitionOrDoExpr);
 		try {
-			this.state = 573;
+			this.state = 556;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 59, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 58, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 571;
+				this.state = 554;
 				this.transitionExpr();
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 572;
+				this.state = 555;
 				this.doExpr();
 				}
 				break;
@@ -2237,7 +2284,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2247,39 +2294,39 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public stateTransition(): StateTransitionContext {
-		let _localctx: StateTransitionContext = new StateTransitionContext(this._ctx, this.state);
-		this.enterRule(_localctx, 66, FppParser.RULE_stateTransition);
+		let localctx: StateTransitionContext = new StateTransitionContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 66, FppParser.RULE_stateTransition);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 575;
+			this.state = 558;
 			this.match(FppParser.ON);
-			this.state = 576;
-			_localctx._signal = this.match(FppParser.IDENTIFIER);
-			this.state = 579;
+			this.state = 559;
+			localctx._signal = this.match(FppParser.IDENTIFIER);
+			this.state = 562;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.IF) {
+			if (_la===75) {
 				{
-				this.state = 577;
+				this.state = 560;
 				this.match(FppParser.IF);
-				this.state = 578;
-				_localctx._guard = this.match(FppParser.IDENTIFIER);
+				this.state = 561;
+				localctx._guard = this.match(FppParser.IDENTIFIER);
 				}
 			}
 
-			this.state = 581;
-			_localctx._transition = this.transitionOrDoExpr();
+			this.state = 564;
+			localctx._transition = this.transitionOrDoExpr();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2289,24 +2336,24 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public stateEntry(): StateEntryContext {
-		let _localctx: StateEntryContext = new StateEntryContext(this._ctx, this.state);
-		this.enterRule(_localctx, 68, FppParser.RULE_stateEntry);
+		let localctx: StateEntryContext = new StateEntryContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 68, FppParser.RULE_stateEntry);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 583;
+			this.state = 566;
 			this.match(FppParser.ENTRY);
-			this.state = 584;
-			_localctx._do = this.doExpr();
+			this.state = 567;
+			localctx._do_ = this.doExpr();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2316,24 +2363,24 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public stateExit(): StateExitContext {
-		let _localctx: StateExitContext = new StateExitContext(this._ctx, this.state);
-		this.enterRule(_localctx, 70, FppParser.RULE_stateExit);
+		let localctx: StateExitContext = new StateExitContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 70, FppParser.RULE_stateExit);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 586;
+			this.state = 569;
 			this.match(FppParser.EXIT);
-			this.state = 587;
-			_localctx._do = this.doExpr();
+			this.state = 570;
+			localctx._do_ = this.doExpr();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2343,55 +2390,55 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public stateMemberTempl(): StateMemberTemplContext {
-		let _localctx: StateMemberTemplContext = new StateMemberTemplContext(this._ctx, this.state);
-		this.enterRule(_localctx, 72, FppParser.RULE_stateMemberTempl);
+	public stateMember(): StateMemberContext {
+		let localctx: StateMemberContext = new StateMemberContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 72, FppParser.RULE_stateMember);
 		try {
-			this.state = 595;
+			this.state = 578;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.INITIAL:
-				this.enterOuterAlt(_localctx, 1);
+			case 78:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 589;
+				this.state = 572;
 				this.initialTransition();
 				}
 				break;
-			case FppParser.CHOICE:
-				this.enterOuterAlt(_localctx, 2);
+			case 48:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 590;
+				this.state = 573;
 				this.choiceDef();
 				}
 				break;
-			case FppParser.STATE:
-				this.enterOuterAlt(_localctx, 3);
+			case 115:
+				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 591;
+				this.state = 574;
 				this.stateDef();
 				}
 				break;
-			case FppParser.ON:
-				this.enterOuterAlt(_localctx, 4);
+			case 87:
+				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 592;
+				this.state = 575;
 				this.stateTransition();
 				}
 				break;
-			case FppParser.ENTRY:
-				this.enterOuterAlt(_localctx, 5);
+			case 61:
+				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 593;
+				this.state = 576;
 				this.stateEntry();
 				}
 				break;
-			case FppParser.EXIT:
-				this.enterOuterAlt(_localctx, 6);
+			case 64:
+				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 594;
+				this.state = 577;
 				this.stateExit();
 				}
 				break;
@@ -2401,7 +2448,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2411,121 +2458,75 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public stateMember(): StateMemberContext {
-		let _localctx: StateMemberContext = new StateMemberContext(this._ctx, this.state);
-		this.enterRule(_localctx, 74, FppParser.RULE_stateMember);
-		let _la: number;
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 598;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 597;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 600;
-			this.stateMemberTempl();
-			this.state = 602;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 601;
-				this.match(FppParser.ANNOTATION);
-				}
-			}
-
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public stateDef(): StateDefContext {
-		let _localctx: StateDefContext = new StateDefContext(this._ctx, this.state);
-		this.enterRule(_localctx, 76, FppParser.RULE_stateDef);
+		let localctx: StateDefContext = new StateDefContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 74, FppParser.RULE_stateDef);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 604;
+			this.state = 580;
 			this.match(FppParser.STATE);
-			this.state = 605;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 628;
+			this.state = 581;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 604;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__5) {
+			if (_la===6) {
 				{
-				this.state = 606;
+				this.state = 582;
 				this.match(FppParser.T__5);
-				this.state = 610;
+				this.state = 586;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 64, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 61, this._ctx);
 				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 					if (_alt === 1) {
 						{
 						{
-						this.state = 607;
+						this.state = 583;
 						this.match(FppParser.NL);
 						}
 						}
 					}
-					this.state = 612;
+					this.state = 588;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 64, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 61, this._ctx);
 				}
-				this.state = 618;
+				this.state = 594;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				while (_la === FppParser.ANNOTATION || ((((_la - 48)) & ~0x1F) === 0 && ((1 << (_la - 48)) & ((1 << (FppParser.CHOICE - 48)) | (1 << (FppParser.ENTRY - 48)) | (1 << (FppParser.EXIT - 48)) | (1 << (FppParser.INITIAL - 48)))) !== 0) || _la === FppParser.ON || _la === FppParser.STATE) {
+				while (((((_la - 48)) & ~0x1F) === 0 && ((1 << (_la - 48)) & 1073815553) !== 0) || _la===87 || _la===115) {
 					{
 					{
-					this.state = 613;
+					this.state = 589;
 					this.stateMember();
-					this.state = 614;
+					this.state = 590;
 					this.semiDelim();
 					}
 					}
-					this.state = 620;
+					this.state = 596;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
 				}
-				this.state = 624;
+				this.state = 600;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				while (_la === FppParser.NL) {
+				while (_la===17) {
 					{
 					{
-					this.state = 621;
+					this.state = 597;
 					this.match(FppParser.NL);
 					}
 					}
-					this.state = 626;
+					this.state = 602;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
 				}
-				this.state = 627;
+				this.state = 603;
 				this.match(FppParser.T__6);
 				}
 			}
@@ -2534,7 +2535,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2544,55 +2545,55 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public stateMachineMemberTempl(): StateMachineMemberTemplContext {
-		let _localctx: StateMachineMemberTemplContext = new StateMachineMemberTemplContext(this._ctx, this.state);
-		this.enterRule(_localctx, 78, FppParser.RULE_stateMachineMemberTempl);
+		let localctx: StateMachineMemberTemplContext = new StateMachineMemberTemplContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 76, FppParser.RULE_stateMachineMemberTempl);
 		try {
-			this.state = 636;
+			this.state = 612;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.CHOICE:
-				this.enterOuterAlt(_localctx, 1);
+			case 48:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 630;
+				this.state = 606;
 				this.choiceDef();
 				}
 				break;
-			case FppParser.GUARD:
-				this.enterOuterAlt(_localctx, 2);
+			case 69:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 631;
+				this.state = 607;
 				this.guardDef();
 				}
 				break;
-			case FppParser.INITIAL:
-				this.enterOuterAlt(_localctx, 3);
+			case 78:
+				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 632;
+				this.state = 608;
 				this.initialTransition();
 				}
 				break;
-			case FppParser.SIGNAL:
-				this.enterOuterAlt(_localctx, 4);
+			case 112:
+				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 633;
+				this.state = 609;
 				this.signalDef();
 				}
 				break;
-			case FppParser.STATE:
-				this.enterOuterAlt(_localctx, 5);
+			case 115:
+				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 634;
+				this.state = 610;
 				this.stateDef();
 				}
 				break;
-			case FppParser.ACTION:
-				this.enterOuterAlt(_localctx, 6);
+			case 36:
+				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 635;
+				this.state = 611;
 				this.actionDef();
 				}
 				break;
@@ -2602,7 +2603,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2612,34 +2613,24 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public stateMachineMember(): StateMachineMemberContext {
-		let _localctx: StateMachineMemberContext = new StateMachineMemberContext(this._ctx, this.state);
-		this.enterRule(_localctx, 80, FppParser.RULE_stateMachineMember);
+		let localctx: StateMachineMemberContext = new StateMachineMemberContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 78, FppParser.RULE_stateMachineMember);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 639;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 638;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 641;
+			this.state = 614;
 			this.stateMachineMemberTempl();
-			this.state = 643;
+			this.state = 616;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
+			if (_la===21) {
 				{
-				this.state = 642;
+				this.state = 615;
 				this.match(FppParser.ANNOTATION);
 				}
 			}
@@ -2648,7 +2639,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2658,136 +2649,136 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public stateMachineDef(): StateMachineDefContext {
-		let _localctx: StateMachineDefContext = new StateMachineDefContext(this._ctx, this.state);
-		this.enterRule(_localctx, 82, FppParser.RULE_stateMachineDef);
+		let localctx: StateMachineDefContext = new StateMachineDefContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 80, FppParser.RULE_stateMachineDef);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 618;
+			this.match(FppParser.STATE);
+			this.state = 619;
+			this.match(FppParser.MACHINE);
+			this.state = 620;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 643;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la===6) {
+				{
+				this.state = 621;
+				this.match(FppParser.T__5);
+				this.state = 625;
+				this._errHandler.sync(this);
+				_alt = this._interp.adaptivePredict(this._input, 67, this._ctx);
+				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
+					if (_alt === 1) {
+						{
+						{
+						this.state = 622;
+						this.match(FppParser.NL);
+						}
+						}
+					}
+					this.state = 627;
+					this._errHandler.sync(this);
+					_alt = this._interp.adaptivePredict(this._input, 67, this._ctx);
+				}
+				this.state = 633;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				while (_la===36 || _la===48 || _la===69 || _la===78 || _la===112 || _la===115) {
+					{
+					{
+					this.state = 628;
+					this.stateMachineMember();
+					this.state = 629;
+					this.semiDelim();
+					}
+					}
+					this.state = 635;
+					this._errHandler.sync(this);
+					_la = this._input.LA(1);
+				}
+				this.state = 639;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				while (_la===17) {
+					{
+					{
+					this.state = 636;
+					this.match(FppParser.NL);
+					}
+					}
+					this.state = 641;
+					this._errHandler.sync(this);
+					_la = this._input.LA(1);
+				}
+				this.state = 642;
+				this.match(FppParser.T__6);
+				}
+			}
+
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public stateMachineInstance(): StateMachineInstanceContext {
+		let localctx: StateMachineInstanceContext = new StateMachineInstanceContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 82, FppParser.RULE_stateMachineInstance);
+		let _la: number;
+		try {
+			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 645;
 			this.match(FppParser.STATE);
 			this.state = 646;
 			this.match(FppParser.MACHINE);
 			this.state = 647;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 670;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.T__5) {
-				{
-				this.state = 648;
-				this.match(FppParser.T__5);
-				this.state = 652;
-				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 71, this._ctx);
-				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
-					if (_alt === 1) {
-						{
-						{
-						this.state = 649;
-						this.match(FppParser.NL);
-						}
-						}
-					}
-					this.state = 654;
-					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 71, this._ctx);
-				}
-				this.state = 660;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				while (((((_la - 21)) & ~0x1F) === 0 && ((1 << (_la - 21)) & ((1 << (FppParser.ANNOTATION - 21)) | (1 << (FppParser.ACTION - 21)) | (1 << (FppParser.CHOICE - 21)))) !== 0) || _la === FppParser.GUARD || _la === FppParser.INITIAL || _la === FppParser.SIGNAL || _la === FppParser.STATE) {
-					{
-					{
-					this.state = 655;
-					this.stateMachineMember();
-					this.state = 656;
-					this.semiDelim();
-					}
-					}
-					this.state = 662;
-					this._errHandler.sync(this);
-					_la = this._input.LA(1);
-				}
-				this.state = 666;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				while (_la === FppParser.NL) {
-					{
-					{
-					this.state = 663;
-					this.match(FppParser.NL);
-					}
-					}
-					this.state = 668;
-					this._errHandler.sync(this);
-					_la = this._input.LA(1);
-				}
-				this.state = 669;
-				this.match(FppParser.T__6);
-				}
-			}
-
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public stateMachineInstance(): StateMachineInstanceContext {
-		let _localctx: StateMachineInstanceContext = new StateMachineInstanceContext(this._ctx, this.state);
-		this.enterRule(_localctx, 84, FppParser.RULE_stateMachineInstance);
-		let _la: number;
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 672;
-			this.match(FppParser.STATE);
-			this.state = 673;
-			this.match(FppParser.MACHINE);
-			this.state = 674;
 			this.match(FppParser.INSTANCE);
-			this.state = 675;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 676;
+			this.state = 648;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 649;
 			this.match(FppParser.T__3);
-			this.state = 677;
-			_localctx._stateMachine = this.qualIdent();
-			this.state = 680;
+			this.state = 650;
+			localctx._stateMachine = this.qualIdent();
+			this.state = 653;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.PRIORITY) {
+			if (_la===95) {
 				{
-				this.state = 678;
+				this.state = 651;
 				this.match(FppParser.PRIORITY);
-				this.state = 679;
-				_localctx._priority = this.expr(0);
+				this.state = 652;
+				localctx._priority = this.expr(0);
 				}
 			}
 
-			this.state = 683;
+			this.state = 656;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & ((1 << (FppParser.ASSERT - 41)) | (1 << (FppParser.BLOCK - 41)) | (1 << (FppParser.DROP - 41)))) !== 0)) {
+			if (((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & 131089) !== 0)) {
 				{
-				this.state = 682;
-				_localctx._queueFull = this.queueFullBehavior();
+				this.state = 655;
+				localctx._queueFull = this.queueFullBehavior();
 				}
 			}
 
@@ -2795,7 +2786,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2805,27 +2796,27 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public enumMember(): EnumMemberContext {
-		let _localctx: EnumMemberContext = new EnumMemberContext(this._ctx, this.state);
-		this.enterRule(_localctx, 86, FppParser.RULE_enumMember);
+		let localctx: EnumMemberContext = new EnumMemberContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 84, FppParser.RULE_enumMember);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 685;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 688;
+			this.state = 658;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 661;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__0) {
+			if (_la===1) {
 				{
-				this.state = 686;
+				this.state = 659;
 				this.match(FppParser.T__0);
-				this.state = 687;
-				_localctx._value = this.expr(0);
+				this.state = 660;
+				localctx._value = this.expr(0);
 				}
 			}
 
@@ -2833,7 +2824,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2843,60 +2834,36 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public enumMemberN(): EnumMemberNContext {
-		let _localctx: EnumMemberNContext = new EnumMemberNContext(this._ctx, this.state);
-		this.enterRule(_localctx, 88, FppParser.RULE_enumMemberN);
-		let _la: number;
+		let localctx: EnumMemberNContext = new EnumMemberNContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 86, FppParser.RULE_enumMemberN);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 691;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 690;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 693;
+			this.state = 663;
 			this.enumMember();
-			this.state = 699;
+			{
+			this.state = 665;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 80, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 74, this._ctx) ) {
 			case 1:
 				{
-				this.state = 695;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				if (_la === FppParser.T__4) {
-					{
-					this.state = 694;
-					this.match(FppParser.T__4);
-					}
-				}
-
-				this.state = 697;
-				this.postAnnotation();
+				this.state = 664;
+				this.match(FppParser.T__4);
 				}
 				break;
-
-			case 2:
-				{
-				this.state = 698;
-				this.commaDelim();
-				}
-				break;
+			}
+			this.state = 667;
+			this.commaDelim();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2906,60 +2873,43 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public enumMemberL(): EnumMemberLContext {
-		let _localctx: EnumMemberLContext = new EnumMemberLContext(this._ctx, this.state);
-		this.enterRule(_localctx, 90, FppParser.RULE_enumMemberL);
+		let localctx: EnumMemberLContext = new EnumMemberLContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 88, FppParser.RULE_enumMemberL);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 702;
+			this.state = 669;
+			this.enumMember();
+			this.state = 674;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
+			if (_la===5 || _la===17) {
 				{
-				this.state = 701;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 704;
-			this.enumMember();
-			this.state = 710;
-			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 83, this._ctx) ) {
-			case 1:
-				{
-				this.state = 706;
+				this.state = 671;
 				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				if (_la === FppParser.T__4) {
+				switch ( this._interp.adaptivePredict(this._input, 75, this._ctx) ) {
+				case 1:
 					{
-					this.state = 705;
+					this.state = 670;
 					this.match(FppParser.T__4);
 					}
+					break;
 				}
-
-				this.state = 708;
-				this.postAnnotation();
-				}
-				break;
-
-			case 2:
-				{
-				this.state = 709;
+				this.state = 673;
 				this.commaDelim();
 				}
-				break;
 			}
+
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -2969,86 +2919,86 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public enumDecl(): EnumDeclContext {
-		let _localctx: EnumDeclContext = new EnumDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 92, FppParser.RULE_enumDecl);
+		let localctx: EnumDeclContext = new EnumDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 90, FppParser.RULE_enumDecl);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 712;
+			this.state = 676;
 			this.match(FppParser.ENUM);
-			this.state = 713;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 716;
+			this.state = 677;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 680;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__3) {
+			if (_la===4) {
 				{
-				this.state = 714;
+				this.state = 678;
 				this.match(FppParser.T__3);
-				this.state = 715;
-				_localctx._type = this.intType();
+				this.state = 679;
+				localctx._type_ = this.intType();
 				}
 			}
 
-			this.state = 718;
+			this.state = 682;
 			this.match(FppParser.T__5);
-			this.state = 722;
+			this.state = 686;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 719;
+				this.state = 683;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 724;
+				this.state = 688;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 732;
+			this.state = 696;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION || _la === FppParser.IDENTIFIER) {
+			if (_la===131) {
 				{
-				this.state = 728;
+				this.state = 692;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 86, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 79, this._ctx);
 				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 					if (_alt === 1) {
 						{
 						{
-						this.state = 725;
+						this.state = 689;
 						this.enumMemberN();
 						}
 						}
 					}
-					this.state = 730;
+					this.state = 694;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 86, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 79, this._ctx);
 				}
-				this.state = 731;
+				this.state = 695;
 				this.enumMemberL();
 				}
 			}
 
-			this.state = 734;
+			this.state = 698;
 			this.match(FppParser.T__6);
-			this.state = 737;
+			this.state = 701;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.DEFAULT) {
+			if (_la===55) {
 				{
-				this.state = 735;
+				this.state = 699;
 				this.match(FppParser.DEFAULT);
-				this.state = 736;
-				_localctx._default_ = this.expr(0);
+				this.state = 700;
+				localctx._default_ = this.expr(0);
 				}
 			}
 
@@ -3056,7 +3006,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3066,76 +3016,70 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public eventSeverity(): EventSeverityContext {
-		let _localctx: EventSeverityContext = new EventSeverityContext(this._ctx, this.state);
-		this.enterRule(_localctx, 94, FppParser.RULE_eventSeverity);
+		let localctx: EventSeverityContext = new EventSeverityContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 92, FppParser.RULE_eventSeverity);
 		try {
-			this.state = 750;
+			this.state = 714;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 89, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 82, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 739;
+				this.state = 703;
 				this.match(FppParser.ACTIVITY);
-				this.state = 740;
+				this.state = 704;
 				this.match(FppParser.HIGH);
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 741;
+				this.state = 705;
 				this.match(FppParser.ACTIVITY);
-				this.state = 742;
+				this.state = 706;
 				this.match(FppParser.LOW);
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 743;
+				this.state = 707;
 				this.match(FppParser.COMMAND);
 				}
 				break;
-
 			case 4:
-				this.enterOuterAlt(_localctx, 4);
+				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 744;
+				this.state = 708;
 				this.match(FppParser.DIAGNOSTIC);
 				}
 				break;
-
 			case 5:
-				this.enterOuterAlt(_localctx, 5);
+				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 745;
+				this.state = 709;
 				this.match(FppParser.FATAL);
 				}
 				break;
-
 			case 6:
-				this.enterOuterAlt(_localctx, 6);
+				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 746;
+				this.state = 710;
 				this.match(FppParser.WARNING);
-				this.state = 747;
+				this.state = 711;
 				this.match(FppParser.HIGH);
 				}
 				break;
-
 			case 7:
-				this.enterOuterAlt(_localctx, 7);
+				this.enterOuterAlt(localctx, 7);
 				{
-				this.state = 748;
+				this.state = 712;
 				this.match(FppParser.WARNING);
-				this.state = 749;
+				this.state = 713;
 				this.match(FppParser.LOW);
 				}
 				break;
@@ -3143,7 +3087,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3153,59 +3097,59 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public eventDecl(): EventDeclContext {
-		let _localctx: EventDeclContext = new EventDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 96, FppParser.RULE_eventDecl);
+		let localctx: EventDeclContext = new EventDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 94, FppParser.RULE_eventDecl);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 752;
+			this.state = 716;
 			this.match(FppParser.EVENT);
-			this.state = 753;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 755;
+			this.state = 717;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 719;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__8) {
+			if (_la===9) {
 				{
-				this.state = 754;
-				_localctx._params = this.formalParameterList();
+				this.state = 718;
+				localctx._params = this.formalParameterList();
 				}
 			}
 
-			this.state = 757;
+			this.state = 721;
 			this.match(FppParser.SEVERITY);
-			this.state = 758;
+			this.state = 722;
 			this.eventSeverity();
-			this.state = 761;
+			this.state = 725;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ID) {
+			if (_la===74) {
 				{
-				this.state = 759;
+				this.state = 723;
 				this.match(FppParser.ID);
-				this.state = 760;
-				_localctx._id = this.expr(0);
+				this.state = 724;
+				localctx._id = this.expr(0);
 				}
 			}
 
-			this.state = 763;
+			this.state = 727;
 			this.match(FppParser.FORMAT);
-			this.state = 764;
-			_localctx._format = this.match(FppParser.LIT_STRING);
-			this.state = 767;
+			this.state = 728;
+			localctx._format = this.match(FppParser.LIT_STRING);
+			this.state = 731;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.THROTTLE) {
+			if (_la===121) {
 				{
-				this.state = 765;
+				this.state = 729;
 				this.match(FppParser.THROTTLE);
-				this.state = 766;
-				_localctx._throttle = this.expr(0);
+				this.state = 730;
+				localctx._throttle = this.expr(0);
 				}
 			}
 
@@ -3213,7 +3157,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3223,24 +3167,24 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public includeStmt(): IncludeStmtContext {
-		let _localctx: IncludeStmtContext = new IncludeStmtContext(this._ctx, this.state);
-		this.enterRule(_localctx, 98, FppParser.RULE_includeStmt);
+		let localctx: IncludeStmtContext = new IncludeStmtContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 96, FppParser.RULE_includeStmt);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 769;
+			this.state = 733;
 			this.match(FppParser.INCLUDE);
-			this.state = 770;
-			_localctx._include = this.match(FppParser.LIT_STRING);
+			this.state = 734;
+			localctx._include = this.match(FppParser.LIT_STRING);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3250,28 +3194,28 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public matchStmt(): MatchStmtContext {
-		let _localctx: MatchStmtContext = new MatchStmtContext(this._ctx, this.state);
-		this.enterRule(_localctx, 100, FppParser.RULE_matchStmt);
+		let localctx: MatchStmtContext = new MatchStmtContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 98, FppParser.RULE_matchStmt);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 772;
+			this.state = 736;
 			this.match(FppParser.MATCH);
-			this.state = 773;
-			_localctx._match = this.match(FppParser.IDENTIFIER);
-			this.state = 774;
+			this.state = 737;
+			localctx._match = this.match(FppParser.IDENTIFIER);
+			this.state = 738;
 			this.match(FppParser.WITH);
-			this.state = 775;
-			_localctx._with_ = this.match(FppParser.IDENTIFIER);
+			this.state = 739;
+			localctx._with_ = this.match(FppParser.IDENTIFIER);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3281,51 +3225,51 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public internalPortDecl(): InternalPortDeclContext {
-		let _localctx: InternalPortDeclContext = new InternalPortDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 102, FppParser.RULE_internalPortDecl);
+		let localctx: InternalPortDeclContext = new InternalPortDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 100, FppParser.RULE_internalPortDecl);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 777;
+			this.state = 741;
 			this.match(FppParser.INTERNAL);
-			this.state = 778;
+			this.state = 742;
 			this.match(FppParser.PORT);
-			this.state = 779;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 781;
+			this.state = 743;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 745;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__8) {
+			if (_la===9) {
 				{
-				this.state = 780;
-				_localctx._params = this.formalParameterList();
+				this.state = 744;
+				localctx._params = this.formalParameterList();
 				}
 			}
 
-			this.state = 785;
+			this.state = 749;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.PRIORITY) {
+			if (_la===95) {
 				{
-				this.state = 783;
+				this.state = 747;
 				this.match(FppParser.PRIORITY);
-				this.state = 784;
-				_localctx._priority = this.expr(0);
+				this.state = 748;
+				localctx._priority = this.expr(0);
 				}
 			}
 
-			this.state = 788;
+			this.state = 752;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & ((1 << (FppParser.ASSERT - 41)) | (1 << (FppParser.BLOCK - 41)) | (1 << (FppParser.DROP - 41)))) !== 0)) {
+			if (((((_la - 41)) & ~0x1F) === 0 && ((1 << (_la - 41)) & 131089) !== 0)) {
 				{
-				this.state = 787;
-				_localctx._queueFull = this.queueFullBehavior();
+				this.state = 751;
+				localctx._queueFull = this.queueFullBehavior();
 				}
 			}
 
@@ -3333,7 +3277,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3343,313 +3287,302 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public recordSpecifierDecl(): RecordSpecifierDeclContext {
-		let _localctx: RecordSpecifierDeclContext = new RecordSpecifierDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 104, FppParser.RULE_recordSpecifierDecl);
+		let localctx: RecordSpecifierDeclContext = new RecordSpecifierDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 102, FppParser.RULE_recordSpecifierDecl);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 790;
+			this.state = 754;
 			this.match(FppParser.PRODUCT);
-			this.state = 791;
+			this.state = 755;
 			this.match(FppParser.RECORD);
-			this.state = 792;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 793;
+			this.state = 756;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 757;
 			this.match(FppParser.T__3);
-			this.state = 794;
-			_localctx._fppType = this.typeName();
-			this.state = 796;
+			this.state = 758;
+			localctx._fppType = this.typeName();
+			this.state = 760;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ARRAY) {
+			if (_la===40) {
 				{
-				this.state = 795;
+				this.state = 759;
 				this.match(FppParser.ARRAY);
+				}
+			}
+
+			this.state = 764;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la===74) {
+				{
+				this.state = 762;
+				this.match(FppParser.ID);
+				this.state = 763;
+				localctx._id = this.expr(0);
+				}
+			}
+
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public containerSpecifierDecl(): ContainerSpecifierDeclContext {
+		let localctx: ContainerSpecifierDeclContext = new ContainerSpecifierDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 104, FppParser.RULE_containerSpecifierDecl);
+		let _la: number;
+		try {
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 766;
+			this.match(FppParser.PRODUCT);
+			this.state = 767;
+			this.match(FppParser.CONTAINER);
+			this.state = 768;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 771;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la===74) {
+				{
+				this.state = 769;
+				this.match(FppParser.ID);
+				this.state = 770;
+				localctx._id = this.expr(0);
+				}
+			}
+
+			this.state = 776;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la===55) {
+				{
+				this.state = 773;
+				this.match(FppParser.DEFAULT);
+				this.state = 774;
+				this.match(FppParser.PRIORITY);
+				this.state = 775;
+				localctx._priority = this.expr(0);
+				}
+			}
+
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public initSpecifier(): InitSpecifierContext {
+		let localctx: InitSpecifierContext = new InitSpecifierContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 106, FppParser.RULE_initSpecifier);
+		try {
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 778;
+			this.match(FppParser.PHASE);
+			this.state = 779;
+			localctx._phaseExpr = this.expr(0);
+			this.state = 780;
+			localctx._code = this.match(FppParser.LIT_STRING);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public componentInstanceDecl(): ComponentInstanceDeclContext {
+		let localctx: ComponentInstanceDeclContext = new ComponentInstanceDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 108, FppParser.RULE_componentInstanceDecl);
+		let _la: number;
+		try {
+			let _alt: number;
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 782;
+			this.match(FppParser.INSTANCE);
+			this.state = 783;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 784;
+			this.match(FppParser.T__3);
+			this.state = 785;
+			localctx._fppType = this.qualIdent();
+			this.state = 786;
+			this.match(FppParser.BASE);
+			this.state = 787;
+			this.match(FppParser.ID);
+			this.state = 788;
+			localctx._base_id = this.expr(0);
+			this.state = 791;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la===125) {
+				{
+				this.state = 789;
+				this.match(FppParser.TYPE);
+				this.state = 790;
+				localctx._cppType = this.match(FppParser.LIT_STRING);
+				}
+			}
+
+			this.state = 795;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la===43) {
+				{
+				this.state = 793;
+				this.match(FppParser.AT);
+				this.state = 794;
+				localctx._at = this.match(FppParser.LIT_STRING);
 				}
 			}
 
 			this.state = 800;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ID) {
+			if (_la===98) {
 				{
-				this.state = 798;
-				this.match(FppParser.ID);
-				this.state = 799;
-				_localctx._id = this.expr(0);
-				}
-			}
-
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public containerSpecifierDecl(): ContainerSpecifierDeclContext {
-		let _localctx: ContainerSpecifierDeclContext = new ContainerSpecifierDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 106, FppParser.RULE_containerSpecifierDecl);
-		let _la: number;
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 802;
-			this.match(FppParser.PRODUCT);
-			this.state = 803;
-			this.match(FppParser.CONTAINER);
-			this.state = 804;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 807;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ID) {
-				{
-				this.state = 805;
-				this.match(FppParser.ID);
-				this.state = 806;
-				_localctx._id = this.expr(0);
-				}
-			}
-
-			this.state = 812;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.DEFAULT) {
-				{
-				this.state = 809;
-				this.match(FppParser.DEFAULT);
-				this.state = 810;
-				this.match(FppParser.PRIORITY);
-				this.state = 811;
-				_localctx._priority = this.expr(0);
-				}
-			}
-
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public initSpecifier(): InitSpecifierContext {
-		let _localctx: InitSpecifierContext = new InitSpecifierContext(this._ctx, this.state);
-		this.enterRule(_localctx, 108, FppParser.RULE_initSpecifier);
-		let _la: number;
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 815;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 814;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 817;
-			this.match(FppParser.PHASE);
-			this.state = 818;
-			_localctx._phaseExpr = this.expr(0);
-			this.state = 819;
-			_localctx._code = this.match(FppParser.LIT_STRING);
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public componentInstanceDecl(): ComponentInstanceDeclContext {
-		let _localctx: ComponentInstanceDeclContext = new ComponentInstanceDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 110, FppParser.RULE_componentInstanceDecl);
-		let _la: number;
-		try {
-			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 821;
-			this.match(FppParser.INSTANCE);
-			this.state = 822;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 823;
-			this.match(FppParser.T__3);
-			this.state = 824;
-			_localctx._fppType = this.qualIdent();
-			this.state = 825;
-			this.match(FppParser.BASE);
-			this.state = 826;
-			this.match(FppParser.ID);
-			this.state = 827;
-			_localctx._base_id = this.expr(0);
-			this.state = 830;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.TYPE) {
-				{
-				this.state = 828;
-				this.match(FppParser.TYPE);
-				this.state = 829;
-				_localctx._cppType = this.match(FppParser.LIT_STRING);
-				}
-			}
-
-			this.state = 834;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.AT) {
-				{
-				this.state = 832;
-				this.match(FppParser.AT);
-				this.state = 833;
-				_localctx._at = this.match(FppParser.LIT_STRING);
-				}
-			}
-
-			this.state = 839;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.QUEUE) {
-				{
-				this.state = 836;
+				this.state = 797;
 				this.match(FppParser.QUEUE);
-				this.state = 837;
+				this.state = 798;
 				this.match(FppParser.SIZE);
-				this.state = 838;
-				_localctx._queueSize = this.expr(0);
+				this.state = 799;
+				localctx._queueSize = this.expr(0);
 				}
 			}
 
-			this.state = 844;
+			this.state = 805;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.STACK) {
+			if (_la===114) {
 				{
-				this.state = 841;
+				this.state = 802;
 				this.match(FppParser.STACK);
-				this.state = 842;
+				this.state = 803;
 				this.match(FppParser.SIZE);
-				this.state = 843;
-				_localctx._stackSize = this.expr(0);
+				this.state = 804;
+				localctx._stackSize = this.expr(0);
 				}
 			}
 
-			this.state = 848;
+			this.state = 809;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.PRIORITY) {
+			if (_la===95) {
 				{
-				this.state = 846;
+				this.state = 807;
 				this.match(FppParser.PRIORITY);
-				this.state = 847;
-				_localctx._priority = this.expr(0);
+				this.state = 808;
+				localctx._priority = this.expr(0);
 				}
 			}
 
-			this.state = 852;
+			this.state = 813;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.CPU) {
+			if (_la===54) {
 				{
-				this.state = 850;
+				this.state = 811;
 				this.match(FppParser.CPU);
-				this.state = 851;
-				_localctx._cpu = this.expr(0);
+				this.state = 812;
+				localctx._cpu = this.expr(0);
 				}
 			}
 
-			this.state = 876;
+			this.state = 837;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__5) {
+			if (_la===6) {
 				{
-				this.state = 854;
+				this.state = 815;
 				this.match(FppParser.T__5);
-				this.state = 858;
+				this.state = 819;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 107, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 99, this._ctx);
 				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 					if (_alt === 1) {
 						{
 						{
-						this.state = 855;
+						this.state = 816;
 						this.match(FppParser.NL);
 						}
 						}
 					}
-					this.state = 860;
+					this.state = 821;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 107, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 99, this._ctx);
 				}
-				this.state = 866;
+				this.state = 827;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				while (_la === FppParser.ANNOTATION || _la === FppParser.PHASE) {
+				while (_la===93) {
 					{
 					{
-					this.state = 861;
+					this.state = 822;
 					this.initSpecifier();
-					this.state = 862;
+					this.state = 823;
 					this.semiDelim();
 					}
 					}
-					this.state = 868;
+					this.state = 829;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
 				}
-				this.state = 872;
+				this.state = 833;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				while (_la === FppParser.NL) {
+				while (_la===17) {
 					{
 					{
-					this.state = 869;
+					this.state = 830;
 					this.match(FppParser.NL);
 					}
 					}
-					this.state = 874;
+					this.state = 835;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
 				}
-				this.state = 875;
+				this.state = 836;
 				this.match(FppParser.T__6);
 				}
 			}
@@ -3658,7 +3591,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3668,33 +3601,30 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public componentKind(): ComponentKindContext {
-		let _localctx: ComponentKindContext = new ComponentKindContext(this._ctx, this.state);
-		this.enterRule(_localctx, 112, FppParser.RULE_componentKind);
+		let localctx: ComponentKindContext = new ComponentKindContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 110, FppParser.RULE_componentKind);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 878;
+			this.state = 839;
 			_la = this._input.LA(1);
-			if (!(_la === FppParser.ACTIVE || _la === FppParser.PASSIVE || _la === FppParser.QUEUED)) {
+			if(!(_la===37 || _la===92 || _la===99)) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3704,164 +3634,146 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public componentMemberTempl(): ComponentMemberTemplContext {
-		let _localctx: ComponentMemberTemplContext = new ComponentMemberTemplContext(this._ctx, this.state);
-		this.enterRule(_localctx, 114, FppParser.RULE_componentMemberTempl);
+	public componentMember(): ComponentMemberContext {
+		let localctx: ComponentMemberContext = new ComponentMemberContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 112, FppParser.RULE_componentMember);
 		try {
-			this.state = 899;
+			this.state = 860;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 111, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 103, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 880;
+				this.state = 841;
 				this.abstractTypeDecl();
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 881;
+				this.state = 842;
 				this.aliasTypeDecl();
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 882;
+				this.state = 843;
 				this.arrayDecl();
 				}
 				break;
-
 			case 4:
-				this.enterOuterAlt(_localctx, 4);
+				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 883;
+				this.state = 844;
 				this.constantDecl();
 				}
 				break;
-
 			case 5:
-				this.enterOuterAlt(_localctx, 5);
+				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 884;
+				this.state = 845;
 				this.structDecl();
 				}
 				break;
-
 			case 6:
-				this.enterOuterAlt(_localctx, 6);
+				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 885;
+				this.state = 846;
 				this.commandDecl();
 				}
 				break;
-
 			case 7:
-				this.enterOuterAlt(_localctx, 7);
+				this.enterOuterAlt(localctx, 7);
 				{
-				this.state = 886;
+				this.state = 847;
 				this.paramDecl();
 				}
 				break;
-
 			case 8:
-				this.enterOuterAlt(_localctx, 8);
+				this.enterOuterAlt(localctx, 8);
 				{
-				this.state = 887;
+				this.state = 848;
 				this.generalPortInstanceDecl();
 				}
 				break;
-
 			case 9:
-				this.enterOuterAlt(_localctx, 9);
+				this.enterOuterAlt(localctx, 9);
 				{
-				this.state = 888;
+				this.state = 849;
 				this.specialPortInstanceDecl();
 				}
 				break;
-
 			case 10:
-				this.enterOuterAlt(_localctx, 10);
+				this.enterOuterAlt(localctx, 10);
 				{
-				this.state = 889;
+				this.state = 850;
 				this.telemetryChannelDecl();
 				}
 				break;
-
 			case 11:
-				this.enterOuterAlt(_localctx, 11);
+				this.enterOuterAlt(localctx, 11);
 				{
-				this.state = 890;
+				this.state = 851;
 				this.enumDecl();
 				}
 				break;
-
 			case 12:
-				this.enterOuterAlt(_localctx, 12);
+				this.enterOuterAlt(localctx, 12);
 				{
-				this.state = 891;
+				this.state = 852;
 				this.eventDecl();
 				}
 				break;
-
 			case 13:
-				this.enterOuterAlt(_localctx, 13);
+				this.enterOuterAlt(localctx, 13);
 				{
-				this.state = 892;
+				this.state = 853;
 				this.includeStmt();
 				}
 				break;
-
 			case 14:
-				this.enterOuterAlt(_localctx, 14);
+				this.enterOuterAlt(localctx, 14);
 				{
-				this.state = 893;
+				this.state = 854;
 				this.internalPortDecl();
 				}
 				break;
-
 			case 15:
-				this.enterOuterAlt(_localctx, 15);
+				this.enterOuterAlt(localctx, 15);
 				{
-				this.state = 894;
+				this.state = 855;
 				this.matchStmt();
 				}
 				break;
-
 			case 16:
-				this.enterOuterAlt(_localctx, 16);
+				this.enterOuterAlt(localctx, 16);
 				{
-				this.state = 895;
+				this.state = 856;
 				this.recordSpecifierDecl();
 				}
 				break;
-
 			case 17:
-				this.enterOuterAlt(_localctx, 17);
+				this.enterOuterAlt(localctx, 17);
 				{
-				this.state = 896;
+				this.state = 857;
 				this.containerSpecifierDecl();
 				}
 				break;
-
 			case 18:
-				this.enterOuterAlt(_localctx, 18);
+				this.enterOuterAlt(localctx, 18);
 				{
-				this.state = 897;
+				this.state = 858;
 				this.stateMachineInstance();
 				}
 				break;
-
 			case 19:
-				this.enterOuterAlt(_localctx, 19);
+				this.enterOuterAlt(localctx, 19);
 				{
-				this.state = 898;
+				this.state = 859;
 				this.stateMachineDef();
 				}
 				break;
@@ -3869,7 +3781,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -3879,124 +3791,78 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public componentMember(): ComponentMemberContext {
-		let _localctx: ComponentMemberContext = new ComponentMemberContext(this._ctx, this.state);
-		this.enterRule(_localctx, 116, FppParser.RULE_componentMember);
-		let _la: number;
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 902;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 901;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 904;
-			this.componentMemberTempl();
-			this.state = 906;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 905;
-				this.match(FppParser.ANNOTATION);
-				}
-			}
-
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public componentDecl(): ComponentDeclContext {
-		let _localctx: ComponentDeclContext = new ComponentDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 118, FppParser.RULE_componentDecl);
+		let localctx: ComponentDeclContext = new ComponentDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 114, FppParser.RULE_componentDecl);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 908;
-			_localctx._kind = this.componentKind();
-			this.state = 909;
+			this.state = 862;
+			localctx._kind = this.componentKind();
+			this.state = 863;
 			this.match(FppParser.COMPONENT);
-			this.state = 910;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 911;
+			this.state = 864;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 865;
 			this.match(FppParser.T__5);
-			this.state = 915;
+			this.state = 869;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 114, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 104, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 912;
+					this.state = 866;
 					this.match(FppParser.NL);
 					}
 					}
 				}
-				this.state = 917;
+				this.state = 871;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 114, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 104, this._ctx);
 			}
-			this.state = 923;
+			this.state = 877;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (((((_la - 21)) & ~0x1F) === 0 && ((1 << (_la - 21)) & ((1 << (FppParser.ANNOTATION - 21)) | (1 << (FppParser.ARRAY - 21)) | (1 << (FppParser.ASYNC - 21)) | (1 << (FppParser.COMMAND - 21)) | (1 << (FppParser.CONSTANT - 21)))) !== 0) || ((((_la - 62)) & ~0x1F) === 0 && ((1 << (_la - 62)) & ((1 << (FppParser.ENUM - 62)) | (1 << (FppParser.EVENT - 62)) | (1 << (FppParser.GUARDED - 62)) | (1 << (FppParser.INCLUDE - 62)) | (1 << (FppParser.INTERNAL - 62)) | (1 << (FppParser.MATCH - 62)) | (1 << (FppParser.OUTPUT - 62)) | (1 << (FppParser.PARAM - 62)))) !== 0) || ((((_la - 97)) & ~0x1F) === 0 && ((1 << (_la - 97)) & ((1 << (FppParser.PRODUCT - 97)) | (1 << (FppParser.STATE - 97)) | (1 << (FppParser.STRUCT - 97)) | (1 << (FppParser.SYNC - 97)) | (1 << (FppParser.TELEMETRY - 97)) | (1 << (FppParser.TEXT - 97)) | (1 << (FppParser.TIME - 97)) | (1 << (FppParser.TYPE - 97)))) !== 0)) {
+			while (((((_la - 40)) & ~0x1F) === 0 && ((1 << (_la - 40)) & 1086329349) !== 0) || ((((_la - 77)) & ~0x1F) === 0 && ((1 << (_la - 77)) & 1073425) !== 0) || ((((_la - 115)) & ~0x1F) === 0 && ((1 << (_la - 115)) & 1213) !== 0)) {
 				{
 				{
-				this.state = 918;
+				this.state = 872;
 				this.componentMember();
-				this.state = 919;
+				this.state = 873;
 				this.semiDelim();
 				}
 				}
-				this.state = 925;
+				this.state = 879;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 929;
+			this.state = 883;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 926;
+				this.state = 880;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 931;
+				this.state = 885;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 932;
+			this.state = 886;
 			this.match(FppParser.T__6);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4006,39 +3872,39 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public portDecl(): PortDeclContext {
-		let _localctx: PortDeclContext = new PortDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 120, FppParser.RULE_portDecl);
+		let localctx: PortDeclContext = new PortDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 116, FppParser.RULE_portDecl);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 934;
+			this.state = 888;
 			this.match(FppParser.PORT);
-			this.state = 935;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 937;
+			this.state = 889;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 891;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__8) {
+			if (_la===9) {
 				{
-				this.state = 936;
-				_localctx._params = this.formalParameterList();
+				this.state = 890;
+				localctx._params = this.formalParameterList();
 				}
 			}
 
-			this.state = 941;
+			this.state = 895;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__7) {
+			if (_la===8) {
 				{
-				this.state = 939;
+				this.state = 893;
 				this.match(FppParser.T__7);
-				this.state = 940;
-				_localctx._returnType = this.typeName();
+				this.state = 894;
+				localctx._returnType = this.typeName();
 				}
 			}
 
@@ -4046,7 +3912,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4056,35 +3922,35 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public componentInstanceSpec(): ComponentInstanceSpecContext {
-		let _localctx: ComponentInstanceSpecContext = new ComponentInstanceSpecContext(this._ctx, this.state);
-		this.enterRule(_localctx, 122, FppParser.RULE_componentInstanceSpec);
+		let localctx: ComponentInstanceSpecContext = new ComponentInstanceSpecContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 118, FppParser.RULE_componentInstanceSpec);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 944;
+			this.state = 898;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.PRIVATE) {
+			if (_la===96) {
 				{
-				this.state = 943;
+				this.state = 897;
 				this.match(FppParser.PRIVATE);
 				}
 			}
 
-			this.state = 946;
+			this.state = 900;
 			this.match(FppParser.INSTANCE);
-			this.state = 947;
-			_localctx._name = this.qualIdent();
+			this.state = 901;
+			localctx._name = this.qualIdent();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4094,28 +3960,28 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public connectionNode(): ConnectionNodeContext {
-		let _localctx: ConnectionNodeContext = new ConnectionNodeContext(this._ctx, this.state);
-		this.enterRule(_localctx, 124, FppParser.RULE_connectionNode);
+		let localctx: ConnectionNodeContext = new ConnectionNodeContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 120, FppParser.RULE_connectionNode);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 949;
-			_localctx._node = this.qualIdent();
-			this.state = 954;
+			this.state = 903;
+			localctx._node = this.qualIdent();
+			this.state = 908;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.T__1) {
+			if (_la===2) {
 				{
-				this.state = 950;
+				this.state = 904;
 				this.match(FppParser.T__1);
-				this.state = 951;
-				_localctx._index = this.expr(0);
-				this.state = 952;
+				this.state = 905;
+				localctx._index = this.expr(0);
+				this.state = 906;
 				this.match(FppParser.T__2);
 				}
 			}
@@ -4124,7 +3990,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4134,26 +4000,37 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public connection(): ConnectionContext {
-		let _localctx: ConnectionContext = new ConnectionContext(this._ctx, this.state);
-		this.enterRule(_localctx, 126, FppParser.RULE_connection);
+		let localctx: ConnectionContext = new ConnectionContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 122, FppParser.RULE_connection);
+		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 956;
-			_localctx._source = this.connectionNode();
-			this.state = 957;
+			this.state = 911;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la===126) {
+				{
+				this.state = 910;
+				this.match(FppParser.UNMATCHED);
+				}
+			}
+
+			this.state = 913;
+			localctx._source = this.connectionNode();
+			this.state = 914;
 			this.match(FppParser.T__7);
-			this.state = 958;
-			_localctx._destination = this.connectionNode();
+			this.state = 915;
+			localctx._destination = this.connectionNode();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4163,76 +4040,76 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public directGraphDecl(): DirectGraphDeclContext {
-		let _localctx: DirectGraphDeclContext = new DirectGraphDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 128, FppParser.RULE_directGraphDecl);
+		let localctx: DirectGraphDeclContext = new DirectGraphDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 124, FppParser.RULE_directGraphDecl);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 960;
+			this.state = 917;
 			this.match(FppParser.CONNECTIONS);
-			this.state = 961;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 962;
+			this.state = 918;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 919;
 			this.match(FppParser.T__5);
-			this.state = 966;
+			this.state = 923;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 121, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 112, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 963;
+					this.state = 920;
 					this.match(FppParser.NL);
 					}
 					}
 				}
-				this.state = 968;
+				this.state = 925;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 121, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 112, this._ctx);
 			}
-			this.state = 974;
+			this.state = 931;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.IDENTIFIER) {
+			while (_la===126 || _la===131) {
 				{
 				{
-				this.state = 969;
+				this.state = 926;
 				this.connection();
-				this.state = 970;
+				this.state = 927;
 				this.commaDelim();
 				}
 				}
-				this.state = 976;
+				this.state = 933;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 980;
+			this.state = 937;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 977;
+				this.state = 934;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 982;
+				this.state = 939;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 983;
+			this.state = 940;
 			this.match(FppParser.T__6);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4242,64 +4119,64 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public patternKind(): PatternKindContext {
-		let _localctx: PatternKindContext = new PatternKindContext(this._ctx, this.state);
-		this.enterRule(_localctx, 130, FppParser.RULE_patternKind);
+		let localctx: PatternKindContext = new PatternKindContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 126, FppParser.RULE_patternKind);
 		try {
-			this.state = 993;
+			this.state = 950;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.COMMAND:
-				this.enterOuterAlt(_localctx, 1);
+			case 49:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 985;
+				this.state = 942;
 				this.match(FppParser.COMMAND);
 				}
 				break;
-			case FppParser.EVENT:
-				this.enterOuterAlt(_localctx, 2);
+			case 63:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 986;
+				this.state = 943;
 				this.match(FppParser.EVENT);
 				}
 				break;
-			case FppParser.TEXT:
-				this.enterOuterAlt(_localctx, 3);
+			case 120:
+				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 987;
+				this.state = 944;
 				this.match(FppParser.TEXT);
-				this.state = 988;
+				this.state = 945;
 				this.match(FppParser.EVENT);
 				}
 				break;
-			case FppParser.HEALTH:
-				this.enterOuterAlt(_localctx, 4);
+			case 71:
+				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 989;
+				this.state = 946;
 				this.match(FppParser.HEALTH);
 				}
 				break;
-			case FppParser.PARAM:
-				this.enterOuterAlt(_localctx, 5);
+			case 91:
+				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 990;
+				this.state = 947;
 				this.match(FppParser.PARAM);
 				}
 				break;
-			case FppParser.TELEMETRY:
-				this.enterOuterAlt(_localctx, 6);
+			case 119:
+				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 991;
+				this.state = 948;
 				this.match(FppParser.TELEMETRY);
 				}
 				break;
-			case FppParser.TIME:
-				this.enterOuterAlt(_localctx, 7);
+			case 122:
+				this.enterOuterAlt(localctx, 7);
 				{
-				this.state = 992;
+				this.state = 949;
 				this.match(FppParser.TIME);
 				}
 				break;
@@ -4309,7 +4186,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4319,43 +4196,43 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public patternGraphSources(): PatternGraphSourcesContext {
-		let _localctx: PatternGraphSourcesContext = new PatternGraphSourcesContext(this._ctx, this.state);
-		this.enterRule(_localctx, 132, FppParser.RULE_patternGraphSources);
+		let localctx: PatternGraphSourcesContext = new PatternGraphSourcesContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 128, FppParser.RULE_patternGraphSources);
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
 			{
-			this.state = 995;
+			this.state = 952;
 			this.qualIdent();
-			this.state = 1001;
+			this.state = 958;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 125, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 116, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 996;
+					this.state = 953;
 					this.commaDelim();
-					this.state = 997;
+					this.state = 954;
 					this.qualIdent();
 					}
 					}
 				}
-				this.state = 1003;
+				this.state = 960;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 125, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 116, this._ctx);
 			}
-			this.state = 1005;
+			this.state = 962;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 126, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 117, this._ctx) ) {
 			case 1:
 				{
-				this.state = 1004;
+				this.state = 961;
 				this.commaDelim();
 				}
 				break;
@@ -4365,7 +4242,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4375,30 +4252,30 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public patternGraphStmt(): PatternGraphStmtContext {
-		let _localctx: PatternGraphStmtContext = new PatternGraphStmtContext(this._ctx, this.state);
-		this.enterRule(_localctx, 134, FppParser.RULE_patternGraphStmt);
+		let localctx: PatternGraphStmtContext = new PatternGraphStmtContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 130, FppParser.RULE_patternGraphStmt);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1007;
-			_localctx._kind = this.patternKind();
-			this.state = 1008;
+			this.state = 964;
+			localctx._kind = this.patternKind();
+			this.state = 965;
 			this.match(FppParser.CONNECTIONS);
-			this.state = 1009;
+			this.state = 966;
 			this.match(FppParser.INSTANCE);
-			this.state = 1010;
-			_localctx._target = this.qualIdent();
-			this.state = 1012;
+			this.state = 967;
+			localctx._target = this.qualIdent();
+			this.state = 969;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.IDENTIFIER) {
+			if (_la===131) {
 				{
-				this.state = 1011;
+				this.state = 968;
 				this.patternGraphSources();
 				}
 			}
@@ -4407,7 +4284,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4417,24 +4294,24 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public topologyImportStmt(): TopologyImportStmtContext {
-		let _localctx: TopologyImportStmtContext = new TopologyImportStmtContext(this._ctx, this.state);
-		this.enterRule(_localctx, 136, FppParser.RULE_topologyImportStmt);
+		let localctx: TopologyImportStmtContext = new TopologyImportStmtContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 132, FppParser.RULE_topologyImportStmt);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1014;
+			this.state = 971;
 			this.match(FppParser.IMPORT);
-			this.state = 1015;
-			_localctx._topology = this.qualIdent();
+			this.state = 972;
+			localctx._topology = this.qualIdent();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4444,55 +4321,55 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public topologyMemberTempl(): TopologyMemberTemplContext {
-		let _localctx: TopologyMemberTemplContext = new TopologyMemberTemplContext(this._ctx, this.state);
-		this.enterRule(_localctx, 138, FppParser.RULE_topologyMemberTempl);
+	public topologyMember(): TopologyMemberContext {
+		let localctx: TopologyMemberContext = new TopologyMemberContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 134, FppParser.RULE_topologyMember);
 		try {
-			this.state = 1022;
+			this.state = 979;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.INSTANCE:
-			case FppParser.PRIVATE:
-				this.enterOuterAlt(_localctx, 1);
+			case 80:
+			case 96:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 1017;
+				this.state = 974;
 				this.componentInstanceSpec();
 				}
 				break;
-			case FppParser.CONNECTIONS:
-				this.enterOuterAlt(_localctx, 2);
+			case 51:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 1018;
+				this.state = 975;
 				this.directGraphDecl();
 				}
 				break;
-			case FppParser.COMMAND:
-			case FppParser.EVENT:
-			case FppParser.HEALTH:
-			case FppParser.PARAM:
-			case FppParser.TELEMETRY:
-			case FppParser.TEXT:
-			case FppParser.TIME:
-				this.enterOuterAlt(_localctx, 3);
+			case 49:
+			case 63:
+			case 71:
+			case 91:
+			case 119:
+			case 120:
+			case 122:
+				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 1019;
+				this.state = 976;
 				this.patternGraphStmt();
 				}
 				break;
-			case FppParser.IMPORT:
-				this.enterOuterAlt(_localctx, 4);
+			case 76:
+				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 1020;
+				this.state = 977;
 				this.topologyImportStmt();
 				}
 				break;
-			case FppParser.INCLUDE:
-				this.enterOuterAlt(_localctx, 5);
+			case 77:
+				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 1021;
+				this.state = 978;
 				this.includeStmt();
 				}
 				break;
@@ -4502,7 +4379,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4512,122 +4389,76 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public topologyMember(): TopologyMemberContext {
-		let _localctx: TopologyMemberContext = new TopologyMemberContext(this._ctx, this.state);
-		this.enterRule(_localctx, 140, FppParser.RULE_topologyMember);
-		let _la: number;
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 1025;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 1024;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 1027;
-			this.topologyMemberTempl();
-			this.state = 1029;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 1028;
-				this.match(FppParser.ANNOTATION);
-				}
-			}
-
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public topologyDecl(): TopologyDeclContext {
-		let _localctx: TopologyDeclContext = new TopologyDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 142, FppParser.RULE_topologyDecl);
+		let localctx: TopologyDeclContext = new TopologyDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 136, FppParser.RULE_topologyDecl);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1031;
+			this.state = 981;
 			this.match(FppParser.TOPOLOGY);
-			this.state = 1032;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 1033;
+			this.state = 982;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 983;
 			this.match(FppParser.T__5);
-			this.state = 1037;
+			this.state = 987;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 131, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 120, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 1034;
+					this.state = 984;
 					this.match(FppParser.NL);
 					}
 					}
 				}
-				this.state = 1039;
+				this.state = 989;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 131, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 120, this._ctx);
 			}
-			this.state = 1045;
+			this.state = 995;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.ANNOTATION || ((((_la - 49)) & ~0x1F) === 0 && ((1 << (_la - 49)) & ((1 << (FppParser.COMMAND - 49)) | (1 << (FppParser.CONNECTIONS - 49)) | (1 << (FppParser.EVENT - 49)) | (1 << (FppParser.HEALTH - 49)) | (1 << (FppParser.IMPORT - 49)) | (1 << (FppParser.INCLUDE - 49)) | (1 << (FppParser.INSTANCE - 49)))) !== 0) || ((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & ((1 << (FppParser.PARAM - 91)) | (1 << (FppParser.PRIVATE - 91)) | (1 << (FppParser.TELEMETRY - 91)) | (1 << (FppParser.TEXT - 91)) | (1 << (FppParser.TIME - 91)))) !== 0)) {
+			while (((((_la - 49)) & ~0x1F) === 0 && ((1 << (_la - 49)) & 2554347525) !== 0) || ((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 2952790049) !== 0)) {
 				{
 				{
-				this.state = 1040;
+				this.state = 990;
 				this.topologyMember();
-				this.state = 1041;
+				this.state = 991;
 				this.semiDelim();
 				}
 				}
-				this.state = 1047;
+				this.state = 997;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 1051;
+			this.state = 1001;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 1048;
+				this.state = 998;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 1053;
+				this.state = 1003;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 1054;
+			this.state = 1004;
 			this.match(FppParser.T__6);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4637,33 +4468,30 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public locationKind(): LocationKindContext {
-		let _localctx: LocationKindContext = new LocationKindContext(this._ctx, this.state);
-		this.enterRule(_localctx, 144, FppParser.RULE_locationKind);
+		let localctx: LocationKindContext = new LocationKindContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 138, FppParser.RULE_locationKind);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1056;
+			this.state = 1006;
 			_la = this._input.LA(1);
-			if (!(((((_la - 50)) & ~0x1F) === 0 && ((1 << (_la - 50)) & ((1 << (FppParser.COMPONENT - 50)) | (1 << (FppParser.CONSTANT - 50)) | (1 << (FppParser.INSTANCE - 50)))) !== 0) || ((((_la - 94)) & ~0x1F) === 0 && ((1 << (_la - 94)) & ((1 << (FppParser.PORT - 94)) | (1 << (FppParser.TOPOLOGY - 94)) | (1 << (FppParser.TYPE - 94)))) !== 0))) {
+			if(!(((((_la - 50)) & ~0x1F) === 0 && ((1 << (_la - 50)) & 1073741829) !== 0) || ((((_la - 94)) & ~0x1F) === 0 && ((1 << (_la - 94)) & 2684354561) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4673,30 +4501,30 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public locationStmt(): LocationStmtContext {
-		let _localctx: LocationStmtContext = new LocationStmtContext(this._ctx, this.state);
-		this.enterRule(_localctx, 146, FppParser.RULE_locationStmt);
+		let localctx: LocationStmtContext = new LocationStmtContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 140, FppParser.RULE_locationStmt);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1058;
+			this.state = 1008;
 			this.match(FppParser.LOCATE);
-			this.state = 1059;
-			_localctx._kind = this.locationKind();
-			this.state = 1060;
-			_localctx._name = this.qualIdent();
-			this.state = 1061;
+			this.state = 1009;
+			localctx._kind = this.locationKind();
+			this.state = 1010;
+			localctx._name = this.qualIdent();
+			this.state = 1011;
 			this.match(FppParser.AT);
-			this.state = 1062;
-			_localctx._path = this.match(FppParser.LIT_STRING);
+			this.state = 1012;
+			localctx._path = this.match(FppParser.LIT_STRING);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4706,124 +4534,111 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
-	public moduleMemberTempl(): ModuleMemberTemplContext {
-		let _localctx: ModuleMemberTemplContext = new ModuleMemberTemplContext(this._ctx, this.state);
-		this.enterRule(_localctx, 148, FppParser.RULE_moduleMemberTempl);
+	public moduleMember(): ModuleMemberContext {
+		let localctx: ModuleMemberContext = new ModuleMemberContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 142, FppParser.RULE_moduleMember);
 		try {
-			this.state = 1078;
+			this.state = 1028;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 134, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 123, this._ctx) ) {
 			case 1:
-				this.enterOuterAlt(_localctx, 1);
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 1064;
+				this.state = 1014;
 				this.abstractTypeDecl();
 				}
 				break;
-
 			case 2:
-				this.enterOuterAlt(_localctx, 2);
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 1065;
+				this.state = 1015;
 				this.aliasTypeDecl();
 				}
 				break;
-
 			case 3:
-				this.enterOuterAlt(_localctx, 3);
+				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 1066;
+				this.state = 1016;
 				this.arrayDecl();
 				}
 				break;
-
 			case 4:
-				this.enterOuterAlt(_localctx, 4);
+				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 1067;
+				this.state = 1017;
 				this.componentDecl();
 				}
 				break;
-
 			case 5:
-				this.enterOuterAlt(_localctx, 5);
+				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 1068;
+				this.state = 1018;
 				this.componentInstanceDecl();
 				}
 				break;
-
 			case 6:
-				this.enterOuterAlt(_localctx, 6);
+				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 1069;
+				this.state = 1019;
 				this.constantDecl();
 				}
 				break;
-
 			case 7:
-				this.enterOuterAlt(_localctx, 7);
+				this.enterOuterAlt(localctx, 7);
 				{
-				this.state = 1070;
+				this.state = 1020;
 				this.moduleDecl();
 				}
 				break;
-
 			case 8:
-				this.enterOuterAlt(_localctx, 8);
+				this.enterOuterAlt(localctx, 8);
 				{
-				this.state = 1071;
+				this.state = 1021;
 				this.portDecl();
 				}
 				break;
-
 			case 9:
-				this.enterOuterAlt(_localctx, 9);
+				this.enterOuterAlt(localctx, 9);
 				{
-				this.state = 1072;
+				this.state = 1022;
 				this.structDecl();
 				}
 				break;
-
 			case 10:
-				this.enterOuterAlt(_localctx, 10);
+				this.enterOuterAlt(localctx, 10);
 				{
-				this.state = 1073;
+				this.state = 1023;
 				this.locationStmt();
 				}
 				break;
-
 			case 11:
-				this.enterOuterAlt(_localctx, 11);
+				this.enterOuterAlt(localctx, 11);
 				{
-				this.state = 1074;
+				this.state = 1024;
 				this.enumDecl();
 				}
 				break;
-
 			case 12:
-				this.enterOuterAlt(_localctx, 12);
+				this.enterOuterAlt(localctx, 12);
 				{
-				this.state = 1075;
+				this.state = 1025;
 				this.includeStmt();
 				}
 				break;
-
 			case 13:
-				this.enterOuterAlt(_localctx, 13);
+				this.enterOuterAlt(localctx, 13);
 				{
-				this.state = 1076;
+				this.state = 1026;
 				this.topologyDecl();
 				}
 				break;
-
 			case 14:
-				this.enterOuterAlt(_localctx, 14);
+				this.enterOuterAlt(localctx, 14);
 				{
-				this.state = 1077;
+				this.state = 1027;
 				this.stateMachineDef();
 				}
 				break;
@@ -4831,7 +4646,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4841,122 +4656,76 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public moduleMember(): ModuleMemberContext {
-		let _localctx: ModuleMemberContext = new ModuleMemberContext(this._ctx, this.state);
-		this.enterRule(_localctx, 150, FppParser.RULE_moduleMember);
-		let _la: number;
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 1081;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 1080;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 1083;
-			this.moduleMemberTempl();
-			this.state = 1085;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 1084;
-				this.match(FppParser.ANNOTATION);
-				}
-			}
-
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public moduleDecl(): ModuleDeclContext {
-		let _localctx: ModuleDeclContext = new ModuleDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 152, FppParser.RULE_moduleDecl);
+		let localctx: ModuleDeclContext = new ModuleDeclContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 144, FppParser.RULE_moduleDecl);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1087;
+			this.state = 1030;
 			this.match(FppParser.MODULE);
-			this.state = 1088;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 1089;
+			this.state = 1031;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 1032;
 			this.match(FppParser.T__5);
-			this.state = 1093;
+			this.state = 1036;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 137, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 124, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 1090;
+					this.state = 1033;
 					this.match(FppParser.NL);
 					}
 					}
 				}
-				this.state = 1095;
+				this.state = 1038;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 137, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 124, this._ctx);
 			}
-			this.state = 1101;
+			this.state = 1044;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (((((_la - 21)) & ~0x1F) === 0 && ((1 << (_la - 21)) & ((1 << (FppParser.ANNOTATION - 21)) | (1 << (FppParser.ACTIVE - 21)) | (1 << (FppParser.ARRAY - 21)) | (1 << (FppParser.CONSTANT - 21)))) !== 0) || ((((_la - 62)) & ~0x1F) === 0 && ((1 << (_la - 62)) & ((1 << (FppParser.ENUM - 62)) | (1 << (FppParser.INCLUDE - 62)) | (1 << (FppParser.INSTANCE - 62)) | (1 << (FppParser.LOCATE - 62)) | (1 << (FppParser.MODULE - 62)) | (1 << (FppParser.PASSIVE - 62)))) !== 0) || ((((_la - 94)) & ~0x1F) === 0 && ((1 << (_la - 94)) & ((1 << (FppParser.PORT - 94)) | (1 << (FppParser.QUEUED - 94)) | (1 << (FppParser.STATE - 94)) | (1 << (FppParser.STRUCT - 94)) | (1 << (FppParser.TOPOLOGY - 94)) | (1 << (FppParser.TYPE - 94)))) !== 0)) {
+			while (((((_la - 37)) & ~0x1F) === 0 && ((1 << (_la - 37)) & 33587209) !== 0) || ((((_la - 77)) & ~0x1F) === 0 && ((1 << (_la - 77)) & 4358697) !== 0) || ((((_la - 115)) & ~0x1F) === 0 && ((1 << (_la - 115)) & 1285) !== 0)) {
 				{
 				{
-				this.state = 1096;
+				this.state = 1039;
 				this.moduleMember();
-				this.state = 1097;
+				this.state = 1040;
 				this.semiDelim();
 				}
 				}
-				this.state = 1103;
+				this.state = 1046;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 1107;
+			this.state = 1050;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 1104;
+				this.state = 1047;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 1109;
+				this.state = 1052;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 1110;
+			this.state = 1053;
 			this.match(FppParser.T__6);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -4966,37 +4735,37 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public formalParameter(): FormalParameterContext {
-		let _localctx: FormalParameterContext = new FormalParameterContext(this._ctx, this.state);
-		this.enterRule(_localctx, 154, FppParser.RULE_formalParameter);
+		let localctx: FormalParameterContext = new FormalParameterContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 146, FppParser.RULE_formalParameter);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1113;
+			this.state = 1056;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.REF) {
+			if (_la===103) {
 				{
-				this.state = 1112;
+				this.state = 1055;
 				this.match(FppParser.REF);
 				}
 			}
 
-			this.state = 1115;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 1116;
+			this.state = 1058;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 1059;
 			this.match(FppParser.T__3);
-			this.state = 1117;
-			_localctx._type = this.typeName();
+			this.state = 1060;
+			localctx._type_ = this.typeName();
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5006,60 +4775,36 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public formalParameterN(): FormalParameterNContext {
-		let _localctx: FormalParameterNContext = new FormalParameterNContext(this._ctx, this.state);
-		this.enterRule(_localctx, 156, FppParser.RULE_formalParameterN);
-		let _la: number;
+		let localctx: FormalParameterNContext = new FormalParameterNContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 148, FppParser.RULE_formalParameterN);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1120;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
-				{
-				this.state = 1119;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 1122;
+			this.state = 1062;
 			this.formalParameter();
-			this.state = 1128;
+			{
+			this.state = 1064;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 143, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 128, this._ctx) ) {
 			case 1:
 				{
-				this.state = 1124;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				if (_la === FppParser.T__4) {
-					{
-					this.state = 1123;
-					this.match(FppParser.T__4);
-					}
-				}
-
-				this.state = 1126;
-				this.postMultiAnnotation();
+				this.state = 1063;
+				this.match(FppParser.T__4);
 				}
 				break;
-
-			case 2:
-				{
-				this.state = 1127;
-				this.commaDelim();
-				}
-				break;
+			}
+			this.state = 1066;
+			this.commaDelim();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5069,60 +4814,43 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public formalParamaterL(): FormalParamaterLContext {
-		let _localctx: FormalParamaterLContext = new FormalParamaterLContext(this._ctx, this.state);
-		this.enterRule(_localctx, 158, FppParser.RULE_formalParamaterL);
+		let localctx: FormalParamaterLContext = new FormalParamaterLContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 150, FppParser.RULE_formalParamaterL);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1131;
+			this.state = 1068;
+			this.formalParameter();
+			this.state = 1073;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION) {
+			if (_la===5 || _la===17) {
 				{
-				this.state = 1130;
-				this.preAnnotation();
-				}
-			}
-
-			this.state = 1133;
-			this.formalParameter();
-			this.state = 1139;
-			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 146, this._ctx) ) {
-			case 1:
-				{
-				this.state = 1135;
+				this.state = 1070;
 				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				if (_la === FppParser.T__4) {
+				switch ( this._interp.adaptivePredict(this._input, 129, this._ctx) ) {
+				case 1:
 					{
-					this.state = 1134;
+					this.state = 1069;
 					this.match(FppParser.T__4);
 					}
+					break;
 				}
-
-				this.state = 1137;
-				this.postMultiAnnotation();
-				}
-				break;
-
-			case 2:
-				{
-				this.state = 1138;
+				this.state = 1072;
 				this.commaDelim();
 				}
-				break;
 			}
+
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5132,66 +4860,66 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public formalParameterList(): FormalParameterListContext {
-		let _localctx: FormalParameterListContext = new FormalParameterListContext(this._ctx, this.state);
-		this.enterRule(_localctx, 160, FppParser.RULE_formalParameterList);
+		let localctx: FormalParameterListContext = new FormalParameterListContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 152, FppParser.RULE_formalParameterList);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1141;
+			this.state = 1075;
 			this.match(FppParser.T__8);
-			this.state = 1145;
+			this.state = 1079;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 1142;
+				this.state = 1076;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 1147;
+				this.state = 1081;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 1155;
+			this.state = 1089;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.ANNOTATION || _la === FppParser.REF || _la === FppParser.IDENTIFIER) {
+			if (_la===103 || _la===131) {
 				{
-				this.state = 1151;
+				this.state = 1085;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 148, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 132, this._ctx);
 				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 					if (_alt === 1) {
 						{
 						{
-						this.state = 1148;
+						this.state = 1082;
 						this.formalParameterN();
 						}
 						}
 					}
-					this.state = 1153;
+					this.state = 1087;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 148, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 132, this._ctx);
 				}
-				this.state = 1154;
+				this.state = 1088;
 				this.formalParamaterL();
 				}
 			}
 
-			this.state = 1157;
+			this.state = 1091;
 			this.match(FppParser.T__9);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5201,41 +4929,41 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public qualIdent(): QualIdentContext {
-		let _localctx: QualIdentContext = new QualIdentContext(this._ctx, this.state);
-		this.enterRule(_localctx, 162, FppParser.RULE_qualIdent);
+		let localctx: QualIdentContext = new QualIdentContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 154, FppParser.RULE_qualIdent);
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1159;
+			this.state = 1093;
 			this.match(FppParser.IDENTIFIER);
-			this.state = 1164;
+			this.state = 1098;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 150, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 134, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 1160;
+					this.state = 1094;
 					this.match(FppParser.T__10);
-					this.state = 1161;
+					this.state = 1095;
 					this.match(FppParser.IDENTIFIER);
 					}
 					}
 				}
-				this.state = 1166;
+				this.state = 1100;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 150, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 134, this._ctx);
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5245,33 +4973,30 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public intType(): IntTypeContext {
-		let _localctx: IntTypeContext = new IntTypeContext(this._ctx, this.state);
-		this.enterRule(_localctx, 164, FppParser.RULE_intType);
+		let localctx: IntTypeContext = new IntTypeContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 156, FppParser.RULE_intType);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1167;
+			this.state = 1101;
 			_la = this._input.LA(1);
-			if (!(((((_la - 28)) & ~0x1F) === 0 && ((1 << (_la - 28)) & ((1 << (FppParser.I16 - 28)) | (1 << (FppParser.I32 - 28)) | (1 << (FppParser.I64 - 28)) | (1 << (FppParser.I8 - 28)) | (1 << (FppParser.U16 - 28)) | (1 << (FppParser.U32 - 28)) | (1 << (FppParser.U64 - 28)) | (1 << (FppParser.U8 - 28)))) !== 0))) {
+			if(!(((((_la - 28)) & ~0x1F) === 0 && ((1 << (_la - 28)) & 255) !== 0))) {
 			this._errHandler.recoverInline(this);
-			} else {
-				if (this._input.LA(1) === Token.EOF) {
-					this.matchedEOF = true;
-				}
-
+			}
+			else {
 				this._errHandler.reportMatch(this);
-				this.consume();
+			    this.consume();
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5281,59 +5006,56 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public primitiveType(): PrimitiveTypeContext {
-		let _localctx: PrimitiveTypeContext = new PrimitiveTypeContext(this._ctx, this.state);
-		this.enterRule(_localctx, 166, FppParser.RULE_primitiveType);
+		let localctx: PrimitiveTypeContext = new PrimitiveTypeContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 158, FppParser.RULE_primitiveType);
 		let _la: number;
 		try {
-			this.state = 1175;
+			this.state = 1109;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.F32:
-			case FppParser.F64:
-			case FppParser.I16:
-			case FppParser.I32:
-			case FppParser.I64:
-			case FppParser.I8:
-			case FppParser.U16:
-			case FppParser.U32:
-			case FppParser.U64:
-			case FppParser.U8:
-			case FppParser.BOOL:
-				this.enterOuterAlt(_localctx, 1);
+			case 26:
+			case 27:
+			case 28:
+			case 29:
+			case 30:
+			case 31:
+			case 32:
+			case 33:
+			case 34:
+			case 35:
+			case 46:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 1169;
-				_localctx._type = this._input.LT(1);
+				this.state = 1103;
+				localctx._type_ = this._input.LT(1);
 				_la = this._input.LA(1);
-				if (!(((((_la - 26)) & ~0x1F) === 0 && ((1 << (_la - 26)) & ((1 << (FppParser.F32 - 26)) | (1 << (FppParser.F64 - 26)) | (1 << (FppParser.I16 - 26)) | (1 << (FppParser.I32 - 26)) | (1 << (FppParser.I64 - 26)) | (1 << (FppParser.I8 - 26)) | (1 << (FppParser.U16 - 26)) | (1 << (FppParser.U32 - 26)) | (1 << (FppParser.U64 - 26)) | (1 << (FppParser.U8 - 26)) | (1 << (FppParser.BOOL - 26)))) !== 0))) {
-					_localctx._type = this._errHandler.recoverInline(this);
-				} else {
-					if (this._input.LA(1) === Token.EOF) {
-						this.matchedEOF = true;
-					}
-
+				if(!(((((_la - 26)) & ~0x1F) === 0 && ((1 << (_la - 26)) & 1049599) !== 0))) {
+				    localctx._type_ = this._errHandler.recoverInline(this);
+				}
+				else {
 					this._errHandler.reportMatch(this);
-					this.consume();
+				    this.consume();
 				}
 				}
 				break;
-			case FppParser.STRING:
-				this.enterOuterAlt(_localctx, 2);
+			case 116:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 1170;
-				_localctx._type = this.match(FppParser.STRING);
-				this.state = 1173;
+				this.state = 1104;
+				localctx._type_ = this.match(FppParser.STRING);
+				this.state = 1107;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === FppParser.SIZE) {
+				if (_la===113) {
 					{
-					this.state = 1171;
+					this.state = 1105;
 					this.match(FppParser.SIZE);
-					this.state = 1172;
-					_localctx._size = this.match(FppParser.LIT_INT);
+					this.state = 1106;
+					localctx._size = this.match(FppParser.LIT_INT);
 					}
 				}
 
@@ -5345,7 +5067,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5355,38 +5077,38 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public typeName(): TypeNameContext {
-		let _localctx: TypeNameContext = new TypeNameContext(this._ctx, this.state);
-		this.enterRule(_localctx, 168, FppParser.RULE_typeName);
+		let localctx: TypeNameContext = new TypeNameContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 160, FppParser.RULE_typeName);
 		try {
-			this.state = 1179;
+			this.state = 1113;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.F32:
-			case FppParser.F64:
-			case FppParser.I16:
-			case FppParser.I32:
-			case FppParser.I64:
-			case FppParser.I8:
-			case FppParser.U16:
-			case FppParser.U32:
-			case FppParser.U64:
-			case FppParser.U8:
-			case FppParser.BOOL:
-			case FppParser.STRING:
-				this.enterOuterAlt(_localctx, 1);
+			case 26:
+			case 27:
+			case 28:
+			case 29:
+			case 30:
+			case 31:
+			case 32:
+			case 33:
+			case 34:
+			case 35:
+			case 46:
+			case 116:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 1177;
+				this.state = 1111;
 				this.primitiveType();
 				}
 				break;
-			case FppParser.IDENTIFIER:
-				this.enterOuterAlt(_localctx, 2);
+			case 131:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 1178;
+				this.state = 1112;
 				this.qualIdent();
 				}
 				break;
@@ -5396,7 +5118,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5406,44 +5128,44 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public commaDelim(): CommaDelimContext {
-		let _localctx: CommaDelimContext = new CommaDelimContext(this._ctx, this.state);
-		this.enterRule(_localctx, 170, FppParser.RULE_commaDelim);
+		let localctx: CommaDelimContext = new CommaDelimContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 162, FppParser.RULE_commaDelim);
 		try {
 			let _alt: number;
-			this.state = 1193;
+			this.state = 1127;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.T__4:
-				this.enterOuterAlt(_localctx, 1);
+			case 5:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 1181;
+				this.state = 1115;
 				this.match(FppParser.T__4);
-				this.state = 1185;
+				this.state = 1119;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 154, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 138, this._ctx);
 				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 					if (_alt === 1) {
 						{
 						{
-						this.state = 1182;
+						this.state = 1116;
 						this.match(FppParser.NL);
 						}
 						}
 					}
-					this.state = 1187;
+					this.state = 1121;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 154, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 138, this._ctx);
 				}
 				}
 				break;
-			case FppParser.NL:
-				this.enterOuterAlt(_localctx, 2);
+			case 17:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 1189;
+				this.state = 1123;
 				this._errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -5451,7 +5173,7 @@ export class FppParser extends Parser {
 					case 1:
 						{
 						{
-						this.state = 1188;
+						this.state = 1122;
 						this.match(FppParser.NL);
 						}
 						}
@@ -5459,9 +5181,9 @@ export class FppParser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					this.state = 1191;
+					this.state = 1125;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 155, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 139, this._ctx);
 				} while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER);
 				}
 				break;
@@ -5471,7 +5193,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5481,44 +5203,44 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public semiDelim(): SemiDelimContext {
-		let _localctx: SemiDelimContext = new SemiDelimContext(this._ctx, this.state);
-		this.enterRule(_localctx, 172, FppParser.RULE_semiDelim);
+		let localctx: SemiDelimContext = new SemiDelimContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 164, FppParser.RULE_semiDelim);
 		try {
 			let _alt: number;
-			this.state = 1207;
+			this.state = 1141;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.T__11:
-				this.enterOuterAlt(_localctx, 1);
+			case 12:
+				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 1195;
+				this.state = 1129;
 				this.match(FppParser.T__11);
-				this.state = 1199;
+				this.state = 1133;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 157, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 141, this._ctx);
 				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 					if (_alt === 1) {
 						{
 						{
-						this.state = 1196;
+						this.state = 1130;
 						this.match(FppParser.NL);
 						}
 						}
 					}
-					this.state = 1201;
+					this.state = 1135;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 157, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 141, this._ctx);
 				}
 				}
 				break;
-			case FppParser.NL:
-				this.enterOuterAlt(_localctx, 2);
+			case 17:
+				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 1203;
+				this.state = 1137;
 				this._errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -5526,7 +5248,7 @@ export class FppParser extends Parser {
 					case 1:
 						{
 						{
-						this.state = 1202;
+						this.state = 1136;
 						this.match(FppParser.NL);
 						}
 						}
@@ -5534,9 +5256,9 @@ export class FppParser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					this.state = 1205;
+					this.state = 1139;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 158, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 142, this._ctx);
 				} while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER);
 				}
 				break;
@@ -5546,7 +5268,7 @@ export class FppParser extends Parser {
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5556,65 +5278,65 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public arrayExpr(): ArrayExprContext {
-		let _localctx: ArrayExprContext = new ArrayExprContext(this._ctx, this.state);
-		this.enterRule(_localctx, 174, FppParser.RULE_arrayExpr);
+		let localctx: ArrayExprContext = new ArrayExprContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 166, FppParser.RULE_arrayExpr);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1209;
+			this.state = 1143;
 			this.match(FppParser.T__1);
-			this.state = 1213;
+			this.state = 1147;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 1210;
+				this.state = 1144;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 1215;
+				this.state = 1149;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 1225;
+			this.state = 1159;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << FppParser.T__1) | (1 << FppParser.T__5) | (1 << FppParser.T__8) | (1 << FppParser.T__12) | (1 << FppParser.LIT_BOOLEAN) | (1 << FppParser.LIT_STRING) | (1 << FppParser.LIT_FLOAT) | (1 << FppParser.LIT_INT))) !== 0) || _la === FppParser.IDENTIFIER) {
+			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 62923332) !== 0) || _la===131) {
 				{
-				this.state = 1216;
+				this.state = 1150;
 				this.expr(0);
-				this.state = 1222;
+				this.state = 1156;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				while (_la === FppParser.T__4 || _la === FppParser.NL) {
+				while (_la===5 || _la===17) {
 					{
 					{
-					this.state = 1217;
+					this.state = 1151;
 					this.commaDelim();
-					this.state = 1218;
+					this.state = 1152;
 					this.expr(0);
 					}
 					}
-					this.state = 1224;
+					this.state = 1158;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
 				}
 				}
 			}
 
-			this.state = 1227;
+			this.state = 1161;
 			this.match(FppParser.T__2);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5624,26 +5346,26 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public structAssignment(): StructAssignmentContext {
-		let _localctx: StructAssignmentContext = new StructAssignmentContext(this._ctx, this.state);
-		this.enterRule(_localctx, 176, FppParser.RULE_structAssignment);
+		let localctx: StructAssignmentContext = new StructAssignmentContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 168, FppParser.RULE_structAssignment);
 		try {
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1229;
-			_localctx._name = this.match(FppParser.IDENTIFIER);
-			this.state = 1230;
+			this.state = 1163;
+			localctx._name = this.match(FppParser.IDENTIFIER);
+			this.state = 1164;
 			this.match(FppParser.T__0);
-			this.state = 1231;
-			_localctx._value = this.expr(0);
+			this.state = 1165;
+			localctx._value = this.expr(0);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5653,64 +5375,64 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 	// @RuleVersion(0)
 	public structExpr(): StructExprContext {
-		let _localctx: StructExprContext = new StructExprContext(this._ctx, this.state);
-		this.enterRule(_localctx, 178, FppParser.RULE_structExpr);
+		let localctx: StructExprContext = new StructExprContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 170, FppParser.RULE_structExpr);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1233;
+			this.state = 1167;
 			this.match(FppParser.T__5);
-			this.state = 1237;
+			this.state = 1171;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === FppParser.NL) {
+			while (_la===17) {
 				{
 				{
-				this.state = 1234;
+				this.state = 1168;
 				this.match(FppParser.NL);
 				}
 				}
-				this.state = 1239;
+				this.state = 1173;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 1252;
+			this.state = 1186;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === FppParser.IDENTIFIER) {
+			if (_la===131) {
 				{
-				this.state = 1240;
+				this.state = 1174;
 				this.structAssignment();
-				this.state = 1246;
+				this.state = 1180;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 164, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 148, this._ctx);
 				while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 					if (_alt === 1) {
 						{
 						{
-						this.state = 1241;
+						this.state = 1175;
 						this.commaDelim();
-						this.state = 1242;
+						this.state = 1176;
 						this.structAssignment();
 						}
 						}
 					}
-					this.state = 1248;
+					this.state = 1182;
 					this._errHandler.sync(this);
-					_alt = this.interpreter.adaptivePredict(this._input, 164, this._ctx);
+					_alt = this._interp.adaptivePredict(this._input, 148, this._ctx);
 				}
-				this.state = 1250;
+				this.state = 1184;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === FppParser.T__4 || _la === FppParser.NL) {
+				if (_la===5 || _la===17) {
 					{
-					this.state = 1249;
+					this.state = 1183;
 					this.commaDelim();
 					}
 				}
@@ -5718,13 +5440,13 @@ export class FppParser extends Parser {
 				}
 			}
 
-			this.state = 1254;
+			this.state = 1188;
 			this.match(FppParser.T__6);
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5734,7 +5456,7 @@ export class FppParser extends Parser {
 		finally {
 			this.exitRule();
 		}
-		return _localctx;
+		return localctx;
 	}
 
 	public expr(): ExprContext;
@@ -5747,160 +5469,153 @@ export class FppParser extends Parser {
 
 		let _parentctx: ParserRuleContext = this._ctx;
 		let _parentState: number = this.state;
-		let _localctx: ExprContext = new ExprContext(this._ctx, _parentState);
-		let _prevctx: ExprContext = _localctx;
-		let _startState: number = 180;
-		this.enterRecursionRule(_localctx, 180, FppParser.RULE_expr, _p);
+		let localctx: ExprContext = new ExprContext(this, this._ctx, _parentState);
+		let _prevctx: ExprContext = localctx;
+		let _startState: number = 172;
+		this.enterRecursionRule(localctx, 172, FppParser.RULE_expr, _p);
 		let _la: number;
 		try {
 			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
+			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 1270;
+			this.state = 1204;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case FppParser.T__12:
+			case 13:
 				{
-				this.state = 1257;
+				this.state = 1191;
 				this.match(FppParser.T__12);
-				this.state = 1258;
-				_localctx._unary = this.expr(11);
+				this.state = 1192;
+				localctx._unary = this.expr(11);
 				}
 				break;
-			case FppParser.T__1:
+			case 2:
 				{
-				this.state = 1259;
+				this.state = 1193;
 				this.arrayExpr();
 				}
 				break;
-			case FppParser.T__5:
+			case 6:
 				{
-				this.state = 1260;
+				this.state = 1194;
 				this.structExpr();
 				}
 				break;
-			case FppParser.IDENTIFIER:
+			case 131:
 				{
-				this.state = 1261;
+				this.state = 1195;
 				this.qualIdent();
 				}
 				break;
-			case FppParser.LIT_BOOLEAN:
+			case 22:
 				{
-				this.state = 1262;
+				this.state = 1196;
 				this.match(FppParser.LIT_BOOLEAN);
 				}
 				break;
-			case FppParser.LIT_FLOAT:
+			case 24:
 				{
-				this.state = 1263;
+				this.state = 1197;
 				this.match(FppParser.LIT_FLOAT);
 				}
 				break;
-			case FppParser.LIT_INT:
+			case 25:
 				{
-				this.state = 1264;
+				this.state = 1198;
 				this.match(FppParser.LIT_INT);
 				}
 				break;
-			case FppParser.LIT_STRING:
+			case 23:
 				{
-				this.state = 1265;
+				this.state = 1199;
 				this.match(FppParser.LIT_STRING);
 				}
 				break;
-			case FppParser.T__8:
+			case 9:
 				{
-				this.state = 1266;
+				this.state = 1200;
 				this.match(FppParser.T__8);
-				this.state = 1267;
-				_localctx._p = this.expr(0);
-				this.state = 1268;
+				this.state = 1201;
+				localctx._p = this.expr(0);
+				this.state = 1202;
 				this.match(FppParser.T__9);
 				}
 				break;
 			default:
 				throw new NoViableAltException(this);
 			}
-			this._ctx._stop = this._input.tryLT(-1);
-			this.state = 1280;
+			this._ctx.stop = this._input.LT(-1);
+			this.state = 1214;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 169, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 153, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					if (this._parseListeners != null) {
 						this.triggerExitRuleEvent();
 					}
-					_prevctx = _localctx;
+					_prevctx = localctx;
 					{
-					this.state = 1278;
+					this.state = 1212;
 					this._errHandler.sync(this);
-					switch ( this.interpreter.adaptivePredict(this._input, 168, this._ctx) ) {
+					switch ( this._interp.adaptivePredict(this._input, 152, this._ctx) ) {
 					case 1:
 						{
-						_localctx = new ExprContext(_parentctx, _parentState);
-						_localctx._left = _prevctx;
-						this.pushNewRecursionContext(_localctx, _startState, FppParser.RULE_expr);
-						this.state = 1272;
+						localctx = new ExprContext(this, _parentctx, _parentState);
+						localctx._left = _prevctx;
+						this.pushNewRecursionContext(localctx, _startState, FppParser.RULE_expr);
+						this.state = 1206;
 						if (!(this.precpred(this._ctx, 10))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 10)");
 						}
-						this.state = 1273;
-						_localctx._op = this._input.LT(1);
+						this.state = 1207;
+						localctx._op = this._input.LT(1);
 						_la = this._input.LA(1);
-						if (!(_la === FppParser.T__13 || _la === FppParser.T__14)) {
-							_localctx._op = this._errHandler.recoverInline(this);
-						} else {
-							if (this._input.LA(1) === Token.EOF) {
-								this.matchedEOF = true;
-							}
-
-							this._errHandler.reportMatch(this);
-							this.consume();
+						if(!(_la===14 || _la===15)) {
+						    localctx._op = this._errHandler.recoverInline(this);
 						}
-						this.state = 1274;
-						_localctx._right = this.expr(11);
+						else {
+							this._errHandler.reportMatch(this);
+						    this.consume();
+						}
+						this.state = 1208;
+						localctx._right = this.expr(11);
 						}
 						break;
-
 					case 2:
 						{
-						_localctx = new ExprContext(_parentctx, _parentState);
-						_localctx._left = _prevctx;
-						this.pushNewRecursionContext(_localctx, _startState, FppParser.RULE_expr);
-						this.state = 1275;
+						localctx = new ExprContext(this, _parentctx, _parentState);
+						localctx._left = _prevctx;
+						this.pushNewRecursionContext(localctx, _startState, FppParser.RULE_expr);
+						this.state = 1209;
 						if (!(this.precpred(this._ctx, 9))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 9)");
 						}
-						this.state = 1276;
-						_localctx._op = this._input.LT(1);
+						this.state = 1210;
+						localctx._op = this._input.LT(1);
 						_la = this._input.LA(1);
-						if (!(_la === FppParser.T__12 || _la === FppParser.T__15)) {
-							_localctx._op = this._errHandler.recoverInline(this);
-						} else {
-							if (this._input.LA(1) === Token.EOF) {
-								this.matchedEOF = true;
-							}
-
-							this._errHandler.reportMatch(this);
-							this.consume();
+						if(!(_la===13 || _la===16)) {
+						    localctx._op = this._errHandler.recoverInline(this);
 						}
-						this.state = 1277;
-						_localctx._right = this.expr(10);
+						else {
+							this._errHandler.reportMatch(this);
+						    this.consume();
+						}
+						this.state = 1211;
+						localctx._right = this.expr(10);
 						}
 						break;
 					}
 					}
 				}
-				this.state = 1282;
+				this.state = 1216;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 169, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 153, this._ctx);
 			}
 			}
 		}
 		catch (re) {
 			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
+				localctx.exception = re;
 				this._errHandler.reportError(this, re);
 				this._errHandler.recover(this, re);
 			} else {
@@ -5910,931 +5625,503 @@ export class FppParser extends Parser {
 		finally {
 			this.unrollRecursionContexts(_parentctx);
 		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public postAnnotation(): PostAnnotationContext {
-		let _localctx: PostAnnotationContext = new PostAnnotationContext(this._ctx, this.state);
-		this.enterRule(_localctx, 182, FppParser.RULE_postAnnotation);
-		let _la: number;
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 1283;
-			this.match(FppParser.ANNOTATION);
-			this.state = 1285;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			do {
-				{
-				{
-				this.state = 1284;
-				this.match(FppParser.NL);
-				}
-				}
-				this.state = 1287;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-			} while (_la === FppParser.NL);
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public postMultiAnnotation(): PostMultiAnnotationContext {
-		let _localctx: PostMultiAnnotationContext = new PostMultiAnnotationContext(this._ctx, this.state);
-		this.enterRule(_localctx, 184, FppParser.RULE_postMultiAnnotation);
-		let _la: number;
-		try {
-			let _alt: number;
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 1293;
-			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 171, this._ctx);
-			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
-				if (_alt === 1) {
-					{
-					{
-					this.state = 1289;
-					this.match(FppParser.ANNOTATION);
-					this.state = 1290;
-					this.match(FppParser.NL);
-					}
-					}
-				}
-				this.state = 1295;
-				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 171, this._ctx);
-			}
-			this.state = 1296;
-			this.match(FppParser.ANNOTATION);
-			this.state = 1298;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			do {
-				{
-				{
-				this.state = 1297;
-				this.match(FppParser.NL);
-				}
-				}
-				this.state = 1300;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-			} while (_la === FppParser.NL);
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public preAnnotation(): PreAnnotationContext {
-		let _localctx: PreAnnotationContext = new PreAnnotationContext(this._ctx, this.state);
-		this.enterRule(_localctx, 186, FppParser.RULE_preAnnotation);
-		let _la: number;
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 1304;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			do {
-				{
-				{
-				this.state = 1302;
-				this.match(FppParser.ANNOTATION);
-				this.state = 1303;
-				this.match(FppParser.NL);
-				}
-				}
-				this.state = 1306;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-			} while (_la === FppParser.ANNOTATION);
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
+		return localctx;
 	}
 
-	public sempred(_localctx: RuleContext, ruleIndex: number, predIndex: number): boolean {
+	public sempred(localctx: RuleContext, ruleIndex: number, predIndex: number): boolean {
 		switch (ruleIndex) {
-		case 90:
-			return this.expr_sempred(_localctx as ExprContext, predIndex);
+		case 86:
+			return this.expr_sempred(localctx as ExprContext, predIndex);
 		}
 		return true;
 	}
-	private expr_sempred(_localctx: ExprContext, predIndex: number): boolean {
+	private expr_sempred(localctx: ExprContext, predIndex: number): boolean {
 		switch (predIndex) {
 		case 0:
 			return this.precpred(this._ctx, 10);
-
 		case 1:
 			return this.precpred(this._ctx, 9);
 		}
 		return true;
 	}
 
-	private static readonly _serializedATNSegments: number = 3;
-	private static readonly _serializedATNSegment0: string =
-		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\x85\u051F\x04" +
-		"\x02\t\x02\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x04\x06\t\x06\x04" +
-		"\x07\t\x07\x04\b\t\b\x04\t\t\t\x04\n\t\n\x04\v\t\v\x04\f\t\f\x04\r\t\r" +
-		"\x04\x0E\t\x0E\x04\x0F\t\x0F\x04\x10\t\x10\x04\x11\t\x11\x04\x12\t\x12" +
-		"\x04\x13\t\x13\x04\x14\t\x14\x04\x15\t\x15\x04\x16\t\x16\x04\x17\t\x17" +
-		"\x04\x18\t\x18\x04\x19\t\x19\x04\x1A\t\x1A\x04\x1B\t\x1B\x04\x1C\t\x1C" +
-		"\x04\x1D\t\x1D\x04\x1E\t\x1E\x04\x1F\t\x1F\x04 \t \x04!\t!\x04\"\t\"\x04" +
-		"#\t#\x04$\t$\x04%\t%\x04&\t&\x04\'\t\'\x04(\t(\x04)\t)\x04*\t*\x04+\t" +
-		"+\x04,\t,\x04-\t-\x04.\t.\x04/\t/\x040\t0\x041\t1\x042\t2\x043\t3\x04" +
-		"4\t4\x045\t5\x046\t6\x047\t7\x048\t8\x049\t9\x04:\t:\x04;\t;\x04<\t<\x04" +
-		"=\t=\x04>\t>\x04?\t?\x04@\t@\x04A\tA\x04B\tB\x04C\tC\x04D\tD\x04E\tE\x04" +
-		"F\tF\x04G\tG\x04H\tH\x04I\tI\x04J\tJ\x04K\tK\x04L\tL\x04M\tM\x04N\tN\x04" +
-		"O\tO\x04P\tP\x04Q\tQ\x04R\tR\x04S\tS\x04T\tT\x04U\tU\x04V\tV\x04W\tW\x04" +
-		"X\tX\x04Y\tY\x04Z\tZ\x04[\t[\x04\\\t\\\x04]\t]\x04^\t^\x04_\t_\x03\x02" +
-		"\x07\x02\xC0\n\x02\f\x02\x0E\x02\xC3\v\x02\x03\x02\x03\x02\x03\x02\x05" +
-		"\x02\xC8\n\x02\x07\x02\xCA\n\x02\f\x02\x0E\x02\xCD\v\x02\x03\x02\x07\x02" +
-		"\xD0\n\x02\f\x02\x0E\x02\xD3\v\x02\x03\x02\x03\x02\x03\x03\x07\x03\xD8" +
-		"\n\x03\f\x03\x0E\x03\xDB\v\x03\x03\x03\x03\x03\x03\x03\x05\x03\xE0\n\x03" +
-		"\x07\x03\xE2\n\x03\f\x03\x0E\x03\xE5\v\x03\x03\x03\x07\x03\xE8\n\x03\f" +
-		"\x03\x0E\x03\xEB\v\x03\x03\x03\x03\x03\x03\x04\x07\x04\xF0\n\x04\f\x04" +
-		"\x0E\x04\xF3\v\x04\x03\x04\x03\x04\x03\x04\x05\x04\xF8\n\x04\x07\x04\xFA" +
-		"\n\x04\f\x04\x0E\x04\xFD\v\x04\x03\x04\x07\x04\u0100\n\x04\f\x04\x0E\x04" +
-		"\u0103\v\x04\x03\x04\x03\x04\x03\x05\x03\x05\x03\x05\x03\x06\x03\x06\x03" +
-		"\x06\x03\x06\x03\x06\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03" +
-		"\x07\x03\x07\x03\x07\x05\x07\u0118\n\x07\x03\x07\x03\x07\x05\x07\u011C" +
-		"\n\x07\x03\b\x03\b\x03\b\x03\b\x03\b\x03\t\x03\t\x03\t\x03\t\x03\t\x03" +
-		"\t\x05\t\u0129\n\t\x03\t\x03\t\x03\t\x05\t\u012E\n\t\x03\n\x05\n\u0131" +
-		"\n\n\x03\n\x03\n\x05\n\u0135\n\n\x03\n\x03\n\x05\n\u0139\n\n\x03\v\x05" +
-		"\v\u013C\n\v\x03\v\x03\v\x05\v\u0140\n\v\x03\v\x03\v\x05\v\u0144\n\v\x03" +
-		"\f\x03\f\x03\f\x03\f\x07\f\u014A\n\f\f\f\x0E\f\u014D\v\f\x03\f\x07\f\u0150" +
-		"\n\f\f\f\x0E\f\u0153\v\f\x03\f\x05\f\u0156\n\f\x03\f\x03\f\x03\f\x05\f" +
-		"\u015B\n\f\x03\r\x03\r\x03\x0E\x03\x0E\x03\x0F\x03\x0F\x03\x0F\x03\x0F" +
-		"\x05\x0F\u0165\n\x0F\x03\x0F\x03\x0F\x05\x0F\u0169\n\x0F\x03\x0F\x03\x0F" +
-		"\x05\x0F\u016D\n\x0F\x03\x0F\x05\x0F\u0170\n\x0F\x03\x10\x03\x10\x03\x10" +
-		"\x03\x10\x03\x10\x03\x10\x05\x10\u0178\n\x10\x03\x10\x03\x10\x05\x10\u017C" +
-		"\n\x10\x03\x10\x03\x10\x03\x10\x05\x10\u0181\n\x10\x03\x10\x03\x10\x03" +
-		"\x10\x05\x10\u0186\n\x10\x03\x11\x03\x11\x03\x11\x03\x11\x03\x11\x03\x11" +
-		"\x03\x11\x05\x11\u018F\n\x11\x03\x12\x03\x12\x03\x12\x03\x12\x03\x12\x03" +
-		"\x12\x03\x12\x03\x12\x03\x12\x03\x12\x03\x12\x03\x12\x03\x12\x03\x12\x03" +
-		"\x12\x03\x12\x03\x12\x03\x12\x03\x12\x03\x12\x03\x12\x05\x12\u01A6\n\x12" +
-		"\x03\x12\x03\x12\x03\x12\x03\x12\x05\x12\u01AC\n\x12\x03\x13\x03\x13\x05" +
-		"\x13\u01B0\n\x13\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14" +
-		"\x03\x14\x05\x14\u01BA\n\x14\x03\x14\x03\x14\x03\x14\x05\x14\u01BF\n\x14" +
-		"\x03\x14\x05\x14\u01C2\n\x14\x03\x15\x03\x15\x03\x15\x03\x15\x03\x16\x03" +
-		"\x16\x03\x17\x03\x17\x03\x17\x03\x18\x03\x18\x07\x18\u01CF\n\x18\f\x18" +
-		"\x0E\x18\u01D2\v\x18\x03\x18\x03\x18\x03\x18\x03\x18\x07\x18\u01D8\n\x18" +
-		"\f\x18\x0E\x18\u01DB\v\x18\x03\x18\x05\x18\u01DE\n\x18\x05\x18\u01E0\n" +
-		"\x18\x03\x18\x03\x18\x03\x19\x03\x19\x03\x19\x05\x19\u01E7\n\x19\x03\x1A" +
-		"\x03\x1A\x03\x1A\x03\x1A\x03\x1A\x03\x1A\x05\x1A\u01EF\n\x1A\x03\x1A\x03" +
-		"\x1A\x05\x1A\u01F3\n\x1A\x03\x1A\x03\x1A\x05\x1A\u01F7\n\x1A\x03\x1A\x03" +
-		"\x1A\x05\x1A\u01FB\n\x1A\x03\x1A\x03\x1A\x05\x1A\u01FF\n\x1A\x03\x1B\x03" +
-		"\x1B\x03\x1B\x03\x1B\x05\x1B\u0205\n\x1B\x03\x1C\x03\x1C\x03\x1C\x03\x1C" +
-		"\x03\x1C\x03\x1C\x03\x1C\x03\x1C\x03\x1C\x03\x1C\x03\x1D\x03\x1D\x03\x1D" +
-		"\x03\x1D\x05\x1D\u0215\n\x1D\x03\x1E\x03\x1E\x03\x1E\x03\x1E\x05\x1E\u021B" +
-		"\n\x1E\x03\x1F\x03\x1F\x03\x1F\x07\x1F\u0220\n\x1F\f\x1F\x0E\x1F\u0223" +
-		"\v\x1F\x03\x1F\x03\x1F\x03\x1F\x03\x1F\x07\x1F\u0229\n\x1F\f\x1F\x0E\x1F" +
-		"\u022C\v\x1F\x05\x1F\u022E\n\x1F\x03\x1F\x05\x1F\u0231\n\x1F\x03\x1F\x03" +
-		"\x1F\x03 \x05 \u0236\n \x03 \x03 \x03 \x03!\x03!\x03!\x03\"\x03\"\x05" +
-		"\"\u0240\n\"\x03#\x03#\x03#\x03#\x05#\u0246\n#\x03#\x03#\x03$\x03$\x03" +
-		"$\x03%\x03%\x03%\x03&\x03&\x03&\x03&\x03&\x03&\x05&\u0256\n&\x03\'\x05" +
-		"\'\u0259\n\'\x03\'\x03\'\x05\'\u025D\n\'\x03(\x03(\x03(\x03(\x07(\u0263" +
-		"\n(\f(\x0E(\u0266\v(\x03(\x03(\x03(\x07(\u026B\n(\f(\x0E(\u026E\v(\x03" +
-		"(\x07(\u0271\n(\f(\x0E(\u0274\v(\x03(\x05(\u0277\n(\x03)\x03)\x03)\x03" +
-		")\x03)\x03)\x05)\u027F\n)\x03*\x05*\u0282\n*\x03*\x03*\x05*\u0286\n*\x03" +
-		"+\x03+\x03+\x03+\x03+\x07+\u028D\n+\f+\x0E+\u0290\v+\x03+\x03+\x03+\x07" +
-		"+\u0295\n+\f+\x0E+\u0298\v+\x03+\x07+\u029B\n+\f+\x0E+\u029E\v+\x03+\x05" +
-		"+\u02A1\n+\x03,\x03,\x03,\x03,\x03,\x03,\x03,\x03,\x05,\u02AB\n,\x03," +
-		"\x05,\u02AE\n,\x03-\x03-\x03-\x05-\u02B3\n-\x03.\x05.\u02B6\n.\x03.\x03" +
-		".\x05.\u02BA\n.\x03.\x03.\x05.\u02BE\n.\x03/\x05/\u02C1\n/\x03/\x03/\x05" +
-		"/\u02C5\n/\x03/\x03/\x05/\u02C9\n/\x030\x030\x030\x030\x050\u02CF\n0\x03" +
-		"0\x030\x070\u02D3\n0\f0\x0E0\u02D6\v0\x030\x070\u02D9\n0\f0\x0E0\u02DC" +
-		"\v0\x030\x050\u02DF\n0\x030\x030\x030\x050\u02E4\n0\x031\x031\x031\x03" +
-		"1\x031\x031\x031\x031\x031\x031\x031\x051\u02F1\n1\x032\x032\x032\x05" +
-		"2\u02F6\n2\x032\x032\x032\x032\x052\u02FC\n2\x032\x032\x032\x032\x052" +
-		"\u0302\n2\x033\x033\x033\x034\x034\x034\x034\x034\x035\x035\x035\x035" +
-		"\x055\u0310\n5\x035\x035\x055\u0314\n5\x035\x055\u0317\n5\x036\x036\x03" +
-		"6\x036\x036\x036\x056\u031F\n6\x036\x036\x056\u0323\n6\x037\x037\x037" +
-		"\x037\x037\x057\u032A\n7\x037\x037\x037\x057\u032F\n7\x038\x058\u0332" +
-		"\n8\x038\x038\x038\x038\x039\x039\x039\x039\x039\x039\x039\x039\x039\x05" +
-		"9\u0341\n9\x039\x039\x059\u0345\n9\x039\x039\x039\x059\u034A\n9\x039\x03" +
-		"9\x039\x059\u034F\n9\x039\x039\x059\u0353\n9\x039\x039\x059\u0357\n9\x03" +
-		"9\x039\x079\u035B\n9\f9\x0E9\u035E\v9\x039\x039\x039\x079\u0363\n9\f9" +
-		"\x0E9\u0366\v9\x039\x079\u0369\n9\f9\x0E9\u036C\v9\x039\x059\u036F\n9" +
-		"\x03:\x03:\x03;\x03;\x03;\x03;\x03;\x03;\x03;\x03;\x03;\x03;\x03;\x03" +
-		";\x03;\x03;\x03;\x03;\x03;\x03;\x03;\x05;\u0386\n;\x03<\x05<\u0389\n<" +
-		"\x03<\x03<\x05<\u038D\n<\x03=\x03=\x03=\x03=\x03=\x07=\u0394\n=\f=\x0E" +
-		"=\u0397\v=\x03=\x03=\x03=\x07=\u039C\n=\f=\x0E=\u039F\v=\x03=\x07=\u03A2" +
-		"\n=\f=\x0E=\u03A5\v=\x03=\x03=\x03>\x03>\x03>\x05>\u03AC\n>\x03>\x03>" +
-		"\x05>\u03B0\n>\x03?\x05?\u03B3\n?\x03?\x03?\x03?\x03@\x03@\x03@\x03@\x03" +
-		"@\x05@\u03BD\n@\x03A\x03A\x03A\x03A\x03B\x03B\x03B\x03B\x07B\u03C7\nB" +
-		"\fB\x0EB\u03CA\vB\x03B\x03B\x03B\x07B\u03CF\nB\fB\x0EB\u03D2\vB\x03B\x07" +
-		"B\u03D5\nB\fB\x0EB\u03D8\vB\x03B\x03B\x03C\x03C\x03C\x03C\x03C\x03C\x03" +
-		"C\x03C\x05C\u03E4\nC\x03D\x03D\x03D\x03D\x07D\u03EA\nD\fD\x0ED\u03ED\v" +
-		"D\x03D\x05D\u03F0\nD\x03E\x03E\x03E\x03E\x03E\x05E\u03F7\nE\x03F\x03F" +
-		"\x03F\x03G\x03G\x03G\x03G\x03G\x05G\u0401\nG\x03H\x05H\u0404\nH\x03H\x03" +
-		"H\x05H\u0408\nH\x03I\x03I\x03I\x03I\x07I\u040E\nI\fI\x0EI\u0411\vI\x03" +
-		"I\x03I\x03I\x07I\u0416\nI\fI\x0EI\u0419\vI\x03I\x07I\u041C\nI\fI\x0EI" +
-		"\u041F\vI\x03I\x03I\x03J\x03J\x03K\x03K\x03K\x03K\x03K\x03K\x03L\x03L" +
-		"\x03L\x03L\x03L\x03L\x03L\x03L\x03L\x03L\x03L\x03L\x03L\x03L\x05L\u0439" +
-		"\nL\x03M\x05M\u043C\nM\x03M\x03M\x05M\u0440\nM\x03N\x03N\x03N\x03N\x07" +
-		"N\u0446\nN\fN\x0EN\u0449\vN\x03N\x03N\x03N\x07N\u044E\nN\fN\x0EN\u0451" +
-		"\vN\x03N\x07N\u0454\nN\fN\x0EN\u0457\vN\x03N\x03N\x03O\x05O\u045C\nO\x03" +
-		"O\x03O\x03O\x03O\x03P\x05P\u0463\nP\x03P\x03P\x05P\u0467\nP\x03P\x03P" +
-		"\x05P\u046B\nP\x03Q\x05Q\u046E\nQ\x03Q\x03Q\x05Q\u0472\nQ\x03Q\x03Q\x05" +
-		"Q\u0476\nQ\x03R\x03R\x07R\u047A\nR\fR\x0ER\u047D\vR\x03R\x07R\u0480\n" +
-		"R\fR\x0ER\u0483\vR\x03R\x05R\u0486\nR\x03R\x03R\x03S\x03S\x03S\x07S\u048D" +
-		"\nS\fS\x0ES\u0490\vS\x03T\x03T\x03U\x03U\x03U\x03U\x05U\u0498\nU\x05U" +
-		"\u049A\nU\x03V\x03V\x05V\u049E\nV\x03W\x03W\x07W\u04A2\nW\fW\x0EW\u04A5" +
-		"\vW\x03W\x06W\u04A8\nW\rW\x0EW\u04A9\x05W\u04AC\nW\x03X\x03X\x07X\u04B0" +
-		"\nX\fX\x0EX\u04B3\vX\x03X\x06X\u04B6\nX\rX\x0EX\u04B7\x05X\u04BA\nX\x03" +
-		"Y\x03Y\x07Y\u04BE\nY\fY\x0EY\u04C1\vY\x03Y\x03Y\x03Y\x03Y\x07Y\u04C7\n" +
-		"Y\fY\x0EY\u04CA\vY\x05Y\u04CC\nY\x03Y\x03Y\x03Z\x03Z\x03Z\x03Z\x03[\x03" +
-		"[\x07[\u04D6\n[\f[\x0E[\u04D9\v[\x03[\x03[\x03[\x03[\x07[\u04DF\n[\f[" +
-		"\x0E[\u04E2\v[\x03[\x05[\u04E5\n[\x05[\u04E7\n[\x03[\x03[\x03\\\x03\\" +
-		"\x03\\\x03\\\x03\\\x03\\\x03\\\x03\\\x03\\\x03\\\x03\\\x03\\\x03\\\x03" +
-		"\\\x05\\\u04F9\n\\\x03\\\x03\\\x03\\\x03\\\x03\\\x03\\\x07\\\u0501\n\\" +
-		"\f\\\x0E\\\u0504\v\\\x03]\x03]\x06]\u0508\n]\r]\x0E]\u0509\x03^\x03^\x07" +
-		"^\u050E\n^\f^\x0E^\u0511\v^\x03^\x03^\x06^\u0515\n^\r^\x0E^\u0516\x03" +
-		"_\x03_\x06_\u051B\n_\r_\x0E_\u051C\x03_\x02\x02\x03\xB6`\x02\x02\x04\x02" +
-		"\x06\x02\b\x02\n\x02\f\x02\x0E\x02\x10\x02\x12\x02\x14\x02\x16\x02\x18" +
-		"\x02\x1A\x02\x1C\x02\x1E\x02 \x02\"\x02$\x02&\x02(\x02*\x02,\x02.\x02" +
-		"0\x022\x024\x026\x028\x02:\x02<\x02>\x02@\x02B\x02D\x02F\x02H\x02J\x02" +
-		"L\x02N\x02P\x02R\x02T\x02V\x02X\x02Z\x02\\\x02^\x02`\x02b\x02d\x02f\x02" +
-		"h\x02j\x02l\x02n\x02p\x02r\x02t\x02v\x02x\x02z\x02|\x02~\x02\x80\x02\x82" +
-		"\x02\x84\x02\x86\x02\x88\x02\x8A\x02\x8C\x02\x8E\x02\x90\x02\x92\x02\x94" +
-		"\x02\x96\x02\x98\x02\x9A\x02\x9C\x02\x9E\x02\xA0\x02\xA2\x02\xA4\x02\xA6" +
-		"\x02\xA8\x02\xAA\x02\xAC\x02\xAE\x02\xB0\x02\xB2\x02\xB4\x02\xB6\x02\xB8" +
-		"\x02\xBA\x02\xBC\x02\x02\v\x05\x02++//<<\x05\x02,,HHxx\x05\x02[[hh\x84" +
-		"\x84\x05\x02\'\'^^ee\b\x024466RR``}}\x7F\x7F\x03\x02\x1E%\x04\x02\x1C" +
-		"%00\x03\x02\x10\x11\x04\x02\x0F\x0F\x12\x12\x02\u05B7\x02\xC1\x03\x02" +
-		"\x02\x02\x04\xD9\x03\x02\x02\x02\x06\xF1\x03\x02\x02\x02\b\u0106\x03\x02" +
-		"\x02\x02\n\u0109\x03\x02\x02\x02\f\u010E\x03\x02\x02\x02\x0E\u011D\x03" +
-		"\x02\x02\x02\x10\u0122\x03\x02\x02\x02\x12\u0130\x03\x02\x02\x02\x14\u013B" +
-		"\x03\x02\x02\x02\x16\u0145\x03\x02\x02\x02\x18\u015C\x03\x02\x02\x02\x1A" +
-		"\u015E\x03\x02\x02\x02\x1C\u0160\x03\x02\x02\x02\x1E\u0171\x03\x02\x02" +
-		"\x02 \u018E\x03\x02\x02\x02\"\u01AB\x03\x02\x02\x02$\u01AF\x03\x02\x02" +
-		"\x02&\u01B1\x03\x02\x02\x02(\u01C3\x03\x02\x02\x02*\u01C7\x03\x02\x02" +
-		"\x02,\u01C9\x03\x02\x02\x02.\u01CC\x03\x02\x02\x020\u01E6\x03\x02\x02" +
-		"\x022\u01E8\x03\x02\x02\x024\u0200\x03\x02\x02\x026\u0206\x03\x02\x02" +
-		"\x028\u0210\x03\x02\x02\x02:\u0216\x03\x02\x02\x02<\u021C\x03\x02\x02" +
-		"\x02>\u0235\x03\x02\x02\x02@\u023A\x03\x02\x02\x02B\u023F\x03\x02\x02" +
-		"\x02D\u0241\x03\x02\x02\x02F\u0249\x03\x02\x02\x02H\u024C\x03\x02\x02" +
-		"\x02J\u0255\x03\x02\x02\x02L\u0258\x03\x02\x02\x02N\u025E\x03\x02\x02" +
-		"\x02P\u027E\x03\x02\x02\x02R\u0281\x03\x02\x02\x02T\u0287\x03\x02\x02" +
-		"\x02V\u02A2\x03\x02\x02\x02X\u02AF\x03\x02\x02\x02Z\u02B5\x03\x02\x02" +
-		"\x02\\\u02C0\x03\x02\x02\x02^\u02CA\x03\x02\x02\x02`\u02F0\x03\x02\x02" +
-		"\x02b\u02F2\x03\x02\x02\x02d\u0303\x03\x02\x02\x02f\u0306\x03\x02\x02" +
-		"\x02h\u030B\x03\x02\x02\x02j\u0318\x03\x02\x02\x02l\u0324\x03\x02\x02" +
-		"\x02n\u0331\x03\x02\x02\x02p\u0337\x03\x02\x02\x02r\u0370\x03\x02\x02" +
-		"\x02t\u0385\x03\x02\x02\x02v\u0388\x03\x02\x02\x02x\u038E\x03\x02\x02" +
-		"\x02z\u03A8\x03\x02\x02\x02|\u03B2\x03\x02\x02\x02~\u03B7\x03\x02\x02" +
-		"\x02\x80\u03BE\x03\x02\x02\x02\x82\u03C2\x03\x02\x02\x02\x84\u03E3\x03" +
-		"\x02\x02\x02\x86\u03E5\x03\x02\x02\x02\x88\u03F1\x03\x02\x02\x02\x8A\u03F8" +
-		"\x03\x02\x02\x02\x8C\u0400\x03\x02\x02\x02\x8E\u0403\x03\x02\x02\x02\x90" +
-		"\u0409\x03\x02\x02\x02\x92\u0422\x03\x02\x02\x02\x94\u0424\x03\x02\x02" +
-		"\x02\x96\u0438\x03\x02\x02\x02\x98\u043B\x03\x02\x02\x02\x9A\u0441\x03" +
-		"\x02\x02\x02\x9C\u045B\x03\x02\x02\x02\x9E\u0462\x03\x02\x02\x02\xA0\u046D" +
-		"\x03\x02\x02\x02\xA2\u0477\x03\x02\x02\x02\xA4\u0489\x03\x02\x02\x02\xA6" +
-		"\u0491\x03\x02\x02\x02\xA8\u0499\x03\x02\x02\x02\xAA\u049D\x03\x02\x02" +
-		"\x02\xAC\u04AB\x03\x02\x02\x02\xAE\u04B9\x03\x02\x02\x02\xB0\u04BB\x03" +
-		"\x02\x02\x02\xB2\u04CF\x03\x02\x02\x02\xB4\u04D3\x03\x02\x02\x02\xB6\u04F8" +
-		"\x03\x02\x02\x02\xB8\u0505\x03\x02\x02\x02\xBA\u050F\x03\x02\x02\x02\xBC" +
-		"\u051A\x03\x02\x02\x02\xBE\xC0\x07\x13\x02\x02\xBF\xBE\x03\x02\x02\x02" +
-		"\xC0\xC3\x03\x02\x02\x02\xC1\xBF\x03\x02\x02\x02\xC1\xC2\x03\x02\x02\x02" +
-		"\xC2\xCB\x03\x02\x02\x02\xC3\xC1\x03\x02\x02\x02\xC4\xC7\x05\x98M\x02" +
-		"\xC5\xC8\x05\xAEX\x02\xC6\xC8\x07\x02\x02\x03\xC7\xC5\x03\x02\x02\x02" +
-		"\xC7\xC6\x03\x02\x02\x02\xC8\xCA\x03\x02\x02\x02\xC9\xC4\x03\x02\x02\x02" +
-		"\xCA\xCD\x03\x02\x02\x02\xCB\xC9\x03\x02\x02\x02\xCB\xCC\x03\x02\x02\x02" +
-		"\xCC\xD1\x03\x02\x02\x02\xCD\xCB\x03\x02\x02\x02\xCE\xD0\x07\x13\x02\x02" +
-		"\xCF\xCE\x03\x02\x02\x02\xD0\xD3\x03\x02\x02\x02\xD1\xCF\x03\x02\x02\x02" +
-		"\xD1\xD2\x03\x02\x02\x02\xD2\xD4\x03\x02\x02\x02\xD3\xD1\x03\x02\x02\x02" +
-		"\xD4\xD5\x07\x02\x02\x03\xD5\x03\x03\x02\x02\x02\xD6\xD8\x07\x13\x02\x02" +
-		"\xD7\xD6\x03\x02\x02\x02\xD8\xDB\x03\x02\x02\x02\xD9\xD7\x03\x02\x02\x02" +
-		"\xD9\xDA\x03\x02\x02\x02\xDA\xE3\x03\x02\x02\x02\xDB\xD9\x03\x02\x02\x02" +
-		"\xDC\xDF\x05\x8EH\x02\xDD\xE0\x05\xAEX\x02\xDE\xE0\x07\x02\x02\x03\xDF" +
-		"\xDD\x03\x02\x02\x02\xDF\xDE\x03\x02\x02\x02\xE0\xE2\x03\x02\x02\x02\xE1" +
-		"\xDC\x03\x02\x02\x02\xE2\xE5\x03\x02\x02\x02\xE3\xE1\x03\x02\x02\x02\xE3" +
-		"\xE4\x03\x02\x02\x02\xE4\xE9\x03\x02\x02\x02\xE5\xE3\x03\x02\x02\x02\xE6" +
-		"\xE8\x07\x13\x02\x02\xE7\xE6\x03\x02\x02\x02\xE8\xEB\x03\x02\x02\x02\xE9" +
-		"\xE7\x03\x02\x02\x02\xE9\xEA\x03\x02\x02\x02\xEA\xEC\x03\x02\x02\x02\xEB" +
-		"\xE9\x03\x02\x02\x02\xEC\xED\x07\x02\x02\x03\xED\x05\x03\x02\x02\x02\xEE" +
-		"\xF0\x07\x13\x02\x02\xEF\xEE\x03\x02\x02\x02\xF0\xF3\x03\x02\x02\x02\xF1" +
-		"\xEF\x03\x02\x02\x02\xF1\xF2\x03\x02\x02\x02\xF2\xFB\x03\x02\x02\x02\xF3" +
-		"\xF1\x03\x02\x02\x02\xF4\xF7\x05v<\x02\xF5\xF8\x05\xAEX\x02\xF6\xF8\x07" +
-		"\x02\x02\x03\xF7\xF5\x03\x02\x02\x02\xF7\xF6\x03\x02\x02\x02\xF8\xFA\x03" +
-		"\x02\x02\x02\xF9\xF4\x03\x02\x02\x02\xFA\xFD\x03\x02\x02\x02\xFB\xF9\x03" +
-		"\x02\x02\x02\xFB\xFC\x03\x02\x02\x02\xFC\u0101\x03\x02\x02\x02\xFD\xFB" +
-		"\x03\x02\x02\x02\xFE\u0100\x07\x13\x02\x02\xFF\xFE\x03\x02\x02\x02\u0100" +
-		"\u0103\x03\x02\x02\x02\u0101\xFF\x03\x02\x02\x02\u0101\u0102\x03\x02\x02" +
-		"\x02\u0102\u0104\x03\x02\x02\x02\u0103\u0101\x03\x02\x02\x02\u0104\u0105" +
-		"\x07\x02\x02\x03\u0105\x07\x03\x02\x02\x02\u0106\u0107\x07\x7F\x02\x02" +
-		"\u0107\u0108\x07\x85\x02\x02\u0108\t\x03\x02\x02\x02\u0109\u010A\x07\x7F" +
-		"\x02\x02\u010A\u010B\x07\x85\x02\x02\u010B\u010C\x07\x03\x02\x02\u010C" +
-		"\u010D\x05\xAAV\x02\u010D\v\x03\x02\x02\x02\u010E\u010F\x07*\x02\x02\u010F" +
-		"\u0110\x07\x85\x02\x02\u0110\u0111\x07\x03\x02\x02\u0111\u0112\x07\x04" +
-		"\x02\x02\u0112\u0113\x05\xB6\\\x02\u0113\u0114\x07\x05\x02\x02\u0114\u0117" +
-		"\x05\xAAV\x02\u0115\u0116\x079\x02\x02\u0116\u0118\x05\xB0Y\x02\u0117" +
-		"\u0115\x03\x02\x02\x02\u0117\u0118\x03\x02\x02\x02\u0118\u011B\x03\x02" +
-		"\x02\x02\u0119\u011A\x07E\x02\x02\u011A\u011C\x07\x19\x02\x02\u011B\u0119" +
-		"\x03\x02\x02\x02\u011B\u011C\x03\x02\x02\x02\u011C\r\x03\x02\x02\x02\u011D" +
-		"\u011E\x076\x02\x02\u011E\u011F\x07\x85\x02\x02\u011F\u0120\x07\x03\x02" +
-		"\x02\u0120\u0121\x05\xB6\\\x02\u0121\x0F\x03\x02\x02\x02\u0122\u0123\x07" +
-		"\x85\x02\x02\u0123\u0128\x07\x06\x02\x02\u0124\u0125\x07\x04\x02\x02\u0125" +
-		"\u0126\x05\xB6\\\x02\u0126\u0127\x07\x05\x02\x02\u0127\u0129\x03\x02\x02" +
-		"\x02\u0128\u0124\x03\x02\x02\x02\u0128\u0129\x03\x02\x02\x02\u0129\u012A" +
-		"\x03\x02\x02\x02\u012A\u012D\x05\xAAV\x02\u012B\u012C\x07E\x02\x02\u012C" +
-		"\u012E\x07\x19\x02\x02\u012D\u012B\x03\x02\x02\x02\u012D\u012E\x03\x02" +
-		"\x02\x02\u012E\x11\x03\x02\x02\x02\u012F\u0131\x05\xBC_\x02\u0130\u012F" +
-		"\x03\x02\x02\x02\u0130\u0131\x03\x02\x02\x02\u0131\u0132\x03\x02\x02\x02" +
-		"\u0132\u0138\x05\x10\t\x02\u0133\u0135\x07\x07\x02\x02\u0134\u0133\x03" +
-		"\x02\x02\x02\u0134\u0135\x03\x02\x02\x02\u0135\u0136\x03\x02\x02\x02\u0136" +
-		"\u0139\x05\xBA^\x02\u0137\u0139\x05\xACW\x02\u0138\u0134\x03\x02\x02\x02" +
-		"\u0138\u0137\x03\x02\x02\x02\u0139\x13\x03\x02\x02\x02\u013A\u013C\x05" +
-		"\xBC_\x02\u013B\u013A\x03\x02\x02\x02\u013B\u013C\x03\x02\x02\x02\u013C" +
-		"\u013D\x03\x02\x02\x02\u013D\u0143\x05\x10\t\x02\u013E\u0140\x07\x07\x02" +
-		"\x02\u013F\u013E\x03\x02\x02\x02\u013F\u0140\x03\x02\x02\x02\u0140\u0141" +
-		"\x03\x02\x02\x02\u0141\u0144\x05\xBA^\x02\u0142\u0144\x05\xACW\x02\u0143" +
-		"\u013F\x03\x02\x02\x02\u0143\u0142\x03\x02\x02\x02\u0143\u0144\x03\x02" +
-		"\x02\x02\u0144\x15\x03\x02\x02\x02\u0145\u0146\x07w\x02\x02\u0146\u0147" +
-		"\x07\x85\x02\x02\u0147\u014B\x07\b\x02\x02\u0148\u014A\x07\x13\x02\x02" +
-		"\u0149\u0148\x03\x02\x02\x02\u014A\u014D\x03\x02\x02\x02\u014B\u0149\x03" +
-		"\x02\x02\x02\u014B\u014C\x03\x02\x02\x02\u014C\u0155\x03\x02\x02\x02\u014D" +
-		"\u014B\x03\x02\x02\x02\u014E\u0150\x05\x12\n\x02\u014F\u014E\x03\x02\x02" +
-		"\x02\u0150\u0153\x03\x02\x02\x02\u0151\u014F\x03\x02\x02\x02\u0151\u0152" +
-		"\x03\x02\x02\x02\u0152\u0154\x03\x02\x02\x02\u0153\u0151\x03\x02\x02\x02" +
-		"\u0154\u0156\x05\x14\v\x02\u0155\u0151\x03\x02\x02\x02\u0155\u0156\x03" +
-		"\x02\x02\x02\u0156\u0157\x03\x02\x02\x02\u0157\u015A\x07\t\x02\x02\u0158" +
-		"\u0159\x079\x02\x02\u0159\u015B\x05\xB4[\x02\u015A\u0158\x03\x02\x02\x02" +
-		"\u015A\u015B\x03\x02\x02\x02\u015B\x17\x03\x02\x02\x02\u015C\u015D\t\x02" +
-		"\x02\x02\u015D\x19\x03\x02\x02\x02\u015E\u015F\t\x03\x02\x02\u015F\x1B" +
-		"\x03\x02\x02\x02\u0160\u0161\x05\x1A\x0E\x02\u0161\u0162\x073\x02\x02" +
-		"\u0162\u0164\x07\x85\x02\x02\u0163\u0165\x05\xA2R\x02\u0164\u0163\x03" +
-		"\x02\x02\x02\u0164\u0165\x03\x02\x02\x02\u0165\u0168\x03\x02\x02\x02\u0166" +
-		"\u0167\x07Z\x02\x02\u0167\u0169\x05\xB6\\\x02\u0168\u0166\x03\x02\x02" +
-		"\x02\u0168\u0169\x03\x02\x02\x02\u0169\u016C\x03\x02\x02\x02\u016A\u016B" +
-		"\x07a\x02\x02\u016B\u016D\x05\xB6\\\x02\u016C\u016A\x03\x02\x02\x02\u016C" +
-		"\u016D\x03\x02\x02\x02\u016D\u016F\x03\x02\x02\x02\u016E\u0170\x05\x18" +
-		"\r\x02\u016F\u016E\x03\x02\x02\x02\u016F\u0170\x03\x02\x02\x02\u0170\x1D" +
-		"\x03\x02\x02\x02\u0171\u0172\x07]\x02\x02\u0172\u0173\x07\x85\x02\x02" +
-		"\u0173\u0174\x07\x06\x02\x02\u0174\u0177\x05\xAAV\x02\u0175\u0176\x07" +
-		"9\x02\x02\u0176\u0178\x05\xB6\\\x02\u0177\u0175\x03\x02\x02\x02\u0177" +
-		"\u0178\x03\x02\x02\x02\u0178\u017B\x03\x02\x02\x02\u0179";
-	private static readonly _serializedATNSegment1: string =
-		"\u017A\x07L\x02\x02\u017A\u017C\x05\xB6\\\x02\u017B\u0179\x03\x02\x02" +
-		"\x02\u017B\u017C\x03\x02\x02\x02\u017C\u0180\x03\x02\x02\x02\u017D\u017E" +
-		"\x07p\x02\x02\u017E\u017F\x07Z\x02\x02\u017F\u0181\x05\xB6\\\x02\u0180" +
-		"\u017D\x03\x02\x02\x02\u0180\u0181\x03\x02\x02\x02\u0181\u0185\x03\x02" +
-		"\x02\x02\u0182\u0183\x07m\x02\x02\u0183\u0184\x07Z\x02\x02\u0184\u0186" +
-		"\x05\xB6\\\x02\u0185\u0182\x03\x02\x02\x02\u0185\u0186\x03\x02\x02\x02" +
-		"\u0186\x1F\x03\x02\x02\x02\u0187\u0188\x07,\x02\x02\u0188\u018F\x07Q\x02" +
-		"\x02\u0189\u018A\x07H\x02\x02\u018A\u018F\x07Q\x02\x02\u018B\u018C\x07" +
-		"x\x02\x02\u018C\u018F\x07Q\x02\x02\u018D\u018F\x07\\\x02\x02\u018E\u0187" +
-		"\x03\x02\x02\x02\u018E\u0189\x03\x02\x02\x02\u018E\u018B\x03\x02\x02\x02" +
-		"\u018E\u018D\x03\x02\x02\x02\u018F!\x03\x02\x02\x02\u0190\u0191\x073\x02" +
-		"\x02\u0191\u01AC\x07g\x02\x02\u0192\u0193\x073\x02\x02\u0193\u01AC\x07" +
-		"j\x02\x02\u0194\u0195\x073\x02\x02\u0195\u01AC\x07l\x02\x02\u0196\u01AC" +
-		"\x07A\x02\x02\u0197\u0198\x07]\x02\x02\u0198\u01AC\x07F\x02\x02\u0199" +
-		"\u019A\x07]\x02\x02\u019A\u01AC\x07p\x02\x02\u019B\u01AC\x07y\x02\x02" +
-		"\u019C\u019D\x07z\x02\x02\u019D\u01AC\x07A\x02\x02\u019E\u019F\x07|\x02" +
-		"\x02\u019F\u01AC\x07F\x02\x02\u01A0\u01A1\x07c\x02\x02\u01A1\u01AC\x07" +
-		"F\x02\x02\u01A2\u01A3\x07c\x02\x02\u01A3\u01AC\x07k\x02\x02\u01A4\u01A6" +
-		"\x07,\x02\x02\u01A5\u01A4\x03\x02\x02\x02\u01A5\u01A6\x03\x02\x02\x02" +
-		"\u01A6\u01A7\x03\x02\x02\x02\u01A7\u01A8\x07c\x02\x02\u01A8\u01AC\x07" +
-		"g\x02\x02\u01A9\u01AA\x07c\x02\x02\u01AA\u01AC\x07n\x02\x02\u01AB\u0190" +
-		"\x03\x02\x02\x02\u01AB\u0192\x03\x02\x02\x02\u01AB\u0194\x03\x02\x02\x02" +
-		"\u01AB\u0196\x03\x02\x02\x02\u01AB\u0197\x03\x02\x02\x02\u01AB\u0199\x03" +
-		"\x02\x02\x02\u01AB\u019B\x03\x02\x02\x02\u01AB\u019C\x03\x02\x02\x02\u01AB" +
-		"\u019E\x03\x02\x02\x02\u01AB\u01A0\x03\x02\x02\x02\u01AB\u01A2\x03\x02" +
-		"\x02\x02\u01AB\u01A5\x03\x02\x02\x02\u01AB\u01A9\x03\x02\x02\x02\u01AC" +
-		"#\x03\x02\x02\x02\u01AD\u01B0\x07o\x02\x02\u01AE\u01B0\x05\xA4S\x02\u01AF" +
-		"\u01AD\x03\x02\x02\x02\u01AF\u01AE\x03\x02\x02\x02\u01B0%\x03\x02\x02" +
-		"\x02\u01B1\u01B2\x05 \x11\x02\u01B2\u01B3\x07`\x02\x02\u01B3\u01B4\x07" +
-		"\x85\x02\x02\u01B4\u01B9\x07\x06\x02\x02\u01B5\u01B6\x07\x04\x02\x02\u01B6" +
-		"\u01B7\x05\xB6\\\x02\u01B7\u01B8\x07\x05\x02\x02\u01B8\u01BA\x03\x02\x02" +
-		"\x02\u01B9\u01B5\x03\x02\x02\x02\u01B9\u01BA\x03\x02\x02\x02\u01BA\u01BB" +
-		"\x03\x02\x02\x02\u01BB\u01BE\x05$\x13\x02\u01BC\u01BD\x07a\x02\x02\u01BD" +
-		"\u01BF\x05\xB6\\\x02\u01BE\u01BC\x03\x02\x02\x02\u01BE\u01BF\x03\x02\x02" +
-		"\x02\u01BF\u01C1\x03\x02\x02\x02\u01C0\u01C2\x05\x18\r\x02\u01C1\u01C0" +
-		"\x03\x02\x02\x02\u01C1\u01C2\x03\x02\x02\x02\u01C2\'\x03\x02\x02\x02\u01C3" +
-		"\u01C4\x05\"\x12\x02\u01C4\u01C5\x07`\x02\x02\u01C5\u01C6\x07\x85\x02" +
-		"\x02\u01C6)\x03\x02\x02\x02\u01C7\u01C8\t\x04\x02\x02\u01C8+\x03\x02\x02" +
-		"\x02\u01C9\u01CA\x05*\x16\x02\u01CA\u01CB\x05\xB6\\\x02\u01CB-\x03\x02" +
-		"\x02\x02\u01CC\u01D0\x07\b\x02\x02\u01CD\u01CF\x07\x13\x02\x02\u01CE\u01CD" +
-		"\x03\x02\x02\x02\u01CF\u01D2\x03\x02\x02\x02\u01D0\u01CE\x03\x02\x02\x02" +
-		"\u01D0\u01D1\x03\x02\x02\x02\u01D1\u01DF\x03\x02\x02\x02\u01D2\u01D0\x03" +
-		"\x02\x02\x02\u01D3\u01D9\x05,\x17\x02\u01D4\u01D5\x05\xACW\x02\u01D5\u01D6" +
-		"\x05,\x17\x02\u01D6\u01D8\x03\x02\x02\x02\u01D7\u01D4\x03\x02\x02\x02" +
-		"\u01D8\u01DB\x03\x02\x02\x02\u01D9\u01D7\x03\x02\x02\x02\u01D9\u01DA\x03" +
-		"\x02\x02\x02\u01DA\u01DD\x03\x02\x02\x02\u01DB\u01D9\x03\x02\x02\x02\u01DC" +
-		"\u01DE\x05\xACW\x02\u01DD\u01DC\x03\x02\x02\x02\u01DD\u01DE\x03\x02\x02" +
-		"\x02\u01DE\u01E0\x03\x02\x02\x02\u01DF\u01D3\x03\x02\x02\x02\u01DF\u01E0" +
-		"\x03\x02\x02\x02\u01E0\u01E1\x03\x02\x02\x02\u01E1\u01E2\x07\t\x02\x02" +
-		"\u01E2/\x03\x02\x02\x02\u01E3\u01E7\x07)\x02\x02\u01E4\u01E5\x07Y\x02" +
-		"\x02\u01E5\u01E7\x071\x02\x02\u01E6\u01E3\x03\x02\x02\x02\u01E6\u01E4" +
-		"\x03\x02\x02\x02\u01E71\x03\x02\x02\x02\u01E8\u01E9\x07y\x02\x02\u01E9" +
-		"\u01EA\x07\x85\x02\x02\u01EA\u01EB\x07\x06\x02\x02\u01EB\u01EE\x05\xAA" +
-		"V\x02\u01EC\u01ED\x07L\x02\x02\u01ED\u01EF\x05\xB6\\\x02\u01EE\u01EC\x03" +
-		"\x02\x02\x02\u01EE\u01EF\x03\x02\x02\x02\u01EF\u01F2\x03\x02\x02\x02\u01F0" +
-		"\u01F1\x07\x81\x02\x02\u01F1\u01F3\x050\x19\x02\u01F2\u01F0\x03\x02\x02" +
-		"\x02\u01F2\u01F3\x03\x02\x02\x02\u01F3\u01F6\x03\x02\x02\x02\u01F4\u01F5" +
-		"\x07E\x02\x02\u01F5\u01F7\x07\x19\x02\x02\u01F6\u01F4\x03\x02\x02\x02" +
-		"\u01F6\u01F7\x03\x02\x02\x02\u01F7\u01FA\x03\x02\x02\x02\u01F8\u01F9\x07" +
-		"U\x02\x02\u01F9\u01FB\x05.\x18\x02\u01FA\u01F8\x03\x02\x02\x02\u01FA\u01FB" +
-		"\x03\x02\x02\x02\u01FB\u01FE\x03\x02\x02\x02\u01FC\u01FD\x07J\x02\x02" +
-		"\u01FD\u01FF\x05.\x18\x02\u01FE\u01FC\x03\x02\x02\x02\u01FE\u01FF\x03" +
-		"\x02\x02\x02\u01FF3\x03\x02\x02\x02\u0200\u0201\x07&\x02\x02\u0201\u0204" +
-		"\x07\x85\x02\x02\u0202\u0203\x07\x06\x02\x02\u0203\u0205\x05\xAAV\x02" +
-		"\u0204\u0202\x03\x02\x02\x02\u0204\u0205\x03\x02\x02\x02\u02055\x03\x02" +
-		"\x02\x02\u0206\u0207\x072\x02\x02\u0207\u0208\x07\x85\x02\x02\u0208\u0209" +
-		"\x07\b\x02\x02\u0209\u020A\x07M\x02\x02\u020A\u020B\x07\x85\x02\x02\u020B" +
-		"\u020C\x05> \x02\u020C\u020D\x07=\x02\x02\u020D\u020E\x05> \x02\u020E" +
-		"\u020F\x07\t\x02\x02\u020F7\x03\x02\x02\x02\u0210\u0211\x07G\x02\x02\u0211" +
-		"\u0214\x07\x85\x02\x02\u0212\u0213\x07\x06\x02\x02\u0213\u0215\x05\xAA" +
-		"V\x02\u0214\u0212\x03\x02\x02\x02\u0214\u0215\x03\x02\x02\x02\u02159\x03" +
-		"\x02\x02\x02\u0216\u0217\x07r\x02\x02\u0217\u021A\x07\x85\x02\x02\u0218" +
-		"\u0219\x07\x06\x02\x02\u0219\u021B\x05\xAAV\x02\u021A\u0218\x03\x02\x02" +
-		"\x02\u021A\u021B\x03\x02\x02\x02\u021B;\x03\x02\x02\x02\u021C\u021D\x07" +
-		";\x02\x02\u021D\u0221\x07\b\x02\x02\u021E\u0220\x07\x13\x02\x02\u021F" +
-		"\u021E\x03\x02\x02\x02\u0220\u0223\x03\x02\x02\x02\u0221\u021F\x03\x02" +
-		"\x02\x02\u0221\u0222\x03\x02\x02\x02\u0222\u022D\x03\x02\x02\x02\u0223" +
-		"\u0221\x03\x02\x02\x02\u0224\u022A\x07\x85\x02\x02\u0225\u0226\x05\xAC" +
-		"W\x02\u0226\u0227\x07\x85\x02\x02\u0227\u0229\x03\x02\x02\x02\u0228\u0225" +
-		"\x03\x02\x02\x02\u0229\u022C\x03\x02\x02\x02\u022A\u0228\x03\x02\x02\x02" +
-		"\u022A\u022B\x03\x02\x02\x02\u022B\u022E\x03\x02\x02\x02\u022C\u022A\x03" +
-		"\x02\x02\x02\u022D\u0224\x03\x02\x02\x02\u022D\u022E\x03\x02\x02\x02\u022E" +
-		"\u0230\x03\x02\x02\x02\u022F\u0231\x05\xACW\x02\u0230\u022F\x03\x02\x02" +
-		"\x02\u0230\u0231\x03\x02\x02\x02\u0231\u0232\x03\x02\x02\x02\u0232\u0233" +
-		"\x07\t\x02\x02\u0233=\x03\x02\x02\x02\u0234\u0236\x05<\x1F\x02\u0235\u0234" +
-		"\x03\x02\x02\x02\u0235\u0236\x03\x02\x02\x02\u0236\u0237\x03\x02\x02\x02" +
-		"\u0237\u0238\x07>\x02\x02\u0238\u0239\x05\xA4S\x02\u0239?\x03\x02\x02" +
-		"\x02\u023A\u023B\x07P\x02\x02\u023B\u023C\x05> \x02\u023CA\x03\x02\x02" +
-		"\x02\u023D\u0240\x05> \x02\u023E\u0240\x05<\x1F\x02\u023F\u023D\x03\x02" +
-		"\x02\x02\u023F\u023E\x03\x02\x02\x02\u0240C\x03\x02\x02\x02\u0241\u0242" +
-		"\x07Y\x02\x02\u0242\u0245\x07\x85\x02\x02\u0243\u0244\x07M\x02\x02\u0244" +
-		"\u0246\x07\x85\x02\x02\u0245\u0243\x03\x02\x02\x02\u0245\u0246\x03\x02" +
-		"\x02\x02\u0246\u0247\x03\x02\x02\x02\u0247\u0248\x05B\"\x02\u0248E\x03" +
-		"\x02\x02\x02\u0249\u024A\x07?\x02\x02\u024A\u024B\x05<\x1F\x02\u024BG" +
-		"\x03\x02\x02\x02\u024C\u024D\x07B\x02\x02\u024D\u024E\x05<\x1F\x02\u024E" +
-		"I\x03\x02\x02\x02\u024F\u0256\x05@!\x02\u0250\u0256\x056\x1C\x02\u0251" +
-		"\u0256\x05N(\x02\u0252\u0256\x05D#\x02\u0253\u0256\x05F$\x02\u0254\u0256" +
-		"\x05H%\x02\u0255\u024F\x03\x02\x02\x02\u0255\u0250\x03\x02\x02\x02\u0255" +
-		"\u0251\x03\x02\x02\x02\u0255\u0252\x03\x02\x02\x02\u0255\u0253\x03\x02" +
-		"\x02\x02\u0255\u0254\x03\x02\x02\x02\u0256K\x03\x02\x02\x02\u0257\u0259" +
-		"\x05\xBC_\x02\u0258\u0257\x03\x02\x02\x02\u0258\u0259\x03\x02\x02\x02" +
-		"\u0259\u025A\x03\x02\x02\x02\u025A\u025C\x05J&\x02\u025B\u025D\x07\x17" +
-		"\x02\x02\u025C\u025B\x03\x02\x02\x02\u025C\u025D\x03\x02\x02\x02\u025D" +
-		"M\x03\x02\x02\x02\u025E\u025F\x07u\x02\x02\u025F\u0276\x07\x85\x02\x02" +
-		"\u0260\u0264\x07\b\x02\x02\u0261\u0263\x07\x13\x02\x02\u0262\u0261\x03" +
-		"\x02\x02\x02\u0263\u0266\x03\x02\x02\x02\u0264\u0262\x03\x02\x02\x02\u0264" +
-		"\u0265\x03\x02\x02\x02\u0265\u026C\x03\x02\x02\x02\u0266\u0264\x03\x02" +
-		"\x02\x02\u0267\u0268\x05L\'\x02\u0268\u0269\x05\xAEX\x02\u0269\u026B\x03" +
-		"\x02\x02\x02\u026A\u0267\x03\x02\x02\x02\u026B\u026E\x03\x02\x02\x02\u026C" +
-		"\u026A\x03\x02\x02\x02\u026C\u026D\x03\x02\x02\x02\u026D\u0272\x03\x02" +
-		"\x02\x02\u026E\u026C\x03\x02\x02\x02\u026F\u0271\x07\x13\x02\x02\u0270" +
-		"\u026F\x03\x02\x02\x02\u0271\u0274\x03\x02\x02\x02\u0272\u0270\x03\x02" +
-		"\x02\x02\u0272\u0273\x03\x02\x02\x02\u0273\u0275\x03\x02\x02\x02\u0274" +
-		"\u0272\x03\x02\x02\x02\u0275\u0277\x07\t\x02\x02\u0276\u0260\x03\x02\x02" +
-		"\x02\u0276\u0277\x03\x02\x02\x02\u0277O\x03\x02\x02\x02\u0278\u027F\x05" +
-		"6\x1C\x02\u0279\u027F\x058\x1D\x02\u027A\u027F\x05@!\x02\u027B\u027F\x05" +
-		":\x1E\x02\u027C\u027F\x05N(\x02\u027D\u027F\x054\x1B\x02\u027E\u0278\x03" +
-		"\x02\x02\x02\u027E\u0279\x03\x02\x02\x02\u027E\u027A\x03\x02\x02\x02\u027E" +
-		"\u027B\x03\x02\x02\x02\u027E\u027C\x03\x02\x02\x02\u027E\u027D\x03\x02" +
-		"\x02\x02\u027FQ\x03\x02\x02\x02\u0280\u0282\x05\xBC_\x02\u0281\u0280\x03" +
-		"\x02\x02\x02\u0281\u0282\x03\x02\x02\x02\u0282\u0283\x03\x02\x02\x02\u0283" +
-		"\u0285\x05P)\x02\u0284\u0286\x07\x17\x02\x02\u0285\u0284\x03\x02\x02\x02" +
-		"\u0285\u0286\x03\x02\x02\x02\u0286S\x03\x02\x02\x02\u0287\u0288\x07u\x02" +
-		"\x02\u0288\u0289\x07V\x02\x02\u0289\u02A0\x07\x85\x02\x02\u028A\u028E" +
-		"\x07\b\x02\x02\u028B\u028D\x07\x13\x02\x02\u028C\u028B\x03\x02\x02\x02" +
-		"\u028D\u0290\x03\x02\x02\x02\u028E\u028C\x03\x02\x02\x02\u028E\u028F\x03" +
-		"\x02\x02\x02\u028F\u0296\x03\x02\x02\x02\u0290\u028E\x03\x02\x02\x02\u0291" +
-		"\u0292\x05R*\x02\u0292\u0293\x05\xAEX\x02\u0293\u0295\x03\x02\x02\x02" +
-		"\u0294\u0291\x03\x02\x02\x02\u0295\u0298\x03\x02\x02\x02\u0296\u0294\x03" +
-		"\x02\x02\x02\u0296\u0297\x03\x02\x02\x02\u0297\u029C\x03\x02\x02\x02\u0298" +
-		"\u0296\x03\x02\x02\x02\u0299\u029B\x07\x13\x02\x02\u029A\u0299\x03\x02" +
-		"\x02\x02\u029B\u029E\x03\x02\x02\x02\u029C\u029A\x03\x02\x02\x02\u029C" +
-		"\u029D\x03\x02\x02\x02\u029D\u029F\x03\x02\x02\x02\u029E\u029C\x03\x02" +
-		"\x02\x02\u029F\u02A1\x07\t\x02\x02\u02A0\u028A\x03\x02\x02\x02\u02A0\u02A1" +
-		"\x03\x02\x02\x02\u02A1U\x03\x02\x02\x02\u02A2\u02A3\x07u\x02\x02\u02A3" +
-		"\u02A4\x07V\x02\x02\u02A4\u02A5\x07R\x02\x02\u02A5\u02A6\x07\x85\x02\x02" +
-		"\u02A6\u02A7\x07\x06\x02\x02\u02A7\u02AA\x05\xA4S\x02\u02A8\u02A9\x07" +
-		"a\x02\x02\u02A9\u02AB\x05\xB6\\\x02\u02AA\u02A8\x03\x02\x02\x02\u02AA" +
-		"\u02AB\x03\x02\x02\x02\u02AB\u02AD\x03\x02\x02\x02\u02AC\u02AE\x05\x18" +
-		"\r\x02\u02AD\u02AC\x03\x02\x02\x02\u02AD\u02AE\x03\x02\x02\x02\u02AEW" +
-		"\x03\x02\x02\x02\u02AF\u02B2\x07\x85\x02\x02\u02B0\u02B1\x07\x03\x02\x02" +
-		"\u02B1\u02B3\x05\xB6\\\x02\u02B2\u02B0\x03\x02\x02\x02\u02B2\u02B3\x03" +
-		"\x02\x02\x02\u02B3Y\x03\x02\x02\x02\u02B4\u02B6\x05\xBC_\x02\u02B5\u02B4" +
-		"\x03\x02\x02\x02\u02B5\u02B6\x03\x02\x02\x02\u02B6\u02B7\x03\x02\x02\x02" +
-		"\u02B7\u02BD\x05X-\x02\u02B8\u02BA\x07\x07\x02\x02\u02B9\u02B8\x03\x02" +
-		"\x02\x02\u02B9\u02BA\x03\x02\x02\x02\u02BA\u02BB\x03\x02\x02\x02\u02BB" +
-		"\u02BE\x05\xB8]\x02\u02BC\u02BE\x05\xACW\x02\u02BD\u02B9\x03\x02\x02\x02" +
-		"\u02BD\u02BC\x03\x02\x02\x02\u02BE[\x03\x02\x02\x02\u02BF\u02C1\x05\xBC" +
-		"_\x02\u02C0\u02BF\x03\x02\x02\x02\u02C0\u02C1\x03\x02\x02\x02\u02C1\u02C2" +
-		"\x03\x02\x02\x02\u02C2\u02C8\x05X-\x02\u02C3\u02C5\x07\x07\x02\x02\u02C4" +
-		"\u02C3\x03\x02\x02\x02\u02C4\u02C5\x03\x02\x02\x02\u02C5\u02C6\x03\x02" +
-		"\x02\x02\u02C6\u02C9\x05\xB8]\x02\u02C7\u02C9\x05\xACW\x02\u02C8\u02C4" +
-		"\x03\x02\x02\x02\u02C8\u02C7\x03\x02\x02\x02\u02C8\u02C9\x03\x02\x02\x02" +
-		"\u02C9]\x03\x02\x02\x02\u02CA\u02CB\x07@\x02\x02\u02CB\u02CE\x07\x85\x02" +
-		"\x02\u02CC\u02CD\x07\x06\x02\x02\u02CD\u02CF\x05\xA6T\x02\u02CE\u02CC" +
-		"\x03\x02\x02\x02\u02CE\u02CF\x03\x02\x02\x02\u02CF\u02D0\x03\x02\x02\x02" +
-		"\u02D0\u02D4\x07\b\x02\x02\u02D1\u02D3\x07\x13\x02\x02\u02D2\u02D1\x03" +
-		"\x02\x02\x02\u02D3\u02D6\x03\x02\x02\x02\u02D4\u02D2\x03\x02\x02\x02\u02D4" +
-		"\u02D5\x03\x02\x02\x02\u02D5\u02DE\x03\x02\x02\x02\u02D6\u02D4\x03\x02" +
-		"\x02\x02\u02D7\u02D9\x05Z.\x02\u02D8\u02D7\x03\x02\x02\x02\u02D9\u02DC" +
-		"\x03\x02\x02\x02\u02DA\u02D8\x03\x02\x02\x02\u02DA\u02DB\x03\x02\x02\x02" +
-		"\u02DB\u02DD\x03\x02\x02\x02\u02DC\u02DA\x03\x02\x02\x02\u02DD\u02DF\x05" +
-		"\\/\x02\u02DE\u02DA\x03\x02\x02\x02\u02DE\u02DF\x03\x02\x02\x02\u02DF" +
-		"\u02E0\x03\x02\x02\x02\u02E0\u02E3\x07\t\x02\x02\u02E1\u02E2\x079\x02" +
-		"\x02\u02E2\u02E4\x05\xB6\\\x02\u02E3\u02E1\x03\x02\x02\x02\u02E3\u02E4" +
-		"\x03\x02\x02\x02\u02E4_\x03\x02\x02\x02\u02E5\u02E6\x07(\x02\x02\u02E6" +
-		"\u02F1\x07J\x02\x02\u02E7\u02E8\x07(\x02\x02\u02E8\u02F1\x07U\x02\x02" +
-		"\u02E9\u02F1\x073\x02\x02\u02EA\u02F1\x07:\x02\x02\u02EB\u02F1\x07D\x02" +
-		"\x02\u02EC\u02ED\x07\x82\x02\x02\u02ED\u02F1\x07J\x02\x02\u02EE\u02EF" +
-		"\x07\x82\x02\x02\u02EF\u02F1\x07U\x02\x02\u02F0\u02E5\x03\x02\x02\x02" +
-		"\u02F0\u02E7\x03\x02\x02\x02\u02F0\u02E9\x03\x02\x02\x02\u02F0\u02EA\x03" +
-		"\x02\x02\x02\u02F0\u02EB\x03\x02\x02\x02\u02F0\u02EC\x03\x02\x02\x02\u02F0" +
-		"\u02EE\x03\x02\x02\x02\u02F1a\x03\x02\x02\x02\u02F2\u02F3\x07A\x02\x02" +
-		"\u02F3\u02F5\x07\x85\x02\x02\u02F4\u02F6\x05\xA2R\x02\u02F5\u02F4\x03" +
-		"\x02\x02\x02\u02F5\u02F6\x03\x02\x02\x02\u02F6\u02F7\x03\x02\x02\x02\u02F7" +
-		"\u02F8\x07q\x02\x02\u02F8\u02FB\x05`1\x02\u02F9\u02FA\x07L\x02\x02\u02FA" +
-		"\u02FC\x05\xB6\\\x02\u02FB\u02F9\x03\x02\x02\x02\u02FB\u02FC\x03\x02\x02" +
-		"\x02\u02FC\u02FD\x03\x02\x02\x02\u02FD\u02FE\x07E\x02\x02\u02FE\u0301" +
-		"\x07\x19\x02\x02\u02FF\u0300\x07{\x02\x02\u0300\u0302\x05\xB6\\\x02\u0301" +
-		"\u02FF\x03\x02\x02\x02\u0301\u0302\x03\x02\x02\x02\u0302c\x03\x02\x02" +
-		"\x02\u0303\u0304\x07O\x02\x02\u0304\u0305\x07\x19\x02\x02\u0305e\x03\x02" +
-		"\x02\x02\u0306\u0307\x07W\x02\x02\u0307\u0308\x07\x85\x02\x02\u0308\u0309" +
-		"\x07\x83\x02\x02\u0309\u030A\x07\x85\x02\x02\u030Ag\x03\x02\x02\x02\u030B" +
-		"\u030C\x07S\x02\x02\u030C\u030D\x07`\x02\x02\u030D\u030F\x07\x85\x02\x02" +
-		"\u030E\u0310\x05\xA2R\x02\u030F\u030E\x03\x02\x02\x02\u030F\u0310\x03" +
-		"\x02\x02\x02\u0310\u0313\x03\x02\x02\x02\u0311\u0312\x07a\x02\x02\u0312" +
-		"\u0314\x05\xB6\\\x02\u0313\u0311\x03\x02\x02\x02\u0313\u0314\x03\x02\x02" +
-		"\x02\u0314\u0316\x03\x02\x02\x02\u0315\u0317\x05\x18\r\x02\u0316\u0315" +
-		"\x03\x02\x02\x02\u0316\u0317\x03\x02\x02\x02\u0317i\x03\x02\x02\x02\u0318" +
-		"\u0319\x07c\x02\x02\u0319\u031A\x07f\x02\x02\u031A\u031B\x07\x85\x02\x02" +
-		"\u031B\u031C\x07\x06\x02\x02\u031C\u031E\x05\xAAV\x02\u031D\u031F\x07" +
-		"*\x02\x02\u031E\u031D\x03\x02\x02\x02\u031E\u031F\x03\x02\x02\x02\u031F" +
-		"\u0322\x03\x02\x02\x02\u0320\u0321\x07L\x02\x02\u0321\u0323\x05\xB6\\" +
-		"\x02\u0322\u0320\x03\x02\x02\x02\u0322\u0323\x03\x02\x02\x02\u0323k\x03" +
-		"\x02\x02\x02\u0324\u0325\x07c\x02\x02\u0325\u0326\x077\x02\x02\u0326\u0329" +
-		"\x07\x85\x02\x02\u0327\u0328\x07L\x02\x02\u0328\u032A\x05\xB6\\\x02\u0329" +
-		"\u0327\x03\x02\x02\x02\u0329\u032A\x03\x02\x02\x02\u032A\u032E\x03\x02" +
-		"\x02\x02\u032B\u032C\x079\x02\x02\u032C\u032D\x07a\x02\x02\u032D\u032F" +
-		"\x05\xB6\\\x02\u032E\u032B\x03\x02\x02\x02\u032E\u032F\x03\x02\x02\x02" +
-		"\u032Fm\x03\x02\x02\x02\u0330\u0332\x05\xBC_\x02\u0331\u0330\x03\x02\x02" +
-		"\x02\u0331\u0332\x03\x02\x02\x02\u0332\u0333\x03\x02\x02\x02\u0333\u0334" +
-		"\x07_\x02\x02\u0334\u0335\x05\xB6\\\x02\u0335\u0336\x07\x19\x02\x02\u0336" +
-		"o\x03\x02\x02\x02\u0337\u0338\x07R\x02\x02\u0338\u0339\x07\x85\x02\x02" +
-		"\u0339\u033A\x07\x06\x02\x02\u033A\u033B\x05\xA4S\x02\u033B\u033C\x07" +
-		".\x02\x02\u033C\u033D\x07L\x02\x02\u033D\u0340\x05\xB6\\\x02\u033E\u033F" +
-		"\x07\x7F\x02\x02\u033F\u0341\x07\x19\x02\x02\u0340\u033E\x03\x02\x02\x02" +
-		"\u0340\u0341\x03\x02\x02\x02\u0341\u0344\x03\x02\x02\x02\u0342\u0343\x07" +
-		"-\x02\x02\u0343\u0345\x07\x19\x02\x02\u0344\u0342\x03\x02\x02\x02\u0344" +
-		"\u0345\x03\x02\x02\x02\u0345\u0349\x03\x02\x02\x02\u0346\u0347\x07d\x02" +
-		"\x02\u0347\u0348\x07s\x02\x02\u0348\u034A\x05\xB6\\\x02\u0349\u0346\x03" +
-		"\x02\x02\x02\u0349\u034A\x03\x02\x02\x02\u034A\u034E\x03\x02\x02\x02\u034B" +
-		"\u034C\x07t\x02\x02\u034C\u034D\x07s\x02\x02\u034D\u034F\x05\xB6\\\x02" +
-		"\u034E\u034B\x03\x02\x02\x02\u034E\u034F\x03\x02\x02\x02\u034F\u0352\x03" +
-		"\x02\x02\x02\u0350\u0351\x07a\x02\x02\u0351\u0353\x05\xB6\\\x02\u0352" +
-		"\u0350\x03\x02\x02\x02\u0352\u0353\x03\x02\x02\x02\u0353\u0356\x03\x02" +
-		"\x02\x02\u0354\u0355\x078\x02\x02\u0355\u0357\x05\xB6\\\x02\u0356\u0354" +
-		"\x03\x02\x02\x02\u0356\u0357\x03\x02\x02\x02\u0357\u036E\x03\x02\x02\x02" +
-		"\u0358\u035C\x07\b\x02\x02\u0359\u035B\x07\x13\x02\x02\u035A\u0359\x03" +
-		"\x02\x02\x02\u035B\u035E\x03\x02\x02\x02\u035C\u035A\x03\x02\x02\x02\u035C" +
-		"\u035D\x03\x02\x02\x02\u035D\u0364\x03\x02\x02\x02\u035E\u035C\x03\x02" +
-		"\x02\x02\u035F\u0360\x05n8\x02\u0360\u0361\x05\xAEX\x02\u0361\u0363\x03" +
-		"\x02\x02\x02\u0362\u035F\x03\x02\x02\x02\u0363\u0366\x03\x02\x02\x02\u0364" +
-		"\u0362\x03\x02\x02\x02\u0364\u0365\x03\x02\x02\x02\u0365\u036A\x03\x02" +
-		"\x02\x02\u0366\u0364\x03\x02\x02\x02\u0367\u0369\x07\x13\x02\x02\u0368" +
-		"\u0367\x03\x02\x02\x02\u0369\u036C\x03\x02\x02\x02\u036A\u0368\x03\x02" +
-		"\x02\x02\u036A\u036B\x03\x02\x02\x02\u036B\u036D\x03\x02\x02\x02\u036C" +
-		"\u036A\x03\x02\x02\x02\u036D\u036F\x07\t\x02\x02\u036E\u0358\x03\x02\x02" +
-		"\x02\u036E\u036F\x03\x02\x02\x02\u036Fq\x03\x02\x02\x02\u0370\u0371\t" +
-		"\x05\x02\x02\u0371s\x03\x02\x02\x02\u0372\u0386\x05\b\x05\x02\u0373\u0386" +
-		"\x05\n\x06\x02\u0374\u0386\x05\f\x07\x02\u0375\u0386\x05\x0E\b\x02\u0376" +
-		"\u0386\x05\x16\f\x02\u0377\u0386\x05\x1C\x0F\x02\u0378\u0386\x05\x1E\x10" +
-		"\x02\u0379\u0386\x05&\x14\x02\u037A\u0386\x05(\x15\x02\u037B\u0386\x05" +
-		"2\x1A\x02\u037C\u0386\x05^0\x02\u037D\u0386\x05b2\x02\u037E\u0386\x05" +
-		"d3\x02\u037F\u0386\x05h5\x02\u0380\u0386\x05f4\x02\u0381\u0386\x05j6\x02" +
-		"\u0382\u0386\x05l7\x02\u0383\u0386\x05V,\x02\u0384\u0386\x05T+\x02\u0385" +
-		"\u0372\x03\x02\x02\x02\u0385\u0373\x03\x02\x02\x02\u0385\u0374\x03\x02" +
-		"\x02\x02\u0385\u0375\x03\x02\x02\x02\u0385\u0376\x03\x02\x02\x02\u0385" +
-		"\u0377\x03\x02\x02\x02\u0385\u0378\x03\x02\x02\x02\u0385\u0379\x03\x02" +
-		"\x02\x02\u0385\u037A\x03\x02\x02\x02\u0385\u037B\x03\x02\x02\x02\u0385" +
-		"\u037C\x03\x02\x02\x02\u0385\u037D\x03\x02\x02\x02\u0385\u037E\x03\x02" +
-		"\x02\x02\u0385\u037F\x03\x02\x02\x02\u0385\u0380\x03\x02\x02\x02\u0385" +
-		"\u0381\x03\x02\x02\x02\u0385\u0382\x03\x02\x02\x02\u0385\u0383\x03\x02" +
-		"\x02\x02\u0385\u0384\x03\x02\x02\x02\u0386u\x03\x02\x02\x02\u0387\u0389" +
-		"\x05\xBC_\x02\u0388\u0387\x03\x02\x02\x02\u0388\u0389\x03\x02\x02\x02" +
-		"\u0389\u038A\x03\x02\x02\x02\u038A\u038C\x05t;\x02\u038B\u038D\x07\x17" +
-		"\x02\x02\u038C\u038B\x03\x02\x02\x02\u038C\u038D\x03\x02\x02\x02\u038D" +
-		"w\x03\x02\x02\x02\u038E\u038F\x05r:\x02\u038F\u0390\x074\x02\x02\u0390" +
-		"\u0391\x07\x85\x02\x02\u0391\u0395\x07\b\x02\x02\u0392\u0394\x07\x13\x02" +
-		"\x02\u0393\u0392\x03\x02\x02\x02\u0394\u0397\x03\x02\x02\x02\u0395\u0393" +
-		"\x03\x02\x02\x02\u0395\u0396\x03\x02\x02\x02\u0396\u039D\x03\x02\x02\x02" +
-		"\u0397\u0395\x03\x02\x02\x02\u0398\u0399\x05v<\x02\u0399\u039A\x05\xAE" +
-		"X\x02\u039A\u039C\x03\x02\x02\x02\u039B\u0398\x03\x02\x02\x02\u039C\u039F" +
-		"\x03\x02\x02\x02\u039D\u039B\x03\x02\x02\x02\u039D\u039E\x03\x02\x02\x02" +
-		"\u039E\u03A3\x03\x02\x02\x02\u039F\u039D\x03\x02\x02\x02\u03A0\u03A2\x07" +
-		"\x13\x02\x02\u03A1\u03A0\x03\x02\x02\x02\u03A2\u03A5\x03\x02\x02\x02\u03A3" +
-		"\u03A1\x03\x02\x02\x02\u03A3\u03A4\x03\x02\x02\x02\u03A4\u03A6\x03\x02" +
-		"\x02\x02\u03A5\u03A3\x03\x02\x02\x02\u03A6\u03A7\x07\t\x02\x02\u03A7y" +
-		"\x03\x02\x02\x02\u03A8\u03A9\x07`\x02\x02\u03A9\u03AB\x07\x85\x02\x02" +
-		"\u03AA\u03AC\x05\xA2R\x02\u03AB\u03AA\x03\x02\x02\x02\u03AB\u03AC\x03" +
-		"\x02\x02\x02\u03AC\u03AF\x03\x02\x02\x02\u03AD\u03AE\x07\n\x02\x02\u03AE" +
-		"\u03B0\x05\xAAV\x02\u03AF\u03AD\x03\x02\x02\x02\u03AF\u03B0\x03\x02\x02" +
-		"\x02\u03B0{\x03\x02\x02\x02\u03B1\u03B3\x07b\x02\x02\u03B2\u03B1\x03\x02" +
-		"\x02\x02\u03B2\u03B3\x03\x02\x02\x02\u03B3\u03B4\x03\x02\x02\x02\u03B4" +
-		"\u03B5\x07R\x02\x02\u03B5\u03B6\x05\xA4S\x02\u03B6}\x03\x02\x02\x02\u03B7" +
-		"\u03BC\x05\xA4S\x02\u03B8\u03B9\x07\x04\x02\x02\u03B9\u03BA\x05\xB6\\" +
-		"\x02\u03BA\u03BB\x07\x05\x02\x02\u03BB\u03BD\x03\x02\x02\x02\u03BC\u03B8" +
-		"\x03\x02\x02\x02\u03BC\u03BD\x03\x02\x02\x02\u03BD\x7F\x03\x02\x02\x02" +
-		"\u03BE\u03BF\x05~@\x02\u03BF\u03C0\x07\n\x02\x02\u03C0\u03C1\x05~@\x02" +
-		"\u03C1\x81\x03\x02\x02\x02\u03C2\u03C3\x075\x02\x02\u03C3\u03C4\x07\x85" +
-		"\x02\x02\u03C4\u03C8\x07\b\x02\x02\u03C5\u03C7\x07\x13\x02\x02\u03C6\u03C5" +
-		"\x03\x02\x02\x02\u03C7\u03CA\x03\x02\x02\x02\u03C8\u03C6\x03\x02\x02\x02" +
-		"\u03C8\u03C9\x03\x02\x02\x02\u03C9\u03D0\x03\x02\x02\x02\u03CA\u03C8\x03" +
-		"\x02\x02\x02\u03CB\u03CC\x05\x80A\x02\u03CC\u03CD\x05\xACW\x02\u03CD\u03CF" +
-		"\x03\x02\x02\x02\u03CE\u03CB\x03\x02\x02\x02\u03CF\u03D2\x03\x02\x02\x02" +
-		"\u03D0\u03CE\x03\x02\x02\x02\u03D0\u03D1\x03\x02\x02\x02\u03D1\u03D6\x03" +
-		"\x02\x02\x02\u03D2\u03D0\x03\x02\x02\x02\u03D3\u03D5\x07\x13\x02\x02\u03D4" +
-		"\u03D3\x03\x02\x02\x02\u03D5\u03D8\x03\x02\x02\x02\u03D6\u03D4\x03\x02" +
-		"\x02\x02\u03D6\u03D7\x03\x02\x02\x02\u03D7\u03D9\x03\x02\x02\x02\u03D8" +
-		"\u03D6\x03\x02\x02\x02\u03D9\u03DA\x07\t\x02\x02\u03DA\x83\x03\x02\x02" +
-		"\x02\u03DB\u03E4\x073\x02\x02\u03DC\u03E4\x07A\x02\x02\u03DD\u03DE\x07" +
-		"z\x02\x02\u03DE\u03E4\x07A\x02\x02\u03DF\u03E4\x07I\x02\x02\u03E0\u03E4" +
-		"\x07]\x02\x02\u03E1\u03E4\x07y\x02\x02\u03E2\u03E4\x07|\x02\x02\u03E3" +
-		"\u03DB\x03\x02\x02\x02\u03E3\u03DC\x03\x02\x02\x02\u03E3\u03DD\x03\x02" +
-		"\x02\x02\u03E3\u03DF\x03\x02\x02\x02\u03E3\u03E0\x03\x02\x02\x02\u03E3" +
-		"\u03E1\x03\x02\x02\x02\u03E3\u03E2\x03\x02\x02\x02\u03E4\x85\x03\x02\x02" +
-		"\x02\u03E5\u03EB\x05\xA4S\x02\u03E6\u03E7\x05\xACW\x02\u03E7\u03E8\x05" +
-		"\xA4S\x02\u03E8\u03EA\x03\x02\x02\x02\u03E9\u03E6\x03\x02\x02\x02\u03EA" +
-		"\u03ED\x03\x02\x02\x02\u03EB\u03E9\x03\x02\x02\x02\u03EB\u03EC\x03\x02" +
-		"\x02\x02\u03EC\u03EF\x03\x02\x02\x02\u03ED\u03EB\x03\x02\x02\x02\u03EE" +
-		"\u03F0\x05\xACW\x02\u03EF\u03EE\x03\x02\x02\x02\u03EF\u03F0\x03\x02\x02" +
-		"\x02\u03F0\x87\x03\x02\x02\x02\u03F1\u03F2\x05\x84C\x02\u03F2\u03F3\x07" +
-		"5\x02\x02\u03F3\u03F4\x07R\x02\x02\u03F4\u03F6\x05\xA4S\x02\u03F5\u03F7" +
-		"\x05\x86D\x02\u03F6\u03F5\x03\x02\x02\x02\u03F6\u03F7\x03\x02\x02\x02" +
-		"\u03F7\x89\x03\x02\x02\x02\u03F8\u03F9\x07N\x02\x02\u03F9\u03FA\x05\xA4" +
-		"S\x02\u03FA\x8B\x03\x02\x02\x02\u03FB\u0401\x05|?\x02\u03FC\u0401\x05" +
-		"\x82B\x02\u03FD\u0401\x05\x88E\x02\u03FE\u0401\x05\x8AF\x02\u03FF\u0401" +
-		"\x05d3\x02\u0400\u03FB\x03\x02\x02\x02\u0400\u03FC\x03\x02\x02\x02\u0400" +
-		"\u03FD\x03\x02\x02\x02\u0400\u03FE\x03\x02\x02\x02\u0400\u03FF\x03\x02" +
-		"\x02\x02\u0401\x8D\x03\x02\x02\x02\u0402\u0404\x05\xBC_\x02\u0403\u0402" +
-		"\x03\x02\x02\x02\u0403\u0404\x03\x02\x02\x02\u0404\u0405\x03\x02\x02\x02" +
-		"\u0405\u0407\x05\x8CG\x02\u0406\u0408\x07\x17\x02\x02\u0407\u0406\x03" +
-		"\x02\x02\x02\u0407\u0408\x03\x02\x02\x02\u0408\x8F\x03\x02\x02\x02\u0409" +
-		"\u040A\x07}\x02\x02\u040A\u040B\x07\x85\x02\x02\u040B\u040F\x07\b\x02" +
-		"\x02\u040C\u040E\x07\x13\x02\x02\u040D\u040C\x03\x02\x02\x02\u040E\u0411" +
-		"\x03\x02\x02\x02\u040F\u040D\x03\x02\x02\x02\u040F\u0410\x03\x02\x02\x02" +
-		"\u0410\u0417\x03\x02\x02\x02\u0411\u040F\x03\x02\x02\x02\u0412\u0413\x05" +
-		"\x8EH\x02\u0413\u0414\x05\xAEX\x02\u0414\u0416\x03\x02\x02\x02\u0415\u0412" +
-		"\x03\x02\x02\x02\u0416\u0419\x03\x02\x02\x02\u0417\u0415\x03\x02\x02\x02" +
-		"\u0417\u0418\x03\x02\x02\x02\u0418\u041D\x03\x02\x02\x02\u0419\u0417\x03" +
-		"\x02\x02\x02\u041A\u041C\x07\x13\x02\x02\u041B\u041A\x03\x02\x02\x02\u041C" +
-		"\u041F\x03\x02\x02\x02\u041D\u041B\x03\x02\x02\x02\u041D\u041E\x03\x02" +
-		"\x02\x02\u041E\u0420\x03\x02\x02\x02\u041F\u041D\x03";
-	private static readonly _serializedATNSegment2: string =
-		"\x02\x02\x02\u0420\u0421\x07\t\x02\x02\u0421\x91\x03\x02\x02\x02\u0422" +
-		"\u0423\t\x06\x02\x02\u0423\x93\x03\x02\x02\x02\u0424\u0425\x07T\x02\x02" +
-		"\u0425\u0426\x05\x92J\x02\u0426\u0427\x05\xA4S\x02\u0427\u0428\x07-\x02" +
-		"\x02\u0428\u0429\x07\x19\x02\x02\u0429\x95\x03\x02\x02\x02\u042A\u0439" +
-		"\x05\b\x05\x02\u042B\u0439\x05\n\x06\x02\u042C\u0439\x05\f\x07\x02\u042D" +
-		"\u0439\x05x=\x02\u042E\u0439\x05p9\x02\u042F\u0439\x05\x0E\b\x02\u0430" +
-		"\u0439\x05\x9AN\x02\u0431\u0439\x05z>\x02\u0432\u0439\x05\x16\f\x02\u0433" +
-		"\u0439\x05\x94K\x02\u0434\u0439\x05^0\x02\u0435\u0439\x05d3\x02\u0436" +
-		"\u0439\x05\x90I\x02\u0437\u0439\x05T+\x02\u0438\u042A\x03\x02\x02\x02" +
-		"\u0438\u042B\x03\x02\x02\x02\u0438\u042C\x03\x02\x02\x02\u0438\u042D\x03" +
-		"\x02\x02\x02\u0438\u042E\x03\x02\x02\x02\u0438\u042F\x03\x02\x02\x02\u0438" +
-		"\u0430\x03\x02\x02\x02\u0438\u0431\x03\x02\x02\x02\u0438\u0432\x03\x02" +
-		"\x02\x02\u0438\u0433\x03\x02\x02\x02\u0438\u0434\x03\x02\x02\x02\u0438" +
-		"\u0435\x03\x02\x02\x02\u0438\u0436\x03\x02\x02\x02\u0438\u0437\x03\x02" +
-		"\x02\x02\u0439\x97\x03\x02\x02\x02\u043A\u043C\x05\xBC_\x02\u043B\u043A" +
-		"\x03\x02\x02\x02\u043B\u043C\x03\x02\x02\x02\u043C\u043D\x03\x02\x02\x02" +
-		"\u043D\u043F\x05\x96L\x02\u043E\u0440\x07\x17\x02\x02\u043F\u043E\x03" +
-		"\x02\x02\x02\u043F\u0440\x03\x02\x02\x02\u0440\x99\x03\x02\x02\x02\u0441" +
-		"\u0442\x07X\x02\x02\u0442\u0443\x07\x85\x02\x02\u0443\u0447\x07\b\x02" +
-		"\x02\u0444\u0446\x07\x13\x02\x02\u0445\u0444\x03\x02\x02\x02\u0446\u0449" +
-		"\x03\x02\x02\x02\u0447\u0445\x03\x02\x02\x02\u0447\u0448\x03\x02\x02\x02" +
-		"\u0448\u044F\x03\x02\x02\x02\u0449\u0447\x03\x02\x02\x02\u044A\u044B\x05" +
-		"\x98M\x02\u044B\u044C\x05\xAEX\x02\u044C\u044E\x03\x02\x02\x02\u044D\u044A" +
-		"\x03\x02\x02\x02\u044E\u0451\x03\x02\x02\x02\u044F\u044D\x03\x02\x02\x02" +
-		"\u044F\u0450\x03\x02\x02\x02\u0450\u0455\x03\x02\x02\x02\u0451\u044F\x03" +
-		"\x02\x02\x02\u0452\u0454\x07\x13\x02\x02\u0453\u0452\x03\x02\x02\x02\u0454" +
-		"\u0457\x03\x02\x02\x02\u0455\u0453\x03\x02\x02\x02\u0455\u0456\x03\x02" +
-		"\x02\x02\u0456\u0458\x03\x02\x02\x02\u0457\u0455\x03\x02\x02\x02\u0458" +
-		"\u0459\x07\t\x02\x02\u0459\x9B\x03\x02\x02\x02\u045A\u045C\x07i\x02\x02" +
-		"\u045B\u045A\x03\x02\x02\x02\u045B\u045C\x03\x02\x02\x02\u045C\u045D\x03" +
-		"\x02\x02\x02\u045D\u045E\x07\x85\x02\x02\u045E\u045F\x07\x06\x02\x02\u045F" +
-		"\u0460\x05\xAAV\x02\u0460\x9D\x03\x02\x02\x02\u0461\u0463\x05\xBC_\x02" +
-		"\u0462\u0461\x03\x02\x02\x02\u0462\u0463\x03\x02\x02\x02\u0463\u0464\x03" +
-		"\x02\x02\x02\u0464\u046A\x05\x9CO\x02\u0465\u0467\x07\x07\x02\x02\u0466" +
-		"\u0465\x03\x02\x02\x02\u0466\u0467\x03\x02\x02\x02\u0467\u0468\x03\x02" +
-		"\x02\x02\u0468\u046B\x05\xBA^\x02\u0469\u046B\x05\xACW\x02\u046A\u0466" +
-		"\x03\x02\x02\x02\u046A\u0469\x03\x02\x02\x02\u046B\x9F\x03\x02\x02\x02" +
-		"\u046C\u046E\x05\xBC_\x02\u046D\u046C\x03\x02\x02\x02\u046D\u046E\x03" +
-		"\x02\x02\x02\u046E\u046F\x03\x02\x02\x02\u046F\u0475\x05\x9CO\x02\u0470" +
-		"\u0472\x07\x07\x02\x02\u0471\u0470\x03\x02\x02\x02\u0471\u0472\x03\x02" +
-		"\x02\x02\u0472\u0473\x03\x02\x02\x02\u0473\u0476\x05\xBA^\x02\u0474\u0476" +
-		"\x05\xACW\x02\u0475\u0471\x03\x02\x02\x02\u0475\u0474\x03\x02\x02\x02" +
-		"\u0475\u0476\x03\x02\x02\x02\u0476\xA1\x03\x02\x02\x02\u0477\u047B\x07" +
-		"\v\x02\x02\u0478\u047A\x07\x13\x02\x02\u0479\u0478\x03\x02\x02\x02\u047A" +
-		"\u047D\x03\x02\x02\x02\u047B\u0479\x03\x02\x02\x02\u047B\u047C\x03\x02" +
-		"\x02\x02\u047C\u0485\x03\x02\x02\x02\u047D\u047B\x03\x02\x02\x02\u047E" +
-		"\u0480\x05\x9EP\x02\u047F\u047E\x03\x02\x02\x02\u0480\u0483\x03\x02\x02" +
-		"\x02\u0481\u047F\x03\x02\x02\x02\u0481\u0482\x03\x02\x02\x02\u0482\u0484" +
-		"\x03\x02\x02\x02\u0483\u0481\x03\x02\x02\x02\u0484\u0486\x05\xA0Q\x02" +
-		"\u0485\u0481\x03\x02\x02\x02\u0485\u0486\x03\x02\x02\x02\u0486\u0487\x03" +
-		"\x02\x02\x02\u0487\u0488\x07\f\x02\x02\u0488\xA3\x03\x02\x02\x02\u0489" +
-		"\u048E\x07\x85\x02\x02\u048A\u048B\x07\r\x02\x02\u048B\u048D\x07\x85\x02" +
-		"\x02\u048C\u048A\x03\x02\x02\x02\u048D\u0490\x03\x02\x02\x02\u048E\u048C" +
-		"\x03\x02\x02\x02\u048E\u048F\x03\x02\x02\x02\u048F\xA5\x03\x02\x02\x02" +
-		"\u0490\u048E\x03\x02\x02\x02\u0491\u0492\t\x07\x02\x02\u0492\xA7\x03\x02" +
-		"\x02\x02\u0493\u049A\t\b\x02\x02\u0494\u0497\x07v\x02\x02\u0495\u0496" +
-		"\x07s\x02\x02\u0496\u0498\x07\x1B\x02\x02\u0497\u0495\x03\x02\x02\x02" +
-		"\u0497\u0498\x03\x02\x02\x02\u0498\u049A\x03\x02\x02\x02\u0499\u0493\x03" +
-		"\x02\x02\x02\u0499\u0494\x03\x02\x02\x02\u049A\xA9\x03\x02\x02\x02\u049B" +
-		"\u049E\x05\xA8U\x02\u049C\u049E\x05\xA4S\x02\u049D\u049B\x03\x02\x02\x02" +
-		"\u049D\u049C\x03\x02\x02\x02\u049E\xAB\x03\x02\x02\x02\u049F\u04A3\x07" +
-		"\x07\x02\x02\u04A0\u04A2\x07\x13\x02\x02\u04A1\u04A0\x03\x02\x02\x02\u04A2" +
-		"\u04A5\x03\x02\x02\x02\u04A3\u04A1\x03\x02\x02\x02\u04A3\u04A4\x03\x02" +
-		"\x02\x02\u04A4\u04AC\x03\x02\x02\x02\u04A5\u04A3\x03\x02\x02\x02\u04A6" +
-		"\u04A8\x07\x13\x02\x02\u04A7\u04A6\x03\x02\x02\x02\u04A8\u04A9\x03\x02" +
-		"\x02\x02\u04A9\u04A7\x03\x02\x02\x02\u04A9\u04AA\x03\x02\x02\x02\u04AA" +
-		"\u04AC\x03\x02\x02\x02\u04AB\u049F\x03\x02\x02\x02\u04AB\u04A7\x03\x02" +
-		"\x02\x02\u04AC\xAD\x03\x02\x02\x02\u04AD\u04B1\x07\x0E\x02\x02\u04AE\u04B0" +
-		"\x07\x13\x02\x02\u04AF\u04AE\x03\x02\x02\x02\u04B0\u04B3\x03\x02\x02\x02" +
-		"\u04B1\u04AF\x03\x02\x02\x02\u04B1\u04B2\x03\x02\x02\x02\u04B2\u04BA\x03" +
-		"\x02\x02\x02\u04B3\u04B1\x03\x02\x02\x02\u04B4\u04B6\x07\x13\x02\x02\u04B5" +
-		"\u04B4\x03\x02\x02\x02\u04B6\u04B7\x03\x02\x02\x02\u04B7\u04B5\x03\x02" +
-		"\x02\x02\u04B7\u04B8\x03\x02\x02\x02\u04B8\u04BA\x03\x02\x02\x02\u04B9" +
-		"\u04AD\x03\x02\x02\x02\u04B9\u04B5\x03\x02\x02\x02\u04BA\xAF\x03\x02\x02" +
-		"\x02\u04BB\u04BF\x07\x04\x02\x02\u04BC\u04BE\x07\x13\x02\x02\u04BD\u04BC" +
-		"\x03\x02\x02\x02\u04BE\u04C1\x03\x02\x02\x02\u04BF\u04BD\x03\x02\x02\x02" +
-		"\u04BF\u04C0\x03\x02\x02\x02\u04C0\u04CB\x03\x02\x02\x02\u04C1\u04BF\x03" +
-		"\x02\x02\x02\u04C2\u04C8\x05\xB6\\\x02\u04C3\u04C4\x05\xACW\x02\u04C4" +
-		"\u04C5\x05\xB6\\\x02\u04C5\u04C7\x03\x02\x02\x02\u04C6\u04C3\x03\x02\x02" +
-		"\x02\u04C7\u04CA\x03\x02\x02\x02\u04C8\u04C6\x03\x02\x02\x02\u04C8\u04C9" +
-		"\x03\x02\x02\x02\u04C9\u04CC\x03\x02\x02\x02\u04CA\u04C8\x03\x02\x02\x02" +
-		"\u04CB\u04C2\x03\x02\x02\x02\u04CB\u04CC\x03\x02\x02\x02\u04CC\u04CD\x03" +
-		"\x02\x02\x02\u04CD\u04CE\x07\x05\x02\x02\u04CE\xB1\x03\x02\x02\x02\u04CF" +
-		"\u04D0\x07\x85\x02\x02\u04D0\u04D1\x07\x03\x02\x02\u04D1\u04D2\x05\xB6" +
-		"\\\x02\u04D2\xB3\x03\x02\x02\x02\u04D3\u04D7\x07\b\x02\x02\u04D4\u04D6" +
-		"\x07\x13\x02\x02\u04D5\u04D4\x03\x02\x02\x02\u04D6\u04D9\x03\x02\x02\x02" +
-		"\u04D7\u04D5\x03\x02\x02\x02\u04D7\u04D8\x03\x02\x02\x02\u04D8\u04E6\x03" +
-		"\x02\x02\x02\u04D9\u04D7\x03\x02\x02\x02\u04DA\u04E0\x05\xB2Z\x02\u04DB" +
-		"\u04DC\x05\xACW\x02\u04DC\u04DD\x05\xB2Z\x02\u04DD\u04DF\x03\x02\x02\x02" +
-		"\u04DE\u04DB\x03\x02\x02\x02\u04DF\u04E2\x03\x02\x02\x02\u04E0\u04DE\x03" +
-		"\x02\x02\x02\u04E0\u04E1\x03\x02\x02\x02\u04E1\u04E4\x03\x02\x02\x02\u04E2" +
-		"\u04E0\x03\x02\x02\x02\u04E3\u04E5\x05\xACW\x02\u04E4\u04E3\x03\x02\x02" +
-		"\x02\u04E4\u04E5\x03\x02\x02\x02\u04E5\u04E7\x03\x02\x02\x02\u04E6\u04DA" +
-		"\x03\x02\x02\x02\u04E6\u04E7\x03\x02\x02\x02\u04E7\u04E8\x03\x02\x02\x02" +
-		"\u04E8\u04E9\x07\t\x02\x02\u04E9\xB5\x03\x02\x02\x02\u04EA\u04EB\b\\\x01" +
-		"\x02\u04EB\u04EC\x07\x0F\x02\x02\u04EC\u04F9\x05\xB6\\\r\u04ED\u04F9\x05" +
-		"\xB0Y\x02\u04EE\u04F9\x05\xB4[\x02\u04EF\u04F9\x05\xA4S\x02\u04F0\u04F9" +
-		"\x07\x18\x02\x02\u04F1\u04F9\x07\x1A\x02\x02\u04F2\u04F9\x07\x1B\x02\x02" +
-		"\u04F3\u04F9\x07\x19\x02\x02\u04F4\u04F5\x07\v\x02\x02\u04F5\u04F6\x05" +
-		"\xB6\\\x02\u04F6\u04F7\x07\f\x02\x02\u04F7\u04F9\x03\x02\x02\x02\u04F8" +
-		"\u04EA\x03\x02\x02\x02\u04F8\u04ED\x03\x02\x02\x02\u04F8\u04EE\x03\x02" +
-		"\x02\x02\u04F8\u04EF\x03\x02\x02\x02\u04F8\u04F0\x03\x02\x02\x02\u04F8" +
-		"\u04F1\x03\x02\x02\x02\u04F8\u04F2\x03\x02\x02\x02\u04F8\u04F3\x03\x02" +
-		"\x02\x02\u04F8\u04F4\x03\x02\x02\x02\u04F9\u0502\x03\x02\x02\x02\u04FA" +
-		"\u04FB\f\f\x02\x02\u04FB\u04FC\t\t\x02\x02\u04FC\u0501\x05\xB6\\\r\u04FD" +
-		"\u04FE\f\v\x02\x02\u04FE\u04FF\t\n\x02\x02\u04FF\u0501\x05\xB6\\\f\u0500" +
-		"\u04FA\x03\x02\x02\x02\u0500\u04FD\x03\x02\x02\x02\u0501\u0504\x03\x02" +
-		"\x02\x02\u0502\u0500\x03\x02\x02\x02\u0502\u0503\x03\x02\x02\x02\u0503" +
-		"\xB7\x03\x02\x02\x02\u0504\u0502\x03\x02\x02\x02\u0505\u0507\x07\x17\x02" +
-		"\x02\u0506\u0508\x07\x13\x02\x02\u0507\u0506\x03\x02\x02\x02\u0508\u0509" +
-		"\x03\x02\x02\x02\u0509\u0507\x03\x02\x02\x02\u0509\u050A\x03\x02\x02\x02" +
-		"\u050A\xB9\x03\x02\x02\x02\u050B\u050C\x07\x17\x02\x02\u050C\u050E\x07" +
-		"\x13\x02\x02\u050D\u050B\x03\x02\x02\x02\u050E\u0511\x03\x02\x02\x02\u050F" +
-		"\u050D\x03\x02\x02\x02\u050F\u0510\x03\x02\x02\x02\u0510\u0512\x03\x02" +
-		"\x02\x02\u0511\u050F\x03\x02\x02\x02\u0512\u0514\x07\x17\x02\x02\u0513" +
-		"\u0515\x07\x13\x02\x02\u0514\u0513\x03\x02\x02\x02\u0515\u0516\x03\x02" +
-		"\x02\x02\u0516\u0514\x03\x02\x02\x02\u0516\u0517\x03\x02\x02\x02\u0517" +
-		"\xBB\x03\x02\x02\x02\u0518\u0519\x07\x17\x02\x02\u0519\u051B\x07\x13\x02" +
-		"\x02\u051A\u0518\x03\x02\x02\x02\u051B\u051C\x03\x02\x02\x02\u051C\u051A" +
-		"\x03\x02\x02\x02\u051C\u051D\x03\x02\x02\x02\u051D\xBD\x03\x02\x02\x02" +
-		"\xB0\xC1\xC7\xCB\xD1\xD9\xDF\xE3\xE9\xF1\xF7\xFB\u0101\u0117\u011B\u0128" +
-		"\u012D\u0130\u0134\u0138\u013B\u013F\u0143\u014B\u0151\u0155\u015A\u0164" +
-		"\u0168\u016C\u016F\u0177\u017B\u0180\u0185\u018E\u01A5\u01AB\u01AF\u01B9" +
-		"\u01BE\u01C1\u01D0\u01D9\u01DD\u01DF\u01E6\u01EE\u01F2\u01F6\u01FA\u01FE" +
-		"\u0204\u0214\u021A\u0221\u022A\u022D\u0230\u0235\u023F\u0245\u0255\u0258" +
-		"\u025C\u0264\u026C\u0272\u0276\u027E\u0281\u0285\u028E\u0296\u029C\u02A0" +
-		"\u02AA\u02AD\u02B2\u02B5\u02B9\u02BD\u02C0\u02C4\u02C8\u02CE\u02D4\u02DA" +
-		"\u02DE\u02E3\u02F0\u02F5\u02FB\u0301\u030F\u0313\u0316\u031E\u0322\u0329" +
-		"\u032E\u0331\u0340\u0344\u0349\u034E\u0352\u0356\u035C\u0364\u036A\u036E" +
-		"\u0385\u0388\u038C\u0395\u039D\u03A3\u03AB\u03AF\u03B2\u03BC\u03C8\u03D0" +
-		"\u03D6\u03E3\u03EB\u03EF\u03F6\u0400\u0403\u0407\u040F\u0417\u041D\u0438" +
-		"\u043B\u043F\u0447\u044F\u0455\u045B\u0462\u0466\u046A\u046D\u0471\u0475" +
-		"\u047B\u0481\u0485\u048E\u0497\u0499\u049D\u04A3\u04A9\u04AB\u04B1\u04B7" +
-		"\u04B9\u04BF\u04C8\u04CB\u04D7\u04E0\u04E4\u04E6\u04F8\u0500\u0502\u0509" +
-		"\u050F\u0516\u051C";
-	public static readonly _serializedATN: string = Utils.join(
-		[
-			FppParser._serializedATNSegment0,
-			FppParser._serializedATNSegment1,
-			FppParser._serializedATNSegment2,
-		],
-		"",
-	);
-	public static __ATN: ATN;
+	public static readonly _serializedATN: number[] = [4,1,131,1218,2,0,7,0,
+	2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,7,7,2,8,7,8,2,9,7,9,
+	2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,2,15,7,15,2,16,7,16,2,
+	17,7,17,2,18,7,18,2,19,7,19,2,20,7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,
+	7,24,2,25,7,25,2,26,7,26,2,27,7,27,2,28,7,28,2,29,7,29,2,30,7,30,2,31,7,
+	31,2,32,7,32,2,33,7,33,2,34,7,34,2,35,7,35,2,36,7,36,2,37,7,37,2,38,7,38,
+	2,39,7,39,2,40,7,40,2,41,7,41,2,42,7,42,2,43,7,43,2,44,7,44,2,45,7,45,2,
+	46,7,46,2,47,7,47,2,48,7,48,2,49,7,49,2,50,7,50,2,51,7,51,2,52,7,52,2,53,
+	7,53,2,54,7,54,2,55,7,55,2,56,7,56,2,57,7,57,2,58,7,58,2,59,7,59,2,60,7,
+	60,2,61,7,61,2,62,7,62,2,63,7,63,2,64,7,64,2,65,7,65,2,66,7,66,2,67,7,67,
+	2,68,7,68,2,69,7,69,2,70,7,70,2,71,7,71,2,72,7,72,2,73,7,73,2,74,7,74,2,
+	75,7,75,2,76,7,76,2,77,7,77,2,78,7,78,2,79,7,79,2,80,7,80,2,81,7,81,2,82,
+	7,82,2,83,7,83,2,84,7,84,2,85,7,85,2,86,7,86,1,0,5,0,176,8,0,10,0,12,0,
+	179,9,0,1,0,1,0,1,0,3,0,184,8,0,5,0,186,8,0,10,0,12,0,189,9,0,1,0,5,0,192,
+	8,0,10,0,12,0,195,9,0,1,0,1,0,1,1,5,1,200,8,1,10,1,12,1,203,9,1,1,1,1,1,
+	1,1,3,1,208,8,1,5,1,210,8,1,10,1,12,1,213,9,1,1,1,5,1,216,8,1,10,1,12,1,
+	219,9,1,1,1,1,1,1,2,5,2,224,8,2,10,2,12,2,227,9,2,1,2,1,2,1,2,3,2,232,8,
+	2,5,2,234,8,2,10,2,12,2,237,9,2,1,2,5,2,240,8,2,10,2,12,2,243,9,2,1,2,1,
+	2,1,3,1,3,1,3,1,4,1,4,1,4,1,4,1,4,1,5,1,5,1,5,1,5,1,5,1,5,1,5,1,5,1,5,3,
+	5,264,8,5,1,5,1,5,3,5,268,8,5,1,6,1,6,1,6,1,6,1,6,1,7,1,7,1,7,1,7,1,7,1,
+	7,3,7,281,8,7,1,7,1,7,1,7,3,7,286,8,7,1,8,1,8,3,8,290,8,8,1,8,1,8,1,9,1,
+	9,3,9,296,8,9,1,9,3,9,299,8,9,1,10,1,10,1,10,1,10,5,10,305,8,10,10,10,12,
+	10,308,9,10,1,10,5,10,311,8,10,10,10,12,10,314,9,10,1,10,3,10,317,8,10,
+	1,10,1,10,1,10,3,10,322,8,10,1,11,1,11,1,12,1,12,1,13,1,13,1,13,1,13,3,
+	13,332,8,13,1,13,1,13,3,13,336,8,13,1,13,1,13,3,13,340,8,13,1,13,3,13,343,
+	8,13,1,14,1,14,1,14,1,14,1,14,1,14,3,14,351,8,14,1,14,1,14,3,14,355,8,14,
+	1,14,1,14,1,14,3,14,360,8,14,1,14,1,14,1,14,3,14,365,8,14,1,15,1,15,1,15,
+	1,15,1,15,1,15,1,15,3,15,374,8,15,1,16,1,16,1,16,1,16,1,16,1,16,1,16,1,
+	16,1,16,1,16,1,16,1,16,1,16,1,16,1,16,1,16,1,16,1,16,1,16,1,16,1,16,3,16,
+	397,8,16,1,16,1,16,1,16,1,16,3,16,403,8,16,1,17,1,17,3,17,407,8,17,1,18,
+	1,18,1,18,1,18,1,18,1,18,1,18,1,18,3,18,417,8,18,1,18,1,18,1,18,3,18,422,
+	8,18,1,18,3,18,425,8,18,1,19,1,19,1,19,1,19,1,19,3,19,432,8,19,1,19,3,19,
+	435,8,19,1,20,1,20,1,21,1,21,1,21,1,22,1,22,5,22,444,8,22,10,22,12,22,447,
+	9,22,1,22,1,22,1,22,1,22,5,22,453,8,22,10,22,12,22,456,9,22,1,22,3,22,459,
+	8,22,3,22,461,8,22,1,22,1,22,1,23,1,23,1,23,3,23,468,8,23,1,24,1,24,1,24,
+	1,24,1,24,1,24,3,24,476,8,24,1,24,1,24,3,24,480,8,24,1,24,1,24,3,24,484,
+	8,24,1,24,1,24,3,24,488,8,24,1,24,1,24,3,24,492,8,24,1,25,1,25,1,25,1,25,
+	3,25,498,8,25,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,27,1,
+	27,1,27,1,27,3,27,514,8,27,1,28,1,28,1,28,1,28,3,28,520,8,28,1,29,1,29,
+	1,29,5,29,525,8,29,10,29,12,29,528,9,29,1,29,1,29,1,29,1,29,5,29,534,8,
+	29,10,29,12,29,537,9,29,3,29,539,8,29,1,29,3,29,542,8,29,1,29,1,29,1,30,
+	3,30,547,8,30,1,30,1,30,1,30,1,31,1,31,1,31,1,32,1,32,3,32,557,8,32,1,33,
+	1,33,1,33,1,33,3,33,563,8,33,1,33,1,33,1,34,1,34,1,34,1,35,1,35,1,35,1,
+	36,1,36,1,36,1,36,1,36,1,36,3,36,579,8,36,1,37,1,37,1,37,1,37,5,37,585,
+	8,37,10,37,12,37,588,9,37,1,37,1,37,1,37,5,37,593,8,37,10,37,12,37,596,
+	9,37,1,37,5,37,599,8,37,10,37,12,37,602,9,37,1,37,3,37,605,8,37,1,38,1,
+	38,1,38,1,38,1,38,1,38,3,38,613,8,38,1,39,1,39,3,39,617,8,39,1,40,1,40,
+	1,40,1,40,1,40,5,40,624,8,40,10,40,12,40,627,9,40,1,40,1,40,1,40,5,40,632,
+	8,40,10,40,12,40,635,9,40,1,40,5,40,638,8,40,10,40,12,40,641,9,40,1,40,
+	3,40,644,8,40,1,41,1,41,1,41,1,41,1,41,1,41,1,41,1,41,3,41,654,8,41,1,41,
+	3,41,657,8,41,1,42,1,42,1,42,3,42,662,8,42,1,43,1,43,3,43,666,8,43,1,43,
+	1,43,1,44,1,44,3,44,672,8,44,1,44,3,44,675,8,44,1,45,1,45,1,45,1,45,3,45,
+	681,8,45,1,45,1,45,5,45,685,8,45,10,45,12,45,688,9,45,1,45,5,45,691,8,45,
+	10,45,12,45,694,9,45,1,45,3,45,697,8,45,1,45,1,45,1,45,3,45,702,8,45,1,
+	46,1,46,1,46,1,46,1,46,1,46,1,46,1,46,1,46,1,46,1,46,3,46,715,8,46,1,47,
+	1,47,1,47,3,47,720,8,47,1,47,1,47,1,47,1,47,3,47,726,8,47,1,47,1,47,1,47,
+	1,47,3,47,732,8,47,1,48,1,48,1,48,1,49,1,49,1,49,1,49,1,49,1,50,1,50,1,
+	50,1,50,3,50,746,8,50,1,50,1,50,3,50,750,8,50,1,50,3,50,753,8,50,1,51,1,
+	51,1,51,1,51,1,51,1,51,3,51,761,8,51,1,51,1,51,3,51,765,8,51,1,52,1,52,
+	1,52,1,52,1,52,3,52,772,8,52,1,52,1,52,1,52,3,52,777,8,52,1,53,1,53,1,53,
+	1,53,1,54,1,54,1,54,1,54,1,54,1,54,1,54,1,54,1,54,3,54,792,8,54,1,54,1,
+	54,3,54,796,8,54,1,54,1,54,1,54,3,54,801,8,54,1,54,1,54,1,54,3,54,806,8,
+	54,1,54,1,54,3,54,810,8,54,1,54,1,54,3,54,814,8,54,1,54,1,54,5,54,818,8,
+	54,10,54,12,54,821,9,54,1,54,1,54,1,54,5,54,826,8,54,10,54,12,54,829,9,
+	54,1,54,5,54,832,8,54,10,54,12,54,835,9,54,1,54,3,54,838,8,54,1,55,1,55,
+	1,56,1,56,1,56,1,56,1,56,1,56,1,56,1,56,1,56,1,56,1,56,1,56,1,56,1,56,1,
+	56,1,56,1,56,1,56,1,56,3,56,861,8,56,1,57,1,57,1,57,1,57,1,57,5,57,868,
+	8,57,10,57,12,57,871,9,57,1,57,1,57,1,57,5,57,876,8,57,10,57,12,57,879,
+	9,57,1,57,5,57,882,8,57,10,57,12,57,885,9,57,1,57,1,57,1,58,1,58,1,58,3,
+	58,892,8,58,1,58,1,58,3,58,896,8,58,1,59,3,59,899,8,59,1,59,1,59,1,59,1,
+	60,1,60,1,60,1,60,1,60,3,60,909,8,60,1,61,3,61,912,8,61,1,61,1,61,1,61,
+	1,61,1,62,1,62,1,62,1,62,5,62,922,8,62,10,62,12,62,925,9,62,1,62,1,62,1,
+	62,5,62,930,8,62,10,62,12,62,933,9,62,1,62,5,62,936,8,62,10,62,12,62,939,
+	9,62,1,62,1,62,1,63,1,63,1,63,1,63,1,63,1,63,1,63,1,63,3,63,951,8,63,1,
+	64,1,64,1,64,1,64,5,64,957,8,64,10,64,12,64,960,9,64,1,64,3,64,963,8,64,
+	1,65,1,65,1,65,1,65,1,65,3,65,970,8,65,1,66,1,66,1,66,1,67,1,67,1,67,1,
+	67,1,67,3,67,980,8,67,1,68,1,68,1,68,1,68,5,68,986,8,68,10,68,12,68,989,
+	9,68,1,68,1,68,1,68,5,68,994,8,68,10,68,12,68,997,9,68,1,68,5,68,1000,8,
+	68,10,68,12,68,1003,9,68,1,68,1,68,1,69,1,69,1,70,1,70,1,70,1,70,1,70,1,
+	70,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,
+	3,71,1029,8,71,1,72,1,72,1,72,1,72,5,72,1035,8,72,10,72,12,72,1038,9,72,
+	1,72,1,72,1,72,5,72,1043,8,72,10,72,12,72,1046,9,72,1,72,5,72,1049,8,72,
+	10,72,12,72,1052,9,72,1,72,1,72,1,73,3,73,1057,8,73,1,73,1,73,1,73,1,73,
+	1,74,1,74,3,74,1065,8,74,1,74,1,74,1,75,1,75,3,75,1071,8,75,1,75,3,75,1074,
+	8,75,1,76,1,76,5,76,1078,8,76,10,76,12,76,1081,9,76,1,76,5,76,1084,8,76,
+	10,76,12,76,1087,9,76,1,76,3,76,1090,8,76,1,76,1,76,1,77,1,77,1,77,5,77,
+	1097,8,77,10,77,12,77,1100,9,77,1,78,1,78,1,79,1,79,1,79,1,79,3,79,1108,
+	8,79,3,79,1110,8,79,1,80,1,80,3,80,1114,8,80,1,81,1,81,5,81,1118,8,81,10,
+	81,12,81,1121,9,81,1,81,4,81,1124,8,81,11,81,12,81,1125,3,81,1128,8,81,
+	1,82,1,82,5,82,1132,8,82,10,82,12,82,1135,9,82,1,82,4,82,1138,8,82,11,82,
+	12,82,1139,3,82,1142,8,82,1,83,1,83,5,83,1146,8,83,10,83,12,83,1149,9,83,
+	1,83,1,83,1,83,1,83,5,83,1155,8,83,10,83,12,83,1158,9,83,3,83,1160,8,83,
+	1,83,1,83,1,84,1,84,1,84,1,84,1,85,1,85,5,85,1170,8,85,10,85,12,85,1173,
+	9,85,1,85,1,85,1,85,1,85,5,85,1179,8,85,10,85,12,85,1182,9,85,1,85,3,85,
+	1185,8,85,3,85,1187,8,85,1,85,1,85,1,86,1,86,1,86,1,86,1,86,1,86,1,86,1,
+	86,1,86,1,86,1,86,1,86,1,86,1,86,3,86,1205,8,86,1,86,1,86,1,86,1,86,1,86,
+	1,86,5,86,1213,8,86,10,86,12,86,1216,9,86,1,86,0,1,172,87,0,2,4,6,8,10,
+	12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,
+	60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,
+	106,108,110,112,114,116,118,120,122,124,126,128,130,132,134,136,138,140,
+	142,144,146,148,150,152,154,156,158,160,162,164,166,168,170,172,0,9,3,0,
+	41,41,45,45,58,58,3,0,42,42,70,70,118,118,3,0,89,89,102,102,130,130,3,0,
+	37,37,92,92,99,99,6,0,50,50,52,52,80,80,94,94,123,123,125,125,1,0,28,35,
+	2,0,26,35,46,46,1,0,14,15,2,0,13,13,16,16,1354,0,177,1,0,0,0,2,201,1,0,
+	0,0,4,225,1,0,0,0,6,246,1,0,0,0,8,249,1,0,0,0,10,254,1,0,0,0,12,269,1,0,
+	0,0,14,274,1,0,0,0,16,287,1,0,0,0,18,293,1,0,0,0,20,300,1,0,0,0,22,323,
+	1,0,0,0,24,325,1,0,0,0,26,327,1,0,0,0,28,344,1,0,0,0,30,373,1,0,0,0,32,
+	402,1,0,0,0,34,406,1,0,0,0,36,408,1,0,0,0,38,426,1,0,0,0,40,436,1,0,0,0,
+	42,438,1,0,0,0,44,441,1,0,0,0,46,467,1,0,0,0,48,469,1,0,0,0,50,493,1,0,
+	0,0,52,499,1,0,0,0,54,509,1,0,0,0,56,515,1,0,0,0,58,521,1,0,0,0,60,546,
+	1,0,0,0,62,551,1,0,0,0,64,556,1,0,0,0,66,558,1,0,0,0,68,566,1,0,0,0,70,
+	569,1,0,0,0,72,578,1,0,0,0,74,580,1,0,0,0,76,612,1,0,0,0,78,614,1,0,0,0,
+	80,618,1,0,0,0,82,645,1,0,0,0,84,658,1,0,0,0,86,663,1,0,0,0,88,669,1,0,
+	0,0,90,676,1,0,0,0,92,714,1,0,0,0,94,716,1,0,0,0,96,733,1,0,0,0,98,736,
+	1,0,0,0,100,741,1,0,0,0,102,754,1,0,0,0,104,766,1,0,0,0,106,778,1,0,0,0,
+	108,782,1,0,0,0,110,839,1,0,0,0,112,860,1,0,0,0,114,862,1,0,0,0,116,888,
+	1,0,0,0,118,898,1,0,0,0,120,903,1,0,0,0,122,911,1,0,0,0,124,917,1,0,0,0,
+	126,950,1,0,0,0,128,952,1,0,0,0,130,964,1,0,0,0,132,971,1,0,0,0,134,979,
+	1,0,0,0,136,981,1,0,0,0,138,1006,1,0,0,0,140,1008,1,0,0,0,142,1028,1,0,
+	0,0,144,1030,1,0,0,0,146,1056,1,0,0,0,148,1062,1,0,0,0,150,1068,1,0,0,0,
+	152,1075,1,0,0,0,154,1093,1,0,0,0,156,1101,1,0,0,0,158,1109,1,0,0,0,160,
+	1113,1,0,0,0,162,1127,1,0,0,0,164,1141,1,0,0,0,166,1143,1,0,0,0,168,1163,
+	1,0,0,0,170,1167,1,0,0,0,172,1204,1,0,0,0,174,176,5,17,0,0,175,174,1,0,
+	0,0,176,179,1,0,0,0,177,175,1,0,0,0,177,178,1,0,0,0,178,187,1,0,0,0,179,
+	177,1,0,0,0,180,183,3,142,71,0,181,184,3,164,82,0,182,184,5,0,0,1,183,181,
+	1,0,0,0,183,182,1,0,0,0,184,186,1,0,0,0,185,180,1,0,0,0,186,189,1,0,0,0,
+	187,185,1,0,0,0,187,188,1,0,0,0,188,193,1,0,0,0,189,187,1,0,0,0,190,192,
+	5,17,0,0,191,190,1,0,0,0,192,195,1,0,0,0,193,191,1,0,0,0,193,194,1,0,0,
+	0,194,196,1,0,0,0,195,193,1,0,0,0,196,197,5,0,0,1,197,1,1,0,0,0,198,200,
+	5,17,0,0,199,198,1,0,0,0,200,203,1,0,0,0,201,199,1,0,0,0,201,202,1,0,0,
+	0,202,211,1,0,0,0,203,201,1,0,0,0,204,207,3,134,67,0,205,208,3,164,82,0,
+	206,208,5,0,0,1,207,205,1,0,0,0,207,206,1,0,0,0,208,210,1,0,0,0,209,204,
+	1,0,0,0,210,213,1,0,0,0,211,209,1,0,0,0,211,212,1,0,0,0,212,217,1,0,0,0,
+	213,211,1,0,0,0,214,216,5,17,0,0,215,214,1,0,0,0,216,219,1,0,0,0,217,215,
+	1,0,0,0,217,218,1,0,0,0,218,220,1,0,0,0,219,217,1,0,0,0,220,221,5,0,0,1,
+	221,3,1,0,0,0,222,224,5,17,0,0,223,222,1,0,0,0,224,227,1,0,0,0,225,223,
+	1,0,0,0,225,226,1,0,0,0,226,235,1,0,0,0,227,225,1,0,0,0,228,231,3,112,56,
+	0,229,232,3,164,82,0,230,232,5,0,0,1,231,229,1,0,0,0,231,230,1,0,0,0,232,
+	234,1,0,0,0,233,228,1,0,0,0,234,237,1,0,0,0,235,233,1,0,0,0,235,236,1,0,
+	0,0,236,241,1,0,0,0,237,235,1,0,0,0,238,240,5,17,0,0,239,238,1,0,0,0,240,
+	243,1,0,0,0,241,239,1,0,0,0,241,242,1,0,0,0,242,244,1,0,0,0,243,241,1,0,
+	0,0,244,245,5,0,0,1,245,5,1,0,0,0,246,247,5,125,0,0,247,248,5,131,0,0,248,
+	7,1,0,0,0,249,250,5,125,0,0,250,251,5,131,0,0,251,252,5,1,0,0,252,253,3,
+	160,80,0,253,9,1,0,0,0,254,255,5,40,0,0,255,256,5,131,0,0,256,257,5,1,0,
+	0,257,258,5,2,0,0,258,259,3,172,86,0,259,260,5,3,0,0,260,263,3,160,80,0,
+	261,262,5,55,0,0,262,264,3,172,86,0,263,261,1,0,0,0,263,264,1,0,0,0,264,
+	267,1,0,0,0,265,266,5,67,0,0,266,268,5,23,0,0,267,265,1,0,0,0,267,268,1,
+	0,0,0,268,11,1,0,0,0,269,270,5,52,0,0,270,271,5,131,0,0,271,272,5,1,0,0,
+	272,273,3,172,86,0,273,13,1,0,0,0,274,275,5,131,0,0,275,280,5,4,0,0,276,
+	277,5,2,0,0,277,278,3,172,86,0,278,279,5,3,0,0,279,281,1,0,0,0,280,276,
+	1,0,0,0,280,281,1,0,0,0,281,282,1,0,0,0,282,285,3,160,80,0,283,284,5,67,
+	0,0,284,286,5,23,0,0,285,283,1,0,0,0,285,286,1,0,0,0,286,15,1,0,0,0,287,
+	289,3,14,7,0,288,290,5,5,0,0,289,288,1,0,0,0,289,290,1,0,0,0,290,291,1,
+	0,0,0,291,292,3,162,81,0,292,17,1,0,0,0,293,298,3,14,7,0,294,296,5,5,0,
+	0,295,294,1,0,0,0,295,296,1,0,0,0,296,297,1,0,0,0,297,299,3,162,81,0,298,
+	295,1,0,0,0,298,299,1,0,0,0,299,19,1,0,0,0,300,301,5,117,0,0,301,302,5,
+	131,0,0,302,306,5,6,0,0,303,305,5,17,0,0,304,303,1,0,0,0,305,308,1,0,0,
+	0,306,304,1,0,0,0,306,307,1,0,0,0,307,316,1,0,0,0,308,306,1,0,0,0,309,311,
+	3,16,8,0,310,309,1,0,0,0,311,314,1,0,0,0,312,310,1,0,0,0,312,313,1,0,0,
+	0,313,315,1,0,0,0,314,312,1,0,0,0,315,317,3,18,9,0,316,312,1,0,0,0,316,
+	317,1,0,0,0,317,318,1,0,0,0,318,321,5,7,0,0,319,320,5,55,0,0,320,322,3,
+	170,85,0,321,319,1,0,0,0,321,322,1,0,0,0,322,21,1,0,0,0,323,324,7,0,0,0,
+	324,23,1,0,0,0,325,326,7,1,0,0,326,25,1,0,0,0,327,328,3,24,12,0,328,329,
+	5,49,0,0,329,331,5,131,0,0,330,332,3,152,76,0,331,330,1,0,0,0,331,332,1,
+	0,0,0,332,335,1,0,0,0,333,334,5,88,0,0,334,336,3,172,86,0,335,333,1,0,0,
+	0,335,336,1,0,0,0,336,339,1,0,0,0,337,338,5,95,0,0,338,340,3,172,86,0,339,
+	337,1,0,0,0,339,340,1,0,0,0,340,342,1,0,0,0,341,343,3,22,11,0,342,341,1,
+	0,0,0,342,343,1,0,0,0,343,27,1,0,0,0,344,345,5,91,0,0,345,346,5,131,0,0,
+	346,347,5,4,0,0,347,350,3,160,80,0,348,349,5,55,0,0,349,351,3,172,86,0,
+	350,348,1,0,0,0,350,351,1,0,0,0,351,354,1,0,0,0,352,353,5,74,0,0,353,355,
+	3,172,86,0,354,352,1,0,0,0,354,355,1,0,0,0,355,359,1,0,0,0,356,357,5,110,
+	0,0,357,358,5,88,0,0,358,360,3,172,86,0,359,356,1,0,0,0,359,360,1,0,0,0,
+	360,364,1,0,0,0,361,362,5,107,0,0,362,363,5,88,0,0,363,365,3,172,86,0,364,
+	361,1,0,0,0,364,365,1,0,0,0,365,29,1,0,0,0,366,367,5,42,0,0,367,374,5,79,
+	0,0,368,369,5,70,0,0,369,374,5,79,0,0,370,371,5,118,0,0,371,374,5,79,0,
+	0,372,374,5,90,0,0,373,366,1,0,0,0,373,368,1,0,0,0,373,370,1,0,0,0,373,
+	372,1,0,0,0,374,31,1,0,0,0,375,376,5,49,0,0,376,403,5,101,0,0,377,378,5,
+	49,0,0,378,403,5,104,0,0,379,380,5,49,0,0,380,403,5,106,0,0,381,403,5,63,
+	0,0,382,383,5,91,0,0,383,403,5,68,0,0,384,385,5,91,0,0,385,403,5,110,0,
+	0,386,403,5,119,0,0,387,388,5,120,0,0,388,403,5,63,0,0,389,390,5,122,0,
+	0,390,403,5,68,0,0,391,392,5,97,0,0,392,403,5,68,0,0,393,394,5,97,0,0,394,
+	403,5,105,0,0,395,397,5,42,0,0,396,395,1,0,0,0,396,397,1,0,0,0,397,398,
+	1,0,0,0,398,399,5,97,0,0,399,403,5,101,0,0,400,401,5,97,0,0,401,403,5,108,
+	0,0,402,375,1,0,0,0,402,377,1,0,0,0,402,379,1,0,0,0,402,381,1,0,0,0,402,
+	382,1,0,0,0,402,384,1,0,0,0,402,386,1,0,0,0,402,387,1,0,0,0,402,389,1,0,
+	0,0,402,391,1,0,0,0,402,393,1,0,0,0,402,396,1,0,0,0,402,400,1,0,0,0,403,
+	33,1,0,0,0,404,407,5,109,0,0,405,407,3,154,77,0,406,404,1,0,0,0,406,405,
+	1,0,0,0,407,35,1,0,0,0,408,409,3,30,15,0,409,410,5,94,0,0,410,411,5,131,
+	0,0,411,416,5,4,0,0,412,413,5,2,0,0,413,414,3,172,86,0,414,415,5,3,0,0,
+	415,417,1,0,0,0,416,412,1,0,0,0,416,417,1,0,0,0,417,418,1,0,0,0,418,421,
+	3,34,17,0,419,420,5,95,0,0,420,422,3,172,86,0,421,419,1,0,0,0,421,422,1,
+	0,0,0,422,424,1,0,0,0,423,425,3,22,11,0,424,423,1,0,0,0,424,425,1,0,0,0,
+	425,37,1,0,0,0,426,427,3,32,16,0,427,428,5,94,0,0,428,431,5,131,0,0,429,
+	430,5,95,0,0,430,432,3,172,86,0,431,429,1,0,0,0,431,432,1,0,0,0,432,434,
+	1,0,0,0,433,435,3,22,11,0,434,433,1,0,0,0,434,435,1,0,0,0,435,39,1,0,0,
+	0,436,437,7,2,0,0,437,41,1,0,0,0,438,439,3,40,20,0,439,440,3,172,86,0,440,
+	43,1,0,0,0,441,445,5,6,0,0,442,444,5,17,0,0,443,442,1,0,0,0,444,447,1,0,
+	0,0,445,443,1,0,0,0,445,446,1,0,0,0,446,460,1,0,0,0,447,445,1,0,0,0,448,
+	454,3,42,21,0,449,450,3,162,81,0,450,451,3,42,21,0,451,453,1,0,0,0,452,
+	449,1,0,0,0,453,456,1,0,0,0,454,452,1,0,0,0,454,455,1,0,0,0,455,458,1,0,
+	0,0,456,454,1,0,0,0,457,459,3,162,81,0,458,457,1,0,0,0,458,459,1,0,0,0,
+	459,461,1,0,0,0,460,448,1,0,0,0,460,461,1,0,0,0,461,462,1,0,0,0,462,463,
+	5,7,0,0,463,45,1,0,0,0,464,468,5,39,0,0,465,466,5,87,0,0,466,468,5,47,0,
+	0,467,464,1,0,0,0,467,465,1,0,0,0,468,47,1,0,0,0,469,470,5,119,0,0,470,
+	471,5,131,0,0,471,472,5,4,0,0,472,475,3,160,80,0,473,474,5,74,0,0,474,476,
+	3,172,86,0,475,473,1,0,0,0,475,476,1,0,0,0,476,479,1,0,0,0,477,478,5,127,
+	0,0,478,480,3,46,23,0,479,477,1,0,0,0,479,480,1,0,0,0,480,483,1,0,0,0,481,
+	482,5,67,0,0,482,484,5,23,0,0,483,481,1,0,0,0,483,484,1,0,0,0,484,487,1,
+	0,0,0,485,486,5,83,0,0,486,488,3,44,22,0,487,485,1,0,0,0,487,488,1,0,0,
+	0,488,491,1,0,0,0,489,490,5,72,0,0,490,492,3,44,22,0,491,489,1,0,0,0,491,
+	492,1,0,0,0,492,49,1,0,0,0,493,494,5,36,0,0,494,497,5,131,0,0,495,496,5,
+	4,0,0,496,498,3,160,80,0,497,495,1,0,0,0,497,498,1,0,0,0,498,51,1,0,0,0,
+	499,500,5,48,0,0,500,501,5,131,0,0,501,502,5,6,0,0,502,503,5,75,0,0,503,
+	504,5,131,0,0,504,505,3,60,30,0,505,506,5,59,0,0,506,507,3,60,30,0,507,
+	508,5,7,0,0,508,53,1,0,0,0,509,510,5,69,0,0,510,513,5,131,0,0,511,512,5,
+	4,0,0,512,514,3,160,80,0,513,511,1,0,0,0,513,514,1,0,0,0,514,55,1,0,0,0,
+	515,516,5,112,0,0,516,519,5,131,0,0,517,518,5,4,0,0,518,520,3,160,80,0,
+	519,517,1,0,0,0,519,520,1,0,0,0,520,57,1,0,0,0,521,522,5,57,0,0,522,526,
+	5,6,0,0,523,525,5,17,0,0,524,523,1,0,0,0,525,528,1,0,0,0,526,524,1,0,0,
+	0,526,527,1,0,0,0,527,538,1,0,0,0,528,526,1,0,0,0,529,535,5,131,0,0,530,
+	531,3,162,81,0,531,532,5,131,0,0,532,534,1,0,0,0,533,530,1,0,0,0,534,537,
+	1,0,0,0,535,533,1,0,0,0,535,536,1,0,0,0,536,539,1,0,0,0,537,535,1,0,0,0,
+	538,529,1,0,0,0,538,539,1,0,0,0,539,541,1,0,0,0,540,542,3,162,81,0,541,
+	540,1,0,0,0,541,542,1,0,0,0,542,543,1,0,0,0,543,544,5,7,0,0,544,59,1,0,
+	0,0,545,547,3,58,29,0,546,545,1,0,0,0,546,547,1,0,0,0,547,548,1,0,0,0,548,
+	549,5,60,0,0,549,550,3,154,77,0,550,61,1,0,0,0,551,552,5,78,0,0,552,553,
+	3,60,30,0,553,63,1,0,0,0,554,557,3,60,30,0,555,557,3,58,29,0,556,554,1,
+	0,0,0,556,555,1,0,0,0,557,65,1,0,0,0,558,559,5,87,0,0,559,562,5,131,0,0,
+	560,561,5,75,0,0,561,563,5,131,0,0,562,560,1,0,0,0,562,563,1,0,0,0,563,
+	564,1,0,0,0,564,565,3,64,32,0,565,67,1,0,0,0,566,567,5,61,0,0,567,568,3,
+	58,29,0,568,69,1,0,0,0,569,570,5,64,0,0,570,571,3,58,29,0,571,71,1,0,0,
+	0,572,579,3,62,31,0,573,579,3,52,26,0,574,579,3,74,37,0,575,579,3,66,33,
+	0,576,579,3,68,34,0,577,579,3,70,35,0,578,572,1,0,0,0,578,573,1,0,0,0,578,
+	574,1,0,0,0,578,575,1,0,0,0,578,576,1,0,0,0,578,577,1,0,0,0,579,73,1,0,
+	0,0,580,581,5,115,0,0,581,604,5,131,0,0,582,586,5,6,0,0,583,585,5,17,0,
+	0,584,583,1,0,0,0,585,588,1,0,0,0,586,584,1,0,0,0,586,587,1,0,0,0,587,594,
+	1,0,0,0,588,586,1,0,0,0,589,590,3,72,36,0,590,591,3,164,82,0,591,593,1,
+	0,0,0,592,589,1,0,0,0,593,596,1,0,0,0,594,592,1,0,0,0,594,595,1,0,0,0,595,
+	600,1,0,0,0,596,594,1,0,0,0,597,599,5,17,0,0,598,597,1,0,0,0,599,602,1,
+	0,0,0,600,598,1,0,0,0,600,601,1,0,0,0,601,603,1,0,0,0,602,600,1,0,0,0,603,
+	605,5,7,0,0,604,582,1,0,0,0,604,605,1,0,0,0,605,75,1,0,0,0,606,613,3,52,
+	26,0,607,613,3,54,27,0,608,613,3,62,31,0,609,613,3,56,28,0,610,613,3,74,
+	37,0,611,613,3,50,25,0,612,606,1,0,0,0,612,607,1,0,0,0,612,608,1,0,0,0,
+	612,609,1,0,0,0,612,610,1,0,0,0,612,611,1,0,0,0,613,77,1,0,0,0,614,616,
+	3,76,38,0,615,617,5,21,0,0,616,615,1,0,0,0,616,617,1,0,0,0,617,79,1,0,0,
+	0,618,619,5,115,0,0,619,620,5,84,0,0,620,643,5,131,0,0,621,625,5,6,0,0,
+	622,624,5,17,0,0,623,622,1,0,0,0,624,627,1,0,0,0,625,623,1,0,0,0,625,626,
+	1,0,0,0,626,633,1,0,0,0,627,625,1,0,0,0,628,629,3,78,39,0,629,630,3,164,
+	82,0,630,632,1,0,0,0,631,628,1,0,0,0,632,635,1,0,0,0,633,631,1,0,0,0,633,
+	634,1,0,0,0,634,639,1,0,0,0,635,633,1,0,0,0,636,638,5,17,0,0,637,636,1,
+	0,0,0,638,641,1,0,0,0,639,637,1,0,0,0,639,640,1,0,0,0,640,642,1,0,0,0,641,
+	639,1,0,0,0,642,644,5,7,0,0,643,621,1,0,0,0,643,644,1,0,0,0,644,81,1,0,
+	0,0,645,646,5,115,0,0,646,647,5,84,0,0,647,648,5,80,0,0,648,649,5,131,0,
+	0,649,650,5,4,0,0,650,653,3,154,77,0,651,652,5,95,0,0,652,654,3,172,86,
+	0,653,651,1,0,0,0,653,654,1,0,0,0,654,656,1,0,0,0,655,657,3,22,11,0,656,
+	655,1,0,0,0,656,657,1,0,0,0,657,83,1,0,0,0,658,661,5,131,0,0,659,660,5,
+	1,0,0,660,662,3,172,86,0,661,659,1,0,0,0,661,662,1,0,0,0,662,85,1,0,0,0,
+	663,665,3,84,42,0,664,666,5,5,0,0,665,664,1,0,0,0,665,666,1,0,0,0,666,667,
+	1,0,0,0,667,668,3,162,81,0,668,87,1,0,0,0,669,674,3,84,42,0,670,672,5,5,
+	0,0,671,670,1,0,0,0,671,672,1,0,0,0,672,673,1,0,0,0,673,675,3,162,81,0,
+	674,671,1,0,0,0,674,675,1,0,0,0,675,89,1,0,0,0,676,677,5,62,0,0,677,680,
+	5,131,0,0,678,679,5,4,0,0,679,681,3,156,78,0,680,678,1,0,0,0,680,681,1,
+	0,0,0,681,682,1,0,0,0,682,686,5,6,0,0,683,685,5,17,0,0,684,683,1,0,0,0,
+	685,688,1,0,0,0,686,684,1,0,0,0,686,687,1,0,0,0,687,696,1,0,0,0,688,686,
+	1,0,0,0,689,691,3,86,43,0,690,689,1,0,0,0,691,694,1,0,0,0,692,690,1,0,0,
+	0,692,693,1,0,0,0,693,695,1,0,0,0,694,692,1,0,0,0,695,697,3,88,44,0,696,
+	692,1,0,0,0,696,697,1,0,0,0,697,698,1,0,0,0,698,701,5,7,0,0,699,700,5,55,
+	0,0,700,702,3,172,86,0,701,699,1,0,0,0,701,702,1,0,0,0,702,91,1,0,0,0,703,
+	704,5,38,0,0,704,715,5,72,0,0,705,706,5,38,0,0,706,715,5,83,0,0,707,715,
+	5,49,0,0,708,715,5,56,0,0,709,715,5,66,0,0,710,711,5,128,0,0,711,715,5,
+	72,0,0,712,713,5,128,0,0,713,715,5,83,0,0,714,703,1,0,0,0,714,705,1,0,0,
+	0,714,707,1,0,0,0,714,708,1,0,0,0,714,709,1,0,0,0,714,710,1,0,0,0,714,712,
+	1,0,0,0,715,93,1,0,0,0,716,717,5,63,0,0,717,719,5,131,0,0,718,720,3,152,
+	76,0,719,718,1,0,0,0,719,720,1,0,0,0,720,721,1,0,0,0,721,722,5,111,0,0,
+	722,725,3,92,46,0,723,724,5,74,0,0,724,726,3,172,86,0,725,723,1,0,0,0,725,
+	726,1,0,0,0,726,727,1,0,0,0,727,728,5,67,0,0,728,731,5,23,0,0,729,730,5,
+	121,0,0,730,732,3,172,86,0,731,729,1,0,0,0,731,732,1,0,0,0,732,95,1,0,0,
+	0,733,734,5,77,0,0,734,735,5,23,0,0,735,97,1,0,0,0,736,737,5,85,0,0,737,
+	738,5,131,0,0,738,739,5,129,0,0,739,740,5,131,0,0,740,99,1,0,0,0,741,742,
+	5,81,0,0,742,743,5,94,0,0,743,745,5,131,0,0,744,746,3,152,76,0,745,744,
+	1,0,0,0,745,746,1,0,0,0,746,749,1,0,0,0,747,748,5,95,0,0,748,750,3,172,
+	86,0,749,747,1,0,0,0,749,750,1,0,0,0,750,752,1,0,0,0,751,753,3,22,11,0,
+	752,751,1,0,0,0,752,753,1,0,0,0,753,101,1,0,0,0,754,755,5,97,0,0,755,756,
+	5,100,0,0,756,757,5,131,0,0,757,758,5,4,0,0,758,760,3,160,80,0,759,761,
+	5,40,0,0,760,759,1,0,0,0,760,761,1,0,0,0,761,764,1,0,0,0,762,763,5,74,0,
+	0,763,765,3,172,86,0,764,762,1,0,0,0,764,765,1,0,0,0,765,103,1,0,0,0,766,
+	767,5,97,0,0,767,768,5,53,0,0,768,771,5,131,0,0,769,770,5,74,0,0,770,772,
+	3,172,86,0,771,769,1,0,0,0,771,772,1,0,0,0,772,776,1,0,0,0,773,774,5,55,
+	0,0,774,775,5,95,0,0,775,777,3,172,86,0,776,773,1,0,0,0,776,777,1,0,0,0,
+	777,105,1,0,0,0,778,779,5,93,0,0,779,780,3,172,86,0,780,781,5,23,0,0,781,
+	107,1,0,0,0,782,783,5,80,0,0,783,784,5,131,0,0,784,785,5,4,0,0,785,786,
+	3,154,77,0,786,787,5,44,0,0,787,788,5,74,0,0,788,791,3,172,86,0,789,790,
+	5,125,0,0,790,792,5,23,0,0,791,789,1,0,0,0,791,792,1,0,0,0,792,795,1,0,
+	0,0,793,794,5,43,0,0,794,796,5,23,0,0,795,793,1,0,0,0,795,796,1,0,0,0,796,
+	800,1,0,0,0,797,798,5,98,0,0,798,799,5,113,0,0,799,801,3,172,86,0,800,797,
+	1,0,0,0,800,801,1,0,0,0,801,805,1,0,0,0,802,803,5,114,0,0,803,804,5,113,
+	0,0,804,806,3,172,86,0,805,802,1,0,0,0,805,806,1,0,0,0,806,809,1,0,0,0,
+	807,808,5,95,0,0,808,810,3,172,86,0,809,807,1,0,0,0,809,810,1,0,0,0,810,
+	813,1,0,0,0,811,812,5,54,0,0,812,814,3,172,86,0,813,811,1,0,0,0,813,814,
+	1,0,0,0,814,837,1,0,0,0,815,819,5,6,0,0,816,818,5,17,0,0,817,816,1,0,0,
+	0,818,821,1,0,0,0,819,817,1,0,0,0,819,820,1,0,0,0,820,827,1,0,0,0,821,819,
+	1,0,0,0,822,823,3,106,53,0,823,824,3,164,82,0,824,826,1,0,0,0,825,822,1,
+	0,0,0,826,829,1,0,0,0,827,825,1,0,0,0,827,828,1,0,0,0,828,833,1,0,0,0,829,
+	827,1,0,0,0,830,832,5,17,0,0,831,830,1,0,0,0,832,835,1,0,0,0,833,831,1,
+	0,0,0,833,834,1,0,0,0,834,836,1,0,0,0,835,833,1,0,0,0,836,838,5,7,0,0,837,
+	815,1,0,0,0,837,838,1,0,0,0,838,109,1,0,0,0,839,840,7,3,0,0,840,111,1,0,
+	0,0,841,861,3,6,3,0,842,861,3,8,4,0,843,861,3,10,5,0,844,861,3,12,6,0,845,
+	861,3,20,10,0,846,861,3,26,13,0,847,861,3,28,14,0,848,861,3,36,18,0,849,
+	861,3,38,19,0,850,861,3,48,24,0,851,861,3,90,45,0,852,861,3,94,47,0,853,
+	861,3,96,48,0,854,861,3,100,50,0,855,861,3,98,49,0,856,861,3,102,51,0,857,
+	861,3,104,52,0,858,861,3,82,41,0,859,861,3,80,40,0,860,841,1,0,0,0,860,
+	842,1,0,0,0,860,843,1,0,0,0,860,844,1,0,0,0,860,845,1,0,0,0,860,846,1,0,
+	0,0,860,847,1,0,0,0,860,848,1,0,0,0,860,849,1,0,0,0,860,850,1,0,0,0,860,
+	851,1,0,0,0,860,852,1,0,0,0,860,853,1,0,0,0,860,854,1,0,0,0,860,855,1,0,
+	0,0,860,856,1,0,0,0,860,857,1,0,0,0,860,858,1,0,0,0,860,859,1,0,0,0,861,
+	113,1,0,0,0,862,863,3,110,55,0,863,864,5,50,0,0,864,865,5,131,0,0,865,869,
+	5,6,0,0,866,868,5,17,0,0,867,866,1,0,0,0,868,871,1,0,0,0,869,867,1,0,0,
+	0,869,870,1,0,0,0,870,877,1,0,0,0,871,869,1,0,0,0,872,873,3,112,56,0,873,
+	874,3,164,82,0,874,876,1,0,0,0,875,872,1,0,0,0,876,879,1,0,0,0,877,875,
+	1,0,0,0,877,878,1,0,0,0,878,883,1,0,0,0,879,877,1,0,0,0,880,882,5,17,0,
+	0,881,880,1,0,0,0,882,885,1,0,0,0,883,881,1,0,0,0,883,884,1,0,0,0,884,886,
+	1,0,0,0,885,883,1,0,0,0,886,887,5,7,0,0,887,115,1,0,0,0,888,889,5,94,0,
+	0,889,891,5,131,0,0,890,892,3,152,76,0,891,890,1,0,0,0,891,892,1,0,0,0,
+	892,895,1,0,0,0,893,894,5,8,0,0,894,896,3,160,80,0,895,893,1,0,0,0,895,
+	896,1,0,0,0,896,117,1,0,0,0,897,899,5,96,0,0,898,897,1,0,0,0,898,899,1,
+	0,0,0,899,900,1,0,0,0,900,901,5,80,0,0,901,902,3,154,77,0,902,119,1,0,0,
+	0,903,908,3,154,77,0,904,905,5,2,0,0,905,906,3,172,86,0,906,907,5,3,0,0,
+	907,909,1,0,0,0,908,904,1,0,0,0,908,909,1,0,0,0,909,121,1,0,0,0,910,912,
+	5,126,0,0,911,910,1,0,0,0,911,912,1,0,0,0,912,913,1,0,0,0,913,914,3,120,
+	60,0,914,915,5,8,0,0,915,916,3,120,60,0,916,123,1,0,0,0,917,918,5,51,0,
+	0,918,919,5,131,0,0,919,923,5,6,0,0,920,922,5,17,0,0,921,920,1,0,0,0,922,
+	925,1,0,0,0,923,921,1,0,0,0,923,924,1,0,0,0,924,931,1,0,0,0,925,923,1,0,
+	0,0,926,927,3,122,61,0,927,928,3,162,81,0,928,930,1,0,0,0,929,926,1,0,0,
+	0,930,933,1,0,0,0,931,929,1,0,0,0,931,932,1,0,0,0,932,937,1,0,0,0,933,931,
+	1,0,0,0,934,936,5,17,0,0,935,934,1,0,0,0,936,939,1,0,0,0,937,935,1,0,0,
+	0,937,938,1,0,0,0,938,940,1,0,0,0,939,937,1,0,0,0,940,941,5,7,0,0,941,125,
+	1,0,0,0,942,951,5,49,0,0,943,951,5,63,0,0,944,945,5,120,0,0,945,951,5,63,
+	0,0,946,951,5,71,0,0,947,951,5,91,0,0,948,951,5,119,0,0,949,951,5,122,0,
+	0,950,942,1,0,0,0,950,943,1,0,0,0,950,944,1,0,0,0,950,946,1,0,0,0,950,947,
+	1,0,0,0,950,948,1,0,0,0,950,949,1,0,0,0,951,127,1,0,0,0,952,958,3,154,77,
+	0,953,954,3,162,81,0,954,955,3,154,77,0,955,957,1,0,0,0,956,953,1,0,0,0,
+	957,960,1,0,0,0,958,956,1,0,0,0,958,959,1,0,0,0,959,962,1,0,0,0,960,958,
+	1,0,0,0,961,963,3,162,81,0,962,961,1,0,0,0,962,963,1,0,0,0,963,129,1,0,
+	0,0,964,965,3,126,63,0,965,966,5,51,0,0,966,967,5,80,0,0,967,969,3,154,
+	77,0,968,970,3,128,64,0,969,968,1,0,0,0,969,970,1,0,0,0,970,131,1,0,0,0,
+	971,972,5,76,0,0,972,973,3,154,77,0,973,133,1,0,0,0,974,980,3,118,59,0,
+	975,980,3,124,62,0,976,980,3,130,65,0,977,980,3,132,66,0,978,980,3,96,48,
+	0,979,974,1,0,0,0,979,975,1,0,0,0,979,976,1,0,0,0,979,977,1,0,0,0,979,978,
+	1,0,0,0,980,135,1,0,0,0,981,982,5,123,0,0,982,983,5,131,0,0,983,987,5,6,
+	0,0,984,986,5,17,0,0,985,984,1,0,0,0,986,989,1,0,0,0,987,985,1,0,0,0,987,
+	988,1,0,0,0,988,995,1,0,0,0,989,987,1,0,0,0,990,991,3,134,67,0,991,992,
+	3,164,82,0,992,994,1,0,0,0,993,990,1,0,0,0,994,997,1,0,0,0,995,993,1,0,
+	0,0,995,996,1,0,0,0,996,1001,1,0,0,0,997,995,1,0,0,0,998,1000,5,17,0,0,
+	999,998,1,0,0,0,1000,1003,1,0,0,0,1001,999,1,0,0,0,1001,1002,1,0,0,0,1002,
+	1004,1,0,0,0,1003,1001,1,0,0,0,1004,1005,5,7,0,0,1005,137,1,0,0,0,1006,
+	1007,7,4,0,0,1007,139,1,0,0,0,1008,1009,5,82,0,0,1009,1010,3,138,69,0,1010,
+	1011,3,154,77,0,1011,1012,5,43,0,0,1012,1013,5,23,0,0,1013,141,1,0,0,0,
+	1014,1029,3,6,3,0,1015,1029,3,8,4,0,1016,1029,3,10,5,0,1017,1029,3,114,
+	57,0,1018,1029,3,108,54,0,1019,1029,3,12,6,0,1020,1029,3,144,72,0,1021,
+	1029,3,116,58,0,1022,1029,3,20,10,0,1023,1029,3,140,70,0,1024,1029,3,90,
+	45,0,1025,1029,3,96,48,0,1026,1029,3,136,68,0,1027,1029,3,80,40,0,1028,
+	1014,1,0,0,0,1028,1015,1,0,0,0,1028,1016,1,0,0,0,1028,1017,1,0,0,0,1028,
+	1018,1,0,0,0,1028,1019,1,0,0,0,1028,1020,1,0,0,0,1028,1021,1,0,0,0,1028,
+	1022,1,0,0,0,1028,1023,1,0,0,0,1028,1024,1,0,0,0,1028,1025,1,0,0,0,1028,
+	1026,1,0,0,0,1028,1027,1,0,0,0,1029,143,1,0,0,0,1030,1031,5,86,0,0,1031,
+	1032,5,131,0,0,1032,1036,5,6,0,0,1033,1035,5,17,0,0,1034,1033,1,0,0,0,1035,
+	1038,1,0,0,0,1036,1034,1,0,0,0,1036,1037,1,0,0,0,1037,1044,1,0,0,0,1038,
+	1036,1,0,0,0,1039,1040,3,142,71,0,1040,1041,3,164,82,0,1041,1043,1,0,0,
+	0,1042,1039,1,0,0,0,1043,1046,1,0,0,0,1044,1042,1,0,0,0,1044,1045,1,0,0,
+	0,1045,1050,1,0,0,0,1046,1044,1,0,0,0,1047,1049,5,17,0,0,1048,1047,1,0,
+	0,0,1049,1052,1,0,0,0,1050,1048,1,0,0,0,1050,1051,1,0,0,0,1051,1053,1,0,
+	0,0,1052,1050,1,0,0,0,1053,1054,5,7,0,0,1054,145,1,0,0,0,1055,1057,5,103,
+	0,0,1056,1055,1,0,0,0,1056,1057,1,0,0,0,1057,1058,1,0,0,0,1058,1059,5,131,
+	0,0,1059,1060,5,4,0,0,1060,1061,3,160,80,0,1061,147,1,0,0,0,1062,1064,3,
+	146,73,0,1063,1065,5,5,0,0,1064,1063,1,0,0,0,1064,1065,1,0,0,0,1065,1066,
+	1,0,0,0,1066,1067,3,162,81,0,1067,149,1,0,0,0,1068,1073,3,146,73,0,1069,
+	1071,5,5,0,0,1070,1069,1,0,0,0,1070,1071,1,0,0,0,1071,1072,1,0,0,0,1072,
+	1074,3,162,81,0,1073,1070,1,0,0,0,1073,1074,1,0,0,0,1074,151,1,0,0,0,1075,
+	1079,5,9,0,0,1076,1078,5,17,0,0,1077,1076,1,0,0,0,1078,1081,1,0,0,0,1079,
+	1077,1,0,0,0,1079,1080,1,0,0,0,1080,1089,1,0,0,0,1081,1079,1,0,0,0,1082,
+	1084,3,148,74,0,1083,1082,1,0,0,0,1084,1087,1,0,0,0,1085,1083,1,0,0,0,1085,
+	1086,1,0,0,0,1086,1088,1,0,0,0,1087,1085,1,0,0,0,1088,1090,3,150,75,0,1089,
+	1085,1,0,0,0,1089,1090,1,0,0,0,1090,1091,1,0,0,0,1091,1092,5,10,0,0,1092,
+	153,1,0,0,0,1093,1098,5,131,0,0,1094,1095,5,11,0,0,1095,1097,5,131,0,0,
+	1096,1094,1,0,0,0,1097,1100,1,0,0,0,1098,1096,1,0,0,0,1098,1099,1,0,0,0,
+	1099,155,1,0,0,0,1100,1098,1,0,0,0,1101,1102,7,5,0,0,1102,157,1,0,0,0,1103,
+	1110,7,6,0,0,1104,1107,5,116,0,0,1105,1106,5,113,0,0,1106,1108,5,25,0,0,
+	1107,1105,1,0,0,0,1107,1108,1,0,0,0,1108,1110,1,0,0,0,1109,1103,1,0,0,0,
+	1109,1104,1,0,0,0,1110,159,1,0,0,0,1111,1114,3,158,79,0,1112,1114,3,154,
+	77,0,1113,1111,1,0,0,0,1113,1112,1,0,0,0,1114,161,1,0,0,0,1115,1119,5,5,
+	0,0,1116,1118,5,17,0,0,1117,1116,1,0,0,0,1118,1121,1,0,0,0,1119,1117,1,
+	0,0,0,1119,1120,1,0,0,0,1120,1128,1,0,0,0,1121,1119,1,0,0,0,1122,1124,5,
+	17,0,0,1123,1122,1,0,0,0,1124,1125,1,0,0,0,1125,1123,1,0,0,0,1125,1126,
+	1,0,0,0,1126,1128,1,0,0,0,1127,1115,1,0,0,0,1127,1123,1,0,0,0,1128,163,
+	1,0,0,0,1129,1133,5,12,0,0,1130,1132,5,17,0,0,1131,1130,1,0,0,0,1132,1135,
+	1,0,0,0,1133,1131,1,0,0,0,1133,1134,1,0,0,0,1134,1142,1,0,0,0,1135,1133,
+	1,0,0,0,1136,1138,5,17,0,0,1137,1136,1,0,0,0,1138,1139,1,0,0,0,1139,1137,
+	1,0,0,0,1139,1140,1,0,0,0,1140,1142,1,0,0,0,1141,1129,1,0,0,0,1141,1137,
+	1,0,0,0,1142,165,1,0,0,0,1143,1147,5,2,0,0,1144,1146,5,17,0,0,1145,1144,
+	1,0,0,0,1146,1149,1,0,0,0,1147,1145,1,0,0,0,1147,1148,1,0,0,0,1148,1159,
+	1,0,0,0,1149,1147,1,0,0,0,1150,1156,3,172,86,0,1151,1152,3,162,81,0,1152,
+	1153,3,172,86,0,1153,1155,1,0,0,0,1154,1151,1,0,0,0,1155,1158,1,0,0,0,1156,
+	1154,1,0,0,0,1156,1157,1,0,0,0,1157,1160,1,0,0,0,1158,1156,1,0,0,0,1159,
+	1150,1,0,0,0,1159,1160,1,0,0,0,1160,1161,1,0,0,0,1161,1162,5,3,0,0,1162,
+	167,1,0,0,0,1163,1164,5,131,0,0,1164,1165,5,1,0,0,1165,1166,3,172,86,0,
+	1166,169,1,0,0,0,1167,1171,5,6,0,0,1168,1170,5,17,0,0,1169,1168,1,0,0,0,
+	1170,1173,1,0,0,0,1171,1169,1,0,0,0,1171,1172,1,0,0,0,1172,1186,1,0,0,0,
+	1173,1171,1,0,0,0,1174,1180,3,168,84,0,1175,1176,3,162,81,0,1176,1177,3,
+	168,84,0,1177,1179,1,0,0,0,1178,1175,1,0,0,0,1179,1182,1,0,0,0,1180,1178,
+	1,0,0,0,1180,1181,1,0,0,0,1181,1184,1,0,0,0,1182,1180,1,0,0,0,1183,1185,
+	3,162,81,0,1184,1183,1,0,0,0,1184,1185,1,0,0,0,1185,1187,1,0,0,0,1186,1174,
+	1,0,0,0,1186,1187,1,0,0,0,1187,1188,1,0,0,0,1188,1189,5,7,0,0,1189,171,
+	1,0,0,0,1190,1191,6,86,-1,0,1191,1192,5,13,0,0,1192,1205,3,172,86,11,1193,
+	1205,3,166,83,0,1194,1205,3,170,85,0,1195,1205,3,154,77,0,1196,1205,5,22,
+	0,0,1197,1205,5,24,0,0,1198,1205,5,25,0,0,1199,1205,5,23,0,0,1200,1201,
+	5,9,0,0,1201,1202,3,172,86,0,1202,1203,5,10,0,0,1203,1205,1,0,0,0,1204,
+	1190,1,0,0,0,1204,1193,1,0,0,0,1204,1194,1,0,0,0,1204,1195,1,0,0,0,1204,
+	1196,1,0,0,0,1204,1197,1,0,0,0,1204,1198,1,0,0,0,1204,1199,1,0,0,0,1204,
+	1200,1,0,0,0,1205,1214,1,0,0,0,1206,1207,10,10,0,0,1207,1208,7,7,0,0,1208,
+	1213,3,172,86,11,1209,1210,10,9,0,0,1210,1211,7,8,0,0,1211,1213,3,172,86,
+	10,1212,1206,1,0,0,0,1212,1209,1,0,0,0,1213,1216,1,0,0,0,1214,1212,1,0,
+	0,0,1214,1215,1,0,0,0,1215,173,1,0,0,0,1216,1214,1,0,0,0,154,177,183,187,
+	193,201,207,211,217,225,231,235,241,263,267,280,285,289,295,298,306,312,
+	316,321,331,335,339,342,350,354,359,364,373,396,402,406,416,421,424,431,
+	434,445,454,458,460,467,475,479,483,487,491,497,513,519,526,535,538,541,
+	546,556,562,578,586,594,600,604,612,616,625,633,639,643,653,656,661,665,
+	671,674,680,686,692,696,701,714,719,725,731,745,749,752,760,764,771,776,
+	791,795,800,805,809,813,819,827,833,837,860,869,877,883,891,895,898,908,
+	911,923,931,937,950,958,962,969,979,987,995,1001,1028,1036,1044,1050,1056,
+	1064,1070,1073,1079,1085,1089,1098,1107,1109,1113,1119,1125,1127,1133,1139,
+	1141,1147,1156,1159,1171,1180,1184,1186,1204,1212,1214];
+
+	private static __ATN: ATN;
 	public static get _ATN(): ATN {
 		if (!FppParser.__ATN) {
-			FppParser.__ATN = new ATNDeserializer().deserialize(Utils.toCharArray(FppParser._serializedATN));
+			FppParser.__ATN = new ATNDeserializer().deserialize(FppParser._serializedATN);
 		}
 
 		return FppParser.__ATN;
 	}
 
+
+	static DecisionsToDFA = FppParser._ATN.decisionToState.map( (ds: DecisionState, index: number) => new DFA(ds, index) );
+
 }
 
 export class ProgContext extends ParserRuleContext {
-	public EOF(): TerminalNode[];
-	public EOF(i: number): TerminalNode;
-	public EOF(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.EOF);
-		} else {
-			return this.getToken(FppParser.EOF, i);
-		}
-	}
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public moduleMember(): ModuleMemberContext[];
-	public moduleMember(i: number): ModuleMemberContext;
-	public moduleMember(i?: number): ModuleMemberContext | ModuleMemberContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ModuleMemberContext);
-		} else {
-			return this.getRuleContext(i, ModuleMemberContext);
-		}
-	}
-	public semiDelim(): SemiDelimContext[];
-	public semiDelim(i: number): SemiDelimContext;
-	public semiDelim(i?: number): SemiDelimContext | SemiDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(SemiDelimContext);
-		} else {
-			return this.getRuleContext(i, SemiDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_prog; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterProg) {
-			listener.enterProg(this);
-		}
+	public EOF_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.EOF);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitProg) {
-			listener.exitProg(this);
-		}
+	public EOF(i: number): TerminalNode {
+		return this.getToken(FppParser.EOF, i);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public moduleMember_list(): ModuleMemberContext[] {
+		return this.getTypedRuleContexts(ModuleMemberContext) as ModuleMemberContext[];
+	}
+	public moduleMember(i: number): ModuleMemberContext {
+		return this.getTypedRuleContext(ModuleMemberContext, i) as ModuleMemberContext;
+	}
+	public semiDelim_list(): SemiDelimContext[] {
+		return this.getTypedRuleContexts(SemiDelimContext) as SemiDelimContext[];
+	}
+	public semiDelim(i: number): SemiDelimContext {
+		return this.getTypedRuleContext(SemiDelimContext, i) as SemiDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_prog;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -6848,58 +6135,36 @@ export class ProgContext extends ParserRuleContext {
 
 
 export class ProgTopologyContext extends ParserRuleContext {
-	public EOF(): TerminalNode[];
-	public EOF(i: number): TerminalNode;
-	public EOF(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.EOF);
-		} else {
-			return this.getToken(FppParser.EOF, i);
-		}
-	}
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public topologyMember(): TopologyMemberContext[];
-	public topologyMember(i: number): TopologyMemberContext;
-	public topologyMember(i?: number): TopologyMemberContext | TopologyMemberContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(TopologyMemberContext);
-		} else {
-			return this.getRuleContext(i, TopologyMemberContext);
-		}
-	}
-	public semiDelim(): SemiDelimContext[];
-	public semiDelim(i: number): SemiDelimContext;
-	public semiDelim(i?: number): SemiDelimContext | SemiDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(SemiDelimContext);
-		} else {
-			return this.getRuleContext(i, SemiDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_progTopology; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterProgTopology) {
-			listener.enterProgTopology(this);
-		}
+	public EOF_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.EOF);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitProgTopology) {
-			listener.exitProgTopology(this);
-		}
+	public EOF(i: number): TerminalNode {
+		return this.getToken(FppParser.EOF, i);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public topologyMember_list(): TopologyMemberContext[] {
+		return this.getTypedRuleContexts(TopologyMemberContext) as TopologyMemberContext[];
+	}
+	public topologyMember(i: number): TopologyMemberContext {
+		return this.getTypedRuleContext(TopologyMemberContext, i) as TopologyMemberContext;
+	}
+	public semiDelim_list(): SemiDelimContext[] {
+		return this.getTypedRuleContexts(SemiDelimContext) as SemiDelimContext[];
+	}
+	public semiDelim(i: number): SemiDelimContext {
+		return this.getTypedRuleContext(SemiDelimContext, i) as SemiDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_progTopology;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -6913,58 +6178,36 @@ export class ProgTopologyContext extends ParserRuleContext {
 
 
 export class ProgComponentContext extends ParserRuleContext {
-	public EOF(): TerminalNode[];
-	public EOF(i: number): TerminalNode;
-	public EOF(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.EOF);
-		} else {
-			return this.getToken(FppParser.EOF, i);
-		}
-	}
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public componentMember(): ComponentMemberContext[];
-	public componentMember(i: number): ComponentMemberContext;
-	public componentMember(i?: number): ComponentMemberContext | ComponentMemberContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ComponentMemberContext);
-		} else {
-			return this.getRuleContext(i, ComponentMemberContext);
-		}
-	}
-	public semiDelim(): SemiDelimContext[];
-	public semiDelim(i: number): SemiDelimContext;
-	public semiDelim(i?: number): SemiDelimContext | SemiDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(SemiDelimContext);
-		} else {
-			return this.getRuleContext(i, SemiDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_progComponent; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterProgComponent) {
-			listener.enterProgComponent(this);
-		}
+	public EOF_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.EOF);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitProgComponent) {
-			listener.exitProgComponent(this);
-		}
+	public EOF(i: number): TerminalNode {
+		return this.getToken(FppParser.EOF, i);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public componentMember_list(): ComponentMemberContext[] {
+		return this.getTypedRuleContexts(ComponentMemberContext) as ComponentMemberContext[];
+	}
+	public componentMember(i: number): ComponentMemberContext {
+		return this.getTypedRuleContext(ComponentMemberContext, i) as ComponentMemberContext;
+	}
+	public semiDelim_list(): SemiDelimContext[] {
+		return this.getTypedRuleContexts(SemiDelimContext) as SemiDelimContext[];
+	}
+	public semiDelim(i: number): SemiDelimContext {
+		return this.getTypedRuleContext(SemiDelimContext, i) as SemiDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_progComponent;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -6979,24 +6222,18 @@ export class ProgComponentContext extends ParserRuleContext {
 
 export class AbstractTypeDeclContext extends ParserRuleContext {
 	public _name!: Token;
-	public TYPE(): TerminalNode { return this.getToken(FppParser.TYPE, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_abstractTypeDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterAbstractTypeDecl) {
-			listener.enterAbstractTypeDecl(this);
-		}
+	public TYPE(): TerminalNode {
+		return this.getToken(FppParser.TYPE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitAbstractTypeDecl) {
-			listener.exitAbstractTypeDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_abstractTypeDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7011,28 +6248,22 @@ export class AbstractTypeDeclContext extends ParserRuleContext {
 
 export class AliasTypeDeclContext extends ParserRuleContext {
 	public _name!: Token;
-	public _type!: TypeNameContext;
-	public TYPE(): TerminalNode { return this.getToken(FppParser.TYPE, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public typeName(): TypeNameContext {
-		return this.getRuleContext(0, TypeNameContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	public _type_!: TypeNameContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_aliasTypeDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterAliasTypeDecl) {
-			listener.enterAliasTypeDecl(this);
-		}
+	public TYPE(): TerminalNode {
+		return this.getToken(FppParser.TYPE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitAliasTypeDecl) {
-			listener.exitAliasTypeDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public typeName(): TypeNameContext {
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_aliasTypeDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7048,39 +6279,39 @@ export class AliasTypeDeclContext extends ParserRuleContext {
 export class ArrayDeclContext extends ParserRuleContext {
 	public _name!: Token;
 	public _size!: ExprContext;
-	public _type!: TypeNameContext;
-	public _default_!: ArrayExprContext;
+	public _type_!: TypeNameContext;
+	public _default_!: ExprContext;
 	public _format!: Token;
-	public ARRAY(): TerminalNode { return this.getToken(FppParser.ARRAY, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
+	public ARRAY(): TerminalNode {
+		return this.getToken(FppParser.ARRAY, 0);
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public expr_list(): ExprContext[] {
+		return this.getTypedRuleContexts(ExprContext) as ExprContext[];
+	}
+	public expr(i: number): ExprContext {
+		return this.getTypedRuleContext(ExprContext, i) as ExprContext;
 	}
 	public typeName(): TypeNameContext {
-		return this.getRuleContext(0, TypeNameContext);
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
 	}
-	public DEFAULT(): TerminalNode | undefined { return this.tryGetToken(FppParser.DEFAULT, 0); }
-	public FORMAT(): TerminalNode | undefined { return this.tryGetToken(FppParser.FORMAT, 0); }
-	public arrayExpr(): ArrayExprContext | undefined {
-		return this.tryGetRuleContext(0, ArrayExprContext);
+	public DEFAULT(): TerminalNode {
+		return this.getToken(FppParser.DEFAULT, 0);
 	}
-	public LIT_STRING(): TerminalNode | undefined { return this.tryGetToken(FppParser.LIT_STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+	public FORMAT(): TerminalNode {
+		return this.getToken(FppParser.FORMAT, 0);
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_arrayDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterArrayDecl) {
-			listener.enterArrayDecl(this);
-		}
+	public LIT_STRING(): TerminalNode {
+		return this.getToken(FppParser.LIT_STRING, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitArrayDecl) {
-			listener.exitArrayDecl(this);
-		}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_arrayDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7096,27 +6327,21 @@ export class ArrayDeclContext extends ParserRuleContext {
 export class ConstantDeclContext extends ParserRuleContext {
 	public _name!: Token;
 	public _value!: ExprContext;
-	public CONSTANT(): TerminalNode { return this.getToken(FppParser.CONSTANT, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_constantDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterConstantDecl) {
-			listener.enterConstantDecl(this);
-		}
+	public CONSTANT(): TerminalNode {
+		return this.getToken(FppParser.CONSTANT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitConstantDecl) {
-			listener.exitConstantDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_constantDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7132,33 +6357,29 @@ export class ConstantDeclContext extends ParserRuleContext {
 export class StructMemberContext extends ParserRuleContext {
 	public _name!: Token;
 	public _size!: ExprContext;
-	public _type!: TypeNameContext;
+	public _type_!: TypeNameContext;
 	public _format!: Token;
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public typeName(): TypeNameContext {
-		return this.getRuleContext(0, TypeNameContext);
-	}
-	public FORMAT(): TerminalNode | undefined { return this.tryGetToken(FppParser.FORMAT, 0); }
-	public expr(): ExprContext | undefined {
-		return this.tryGetRuleContext(0, ExprContext);
-	}
-	public LIT_STRING(): TerminalNode | undefined { return this.tryGetToken(FppParser.LIT_STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_structMember; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStructMember) {
-			listener.enterStructMember(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStructMember) {
-			listener.exitStructMember(this);
-		}
+	public typeName(): TypeNameContext {
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
+	}
+	public FORMAT(): TerminalNode {
+		return this.getToken(FppParser.FORMAT, 0);
+	}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+	public LIT_STRING(): TerminalNode {
+		return this.getToken(FppParser.LIT_STRING, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_structMember;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7172,34 +6393,18 @@ export class StructMemberContext extends ParserRuleContext {
 
 
 export class StructMemberNContext extends ParserRuleContext {
-	public structMember(): StructMemberContext {
-		return this.getRuleContext(0, StructMemberContext);
-	}
-	public postMultiAnnotation(): PostMultiAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PostMultiAnnotationContext);
-	}
-	public commaDelim(): CommaDelimContext | undefined {
-		return this.tryGetRuleContext(0, CommaDelimContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_structMemberN; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStructMemberN) {
-			listener.enterStructMemberN(this);
-		}
+	public structMember(): StructMemberContext {
+		return this.getTypedRuleContext(StructMemberContext, 0) as StructMemberContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStructMemberN) {
-			listener.exitStructMemberN(this);
-		}
+	public commaDelim(): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, 0) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_structMemberN;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7213,34 +6418,18 @@ export class StructMemberNContext extends ParserRuleContext {
 
 
 export class StructMemberLContext extends ParserRuleContext {
-	public structMember(): StructMemberContext {
-		return this.getRuleContext(0, StructMemberContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	public postMultiAnnotation(): PostMultiAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PostMultiAnnotationContext);
-	}
-	public commaDelim(): CommaDelimContext | undefined {
-		return this.tryGetRuleContext(0, CommaDelimContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_structMemberL; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStructMemberL) {
-			listener.enterStructMemberL(this);
-		}
+	public structMember(): StructMemberContext {
+		return this.getTypedRuleContext(StructMemberContext, 0) as StructMemberContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStructMemberL) {
-			listener.exitStructMemberL(this);
-		}
+	public commaDelim(): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, 0) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_structMemberL;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7256,49 +6445,39 @@ export class StructMemberLContext extends ParserRuleContext {
 export class StructDeclContext extends ParserRuleContext {
 	public _name!: Token;
 	public _default_!: StructExprContext;
-	public STRUCT(): TerminalNode { return this.getToken(FppParser.STRUCT, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public structMemberL(): StructMemberLContext | undefined {
-		return this.tryGetRuleContext(0, StructMemberLContext);
-	}
-	public DEFAULT(): TerminalNode | undefined { return this.tryGetToken(FppParser.DEFAULT, 0); }
-	public structExpr(): StructExprContext | undefined {
-		return this.tryGetRuleContext(0, StructExprContext);
-	}
-	public structMemberN(): StructMemberNContext[];
-	public structMemberN(i: number): StructMemberNContext;
-	public structMemberN(i?: number): StructMemberNContext | StructMemberNContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(StructMemberNContext);
-		} else {
-			return this.getRuleContext(i, StructMemberNContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_structDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStructDecl) {
-			listener.enterStructDecl(this);
-		}
+	public STRUCT(): TerminalNode {
+		return this.getToken(FppParser.STRUCT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStructDecl) {
-			listener.exitStructDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public structMemberL(): StructMemberLContext {
+		return this.getTypedRuleContext(StructMemberLContext, 0) as StructMemberLContext;
+	}
+	public DEFAULT(): TerminalNode {
+		return this.getToken(FppParser.DEFAULT, 0);
+	}
+	public structExpr(): StructExprContext {
+		return this.getTypedRuleContext(StructExprContext, 0) as StructExprContext;
+	}
+	public structMemberN_list(): StructMemberNContext[] {
+		return this.getTypedRuleContexts(StructMemberNContext) as StructMemberNContext[];
+	}
+	public structMemberN(i: number): StructMemberNContext {
+		return this.getTypedRuleContext(StructMemberNContext, i) as StructMemberNContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_structDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7312,25 +6491,21 @@ export class StructDeclContext extends ParserRuleContext {
 
 
 export class QueueFullBehaviorContext extends ParserRuleContext {
-	public ASSERT(): TerminalNode | undefined { return this.tryGetToken(FppParser.ASSERT, 0); }
-	public BLOCK(): TerminalNode | undefined { return this.tryGetToken(FppParser.BLOCK, 0); }
-	public DROP(): TerminalNode | undefined { return this.tryGetToken(FppParser.DROP, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_queueFullBehavior; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterQueueFullBehavior) {
-			listener.enterQueueFullBehavior(this);
-		}
+	public ASSERT(): TerminalNode {
+		return this.getToken(FppParser.ASSERT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitQueueFullBehavior) {
-			listener.exitQueueFullBehavior(this);
-		}
+	public BLOCK(): TerminalNode {
+		return this.getToken(FppParser.BLOCK, 0);
+	}
+	public DROP(): TerminalNode {
+		return this.getToken(FppParser.DROP, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_queueFullBehavior;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7344,25 +6519,21 @@ export class QueueFullBehaviorContext extends ParserRuleContext {
 
 
 export class CommandKindContext extends ParserRuleContext {
-	public ASYNC(): TerminalNode | undefined { return this.tryGetToken(FppParser.ASYNC, 0); }
-	public GUARDED(): TerminalNode | undefined { return this.tryGetToken(FppParser.GUARDED, 0); }
-	public SYNC(): TerminalNode | undefined { return this.tryGetToken(FppParser.SYNC, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_commandKind; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterCommandKind) {
-			listener.enterCommandKind(this);
-		}
+	public ASYNC(): TerminalNode {
+		return this.getToken(FppParser.ASYNC, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitCommandKind) {
-			listener.exitCommandKind(this);
-		}
+	public GUARDED(): TerminalNode {
+		return this.getToken(FppParser.GUARDED, 0);
+	}
+	public SYNC(): TerminalNode {
+		return this.getToken(FppParser.SYNC, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_commandKind;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7382,44 +6553,39 @@ export class CommandDeclContext extends ParserRuleContext {
 	public _opcode!: ExprContext;
 	public _priority!: ExprContext;
 	public _queueFull!: QueueFullBehaviorContext;
-	public COMMAND(): TerminalNode { return this.getToken(FppParser.COMMAND, 0); }
-	public commandKind(): CommandKindContext {
-		return this.getRuleContext(0, CommandKindContext);
-	}
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public OPCODE(): TerminalNode | undefined { return this.tryGetToken(FppParser.OPCODE, 0); }
-	public PRIORITY(): TerminalNode | undefined { return this.tryGetToken(FppParser.PRIORITY, 0); }
-	public formalParameterList(): FormalParameterListContext | undefined {
-		return this.tryGetRuleContext(0, FormalParameterListContext);
-	}
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	public queueFullBehavior(): QueueFullBehaviorContext | undefined {
-		return this.tryGetRuleContext(0, QueueFullBehaviorContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_commandDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterCommandDecl) {
-			listener.enterCommandDecl(this);
-		}
+	public COMMAND(): TerminalNode {
+		return this.getToken(FppParser.COMMAND, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitCommandDecl) {
-			listener.exitCommandDecl(this);
-		}
+	public commandKind(): CommandKindContext {
+		return this.getTypedRuleContext(CommandKindContext, 0) as CommandKindContext;
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public OPCODE(): TerminalNode {
+		return this.getToken(FppParser.OPCODE, 0);
+	}
+	public PRIORITY(): TerminalNode {
+		return this.getToken(FppParser.PRIORITY, 0);
+	}
+	public formalParameterList(): FormalParameterListContext {
+		return this.getTypedRuleContext(FormalParameterListContext, 0) as FormalParameterListContext;
+	}
+	public expr_list(): ExprContext[] {
+		return this.getTypedRuleContexts(ExprContext) as ExprContext[];
+	}
+	public expr(i: number): ExprContext {
+		return this.getTypedRuleContext(ExprContext, i) as ExprContext;
+	}
+	public queueFullBehavior(): QueueFullBehaviorContext {
+		return this.getTypedRuleContext(QueueFullBehaviorContext, 0) as QueueFullBehaviorContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_commandDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7434,54 +6600,50 @@ export class CommandDeclContext extends ParserRuleContext {
 
 export class ParamDeclContext extends ParserRuleContext {
 	public _name!: Token;
-	public _type!: TypeNameContext;
+	public _type_!: TypeNameContext;
 	public _default_!: ExprContext;
 	public _id!: ExprContext;
 	public _setOpcode!: ExprContext;
 	public _saveOpcode!: ExprContext;
-	public PARAM(): TerminalNode { return this.getToken(FppParser.PARAM, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public typeName(): TypeNameContext {
-		return this.getRuleContext(0, TypeNameContext);
-	}
-	public DEFAULT(): TerminalNode | undefined { return this.tryGetToken(FppParser.DEFAULT, 0); }
-	public ID(): TerminalNode | undefined { return this.tryGetToken(FppParser.ID, 0); }
-	public SET(): TerminalNode | undefined { return this.tryGetToken(FppParser.SET, 0); }
-	public OPCODE(): TerminalNode[];
-	public OPCODE(i: number): TerminalNode;
-	public OPCODE(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.OPCODE);
-		} else {
-			return this.getToken(FppParser.OPCODE, i);
-		}
-	}
-	public SAVE(): TerminalNode | undefined { return this.tryGetToken(FppParser.SAVE, 0); }
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_paramDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterParamDecl) {
-			listener.enterParamDecl(this);
-		}
+	public PARAM(): TerminalNode {
+		return this.getToken(FppParser.PARAM, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitParamDecl) {
-			listener.exitParamDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public typeName(): TypeNameContext {
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
+	}
+	public DEFAULT(): TerminalNode {
+		return this.getToken(FppParser.DEFAULT, 0);
+	}
+	public ID(): TerminalNode {
+		return this.getToken(FppParser.ID, 0);
+	}
+	public SET(): TerminalNode {
+		return this.getToken(FppParser.SET, 0);
+	}
+	public OPCODE_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.OPCODE);
+	}
+	public OPCODE(i: number): TerminalNode {
+		return this.getToken(FppParser.OPCODE, i);
+	}
+	public SAVE(): TerminalNode {
+		return this.getToken(FppParser.SAVE, 0);
+	}
+	public expr_list(): ExprContext[] {
+		return this.getTypedRuleContexts(ExprContext) as ExprContext[];
+	}
+	public expr(i: number): ExprContext {
+		return this.getTypedRuleContext(ExprContext, i) as ExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_paramDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7495,27 +6657,27 @@ export class ParamDeclContext extends ParserRuleContext {
 
 
 export class GeneralPortKindContext extends ParserRuleContext {
-	public ASYNC(): TerminalNode | undefined { return this.tryGetToken(FppParser.ASYNC, 0); }
-	public INPUT(): TerminalNode | undefined { return this.tryGetToken(FppParser.INPUT, 0); }
-	public GUARDED(): TerminalNode | undefined { return this.tryGetToken(FppParser.GUARDED, 0); }
-	public SYNC(): TerminalNode | undefined { return this.tryGetToken(FppParser.SYNC, 0); }
-	public OUTPUT(): TerminalNode | undefined { return this.tryGetToken(FppParser.OUTPUT, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_generalPortKind; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterGeneralPortKind) {
-			listener.enterGeneralPortKind(this);
-		}
+	public ASYNC(): TerminalNode {
+		return this.getToken(FppParser.ASYNC, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitGeneralPortKind) {
-			listener.exitGeneralPortKind(this);
-		}
+	public INPUT(): TerminalNode {
+		return this.getToken(FppParser.INPUT, 0);
+	}
+	public GUARDED(): TerminalNode {
+		return this.getToken(FppParser.GUARDED, 0);
+	}
+	public SYNC(): TerminalNode {
+		return this.getToken(FppParser.SYNC, 0);
+	}
+	public OUTPUT(): TerminalNode {
+		return this.getToken(FppParser.OUTPUT, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_generalPortKind;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7529,37 +6691,57 @@ export class GeneralPortKindContext extends ParserRuleContext {
 
 
 export class SpecialPortKindContext extends ParserRuleContext {
-	public COMMAND(): TerminalNode | undefined { return this.tryGetToken(FppParser.COMMAND, 0); }
-	public RECV(): TerminalNode | undefined { return this.tryGetToken(FppParser.RECV, 0); }
-	public REG(): TerminalNode | undefined { return this.tryGetToken(FppParser.REG, 0); }
-	public RESP(): TerminalNode | undefined { return this.tryGetToken(FppParser.RESP, 0); }
-	public EVENT(): TerminalNode | undefined { return this.tryGetToken(FppParser.EVENT, 0); }
-	public PARAM(): TerminalNode | undefined { return this.tryGetToken(FppParser.PARAM, 0); }
-	public GET(): TerminalNode | undefined { return this.tryGetToken(FppParser.GET, 0); }
-	public SET(): TerminalNode | undefined { return this.tryGetToken(FppParser.SET, 0); }
-	public TELEMETRY(): TerminalNode | undefined { return this.tryGetToken(FppParser.TELEMETRY, 0); }
-	public TEXT(): TerminalNode | undefined { return this.tryGetToken(FppParser.TEXT, 0); }
-	public TIME(): TerminalNode | undefined { return this.tryGetToken(FppParser.TIME, 0); }
-	public PRODUCT(): TerminalNode | undefined { return this.tryGetToken(FppParser.PRODUCT, 0); }
-	public REQUEST(): TerminalNode | undefined { return this.tryGetToken(FppParser.REQUEST, 0); }
-	public ASYNC(): TerminalNode | undefined { return this.tryGetToken(FppParser.ASYNC, 0); }
-	public SEND(): TerminalNode | undefined { return this.tryGetToken(FppParser.SEND, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_specialPortKind; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterSpecialPortKind) {
-			listener.enterSpecialPortKind(this);
-		}
+	public COMMAND(): TerminalNode {
+		return this.getToken(FppParser.COMMAND, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitSpecialPortKind) {
-			listener.exitSpecialPortKind(this);
-		}
+	public RECV(): TerminalNode {
+		return this.getToken(FppParser.RECV, 0);
+	}
+	public REG(): TerminalNode {
+		return this.getToken(FppParser.REG, 0);
+	}
+	public RESP(): TerminalNode {
+		return this.getToken(FppParser.RESP, 0);
+	}
+	public EVENT(): TerminalNode {
+		return this.getToken(FppParser.EVENT, 0);
+	}
+	public PARAM(): TerminalNode {
+		return this.getToken(FppParser.PARAM, 0);
+	}
+	public GET(): TerminalNode {
+		return this.getToken(FppParser.GET, 0);
+	}
+	public SET(): TerminalNode {
+		return this.getToken(FppParser.SET, 0);
+	}
+	public TELEMETRY(): TerminalNode {
+		return this.getToken(FppParser.TELEMETRY, 0);
+	}
+	public TEXT(): TerminalNode {
+		return this.getToken(FppParser.TEXT, 0);
+	}
+	public TIME(): TerminalNode {
+		return this.getToken(FppParser.TIME, 0);
+	}
+	public PRODUCT(): TerminalNode {
+		return this.getToken(FppParser.PRODUCT, 0);
+	}
+	public REQUEST(): TerminalNode {
+		return this.getToken(FppParser.REQUEST, 0);
+	}
+	public ASYNC(): TerminalNode {
+		return this.getToken(FppParser.ASYNC, 0);
+	}
+	public SEND(): TerminalNode {
+		return this.getToken(FppParser.SEND, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_specialPortKind;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7573,26 +6755,18 @@ export class SpecialPortKindContext extends ParserRuleContext {
 
 
 export class GeneralPortInstanceTypeContext extends ParserRuleContext {
-	public SERIAL(): TerminalNode | undefined { return this.tryGetToken(FppParser.SERIAL, 0); }
-	public qualIdent(): QualIdentContext | undefined {
-		return this.tryGetRuleContext(0, QualIdentContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_generalPortInstanceType; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterGeneralPortInstanceType) {
-			listener.enterGeneralPortInstanceType(this);
-		}
+	public SERIAL(): TerminalNode {
+		return this.getToken(FppParser.SERIAL, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitGeneralPortInstanceType) {
-			listener.exitGeneralPortInstanceType(this);
-		}
+	public qualIdent(): QualIdentContext {
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_generalPortInstanceType;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7609,46 +6783,39 @@ export class GeneralPortInstanceDeclContext extends ParserRuleContext {
 	public _kind!: GeneralPortKindContext;
 	public _name!: Token;
 	public _n!: ExprContext;
-	public _type!: GeneralPortInstanceTypeContext;
+	public _type_!: GeneralPortInstanceTypeContext;
 	public _priority!: ExprContext;
 	public _queueFull!: QueueFullBehaviorContext;
-	public PORT(): TerminalNode { return this.getToken(FppParser.PORT, 0); }
-	public generalPortKind(): GeneralPortKindContext {
-		return this.getRuleContext(0, GeneralPortKindContext);
-	}
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public generalPortInstanceType(): GeneralPortInstanceTypeContext {
-		return this.getRuleContext(0, GeneralPortInstanceTypeContext);
-	}
-	public PRIORITY(): TerminalNode | undefined { return this.tryGetToken(FppParser.PRIORITY, 0); }
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	public queueFullBehavior(): QueueFullBehaviorContext | undefined {
-		return this.tryGetRuleContext(0, QueueFullBehaviorContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_generalPortInstanceDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterGeneralPortInstanceDecl) {
-			listener.enterGeneralPortInstanceDecl(this);
-		}
+	public PORT(): TerminalNode {
+		return this.getToken(FppParser.PORT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitGeneralPortInstanceDecl) {
-			listener.exitGeneralPortInstanceDecl(this);
-		}
+	public generalPortKind(): GeneralPortKindContext {
+		return this.getTypedRuleContext(GeneralPortKindContext, 0) as GeneralPortKindContext;
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public generalPortInstanceType(): GeneralPortInstanceTypeContext {
+		return this.getTypedRuleContext(GeneralPortInstanceTypeContext, 0) as GeneralPortInstanceTypeContext;
+	}
+	public PRIORITY(): TerminalNode {
+		return this.getToken(FppParser.PRIORITY, 0);
+	}
+	public expr_list(): ExprContext[] {
+		return this.getTypedRuleContexts(ExprContext) as ExprContext[];
+	}
+	public expr(i: number): ExprContext {
+		return this.getTypedRuleContext(ExprContext, i) as ExprContext;
+	}
+	public queueFullBehavior(): QueueFullBehaviorContext {
+		return this.getTypedRuleContext(QueueFullBehaviorContext, 0) as QueueFullBehaviorContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_generalPortInstanceDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7663,27 +6830,32 @@ export class GeneralPortInstanceDeclContext extends ParserRuleContext {
 
 export class SpecialPortInstanceDeclContext extends ParserRuleContext {
 	public _name!: Token;
-	public specialPortKind(): SpecialPortKindContext {
-		return this.getRuleContext(0, SpecialPortKindContext);
-	}
-	public PORT(): TerminalNode { return this.getToken(FppParser.PORT, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	public _priority!: ExprContext;
+	public _queueFull!: QueueFullBehaviorContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_specialPortInstanceDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterSpecialPortInstanceDecl) {
-			listener.enterSpecialPortInstanceDecl(this);
-		}
+	public specialPortKind(): SpecialPortKindContext {
+		return this.getTypedRuleContext(SpecialPortKindContext, 0) as SpecialPortKindContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitSpecialPortInstanceDecl) {
-			listener.exitSpecialPortInstanceDecl(this);
-		}
+	public PORT(): TerminalNode {
+		return this.getToken(FppParser.PORT, 0);
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public PRIORITY(): TerminalNode {
+		return this.getToken(FppParser.PRIORITY, 0);
+	}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+	public queueFullBehavior(): QueueFullBehaviorContext {
+		return this.getTypedRuleContext(QueueFullBehaviorContext, 0) as QueueFullBehaviorContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_specialPortInstanceDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7697,25 +6869,21 @@ export class SpecialPortInstanceDeclContext extends ParserRuleContext {
 
 
 export class TelemetryLimitKindContext extends ParserRuleContext {
-	public RED(): TerminalNode | undefined { return this.tryGetToken(FppParser.RED, 0); }
-	public ORANGE(): TerminalNode | undefined { return this.tryGetToken(FppParser.ORANGE, 0); }
-	public YELLOW(): TerminalNode | undefined { return this.tryGetToken(FppParser.YELLOW, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_telemetryLimitKind; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTelemetryLimitKind) {
-			listener.enterTelemetryLimitKind(this);
-		}
+	public RED(): TerminalNode {
+		return this.getToken(FppParser.RED, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTelemetryLimitKind) {
-			listener.exitTelemetryLimitKind(this);
-		}
+	public ORANGE(): TerminalNode {
+		return this.getToken(FppParser.ORANGE, 0);
+	}
+	public YELLOW(): TerminalNode {
+		return this.getToken(FppParser.YELLOW, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_telemetryLimitKind;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7731,28 +6899,18 @@ export class TelemetryLimitKindContext extends ParserRuleContext {
 export class TelemetryLimitExprContext extends ParserRuleContext {
 	public _kind!: TelemetryLimitKindContext;
 	public _limit!: ExprContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
 	public telemetryLimitKind(): TelemetryLimitKindContext {
-		return this.getRuleContext(0, TelemetryLimitKindContext);
+		return this.getTypedRuleContext(TelemetryLimitKindContext, 0) as TelemetryLimitKindContext;
 	}
 	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
 	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_telemetryLimitExpr; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTelemetryLimitExpr) {
-			listener.enterTelemetryLimitExpr(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTelemetryLimitExpr) {
-			listener.exitTelemetryLimitExpr(this);
-		}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_telemetryLimitExpr;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7766,49 +6924,30 @@ export class TelemetryLimitExprContext extends ParserRuleContext {
 
 
 export class TelemetryLimitContext extends ParserRuleContext {
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public telemetryLimitExpr(): TelemetryLimitExprContext[];
-	public telemetryLimitExpr(i: number): TelemetryLimitExprContext;
-	public telemetryLimitExpr(i?: number): TelemetryLimitExprContext | TelemetryLimitExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(TelemetryLimitExprContext);
-		} else {
-			return this.getRuleContext(i, TelemetryLimitExprContext);
-		}
-	}
-	public commaDelim(): CommaDelimContext[];
-	public commaDelim(i: number): CommaDelimContext;
-	public commaDelim(i?: number): CommaDelimContext | CommaDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(CommaDelimContext);
-		} else {
-			return this.getRuleContext(i, CommaDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_telemetryLimit; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTelemetryLimit) {
-			listener.enterTelemetryLimit(this);
-		}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTelemetryLimit) {
-			listener.exitTelemetryLimit(this);
-		}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public telemetryLimitExpr_list(): TelemetryLimitExprContext[] {
+		return this.getTypedRuleContexts(TelemetryLimitExprContext) as TelemetryLimitExprContext[];
+	}
+	public telemetryLimitExpr(i: number): TelemetryLimitExprContext {
+		return this.getTypedRuleContext(TelemetryLimitExprContext, i) as TelemetryLimitExprContext;
+	}
+	public commaDelim_list(): CommaDelimContext[] {
+		return this.getTypedRuleContexts(CommaDelimContext) as CommaDelimContext[];
+	}
+	public commaDelim(i: number): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, i) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_telemetryLimit;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7822,25 +6961,21 @@ export class TelemetryLimitContext extends ParserRuleContext {
 
 
 export class TelemetryUpdateContext extends ParserRuleContext {
-	public ALWAYS(): TerminalNode | undefined { return this.tryGetToken(FppParser.ALWAYS, 0); }
-	public ON(): TerminalNode | undefined { return this.tryGetToken(FppParser.ON, 0); }
-	public CHANGE(): TerminalNode | undefined { return this.tryGetToken(FppParser.CHANGE, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_telemetryUpdate; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTelemetryUpdate) {
-			listener.enterTelemetryUpdate(this);
-		}
+	public ALWAYS(): TerminalNode {
+		return this.getToken(FppParser.ALWAYS, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTelemetryUpdate) {
-			listener.exitTelemetryUpdate(this);
-		}
+	public ON(): TerminalNode {
+		return this.getToken(FppParser.ON, 0);
+	}
+	public CHANGE(): TerminalNode {
+		return this.getToken(FppParser.CHANGE, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_telemetryUpdate;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7855,54 +6990,57 @@ export class TelemetryUpdateContext extends ParserRuleContext {
 
 export class TelemetryChannelDeclContext extends ParserRuleContext {
 	public _name!: Token;
-	public _type!: TypeNameContext;
+	public _type_!: TypeNameContext;
 	public _id!: ExprContext;
 	public _update!: TelemetryUpdateContext;
 	public _format!: Token;
 	public _low!: TelemetryLimitContext;
 	public _high!: TelemetryLimitContext;
-	public TELEMETRY(): TerminalNode { return this.getToken(FppParser.TELEMETRY, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public typeName(): TypeNameContext {
-		return this.getRuleContext(0, TypeNameContext);
-	}
-	public ID(): TerminalNode | undefined { return this.tryGetToken(FppParser.ID, 0); }
-	public UPDATE(): TerminalNode | undefined { return this.tryGetToken(FppParser.UPDATE, 0); }
-	public FORMAT(): TerminalNode | undefined { return this.tryGetToken(FppParser.FORMAT, 0); }
-	public LOW(): TerminalNode | undefined { return this.tryGetToken(FppParser.LOW, 0); }
-	public HIGH(): TerminalNode | undefined { return this.tryGetToken(FppParser.HIGH, 0); }
-	public expr(): ExprContext | undefined {
-		return this.tryGetRuleContext(0, ExprContext);
-	}
-	public telemetryUpdate(): TelemetryUpdateContext | undefined {
-		return this.tryGetRuleContext(0, TelemetryUpdateContext);
-	}
-	public LIT_STRING(): TerminalNode | undefined { return this.tryGetToken(FppParser.LIT_STRING, 0); }
-	public telemetryLimit(): TelemetryLimitContext[];
-	public telemetryLimit(i: number): TelemetryLimitContext;
-	public telemetryLimit(i?: number): TelemetryLimitContext | TelemetryLimitContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(TelemetryLimitContext);
-		} else {
-			return this.getRuleContext(i, TelemetryLimitContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_telemetryChannelDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTelemetryChannelDecl) {
-			listener.enterTelemetryChannelDecl(this);
-		}
+	public TELEMETRY(): TerminalNode {
+		return this.getToken(FppParser.TELEMETRY, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTelemetryChannelDecl) {
-			listener.exitTelemetryChannelDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public typeName(): TypeNameContext {
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
+	}
+	public ID(): TerminalNode {
+		return this.getToken(FppParser.ID, 0);
+	}
+	public UPDATE(): TerminalNode {
+		return this.getToken(FppParser.UPDATE, 0);
+	}
+	public FORMAT(): TerminalNode {
+		return this.getToken(FppParser.FORMAT, 0);
+	}
+	public LOW(): TerminalNode {
+		return this.getToken(FppParser.LOW, 0);
+	}
+	public HIGH(): TerminalNode {
+		return this.getToken(FppParser.HIGH, 0);
+	}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+	public telemetryUpdate(): TelemetryUpdateContext {
+		return this.getTypedRuleContext(TelemetryUpdateContext, 0) as TelemetryUpdateContext;
+	}
+	public LIT_STRING(): TerminalNode {
+		return this.getToken(FppParser.LIT_STRING, 0);
+	}
+	public telemetryLimit_list(): TelemetryLimitContext[] {
+		return this.getTypedRuleContexts(TelemetryLimitContext) as TelemetryLimitContext[];
+	}
+	public telemetryLimit(i: number): TelemetryLimitContext {
+		return this.getTypedRuleContext(TelemetryLimitContext, i) as TelemetryLimitContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_telemetryChannelDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7917,28 +7055,22 @@ export class TelemetryChannelDeclContext extends ParserRuleContext {
 
 export class ActionDefContext extends ParserRuleContext {
 	public _name!: Token;
-	public _type!: TypeNameContext;
-	public ACTION(): TerminalNode { return this.getToken(FppParser.ACTION, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public typeName(): TypeNameContext | undefined {
-		return this.tryGetRuleContext(0, TypeNameContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	public _type_!: TypeNameContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_actionDef; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterActionDef) {
-			listener.enterActionDef(this);
-		}
+	public ACTION(): TerminalNode {
+		return this.getToken(FppParser.ACTION, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitActionDef) {
-			listener.exitActionDef(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public typeName(): TypeNameContext {
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_actionDef;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -7955,44 +7087,34 @@ export class ChoiceDefContext extends ParserRuleContext {
 	public _name!: Token;
 	public _guard!: Token;
 	public _then!: TransitionExprContext;
-	public _else!: TransitionExprContext;
-	public CHOICE(): TerminalNode { return this.getToken(FppParser.CHOICE, 0); }
-	public IF(): TerminalNode { return this.getToken(FppParser.IF, 0); }
-	public ELSE(): TerminalNode { return this.getToken(FppParser.ELSE, 0); }
-	public IDENTIFIER(): TerminalNode[];
-	public IDENTIFIER(i: number): TerminalNode;
-	public IDENTIFIER(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.IDENTIFIER);
-		} else {
-			return this.getToken(FppParser.IDENTIFIER, i);
-		}
-	}
-	public transitionExpr(): TransitionExprContext[];
-	public transitionExpr(i: number): TransitionExprContext;
-	public transitionExpr(i?: number): TransitionExprContext | TransitionExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(TransitionExprContext);
-		} else {
-			return this.getRuleContext(i, TransitionExprContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	public _else_!: TransitionExprContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_choiceDef; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterChoiceDef) {
-			listener.enterChoiceDef(this);
-		}
+	public CHOICE(): TerminalNode {
+		return this.getToken(FppParser.CHOICE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitChoiceDef) {
-			listener.exitChoiceDef(this);
-		}
+	public IF(): TerminalNode {
+		return this.getToken(FppParser.IF, 0);
+	}
+	public ELSE(): TerminalNode {
+		return this.getToken(FppParser.ELSE, 0);
+	}
+	public IDENTIFIER_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.IDENTIFIER);
+	}
+	public IDENTIFIER(i: number): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, i);
+	}
+	public transitionExpr_list(): TransitionExprContext[] {
+		return this.getTypedRuleContexts(TransitionExprContext) as TransitionExprContext[];
+	}
+	public transitionExpr(i: number): TransitionExprContext {
+		return this.getTypedRuleContext(TransitionExprContext, i) as TransitionExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_choiceDef;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8007,28 +7129,22 @@ export class ChoiceDefContext extends ParserRuleContext {
 
 export class GuardDefContext extends ParserRuleContext {
 	public _name!: Token;
-	public _type!: TypeNameContext;
-	public GUARD(): TerminalNode { return this.getToken(FppParser.GUARD, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public typeName(): TypeNameContext | undefined {
-		return this.tryGetRuleContext(0, TypeNameContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	public _type_!: TypeNameContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_guardDef; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterGuardDef) {
-			listener.enterGuardDef(this);
-		}
+	public GUARD(): TerminalNode {
+		return this.getToken(FppParser.GUARD, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitGuardDef) {
-			listener.exitGuardDef(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public typeName(): TypeNameContext {
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_guardDef;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8043,28 +7159,22 @@ export class GuardDefContext extends ParserRuleContext {
 
 export class SignalDefContext extends ParserRuleContext {
 	public _name!: Token;
-	public _type!: TypeNameContext;
-	public SIGNAL(): TerminalNode { return this.getToken(FppParser.SIGNAL, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public typeName(): TypeNameContext | undefined {
-		return this.tryGetRuleContext(0, TypeNameContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	public _type_!: TypeNameContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_signalDef; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterSignalDef) {
-			listener.enterSignalDef(this);
-		}
+	public SIGNAL(): TerminalNode {
+		return this.getToken(FppParser.SIGNAL, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitSignalDef) {
-			listener.exitSignalDef(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public typeName(): TypeNameContext {
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_signalDef;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8078,50 +7188,33 @@ export class SignalDefContext extends ParserRuleContext {
 
 
 export class DoExprContext extends ParserRuleContext {
-	public DO(): TerminalNode { return this.getToken(FppParser.DO, 0); }
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public IDENTIFIER(): TerminalNode[];
-	public IDENTIFIER(i: number): TerminalNode;
-	public IDENTIFIER(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.IDENTIFIER);
-		} else {
-			return this.getToken(FppParser.IDENTIFIER, i);
-		}
-	}
-	public commaDelim(): CommaDelimContext[];
-	public commaDelim(i: number): CommaDelimContext;
-	public commaDelim(i?: number): CommaDelimContext | CommaDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(CommaDelimContext);
-		} else {
-			return this.getRuleContext(i, CommaDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_doExpr; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterDoExpr) {
-			listener.enterDoExpr(this);
-		}
+	public DO(): TerminalNode {
+		return this.getToken(FppParser.DO, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitDoExpr) {
-			listener.exitDoExpr(this);
-		}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public IDENTIFIER_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.IDENTIFIER);
+	}
+	public IDENTIFIER(i: number): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, i);
+	}
+	public commaDelim_list(): CommaDelimContext[] {
+		return this.getTypedRuleContexts(CommaDelimContext) as CommaDelimContext[];
+	}
+	public commaDelim(i: number): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, i) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_doExpr;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8135,31 +7228,23 @@ export class DoExprContext extends ParserRuleContext {
 
 
 export class TransitionExprContext extends ParserRuleContext {
-	public _do!: DoExprContext;
-	public _state!: QualIdentContext;
-	public ENTER(): TerminalNode { return this.getToken(FppParser.ENTER, 0); }
-	public qualIdent(): QualIdentContext {
-		return this.getRuleContext(0, QualIdentContext);
-	}
-	public doExpr(): DoExprContext | undefined {
-		return this.tryGetRuleContext(0, DoExprContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	public _do_!: DoExprContext;
+	public _state_!: QualIdentContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_transitionExpr; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTransitionExpr) {
-			listener.enterTransitionExpr(this);
-		}
+	public ENTER(): TerminalNode {
+		return this.getToken(FppParser.ENTER, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTransitionExpr) {
-			listener.exitTransitionExpr(this);
-		}
+	public qualIdent(): QualIdentContext {
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
+	}
+	public doExpr(): DoExprContext {
+		return this.getTypedRuleContext(DoExprContext, 0) as DoExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_transitionExpr;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8174,26 +7259,18 @@ export class TransitionExprContext extends ParserRuleContext {
 
 export class InitialTransitionContext extends ParserRuleContext {
 	public _transition!: TransitionExprContext;
-	public INITIAL(): TerminalNode { return this.getToken(FppParser.INITIAL, 0); }
-	public transitionExpr(): TransitionExprContext {
-		return this.getRuleContext(0, TransitionExprContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_initialTransition; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterInitialTransition) {
-			listener.enterInitialTransition(this);
-		}
+	public INITIAL(): TerminalNode {
+		return this.getToken(FppParser.INITIAL, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitInitialTransition) {
-			listener.exitInitialTransition(this);
-		}
+	public transitionExpr(): TransitionExprContext {
+		return this.getTypedRuleContext(TransitionExprContext, 0) as TransitionExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_initialTransition;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8207,28 +7284,18 @@ export class InitialTransitionContext extends ParserRuleContext {
 
 
 export class TransitionOrDoExprContext extends ParserRuleContext {
-	public transitionExpr(): TransitionExprContext | undefined {
-		return this.tryGetRuleContext(0, TransitionExprContext);
-	}
-	public doExpr(): DoExprContext | undefined {
-		return this.tryGetRuleContext(0, DoExprContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_transitionOrDoExpr; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTransitionOrDoExpr) {
-			listener.enterTransitionOrDoExpr(this);
-		}
+	public transitionExpr(): TransitionExprContext {
+		return this.getTypedRuleContext(TransitionExprContext, 0) as TransitionExprContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTransitionOrDoExpr) {
-			listener.exitTransitionOrDoExpr(this);
-		}
+	public doExpr(): DoExprContext {
+		return this.getTypedRuleContext(DoExprContext, 0) as DoExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_transitionOrDoExpr;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8245,36 +7312,27 @@ export class StateTransitionContext extends ParserRuleContext {
 	public _signal!: Token;
 	public _guard!: Token;
 	public _transition!: TransitionOrDoExprContext;
-	public ON(): TerminalNode { return this.getToken(FppParser.ON, 0); }
-	public IDENTIFIER(): TerminalNode[];
-	public IDENTIFIER(i: number): TerminalNode;
-	public IDENTIFIER(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.IDENTIFIER);
-		} else {
-			return this.getToken(FppParser.IDENTIFIER, i);
-		}
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
+	public ON(): TerminalNode {
+		return this.getToken(FppParser.ON, 0);
+	}
+	public IDENTIFIER_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.IDENTIFIER);
+	}
+	public IDENTIFIER(i: number): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, i);
 	}
 	public transitionOrDoExpr(): TransitionOrDoExprContext {
-		return this.getRuleContext(0, TransitionOrDoExprContext);
+		return this.getTypedRuleContext(TransitionOrDoExprContext, 0) as TransitionOrDoExprContext;
 	}
-	public IF(): TerminalNode | undefined { return this.tryGetToken(FppParser.IF, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+	public IF(): TerminalNode {
+		return this.getToken(FppParser.IF, 0);
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_stateTransition; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStateTransition) {
-			listener.enterStateTransition(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStateTransition) {
-			listener.exitStateTransition(this);
-		}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_stateTransition;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8288,27 +7346,19 @@ export class StateTransitionContext extends ParserRuleContext {
 
 
 export class StateEntryContext extends ParserRuleContext {
-	public _do!: DoExprContext;
-	public ENTRY(): TerminalNode { return this.getToken(FppParser.ENTRY, 0); }
-	public doExpr(): DoExprContext {
-		return this.getRuleContext(0, DoExprContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	public _do_!: DoExprContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_stateEntry; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStateEntry) {
-			listener.enterStateEntry(this);
-		}
+	public ENTRY(): TerminalNode {
+		return this.getToken(FppParser.ENTRY, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStateEntry) {
-			listener.exitStateEntry(this);
-		}
+	public doExpr(): DoExprContext {
+		return this.getTypedRuleContext(DoExprContext, 0) as DoExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_stateEntry;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8322,27 +7372,19 @@ export class StateEntryContext extends ParserRuleContext {
 
 
 export class StateExitContext extends ParserRuleContext {
-	public _do!: DoExprContext;
-	public EXIT(): TerminalNode { return this.getToken(FppParser.EXIT, 0); }
-	public doExpr(): DoExprContext {
-		return this.getRuleContext(0, DoExprContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	public _do_!: DoExprContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_stateExit; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStateExit) {
-			listener.enterStateExit(this);
-		}
+	public EXIT(): TerminalNode {
+		return this.getToken(FppParser.EXIT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStateExit) {
-			listener.exitStateExit(this);
-		}
+	public doExpr(): DoExprContext {
+		return this.getTypedRuleContext(DoExprContext, 0) as DoExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_stateExit;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8355,77 +7397,31 @@ export class StateExitContext extends ParserRuleContext {
 }
 
 
-export class StateMemberTemplContext extends ParserRuleContext {
-	public initialTransition(): InitialTransitionContext | undefined {
-		return this.tryGetRuleContext(0, InitialTransitionContext);
-	}
-	public choiceDef(): ChoiceDefContext | undefined {
-		return this.tryGetRuleContext(0, ChoiceDefContext);
-	}
-	public stateDef(): StateDefContext | undefined {
-		return this.tryGetRuleContext(0, StateDefContext);
-	}
-	public stateTransition(): StateTransitionContext | undefined {
-		return this.tryGetRuleContext(0, StateTransitionContext);
-	}
-	public stateEntry(): StateEntryContext | undefined {
-		return this.tryGetRuleContext(0, StateEntryContext);
-	}
-	public stateExit(): StateExitContext | undefined {
-		return this.tryGetRuleContext(0, StateExitContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_stateMemberTempl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStateMemberTempl) {
-			listener.enterStateMemberTempl(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStateMemberTempl) {
-			listener.exitStateMemberTempl(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: FppVisitor<Result>): Result {
-		if (visitor.visitStateMemberTempl) {
-			return visitor.visitStateMemberTempl(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
 export class StateMemberContext extends ParserRuleContext {
-	public stateMemberTempl(): StateMemberTemplContext {
-		return this.getRuleContext(0, StateMemberTemplContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	public ANNOTATION(): TerminalNode | undefined { return this.tryGetToken(FppParser.ANNOTATION, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_stateMember; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStateMember) {
-			listener.enterStateMember(this);
-		}
+	public initialTransition(): InitialTransitionContext {
+		return this.getTypedRuleContext(InitialTransitionContext, 0) as InitialTransitionContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStateMember) {
-			listener.exitStateMember(this);
-		}
+	public choiceDef(): ChoiceDefContext {
+		return this.getTypedRuleContext(ChoiceDefContext, 0) as ChoiceDefContext;
+	}
+	public stateDef(): StateDefContext {
+		return this.getTypedRuleContext(StateDefContext, 0) as StateDefContext;
+	}
+	public stateTransition(): StateTransitionContext {
+		return this.getTypedRuleContext(StateTransitionContext, 0) as StateTransitionContext;
+	}
+	public stateEntry(): StateEntryContext {
+		return this.getTypedRuleContext(StateEntryContext, 0) as StateEntryContext;
+	}
+	public stateExit(): StateExitContext {
+		return this.getTypedRuleContext(StateExitContext, 0) as StateExitContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_stateMember;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8440,51 +7436,36 @@ export class StateMemberContext extends ParserRuleContext {
 
 export class StateDefContext extends ParserRuleContext {
 	public _name!: Token;
-	public STATE(): TerminalNode { return this.getToken(FppParser.STATE, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public stateMember(): StateMemberContext[];
-	public stateMember(i: number): StateMemberContext;
-	public stateMember(i?: number): StateMemberContext | StateMemberContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(StateMemberContext);
-		} else {
-			return this.getRuleContext(i, StateMemberContext);
-		}
-	}
-	public semiDelim(): SemiDelimContext[];
-	public semiDelim(i: number): SemiDelimContext;
-	public semiDelim(i?: number): SemiDelimContext | SemiDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(SemiDelimContext);
-		} else {
-			return this.getRuleContext(i, SemiDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_stateDef; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStateDef) {
-			listener.enterStateDef(this);
-		}
+	public STATE(): TerminalNode {
+		return this.getToken(FppParser.STATE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStateDef) {
-			listener.exitStateDef(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public stateMember_list(): StateMemberContext[] {
+		return this.getTypedRuleContexts(StateMemberContext) as StateMemberContext[];
+	}
+	public stateMember(i: number): StateMemberContext {
+		return this.getTypedRuleContext(StateMemberContext, i) as StateMemberContext;
+	}
+	public semiDelim_list(): SemiDelimContext[] {
+		return this.getTypedRuleContexts(SemiDelimContext) as SemiDelimContext[];
+	}
+	public semiDelim(i: number): SemiDelimContext {
+		return this.getTypedRuleContext(SemiDelimContext, i) as SemiDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_stateDef;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8498,40 +7479,30 @@ export class StateDefContext extends ParserRuleContext {
 
 
 export class StateMachineMemberTemplContext extends ParserRuleContext {
-	public choiceDef(): ChoiceDefContext | undefined {
-		return this.tryGetRuleContext(0, ChoiceDefContext);
-	}
-	public guardDef(): GuardDefContext | undefined {
-		return this.tryGetRuleContext(0, GuardDefContext);
-	}
-	public initialTransition(): InitialTransitionContext | undefined {
-		return this.tryGetRuleContext(0, InitialTransitionContext);
-	}
-	public signalDef(): SignalDefContext | undefined {
-		return this.tryGetRuleContext(0, SignalDefContext);
-	}
-	public stateDef(): StateDefContext | undefined {
-		return this.tryGetRuleContext(0, StateDefContext);
-	}
-	public actionDef(): ActionDefContext | undefined {
-		return this.tryGetRuleContext(0, ActionDefContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_stateMachineMemberTempl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStateMachineMemberTempl) {
-			listener.enterStateMachineMemberTempl(this);
-		}
+	public choiceDef(): ChoiceDefContext {
+		return this.getTypedRuleContext(ChoiceDefContext, 0) as ChoiceDefContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStateMachineMemberTempl) {
-			listener.exitStateMachineMemberTempl(this);
-		}
+	public guardDef(): GuardDefContext {
+		return this.getTypedRuleContext(GuardDefContext, 0) as GuardDefContext;
+	}
+	public initialTransition(): InitialTransitionContext {
+		return this.getTypedRuleContext(InitialTransitionContext, 0) as InitialTransitionContext;
+	}
+	public signalDef(): SignalDefContext {
+		return this.getTypedRuleContext(SignalDefContext, 0) as SignalDefContext;
+	}
+	public stateDef(): StateDefContext {
+		return this.getTypedRuleContext(StateDefContext, 0) as StateDefContext;
+	}
+	public actionDef(): ActionDefContext {
+		return this.getTypedRuleContext(ActionDefContext, 0) as ActionDefContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_stateMachineMemberTempl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8545,29 +7516,18 @@ export class StateMachineMemberTemplContext extends ParserRuleContext {
 
 
 export class StateMachineMemberContext extends ParserRuleContext {
-	public stateMachineMemberTempl(): StateMachineMemberTemplContext {
-		return this.getRuleContext(0, StateMachineMemberTemplContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	public ANNOTATION(): TerminalNode | undefined { return this.tryGetToken(FppParser.ANNOTATION, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_stateMachineMember; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStateMachineMember) {
-			listener.enterStateMachineMember(this);
-		}
+	public stateMachineMemberTempl(): StateMachineMemberTemplContext {
+		return this.getTypedRuleContext(StateMachineMemberTemplContext, 0) as StateMachineMemberTemplContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStateMachineMember) {
-			listener.exitStateMachineMember(this);
-		}
+	public ANNOTATION(): TerminalNode {
+		return this.getToken(FppParser.ANNOTATION, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_stateMachineMember;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8582,52 +7542,39 @@ export class StateMachineMemberContext extends ParserRuleContext {
 
 export class StateMachineDefContext extends ParserRuleContext {
 	public _name!: Token;
-	public STATE(): TerminalNode { return this.getToken(FppParser.STATE, 0); }
-	public MACHINE(): TerminalNode { return this.getToken(FppParser.MACHINE, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public stateMachineMember(): StateMachineMemberContext[];
-	public stateMachineMember(i: number): StateMachineMemberContext;
-	public stateMachineMember(i?: number): StateMachineMemberContext | StateMachineMemberContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(StateMachineMemberContext);
-		} else {
-			return this.getRuleContext(i, StateMachineMemberContext);
-		}
-	}
-	public semiDelim(): SemiDelimContext[];
-	public semiDelim(i: number): SemiDelimContext;
-	public semiDelim(i?: number): SemiDelimContext | SemiDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(SemiDelimContext);
-		} else {
-			return this.getRuleContext(i, SemiDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_stateMachineDef; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStateMachineDef) {
-			listener.enterStateMachineDef(this);
-		}
+	public STATE(): TerminalNode {
+		return this.getToken(FppParser.STATE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStateMachineDef) {
-			listener.exitStateMachineDef(this);
-		}
+	public MACHINE(): TerminalNode {
+		return this.getToken(FppParser.MACHINE, 0);
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public stateMachineMember_list(): StateMachineMemberContext[] {
+		return this.getTypedRuleContexts(StateMachineMemberContext) as StateMachineMemberContext[];
+	}
+	public stateMachineMember(i: number): StateMachineMemberContext {
+		return this.getTypedRuleContext(StateMachineMemberContext, i) as StateMachineMemberContext;
+	}
+	public semiDelim_list(): SemiDelimContext[] {
+		return this.getTypedRuleContexts(SemiDelimContext) as SemiDelimContext[];
+	}
+	public semiDelim(i: number): SemiDelimContext {
+		return this.getTypedRuleContext(SemiDelimContext, i) as SemiDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_stateMachineDef;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8645,36 +7592,36 @@ export class StateMachineInstanceContext extends ParserRuleContext {
 	public _stateMachine!: QualIdentContext;
 	public _priority!: ExprContext;
 	public _queueFull!: QueueFullBehaviorContext;
-	public STATE(): TerminalNode { return this.getToken(FppParser.STATE, 0); }
-	public MACHINE(): TerminalNode { return this.getToken(FppParser.MACHINE, 0); }
-	public INSTANCE(): TerminalNode { return this.getToken(FppParser.INSTANCE, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public qualIdent(): QualIdentContext {
-		return this.getRuleContext(0, QualIdentContext);
-	}
-	public PRIORITY(): TerminalNode | undefined { return this.tryGetToken(FppParser.PRIORITY, 0); }
-	public expr(): ExprContext | undefined {
-		return this.tryGetRuleContext(0, ExprContext);
-	}
-	public queueFullBehavior(): QueueFullBehaviorContext | undefined {
-		return this.tryGetRuleContext(0, QueueFullBehaviorContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_stateMachineInstance; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStateMachineInstance) {
-			listener.enterStateMachineInstance(this);
-		}
+	public STATE(): TerminalNode {
+		return this.getToken(FppParser.STATE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStateMachineInstance) {
-			listener.exitStateMachineInstance(this);
-		}
+	public MACHINE(): TerminalNode {
+		return this.getToken(FppParser.MACHINE, 0);
+	}
+	public INSTANCE(): TerminalNode {
+		return this.getToken(FppParser.INSTANCE, 0);
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public qualIdent(): QualIdentContext {
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
+	}
+	public PRIORITY(): TerminalNode {
+		return this.getToken(FppParser.PRIORITY, 0);
+	}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+	public queueFullBehavior(): QueueFullBehaviorContext {
+		return this.getTypedRuleContext(QueueFullBehaviorContext, 0) as QueueFullBehaviorContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_stateMachineInstance;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8690,26 +7637,18 @@ export class StateMachineInstanceContext extends ParserRuleContext {
 export class EnumMemberContext extends ParserRuleContext {
 	public _name!: Token;
 	public _value!: ExprContext;
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public expr(): ExprContext | undefined {
-		return this.tryGetRuleContext(0, ExprContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_enumMember; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterEnumMember) {
-			listener.enterEnumMember(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitEnumMember) {
-			listener.exitEnumMember(this);
-		}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_enumMember;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8723,34 +7662,18 @@ export class EnumMemberContext extends ParserRuleContext {
 
 
 export class EnumMemberNContext extends ParserRuleContext {
-	public enumMember(): EnumMemberContext {
-		return this.getRuleContext(0, EnumMemberContext);
-	}
-	public postAnnotation(): PostAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PostAnnotationContext);
-	}
-	public commaDelim(): CommaDelimContext | undefined {
-		return this.tryGetRuleContext(0, CommaDelimContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_enumMemberN; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterEnumMemberN) {
-			listener.enterEnumMemberN(this);
-		}
+	public enumMember(): EnumMemberContext {
+		return this.getTypedRuleContext(EnumMemberContext, 0) as EnumMemberContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitEnumMemberN) {
-			listener.exitEnumMemberN(this);
-		}
+	public commaDelim(): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, 0) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_enumMemberN;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8764,34 +7687,18 @@ export class EnumMemberNContext extends ParserRuleContext {
 
 
 export class EnumMemberLContext extends ParserRuleContext {
-	public enumMember(): EnumMemberContext {
-		return this.getRuleContext(0, EnumMemberContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	public postAnnotation(): PostAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PostAnnotationContext);
-	}
-	public commaDelim(): CommaDelimContext | undefined {
-		return this.tryGetRuleContext(0, CommaDelimContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_enumMemberL; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterEnumMemberL) {
-			listener.enterEnumMemberL(this);
-		}
+	public enumMember(): EnumMemberContext {
+		return this.getTypedRuleContext(EnumMemberContext, 0) as EnumMemberContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitEnumMemberL) {
-			listener.exitEnumMemberL(this);
-		}
+	public commaDelim(): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, 0) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_enumMemberL;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8806,54 +7713,44 @@ export class EnumMemberLContext extends ParserRuleContext {
 
 export class EnumDeclContext extends ParserRuleContext {
 	public _name!: Token;
-	public _type!: IntTypeContext;
+	public _type_!: IntTypeContext;
 	public _default_!: ExprContext;
-	public ENUM(): TerminalNode { return this.getToken(FppParser.ENUM, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public enumMemberL(): EnumMemberLContext | undefined {
-		return this.tryGetRuleContext(0, EnumMemberLContext);
-	}
-	public DEFAULT(): TerminalNode | undefined { return this.tryGetToken(FppParser.DEFAULT, 0); }
-	public intType(): IntTypeContext | undefined {
-		return this.tryGetRuleContext(0, IntTypeContext);
-	}
-	public expr(): ExprContext | undefined {
-		return this.tryGetRuleContext(0, ExprContext);
-	}
-	public enumMemberN(): EnumMemberNContext[];
-	public enumMemberN(i: number): EnumMemberNContext;
-	public enumMemberN(i?: number): EnumMemberNContext | EnumMemberNContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(EnumMemberNContext);
-		} else {
-			return this.getRuleContext(i, EnumMemberNContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_enumDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterEnumDecl) {
-			listener.enterEnumDecl(this);
-		}
+	public ENUM(): TerminalNode {
+		return this.getToken(FppParser.ENUM, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitEnumDecl) {
-			listener.exitEnumDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public enumMemberL(): EnumMemberLContext {
+		return this.getTypedRuleContext(EnumMemberLContext, 0) as EnumMemberLContext;
+	}
+	public DEFAULT(): TerminalNode {
+		return this.getToken(FppParser.DEFAULT, 0);
+	}
+	public intType(): IntTypeContext {
+		return this.getTypedRuleContext(IntTypeContext, 0) as IntTypeContext;
+	}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+	public enumMemberN_list(): EnumMemberNContext[] {
+		return this.getTypedRuleContexts(EnumMemberNContext) as EnumMemberNContext[];
+	}
+	public enumMemberN(i: number): EnumMemberNContext {
+		return this.getTypedRuleContext(EnumMemberNContext, i) as EnumMemberNContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_enumDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8867,29 +7764,33 @@ export class EnumDeclContext extends ParserRuleContext {
 
 
 export class EventSeverityContext extends ParserRuleContext {
-	public ACTIVITY(): TerminalNode | undefined { return this.tryGetToken(FppParser.ACTIVITY, 0); }
-	public HIGH(): TerminalNode | undefined { return this.tryGetToken(FppParser.HIGH, 0); }
-	public LOW(): TerminalNode | undefined { return this.tryGetToken(FppParser.LOW, 0); }
-	public COMMAND(): TerminalNode | undefined { return this.tryGetToken(FppParser.COMMAND, 0); }
-	public DIAGNOSTIC(): TerminalNode | undefined { return this.tryGetToken(FppParser.DIAGNOSTIC, 0); }
-	public FATAL(): TerminalNode | undefined { return this.tryGetToken(FppParser.FATAL, 0); }
-	public WARNING(): TerminalNode | undefined { return this.tryGetToken(FppParser.WARNING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_eventSeverity; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterEventSeverity) {
-			listener.enterEventSeverity(this);
-		}
+	public ACTIVITY(): TerminalNode {
+		return this.getToken(FppParser.ACTIVITY, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitEventSeverity) {
-			listener.exitEventSeverity(this);
-		}
+	public HIGH(): TerminalNode {
+		return this.getToken(FppParser.HIGH, 0);
+	}
+	public LOW(): TerminalNode {
+		return this.getToken(FppParser.LOW, 0);
+	}
+	public COMMAND(): TerminalNode {
+		return this.getToken(FppParser.COMMAND, 0);
+	}
+	public DIAGNOSTIC(): TerminalNode {
+		return this.getToken(FppParser.DIAGNOSTIC, 0);
+	}
+	public FATAL(): TerminalNode {
+		return this.getToken(FppParser.FATAL, 0);
+	}
+	public WARNING(): TerminalNode {
+		return this.getToken(FppParser.WARNING, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_eventSeverity;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8908,44 +7809,45 @@ export class EventDeclContext extends ParserRuleContext {
 	public _id!: ExprContext;
 	public _format!: Token;
 	public _throttle!: ExprContext;
-	public EVENT(): TerminalNode { return this.getToken(FppParser.EVENT, 0); }
-	public SEVERITY(): TerminalNode { return this.getToken(FppParser.SEVERITY, 0); }
-	public eventSeverity(): EventSeverityContext {
-		return this.getRuleContext(0, EventSeverityContext);
-	}
-	public FORMAT(): TerminalNode { return this.getToken(FppParser.FORMAT, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public LIT_STRING(): TerminalNode { return this.getToken(FppParser.LIT_STRING, 0); }
-	public ID(): TerminalNode | undefined { return this.tryGetToken(FppParser.ID, 0); }
-	public THROTTLE(): TerminalNode | undefined { return this.tryGetToken(FppParser.THROTTLE, 0); }
-	public formalParameterList(): FormalParameterListContext | undefined {
-		return this.tryGetRuleContext(0, FormalParameterListContext);
-	}
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_eventDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterEventDecl) {
-			listener.enterEventDecl(this);
-		}
+	public EVENT(): TerminalNode {
+		return this.getToken(FppParser.EVENT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitEventDecl) {
-			listener.exitEventDecl(this);
-		}
+	public SEVERITY(): TerminalNode {
+		return this.getToken(FppParser.SEVERITY, 0);
+	}
+	public eventSeverity(): EventSeverityContext {
+		return this.getTypedRuleContext(EventSeverityContext, 0) as EventSeverityContext;
+	}
+	public FORMAT(): TerminalNode {
+		return this.getToken(FppParser.FORMAT, 0);
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public LIT_STRING(): TerminalNode {
+		return this.getToken(FppParser.LIT_STRING, 0);
+	}
+	public ID(): TerminalNode {
+		return this.getToken(FppParser.ID, 0);
+	}
+	public THROTTLE(): TerminalNode {
+		return this.getToken(FppParser.THROTTLE, 0);
+	}
+	public formalParameterList(): FormalParameterListContext {
+		return this.getTypedRuleContext(FormalParameterListContext, 0) as FormalParameterListContext;
+	}
+	public expr_list(): ExprContext[] {
+		return this.getTypedRuleContexts(ExprContext) as ExprContext[];
+	}
+	public expr(i: number): ExprContext {
+		return this.getTypedRuleContext(ExprContext, i) as ExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_eventDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8960,24 +7862,18 @@ export class EventDeclContext extends ParserRuleContext {
 
 export class IncludeStmtContext extends ParserRuleContext {
 	public _include!: Token;
-	public INCLUDE(): TerminalNode { return this.getToken(FppParser.INCLUDE, 0); }
-	public LIT_STRING(): TerminalNode { return this.getToken(FppParser.LIT_STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_includeStmt; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterIncludeStmt) {
-			listener.enterIncludeStmt(this);
-		}
+	public INCLUDE(): TerminalNode {
+		return this.getToken(FppParser.INCLUDE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitIncludeStmt) {
-			listener.exitIncludeStmt(this);
-		}
+	public LIT_STRING(): TerminalNode {
+		return this.getToken(FppParser.LIT_STRING, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_includeStmt;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -8993,33 +7889,24 @@ export class IncludeStmtContext extends ParserRuleContext {
 export class MatchStmtContext extends ParserRuleContext {
 	public _match!: Token;
 	public _with_!: Token;
-	public MATCH(): TerminalNode { return this.getToken(FppParser.MATCH, 0); }
-	public WITH(): TerminalNode { return this.getToken(FppParser.WITH, 0); }
-	public IDENTIFIER(): TerminalNode[];
-	public IDENTIFIER(i: number): TerminalNode;
-	public IDENTIFIER(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.IDENTIFIER);
-		} else {
-			return this.getToken(FppParser.IDENTIFIER, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_matchStmt; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterMatchStmt) {
-			listener.enterMatchStmt(this);
-		}
+	public MATCH(): TerminalNode {
+		return this.getToken(FppParser.MATCH, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitMatchStmt) {
-			listener.exitMatchStmt(this);
-		}
+	public WITH(): TerminalNode {
+		return this.getToken(FppParser.WITH, 0);
+	}
+	public IDENTIFIER_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.IDENTIFIER);
+	}
+	public IDENTIFIER(i: number): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, i);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_matchStmt;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9037,35 +7924,33 @@ export class InternalPortDeclContext extends ParserRuleContext {
 	public _params!: FormalParameterListContext;
 	public _priority!: ExprContext;
 	public _queueFull!: QueueFullBehaviorContext;
-	public INTERNAL(): TerminalNode { return this.getToken(FppParser.INTERNAL, 0); }
-	public PORT(): TerminalNode { return this.getToken(FppParser.PORT, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public PRIORITY(): TerminalNode | undefined { return this.tryGetToken(FppParser.PRIORITY, 0); }
-	public formalParameterList(): FormalParameterListContext | undefined {
-		return this.tryGetRuleContext(0, FormalParameterListContext);
-	}
-	public expr(): ExprContext | undefined {
-		return this.tryGetRuleContext(0, ExprContext);
-	}
-	public queueFullBehavior(): QueueFullBehaviorContext | undefined {
-		return this.tryGetRuleContext(0, QueueFullBehaviorContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_internalPortDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterInternalPortDecl) {
-			listener.enterInternalPortDecl(this);
-		}
+	public INTERNAL(): TerminalNode {
+		return this.getToken(FppParser.INTERNAL, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitInternalPortDecl) {
-			listener.exitInternalPortDecl(this);
-		}
+	public PORT(): TerminalNode {
+		return this.getToken(FppParser.PORT, 0);
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public PRIORITY(): TerminalNode {
+		return this.getToken(FppParser.PRIORITY, 0);
+	}
+	public formalParameterList(): FormalParameterListContext {
+		return this.getTypedRuleContext(FormalParameterListContext, 0) as FormalParameterListContext;
+	}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+	public queueFullBehavior(): QueueFullBehaviorContext {
+		return this.getTypedRuleContext(QueueFullBehaviorContext, 0) as QueueFullBehaviorContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_internalPortDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9082,33 +7967,33 @@ export class RecordSpecifierDeclContext extends ParserRuleContext {
 	public _name!: Token;
 	public _fppType!: TypeNameContext;
 	public _id!: ExprContext;
-	public PRODUCT(): TerminalNode { return this.getToken(FppParser.PRODUCT, 0); }
-	public RECORD(): TerminalNode { return this.getToken(FppParser.RECORD, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public typeName(): TypeNameContext {
-		return this.getRuleContext(0, TypeNameContext);
-	}
-	public ARRAY(): TerminalNode | undefined { return this.tryGetToken(FppParser.ARRAY, 0); }
-	public ID(): TerminalNode | undefined { return this.tryGetToken(FppParser.ID, 0); }
-	public expr(): ExprContext | undefined {
-		return this.tryGetRuleContext(0, ExprContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_recordSpecifierDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterRecordSpecifierDecl) {
-			listener.enterRecordSpecifierDecl(this);
-		}
+	public PRODUCT(): TerminalNode {
+		return this.getToken(FppParser.PRODUCT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitRecordSpecifierDecl) {
-			listener.exitRecordSpecifierDecl(this);
-		}
+	public RECORD(): TerminalNode {
+		return this.getToken(FppParser.RECORD, 0);
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public typeName(): TypeNameContext {
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
+	}
+	public ARRAY(): TerminalNode {
+		return this.getToken(FppParser.ARRAY, 0);
+	}
+	public ID(): TerminalNode {
+		return this.getToken(FppParser.ID, 0);
+	}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_recordSpecifierDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9125,37 +8010,36 @@ export class ContainerSpecifierDeclContext extends ParserRuleContext {
 	public _name!: Token;
 	public _id!: ExprContext;
 	public _priority!: ExprContext;
-	public PRODUCT(): TerminalNode { return this.getToken(FppParser.PRODUCT, 0); }
-	public CONTAINER(): TerminalNode { return this.getToken(FppParser.CONTAINER, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public ID(): TerminalNode | undefined { return this.tryGetToken(FppParser.ID, 0); }
-	public DEFAULT(): TerminalNode | undefined { return this.tryGetToken(FppParser.DEFAULT, 0); }
-	public PRIORITY(): TerminalNode | undefined { return this.tryGetToken(FppParser.PRIORITY, 0); }
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_containerSpecifierDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterContainerSpecifierDecl) {
-			listener.enterContainerSpecifierDecl(this);
-		}
+	public PRODUCT(): TerminalNode {
+		return this.getToken(FppParser.PRODUCT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitContainerSpecifierDecl) {
-			listener.exitContainerSpecifierDecl(this);
-		}
+	public CONTAINER(): TerminalNode {
+		return this.getToken(FppParser.CONTAINER, 0);
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public ID(): TerminalNode {
+		return this.getToken(FppParser.ID, 0);
+	}
+	public DEFAULT(): TerminalNode {
+		return this.getToken(FppParser.DEFAULT, 0);
+	}
+	public PRIORITY(): TerminalNode {
+		return this.getToken(FppParser.PRIORITY, 0);
+	}
+	public expr_list(): ExprContext[] {
+		return this.getTypedRuleContexts(ExprContext) as ExprContext[];
+	}
+	public expr(i: number): ExprContext {
+		return this.getTypedRuleContext(ExprContext, i) as ExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_containerSpecifierDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9171,30 +8055,21 @@ export class ContainerSpecifierDeclContext extends ParserRuleContext {
 export class InitSpecifierContext extends ParserRuleContext {
 	public _phaseExpr!: ExprContext;
 	public _code!: Token;
-	public PHASE(): TerminalNode { return this.getToken(FppParser.PHASE, 0); }
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
-	public LIT_STRING(): TerminalNode { return this.getToken(FppParser.LIT_STRING, 0); }
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_initSpecifier; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterInitSpecifier) {
-			listener.enterInitSpecifier(this);
-		}
+	public PHASE(): TerminalNode {
+		return this.getToken(FppParser.PHASE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitInitSpecifier) {
-			listener.exitInitSpecifier(this);
-		}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+	public LIT_STRING(): TerminalNode {
+		return this.getToken(FppParser.LIT_STRING, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_initSpecifier;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9217,89 +8092,81 @@ export class ComponentInstanceDeclContext extends ParserRuleContext {
 	public _stackSize!: ExprContext;
 	public _priority!: ExprContext;
 	public _cpu!: ExprContext;
-	public INSTANCE(): TerminalNode { return this.getToken(FppParser.INSTANCE, 0); }
-	public BASE(): TerminalNode { return this.getToken(FppParser.BASE, 0); }
-	public ID(): TerminalNode { return this.getToken(FppParser.ID, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public qualIdent(): QualIdentContext {
-		return this.getRuleContext(0, QualIdentContext);
-	}
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	public TYPE(): TerminalNode | undefined { return this.tryGetToken(FppParser.TYPE, 0); }
-	public AT(): TerminalNode | undefined { return this.tryGetToken(FppParser.AT, 0); }
-	public QUEUE(): TerminalNode | undefined { return this.tryGetToken(FppParser.QUEUE, 0); }
-	public SIZE(): TerminalNode[];
-	public SIZE(i: number): TerminalNode;
-	public SIZE(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.SIZE);
-		} else {
-			return this.getToken(FppParser.SIZE, i);
-		}
-	}
-	public STACK(): TerminalNode | undefined { return this.tryGetToken(FppParser.STACK, 0); }
-	public PRIORITY(): TerminalNode | undefined { return this.tryGetToken(FppParser.PRIORITY, 0); }
-	public CPU(): TerminalNode | undefined { return this.tryGetToken(FppParser.CPU, 0); }
-	public LIT_STRING(): TerminalNode[];
-	public LIT_STRING(i: number): TerminalNode;
-	public LIT_STRING(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.LIT_STRING);
-		} else {
-			return this.getToken(FppParser.LIT_STRING, i);
-		}
-	}
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public initSpecifier(): InitSpecifierContext[];
-	public initSpecifier(i: number): InitSpecifierContext;
-	public initSpecifier(i?: number): InitSpecifierContext | InitSpecifierContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(InitSpecifierContext);
-		} else {
-			return this.getRuleContext(i, InitSpecifierContext);
-		}
-	}
-	public semiDelim(): SemiDelimContext[];
-	public semiDelim(i: number): SemiDelimContext;
-	public semiDelim(i?: number): SemiDelimContext | SemiDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(SemiDelimContext);
-		} else {
-			return this.getRuleContext(i, SemiDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_componentInstanceDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterComponentInstanceDecl) {
-			listener.enterComponentInstanceDecl(this);
-		}
+	public INSTANCE(): TerminalNode {
+		return this.getToken(FppParser.INSTANCE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitComponentInstanceDecl) {
-			listener.exitComponentInstanceDecl(this);
-		}
+	public BASE(): TerminalNode {
+		return this.getToken(FppParser.BASE, 0);
+	}
+	public ID(): TerminalNode {
+		return this.getToken(FppParser.ID, 0);
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public qualIdent(): QualIdentContext {
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
+	}
+	public expr_list(): ExprContext[] {
+		return this.getTypedRuleContexts(ExprContext) as ExprContext[];
+	}
+	public expr(i: number): ExprContext {
+		return this.getTypedRuleContext(ExprContext, i) as ExprContext;
+	}
+	public TYPE(): TerminalNode {
+		return this.getToken(FppParser.TYPE, 0);
+	}
+	public AT(): TerminalNode {
+		return this.getToken(FppParser.AT, 0);
+	}
+	public QUEUE(): TerminalNode {
+		return this.getToken(FppParser.QUEUE, 0);
+	}
+	public SIZE_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.SIZE);
+	}
+	public SIZE(i: number): TerminalNode {
+		return this.getToken(FppParser.SIZE, i);
+	}
+	public STACK(): TerminalNode {
+		return this.getToken(FppParser.STACK, 0);
+	}
+	public PRIORITY(): TerminalNode {
+		return this.getToken(FppParser.PRIORITY, 0);
+	}
+	public CPU(): TerminalNode {
+		return this.getToken(FppParser.CPU, 0);
+	}
+	public LIT_STRING_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.LIT_STRING);
+	}
+	public LIT_STRING(i: number): TerminalNode {
+		return this.getToken(FppParser.LIT_STRING, i);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public initSpecifier_list(): InitSpecifierContext[] {
+		return this.getTypedRuleContexts(InitSpecifierContext) as InitSpecifierContext[];
+	}
+	public initSpecifier(i: number): InitSpecifierContext {
+		return this.getTypedRuleContext(InitSpecifierContext, i) as InitSpecifierContext;
+	}
+	public semiDelim_list(): SemiDelimContext[] {
+		return this.getTypedRuleContexts(SemiDelimContext) as SemiDelimContext[];
+	}
+	public semiDelim(i: number): SemiDelimContext {
+		return this.getTypedRuleContext(SemiDelimContext, i) as SemiDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_componentInstanceDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9313,25 +8180,21 @@ export class ComponentInstanceDeclContext extends ParserRuleContext {
 
 
 export class ComponentKindContext extends ParserRuleContext {
-	public ACTIVE(): TerminalNode | undefined { return this.tryGetToken(FppParser.ACTIVE, 0); }
-	public PASSIVE(): TerminalNode | undefined { return this.tryGetToken(FppParser.PASSIVE, 0); }
-	public QUEUED(): TerminalNode | undefined { return this.tryGetToken(FppParser.QUEUED, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_componentKind; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterComponentKind) {
-			listener.enterComponentKind(this);
-		}
+	public ACTIVE(): TerminalNode {
+		return this.getToken(FppParser.ACTIVE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitComponentKind) {
-			listener.exitComponentKind(this);
-		}
+	public PASSIVE(): TerminalNode {
+		return this.getToken(FppParser.PASSIVE, 0);
+	}
+	public QUEUED(): TerminalNode {
+		return this.getToken(FppParser.QUEUED, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_componentKind;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9344,116 +8207,70 @@ export class ComponentKindContext extends ParserRuleContext {
 }
 
 
-export class ComponentMemberTemplContext extends ParserRuleContext {
-	public abstractTypeDecl(): AbstractTypeDeclContext | undefined {
-		return this.tryGetRuleContext(0, AbstractTypeDeclContext);
-	}
-	public aliasTypeDecl(): AliasTypeDeclContext | undefined {
-		return this.tryGetRuleContext(0, AliasTypeDeclContext);
-	}
-	public arrayDecl(): ArrayDeclContext | undefined {
-		return this.tryGetRuleContext(0, ArrayDeclContext);
-	}
-	public constantDecl(): ConstantDeclContext | undefined {
-		return this.tryGetRuleContext(0, ConstantDeclContext);
-	}
-	public structDecl(): StructDeclContext | undefined {
-		return this.tryGetRuleContext(0, StructDeclContext);
-	}
-	public commandDecl(): CommandDeclContext | undefined {
-		return this.tryGetRuleContext(0, CommandDeclContext);
-	}
-	public paramDecl(): ParamDeclContext | undefined {
-		return this.tryGetRuleContext(0, ParamDeclContext);
-	}
-	public generalPortInstanceDecl(): GeneralPortInstanceDeclContext | undefined {
-		return this.tryGetRuleContext(0, GeneralPortInstanceDeclContext);
-	}
-	public specialPortInstanceDecl(): SpecialPortInstanceDeclContext | undefined {
-		return this.tryGetRuleContext(0, SpecialPortInstanceDeclContext);
-	}
-	public telemetryChannelDecl(): TelemetryChannelDeclContext | undefined {
-		return this.tryGetRuleContext(0, TelemetryChannelDeclContext);
-	}
-	public enumDecl(): EnumDeclContext | undefined {
-		return this.tryGetRuleContext(0, EnumDeclContext);
-	}
-	public eventDecl(): EventDeclContext | undefined {
-		return this.tryGetRuleContext(0, EventDeclContext);
-	}
-	public includeStmt(): IncludeStmtContext | undefined {
-		return this.tryGetRuleContext(0, IncludeStmtContext);
-	}
-	public internalPortDecl(): InternalPortDeclContext | undefined {
-		return this.tryGetRuleContext(0, InternalPortDeclContext);
-	}
-	public matchStmt(): MatchStmtContext | undefined {
-		return this.tryGetRuleContext(0, MatchStmtContext);
-	}
-	public recordSpecifierDecl(): RecordSpecifierDeclContext | undefined {
-		return this.tryGetRuleContext(0, RecordSpecifierDeclContext);
-	}
-	public containerSpecifierDecl(): ContainerSpecifierDeclContext | undefined {
-		return this.tryGetRuleContext(0, ContainerSpecifierDeclContext);
-	}
-	public stateMachineInstance(): StateMachineInstanceContext | undefined {
-		return this.tryGetRuleContext(0, StateMachineInstanceContext);
-	}
-	public stateMachineDef(): StateMachineDefContext | undefined {
-		return this.tryGetRuleContext(0, StateMachineDefContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_componentMemberTempl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterComponentMemberTempl) {
-			listener.enterComponentMemberTempl(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitComponentMemberTempl) {
-			listener.exitComponentMemberTempl(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: FppVisitor<Result>): Result {
-		if (visitor.visitComponentMemberTempl) {
-			return visitor.visitComponentMemberTempl(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
 export class ComponentMemberContext extends ParserRuleContext {
-	public componentMemberTempl(): ComponentMemberTemplContext {
-		return this.getRuleContext(0, ComponentMemberTemplContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	public ANNOTATION(): TerminalNode | undefined { return this.tryGetToken(FppParser.ANNOTATION, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_componentMember; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterComponentMember) {
-			listener.enterComponentMember(this);
-		}
+	public abstractTypeDecl(): AbstractTypeDeclContext {
+		return this.getTypedRuleContext(AbstractTypeDeclContext, 0) as AbstractTypeDeclContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitComponentMember) {
-			listener.exitComponentMember(this);
-		}
+	public aliasTypeDecl(): AliasTypeDeclContext {
+		return this.getTypedRuleContext(AliasTypeDeclContext, 0) as AliasTypeDeclContext;
+	}
+	public arrayDecl(): ArrayDeclContext {
+		return this.getTypedRuleContext(ArrayDeclContext, 0) as ArrayDeclContext;
+	}
+	public constantDecl(): ConstantDeclContext {
+		return this.getTypedRuleContext(ConstantDeclContext, 0) as ConstantDeclContext;
+	}
+	public structDecl(): StructDeclContext {
+		return this.getTypedRuleContext(StructDeclContext, 0) as StructDeclContext;
+	}
+	public commandDecl(): CommandDeclContext {
+		return this.getTypedRuleContext(CommandDeclContext, 0) as CommandDeclContext;
+	}
+	public paramDecl(): ParamDeclContext {
+		return this.getTypedRuleContext(ParamDeclContext, 0) as ParamDeclContext;
+	}
+	public generalPortInstanceDecl(): GeneralPortInstanceDeclContext {
+		return this.getTypedRuleContext(GeneralPortInstanceDeclContext, 0) as GeneralPortInstanceDeclContext;
+	}
+	public specialPortInstanceDecl(): SpecialPortInstanceDeclContext {
+		return this.getTypedRuleContext(SpecialPortInstanceDeclContext, 0) as SpecialPortInstanceDeclContext;
+	}
+	public telemetryChannelDecl(): TelemetryChannelDeclContext {
+		return this.getTypedRuleContext(TelemetryChannelDeclContext, 0) as TelemetryChannelDeclContext;
+	}
+	public enumDecl(): EnumDeclContext {
+		return this.getTypedRuleContext(EnumDeclContext, 0) as EnumDeclContext;
+	}
+	public eventDecl(): EventDeclContext {
+		return this.getTypedRuleContext(EventDeclContext, 0) as EventDeclContext;
+	}
+	public includeStmt(): IncludeStmtContext {
+		return this.getTypedRuleContext(IncludeStmtContext, 0) as IncludeStmtContext;
+	}
+	public internalPortDecl(): InternalPortDeclContext {
+		return this.getTypedRuleContext(InternalPortDeclContext, 0) as InternalPortDeclContext;
+	}
+	public matchStmt(): MatchStmtContext {
+		return this.getTypedRuleContext(MatchStmtContext, 0) as MatchStmtContext;
+	}
+	public recordSpecifierDecl(): RecordSpecifierDeclContext {
+		return this.getTypedRuleContext(RecordSpecifierDeclContext, 0) as RecordSpecifierDeclContext;
+	}
+	public containerSpecifierDecl(): ContainerSpecifierDeclContext {
+		return this.getTypedRuleContext(ContainerSpecifierDeclContext, 0) as ContainerSpecifierDeclContext;
+	}
+	public stateMachineInstance(): StateMachineInstanceContext {
+		return this.getTypedRuleContext(StateMachineInstanceContext, 0) as StateMachineInstanceContext;
+	}
+	public stateMachineDef(): StateMachineDefContext {
+		return this.getTypedRuleContext(StateMachineDefContext, 0) as StateMachineDefContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_componentMember;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9469,54 +8286,39 @@ export class ComponentMemberContext extends ParserRuleContext {
 export class ComponentDeclContext extends ParserRuleContext {
 	public _kind!: ComponentKindContext;
 	public _name!: Token;
-	public COMPONENT(): TerminalNode { return this.getToken(FppParser.COMPONENT, 0); }
-	public componentKind(): ComponentKindContext {
-		return this.getRuleContext(0, ComponentKindContext);
-	}
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public componentMember(): ComponentMemberContext[];
-	public componentMember(i: number): ComponentMemberContext;
-	public componentMember(i?: number): ComponentMemberContext | ComponentMemberContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ComponentMemberContext);
-		} else {
-			return this.getRuleContext(i, ComponentMemberContext);
-		}
-	}
-	public semiDelim(): SemiDelimContext[];
-	public semiDelim(i: number): SemiDelimContext;
-	public semiDelim(i?: number): SemiDelimContext | SemiDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(SemiDelimContext);
-		} else {
-			return this.getRuleContext(i, SemiDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_componentDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterComponentDecl) {
-			listener.enterComponentDecl(this);
-		}
+	public COMPONENT(): TerminalNode {
+		return this.getToken(FppParser.COMPONENT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitComponentDecl) {
-			listener.exitComponentDecl(this);
-		}
+	public componentKind(): ComponentKindContext {
+		return this.getTypedRuleContext(ComponentKindContext, 0) as ComponentKindContext;
+	}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public componentMember_list(): ComponentMemberContext[] {
+		return this.getTypedRuleContexts(ComponentMemberContext) as ComponentMemberContext[];
+	}
+	public componentMember(i: number): ComponentMemberContext {
+		return this.getTypedRuleContext(ComponentMemberContext, i) as ComponentMemberContext;
+	}
+	public semiDelim_list(): SemiDelimContext[] {
+		return this.getTypedRuleContexts(SemiDelimContext) as SemiDelimContext[];
+	}
+	public semiDelim(i: number): SemiDelimContext {
+		return this.getTypedRuleContext(SemiDelimContext, i) as SemiDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_componentDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9533,30 +8335,24 @@ export class PortDeclContext extends ParserRuleContext {
 	public _name!: Token;
 	public _params!: FormalParameterListContext;
 	public _returnType!: TypeNameContext;
-	public PORT(): TerminalNode { return this.getToken(FppParser.PORT, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public formalParameterList(): FormalParameterListContext | undefined {
-		return this.tryGetRuleContext(0, FormalParameterListContext);
-	}
-	public typeName(): TypeNameContext | undefined {
-		return this.tryGetRuleContext(0, TypeNameContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_portDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterPortDecl) {
-			listener.enterPortDecl(this);
-		}
+	public PORT(): TerminalNode {
+		return this.getToken(FppParser.PORT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitPortDecl) {
-			listener.exitPortDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public formalParameterList(): FormalParameterListContext {
+		return this.getTypedRuleContext(FormalParameterListContext, 0) as FormalParameterListContext;
+	}
+	public typeName(): TypeNameContext {
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_portDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9571,27 +8367,21 @@ export class PortDeclContext extends ParserRuleContext {
 
 export class ComponentInstanceSpecContext extends ParserRuleContext {
 	public _name!: QualIdentContext;
-	public INSTANCE(): TerminalNode { return this.getToken(FppParser.INSTANCE, 0); }
-	public qualIdent(): QualIdentContext {
-		return this.getRuleContext(0, QualIdentContext);
-	}
-	public PRIVATE(): TerminalNode | undefined { return this.tryGetToken(FppParser.PRIVATE, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_componentInstanceSpec; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterComponentInstanceSpec) {
-			listener.enterComponentInstanceSpec(this);
-		}
+	public INSTANCE(): TerminalNode {
+		return this.getToken(FppParser.INSTANCE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitComponentInstanceSpec) {
-			listener.exitComponentInstanceSpec(this);
-		}
+	public qualIdent(): QualIdentContext {
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
+	}
+	public PRIVATE(): TerminalNode {
+		return this.getToken(FppParser.PRIVATE, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_componentInstanceSpec;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9607,28 +8397,18 @@ export class ComponentInstanceSpecContext extends ParserRuleContext {
 export class ConnectionNodeContext extends ParserRuleContext {
 	public _node!: QualIdentContext;
 	public _index!: ExprContext;
-	public qualIdent(): QualIdentContext {
-		return this.getRuleContext(0, QualIdentContext);
-	}
-	public expr(): ExprContext | undefined {
-		return this.tryGetRuleContext(0, ExprContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_connectionNode; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterConnectionNode) {
-			listener.enterConnectionNode(this);
-		}
+	public qualIdent(): QualIdentContext {
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitConnectionNode) {
-			listener.exitConnectionNode(this);
-		}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_connectionNode;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9644,31 +8424,21 @@ export class ConnectionNodeContext extends ParserRuleContext {
 export class ConnectionContext extends ParserRuleContext {
 	public _source!: ConnectionNodeContext;
 	public _destination!: ConnectionNodeContext;
-	public connectionNode(): ConnectionNodeContext[];
-	public connectionNode(i: number): ConnectionNodeContext;
-	public connectionNode(i?: number): ConnectionNodeContext | ConnectionNodeContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ConnectionNodeContext);
-		} else {
-			return this.getRuleContext(i, ConnectionNodeContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_connection; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterConnection) {
-			listener.enterConnection(this);
-		}
+	public connectionNode_list(): ConnectionNodeContext[] {
+		return this.getTypedRuleContexts(ConnectionNodeContext) as ConnectionNodeContext[];
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitConnection) {
-			listener.exitConnection(this);
-		}
+	public connectionNode(i: number): ConnectionNodeContext {
+		return this.getTypedRuleContext(ConnectionNodeContext, i) as ConnectionNodeContext;
+	}
+	public UNMATCHED(): TerminalNode {
+		return this.getToken(FppParser.UNMATCHED, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_connection;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9683,51 +8453,36 @@ export class ConnectionContext extends ParserRuleContext {
 
 export class DirectGraphDeclContext extends ParserRuleContext {
 	public _name!: Token;
-	public CONNECTIONS(): TerminalNode { return this.getToken(FppParser.CONNECTIONS, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public connection(): ConnectionContext[];
-	public connection(i: number): ConnectionContext;
-	public connection(i?: number): ConnectionContext | ConnectionContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ConnectionContext);
-		} else {
-			return this.getRuleContext(i, ConnectionContext);
-		}
-	}
-	public commaDelim(): CommaDelimContext[];
-	public commaDelim(i: number): CommaDelimContext;
-	public commaDelim(i?: number): CommaDelimContext | CommaDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(CommaDelimContext);
-		} else {
-			return this.getRuleContext(i, CommaDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_directGraphDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterDirectGraphDecl) {
-			listener.enterDirectGraphDecl(this);
-		}
+	public CONNECTIONS(): TerminalNode {
+		return this.getToken(FppParser.CONNECTIONS, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitDirectGraphDecl) {
-			listener.exitDirectGraphDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public connection_list(): ConnectionContext[] {
+		return this.getTypedRuleContexts(ConnectionContext) as ConnectionContext[];
+	}
+	public connection(i: number): ConnectionContext {
+		return this.getTypedRuleContext(ConnectionContext, i) as ConnectionContext;
+	}
+	public commaDelim_list(): CommaDelimContext[] {
+		return this.getTypedRuleContexts(CommaDelimContext) as CommaDelimContext[];
+	}
+	public commaDelim(i: number): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, i) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_directGraphDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9741,29 +8496,33 @@ export class DirectGraphDeclContext extends ParserRuleContext {
 
 
 export class PatternKindContext extends ParserRuleContext {
-	public COMMAND(): TerminalNode | undefined { return this.tryGetToken(FppParser.COMMAND, 0); }
-	public EVENT(): TerminalNode | undefined { return this.tryGetToken(FppParser.EVENT, 0); }
-	public TEXT(): TerminalNode | undefined { return this.tryGetToken(FppParser.TEXT, 0); }
-	public HEALTH(): TerminalNode | undefined { return this.tryGetToken(FppParser.HEALTH, 0); }
-	public PARAM(): TerminalNode | undefined { return this.tryGetToken(FppParser.PARAM, 0); }
-	public TELEMETRY(): TerminalNode | undefined { return this.tryGetToken(FppParser.TELEMETRY, 0); }
-	public TIME(): TerminalNode | undefined { return this.tryGetToken(FppParser.TIME, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_patternKind; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterPatternKind) {
-			listener.enterPatternKind(this);
-		}
+	public COMMAND(): TerminalNode {
+		return this.getToken(FppParser.COMMAND, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitPatternKind) {
-			listener.exitPatternKind(this);
-		}
+	public EVENT(): TerminalNode {
+		return this.getToken(FppParser.EVENT, 0);
+	}
+	public TEXT(): TerminalNode {
+		return this.getToken(FppParser.TEXT, 0);
+	}
+	public HEALTH(): TerminalNode {
+		return this.getToken(FppParser.HEALTH, 0);
+	}
+	public PARAM(): TerminalNode {
+		return this.getToken(FppParser.PARAM, 0);
+	}
+	public TELEMETRY(): TerminalNode {
+		return this.getToken(FppParser.TELEMETRY, 0);
+	}
+	public TIME(): TerminalNode {
+		return this.getToken(FppParser.TIME, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_patternKind;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9777,40 +8536,24 @@ export class PatternKindContext extends ParserRuleContext {
 
 
 export class PatternGraphSourcesContext extends ParserRuleContext {
-	public qualIdent(): QualIdentContext[];
-	public qualIdent(i: number): QualIdentContext;
-	public qualIdent(i?: number): QualIdentContext | QualIdentContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(QualIdentContext);
-		} else {
-			return this.getRuleContext(i, QualIdentContext);
-		}
-	}
-	public commaDelim(): CommaDelimContext[];
-	public commaDelim(i: number): CommaDelimContext;
-	public commaDelim(i?: number): CommaDelimContext | CommaDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(CommaDelimContext);
-		} else {
-			return this.getRuleContext(i, CommaDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_patternGraphSources; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterPatternGraphSources) {
-			listener.enterPatternGraphSources(this);
-		}
+	public qualIdent_list(): QualIdentContext[] {
+		return this.getTypedRuleContexts(QualIdentContext) as QualIdentContext[];
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitPatternGraphSources) {
-			listener.exitPatternGraphSources(this);
-		}
+	public qualIdent(i: number): QualIdentContext {
+		return this.getTypedRuleContext(QualIdentContext, i) as QualIdentContext;
+	}
+	public commaDelim_list(): CommaDelimContext[] {
+		return this.getTypedRuleContexts(CommaDelimContext) as CommaDelimContext[];
+	}
+	public commaDelim(i: number): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, i) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_patternGraphSources;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9826,33 +8569,27 @@ export class PatternGraphSourcesContext extends ParserRuleContext {
 export class PatternGraphStmtContext extends ParserRuleContext {
 	public _kind!: PatternKindContext;
 	public _target!: QualIdentContext;
-	public CONNECTIONS(): TerminalNode { return this.getToken(FppParser.CONNECTIONS, 0); }
-	public INSTANCE(): TerminalNode { return this.getToken(FppParser.INSTANCE, 0); }
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
+	public CONNECTIONS(): TerminalNode {
+		return this.getToken(FppParser.CONNECTIONS, 0);
+	}
+	public INSTANCE(): TerminalNode {
+		return this.getToken(FppParser.INSTANCE, 0);
+	}
 	public patternKind(): PatternKindContext {
-		return this.getRuleContext(0, PatternKindContext);
+		return this.getTypedRuleContext(PatternKindContext, 0) as PatternKindContext;
 	}
 	public qualIdent(): QualIdentContext {
-		return this.getRuleContext(0, QualIdentContext);
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
 	}
-	public patternGraphSources(): PatternGraphSourcesContext | undefined {
-		return this.tryGetRuleContext(0, PatternGraphSourcesContext);
+	public patternGraphSources(): PatternGraphSourcesContext {
+		return this.getTypedRuleContext(PatternGraphSourcesContext, 0) as PatternGraphSourcesContext;
 	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_patternGraphStmt; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterPatternGraphStmt) {
-			listener.enterPatternGraphStmt(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitPatternGraphStmt) {
-			listener.exitPatternGraphStmt(this);
-		}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_patternGraphStmt;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9867,26 +8604,18 @@ export class PatternGraphStmtContext extends ParserRuleContext {
 
 export class TopologyImportStmtContext extends ParserRuleContext {
 	public _topology!: QualIdentContext;
-	public IMPORT(): TerminalNode { return this.getToken(FppParser.IMPORT, 0); }
-	public qualIdent(): QualIdentContext {
-		return this.getRuleContext(0, QualIdentContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_topologyImportStmt; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTopologyImportStmt) {
-			listener.enterTopologyImportStmt(this);
-		}
+	public IMPORT(): TerminalNode {
+		return this.getToken(FppParser.IMPORT, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTopologyImportStmt) {
-			listener.exitTopologyImportStmt(this);
-		}
+	public qualIdent(): QualIdentContext {
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_topologyImportStmt;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9899,74 +8628,28 @@ export class TopologyImportStmtContext extends ParserRuleContext {
 }
 
 
-export class TopologyMemberTemplContext extends ParserRuleContext {
-	public componentInstanceSpec(): ComponentInstanceSpecContext | undefined {
-		return this.tryGetRuleContext(0, ComponentInstanceSpecContext);
-	}
-	public directGraphDecl(): DirectGraphDeclContext | undefined {
-		return this.tryGetRuleContext(0, DirectGraphDeclContext);
-	}
-	public patternGraphStmt(): PatternGraphStmtContext | undefined {
-		return this.tryGetRuleContext(0, PatternGraphStmtContext);
-	}
-	public topologyImportStmt(): TopologyImportStmtContext | undefined {
-		return this.tryGetRuleContext(0, TopologyImportStmtContext);
-	}
-	public includeStmt(): IncludeStmtContext | undefined {
-		return this.tryGetRuleContext(0, IncludeStmtContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_topologyMemberTempl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTopologyMemberTempl) {
-			listener.enterTopologyMemberTempl(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTopologyMemberTempl) {
-			listener.exitTopologyMemberTempl(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: FppVisitor<Result>): Result {
-		if (visitor.visitTopologyMemberTempl) {
-			return visitor.visitTopologyMemberTempl(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
 export class TopologyMemberContext extends ParserRuleContext {
-	public topologyMemberTempl(): TopologyMemberTemplContext {
-		return this.getRuleContext(0, TopologyMemberTemplContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	public ANNOTATION(): TerminalNode | undefined { return this.tryGetToken(FppParser.ANNOTATION, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_topologyMember; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTopologyMember) {
-			listener.enterTopologyMember(this);
-		}
+	public componentInstanceSpec(): ComponentInstanceSpecContext {
+		return this.getTypedRuleContext(ComponentInstanceSpecContext, 0) as ComponentInstanceSpecContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTopologyMember) {
-			listener.exitTopologyMember(this);
-		}
+	public directGraphDecl(): DirectGraphDeclContext {
+		return this.getTypedRuleContext(DirectGraphDeclContext, 0) as DirectGraphDeclContext;
+	}
+	public patternGraphStmt(): PatternGraphStmtContext {
+		return this.getTypedRuleContext(PatternGraphStmtContext, 0) as PatternGraphStmtContext;
+	}
+	public topologyImportStmt(): TopologyImportStmtContext {
+		return this.getTypedRuleContext(TopologyImportStmtContext, 0) as TopologyImportStmtContext;
+	}
+	public includeStmt(): IncludeStmtContext {
+		return this.getTypedRuleContext(IncludeStmtContext, 0) as IncludeStmtContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_topologyMember;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -9981,51 +8664,36 @@ export class TopologyMemberContext extends ParserRuleContext {
 
 export class TopologyDeclContext extends ParserRuleContext {
 	public _name!: Token;
-	public TOPOLOGY(): TerminalNode { return this.getToken(FppParser.TOPOLOGY, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public topologyMember(): TopologyMemberContext[];
-	public topologyMember(i: number): TopologyMemberContext;
-	public topologyMember(i?: number): TopologyMemberContext | TopologyMemberContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(TopologyMemberContext);
-		} else {
-			return this.getRuleContext(i, TopologyMemberContext);
-		}
-	}
-	public semiDelim(): SemiDelimContext[];
-	public semiDelim(i: number): SemiDelimContext;
-	public semiDelim(i?: number): SemiDelimContext | SemiDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(SemiDelimContext);
-		} else {
-			return this.getRuleContext(i, SemiDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_topologyDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTopologyDecl) {
-			listener.enterTopologyDecl(this);
-		}
+	public TOPOLOGY(): TerminalNode {
+		return this.getToken(FppParser.TOPOLOGY, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTopologyDecl) {
-			listener.exitTopologyDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public topologyMember_list(): TopologyMemberContext[] {
+		return this.getTypedRuleContexts(TopologyMemberContext) as TopologyMemberContext[];
+	}
+	public topologyMember(i: number): TopologyMemberContext {
+		return this.getTypedRuleContext(TopologyMemberContext, i) as TopologyMemberContext;
+	}
+	public semiDelim_list(): SemiDelimContext[] {
+		return this.getTypedRuleContexts(SemiDelimContext) as SemiDelimContext[];
+	}
+	public semiDelim(i: number): SemiDelimContext {
+		return this.getTypedRuleContext(SemiDelimContext, i) as SemiDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_topologyDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10039,28 +8707,30 @@ export class TopologyDeclContext extends ParserRuleContext {
 
 
 export class LocationKindContext extends ParserRuleContext {
-	public INSTANCE(): TerminalNode | undefined { return this.tryGetToken(FppParser.INSTANCE, 0); }
-	public COMPONENT(): TerminalNode | undefined { return this.tryGetToken(FppParser.COMPONENT, 0); }
-	public CONSTANT(): TerminalNode | undefined { return this.tryGetToken(FppParser.CONSTANT, 0); }
-	public PORT(): TerminalNode | undefined { return this.tryGetToken(FppParser.PORT, 0); }
-	public TOPOLOGY(): TerminalNode | undefined { return this.tryGetToken(FppParser.TOPOLOGY, 0); }
-	public TYPE(): TerminalNode | undefined { return this.tryGetToken(FppParser.TYPE, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_locationKind; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterLocationKind) {
-			listener.enterLocationKind(this);
-		}
+	public INSTANCE(): TerminalNode {
+		return this.getToken(FppParser.INSTANCE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitLocationKind) {
-			listener.exitLocationKind(this);
-		}
+	public COMPONENT(): TerminalNode {
+		return this.getToken(FppParser.COMPONENT, 0);
+	}
+	public CONSTANT(): TerminalNode {
+		return this.getToken(FppParser.CONSTANT, 0);
+	}
+	public PORT(): TerminalNode {
+		return this.getToken(FppParser.PORT, 0);
+	}
+	public TOPOLOGY(): TerminalNode {
+		return this.getToken(FppParser.TOPOLOGY, 0);
+	}
+	public TYPE(): TerminalNode {
+		return this.getToken(FppParser.TYPE, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_locationKind;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10077,31 +8747,27 @@ export class LocationStmtContext extends ParserRuleContext {
 	public _kind!: LocationKindContext;
 	public _name!: QualIdentContext;
 	public _path!: Token;
-	public LOCATE(): TerminalNode { return this.getToken(FppParser.LOCATE, 0); }
-	public AT(): TerminalNode { return this.getToken(FppParser.AT, 0); }
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
+	public LOCATE(): TerminalNode {
+		return this.getToken(FppParser.LOCATE, 0);
+	}
+	public AT(): TerminalNode {
+		return this.getToken(FppParser.AT, 0);
+	}
 	public locationKind(): LocationKindContext {
-		return this.getRuleContext(0, LocationKindContext);
+		return this.getTypedRuleContext(LocationKindContext, 0) as LocationKindContext;
 	}
 	public qualIdent(): QualIdentContext {
-		return this.getRuleContext(0, QualIdentContext);
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
 	}
-	public LIT_STRING(): TerminalNode { return this.getToken(FppParser.LIT_STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
+	public LIT_STRING(): TerminalNode {
+		return this.getToken(FppParser.LIT_STRING, 0);
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_locationStmt; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterLocationStmt) {
-			listener.enterLocationStmt(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitLocationStmt) {
-			listener.exitLocationStmt(this);
-		}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_locationStmt;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10114,101 +8780,55 @@ export class LocationStmtContext extends ParserRuleContext {
 }
 
 
-export class ModuleMemberTemplContext extends ParserRuleContext {
-	public abstractTypeDecl(): AbstractTypeDeclContext | undefined {
-		return this.tryGetRuleContext(0, AbstractTypeDeclContext);
-	}
-	public aliasTypeDecl(): AliasTypeDeclContext | undefined {
-		return this.tryGetRuleContext(0, AliasTypeDeclContext);
-	}
-	public arrayDecl(): ArrayDeclContext | undefined {
-		return this.tryGetRuleContext(0, ArrayDeclContext);
-	}
-	public componentDecl(): ComponentDeclContext | undefined {
-		return this.tryGetRuleContext(0, ComponentDeclContext);
-	}
-	public componentInstanceDecl(): ComponentInstanceDeclContext | undefined {
-		return this.tryGetRuleContext(0, ComponentInstanceDeclContext);
-	}
-	public constantDecl(): ConstantDeclContext | undefined {
-		return this.tryGetRuleContext(0, ConstantDeclContext);
-	}
-	public moduleDecl(): ModuleDeclContext | undefined {
-		return this.tryGetRuleContext(0, ModuleDeclContext);
-	}
-	public portDecl(): PortDeclContext | undefined {
-		return this.tryGetRuleContext(0, PortDeclContext);
-	}
-	public structDecl(): StructDeclContext | undefined {
-		return this.tryGetRuleContext(0, StructDeclContext);
-	}
-	public locationStmt(): LocationStmtContext | undefined {
-		return this.tryGetRuleContext(0, LocationStmtContext);
-	}
-	public enumDecl(): EnumDeclContext | undefined {
-		return this.tryGetRuleContext(0, EnumDeclContext);
-	}
-	public includeStmt(): IncludeStmtContext | undefined {
-		return this.tryGetRuleContext(0, IncludeStmtContext);
-	}
-	public topologyDecl(): TopologyDeclContext | undefined {
-		return this.tryGetRuleContext(0, TopologyDeclContext);
-	}
-	public stateMachineDef(): StateMachineDefContext | undefined {
-		return this.tryGetRuleContext(0, StateMachineDefContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_moduleMemberTempl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterModuleMemberTempl) {
-			listener.enterModuleMemberTempl(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitModuleMemberTempl) {
-			listener.exitModuleMemberTempl(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: FppVisitor<Result>): Result {
-		if (visitor.visitModuleMemberTempl) {
-			return visitor.visitModuleMemberTempl(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
 export class ModuleMemberContext extends ParserRuleContext {
-	public moduleMemberTempl(): ModuleMemberTemplContext {
-		return this.getRuleContext(0, ModuleMemberTemplContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	public ANNOTATION(): TerminalNode | undefined { return this.tryGetToken(FppParser.ANNOTATION, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_moduleMember; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterModuleMember) {
-			listener.enterModuleMember(this);
-		}
+	public abstractTypeDecl(): AbstractTypeDeclContext {
+		return this.getTypedRuleContext(AbstractTypeDeclContext, 0) as AbstractTypeDeclContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitModuleMember) {
-			listener.exitModuleMember(this);
-		}
+	public aliasTypeDecl(): AliasTypeDeclContext {
+		return this.getTypedRuleContext(AliasTypeDeclContext, 0) as AliasTypeDeclContext;
+	}
+	public arrayDecl(): ArrayDeclContext {
+		return this.getTypedRuleContext(ArrayDeclContext, 0) as ArrayDeclContext;
+	}
+	public componentDecl(): ComponentDeclContext {
+		return this.getTypedRuleContext(ComponentDeclContext, 0) as ComponentDeclContext;
+	}
+	public componentInstanceDecl(): ComponentInstanceDeclContext {
+		return this.getTypedRuleContext(ComponentInstanceDeclContext, 0) as ComponentInstanceDeclContext;
+	}
+	public constantDecl(): ConstantDeclContext {
+		return this.getTypedRuleContext(ConstantDeclContext, 0) as ConstantDeclContext;
+	}
+	public moduleDecl(): ModuleDeclContext {
+		return this.getTypedRuleContext(ModuleDeclContext, 0) as ModuleDeclContext;
+	}
+	public portDecl(): PortDeclContext {
+		return this.getTypedRuleContext(PortDeclContext, 0) as PortDeclContext;
+	}
+	public structDecl(): StructDeclContext {
+		return this.getTypedRuleContext(StructDeclContext, 0) as StructDeclContext;
+	}
+	public locationStmt(): LocationStmtContext {
+		return this.getTypedRuleContext(LocationStmtContext, 0) as LocationStmtContext;
+	}
+	public enumDecl(): EnumDeclContext {
+		return this.getTypedRuleContext(EnumDeclContext, 0) as EnumDeclContext;
+	}
+	public includeStmt(): IncludeStmtContext {
+		return this.getTypedRuleContext(IncludeStmtContext, 0) as IncludeStmtContext;
+	}
+	public topologyDecl(): TopologyDeclContext {
+		return this.getTypedRuleContext(TopologyDeclContext, 0) as TopologyDeclContext;
+	}
+	public stateMachineDef(): StateMachineDefContext {
+		return this.getTypedRuleContext(StateMachineDefContext, 0) as StateMachineDefContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_moduleMember;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10223,51 +8843,36 @@ export class ModuleMemberContext extends ParserRuleContext {
 
 export class ModuleDeclContext extends ParserRuleContext {
 	public _name!: Token;
-	public MODULE(): TerminalNode { return this.getToken(FppParser.MODULE, 0); }
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public moduleMember(): ModuleMemberContext[];
-	public moduleMember(i: number): ModuleMemberContext;
-	public moduleMember(i?: number): ModuleMemberContext | ModuleMemberContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ModuleMemberContext);
-		} else {
-			return this.getRuleContext(i, ModuleMemberContext);
-		}
-	}
-	public semiDelim(): SemiDelimContext[];
-	public semiDelim(i: number): SemiDelimContext;
-	public semiDelim(i?: number): SemiDelimContext | SemiDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(SemiDelimContext);
-		} else {
-			return this.getRuleContext(i, SemiDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_moduleDecl; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterModuleDecl) {
-			listener.enterModuleDecl(this);
-		}
+	public MODULE(): TerminalNode {
+		return this.getToken(FppParser.MODULE, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitModuleDecl) {
-			listener.exitModuleDecl(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
+	}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
+	}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public moduleMember_list(): ModuleMemberContext[] {
+		return this.getTypedRuleContexts(ModuleMemberContext) as ModuleMemberContext[];
+	}
+	public moduleMember(i: number): ModuleMemberContext {
+		return this.getTypedRuleContext(ModuleMemberContext, i) as ModuleMemberContext;
+	}
+	public semiDelim_list(): SemiDelimContext[] {
+		return this.getTypedRuleContexts(SemiDelimContext) as SemiDelimContext[];
+	}
+	public semiDelim(i: number): SemiDelimContext {
+		return this.getTypedRuleContext(SemiDelimContext, i) as SemiDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_moduleDecl;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10282,28 +8887,22 @@ export class ModuleDeclContext extends ParserRuleContext {
 
 export class FormalParameterContext extends ParserRuleContext {
 	public _name!: Token;
-	public _type!: TypeNameContext;
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public typeName(): TypeNameContext {
-		return this.getRuleContext(0, TypeNameContext);
-	}
-	public REF(): TerminalNode | undefined { return this.tryGetToken(FppParser.REF, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	public _type_!: TypeNameContext;
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_formalParameter; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterFormalParameter) {
-			listener.enterFormalParameter(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitFormalParameter) {
-			listener.exitFormalParameter(this);
-		}
+	public typeName(): TypeNameContext {
+		return this.getTypedRuleContext(TypeNameContext, 0) as TypeNameContext;
+	}
+	public REF(): TerminalNode {
+		return this.getToken(FppParser.REF, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_formalParameter;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10317,34 +8916,18 @@ export class FormalParameterContext extends ParserRuleContext {
 
 
 export class FormalParameterNContext extends ParserRuleContext {
-	public formalParameter(): FormalParameterContext {
-		return this.getRuleContext(0, FormalParameterContext);
-	}
-	public postMultiAnnotation(): PostMultiAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PostMultiAnnotationContext);
-	}
-	public commaDelim(): CommaDelimContext | undefined {
-		return this.tryGetRuleContext(0, CommaDelimContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_formalParameterN; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterFormalParameterN) {
-			listener.enterFormalParameterN(this);
-		}
+	public formalParameter(): FormalParameterContext {
+		return this.getTypedRuleContext(FormalParameterContext, 0) as FormalParameterContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitFormalParameterN) {
-			listener.exitFormalParameterN(this);
-		}
+	public commaDelim(): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, 0) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_formalParameterN;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10358,34 +8941,18 @@ export class FormalParameterNContext extends ParserRuleContext {
 
 
 export class FormalParamaterLContext extends ParserRuleContext {
-	public formalParameter(): FormalParameterContext {
-		return this.getRuleContext(0, FormalParameterContext);
-	}
-	public preAnnotation(): PreAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PreAnnotationContext);
-	}
-	public postMultiAnnotation(): PostMultiAnnotationContext | undefined {
-		return this.tryGetRuleContext(0, PostMultiAnnotationContext);
-	}
-	public commaDelim(): CommaDelimContext | undefined {
-		return this.tryGetRuleContext(0, CommaDelimContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_formalParamaterL; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterFormalParamaterL) {
-			listener.enterFormalParamaterL(this);
-		}
+	public formalParameter(): FormalParameterContext {
+		return this.getTypedRuleContext(FormalParameterContext, 0) as FormalParameterContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitFormalParamaterL) {
-			listener.exitFormalParamaterL(this);
-		}
+	public commaDelim(): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, 0) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_formalParamaterL;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10399,43 +8966,27 @@ export class FormalParamaterLContext extends ParserRuleContext {
 
 
 export class FormalParameterListContext extends ParserRuleContext {
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public formalParamaterL(): FormalParamaterLContext | undefined {
-		return this.tryGetRuleContext(0, FormalParamaterLContext);
-	}
-	public formalParameterN(): FormalParameterNContext[];
-	public formalParameterN(i: number): FormalParameterNContext;
-	public formalParameterN(i?: number): FormalParameterNContext | FormalParameterNContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(FormalParameterNContext);
-		} else {
-			return this.getRuleContext(i, FormalParameterNContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_formalParameterList; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterFormalParameterList) {
-			listener.enterFormalParameterList(this);
-		}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitFormalParameterList) {
-			listener.exitFormalParameterList(this);
-		}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public formalParamaterL(): FormalParamaterLContext {
+		return this.getTypedRuleContext(FormalParamaterLContext, 0) as FormalParamaterLContext;
+	}
+	public formalParameterN_list(): FormalParameterNContext[] {
+		return this.getTypedRuleContexts(FormalParameterNContext) as FormalParameterNContext[];
+	}
+	public formalParameterN(i: number): FormalParameterNContext {
+		return this.getTypedRuleContext(FormalParameterNContext, i) as FormalParameterNContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_formalParameterList;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10449,31 +9000,18 @@ export class FormalParameterListContext extends ParserRuleContext {
 
 
 export class QualIdentContext extends ParserRuleContext {
-	public IDENTIFIER(): TerminalNode[];
-	public IDENTIFIER(i: number): TerminalNode;
-	public IDENTIFIER(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.IDENTIFIER);
-		} else {
-			return this.getToken(FppParser.IDENTIFIER, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_qualIdent; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterQualIdent) {
-			listener.enterQualIdent(this);
-		}
+	public IDENTIFIER_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.IDENTIFIER);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitQualIdent) {
-			listener.exitQualIdent(this);
-		}
+	public IDENTIFIER(i: number): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, i);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_qualIdent;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10487,30 +9025,36 @@ export class QualIdentContext extends ParserRuleContext {
 
 
 export class IntTypeContext extends ParserRuleContext {
-	public U8(): TerminalNode | undefined { return this.tryGetToken(FppParser.U8, 0); }
-	public I8(): TerminalNode | undefined { return this.tryGetToken(FppParser.I8, 0); }
-	public U16(): TerminalNode | undefined { return this.tryGetToken(FppParser.U16, 0); }
-	public I16(): TerminalNode | undefined { return this.tryGetToken(FppParser.I16, 0); }
-	public U32(): TerminalNode | undefined { return this.tryGetToken(FppParser.U32, 0); }
-	public I32(): TerminalNode | undefined { return this.tryGetToken(FppParser.I32, 0); }
-	public U64(): TerminalNode | undefined { return this.tryGetToken(FppParser.U64, 0); }
-	public I64(): TerminalNode | undefined { return this.tryGetToken(FppParser.I64, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_intType; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterIntType) {
-			listener.enterIntType(this);
-		}
+	public U8(): TerminalNode {
+		return this.getToken(FppParser.U8, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitIntType) {
-			listener.exitIntType(this);
-		}
+	public I8(): TerminalNode {
+		return this.getToken(FppParser.I8, 0);
+	}
+	public U16(): TerminalNode {
+		return this.getToken(FppParser.U16, 0);
+	}
+	public I16(): TerminalNode {
+		return this.getToken(FppParser.I16, 0);
+	}
+	public U32(): TerminalNode {
+		return this.getToken(FppParser.U32, 0);
+	}
+	public I32(): TerminalNode {
+		return this.getToken(FppParser.I32, 0);
+	}
+	public U64(): TerminalNode {
+		return this.getToken(FppParser.U64, 0);
+	}
+	public I64(): TerminalNode {
+		return this.getToken(FppParser.I64, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_intType;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10524,38 +9068,56 @@ export class IntTypeContext extends ParserRuleContext {
 
 
 export class PrimitiveTypeContext extends ParserRuleContext {
-	public _type!: Token;
+	public _type_!: Token;
 	public _size!: Token;
-	public U8(): TerminalNode | undefined { return this.tryGetToken(FppParser.U8, 0); }
-	public I8(): TerminalNode | undefined { return this.tryGetToken(FppParser.I8, 0); }
-	public U16(): TerminalNode | undefined { return this.tryGetToken(FppParser.U16, 0); }
-	public I16(): TerminalNode | undefined { return this.tryGetToken(FppParser.I16, 0); }
-	public U32(): TerminalNode | undefined { return this.tryGetToken(FppParser.U32, 0); }
-	public I32(): TerminalNode | undefined { return this.tryGetToken(FppParser.I32, 0); }
-	public U64(): TerminalNode | undefined { return this.tryGetToken(FppParser.U64, 0); }
-	public I64(): TerminalNode | undefined { return this.tryGetToken(FppParser.I64, 0); }
-	public F32(): TerminalNode | undefined { return this.tryGetToken(FppParser.F32, 0); }
-	public F64(): TerminalNode | undefined { return this.tryGetToken(FppParser.F64, 0); }
-	public BOOL(): TerminalNode | undefined { return this.tryGetToken(FppParser.BOOL, 0); }
-	public STRING(): TerminalNode | undefined { return this.tryGetToken(FppParser.STRING, 0); }
-	public SIZE(): TerminalNode | undefined { return this.tryGetToken(FppParser.SIZE, 0); }
-	public LIT_INT(): TerminalNode | undefined { return this.tryGetToken(FppParser.LIT_INT, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_primitiveType; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterPrimitiveType) {
-			listener.enterPrimitiveType(this);
-		}
+	public U8(): TerminalNode {
+		return this.getToken(FppParser.U8, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitPrimitiveType) {
-			listener.exitPrimitiveType(this);
-		}
+	public I8(): TerminalNode {
+		return this.getToken(FppParser.I8, 0);
+	}
+	public U16(): TerminalNode {
+		return this.getToken(FppParser.U16, 0);
+	}
+	public I16(): TerminalNode {
+		return this.getToken(FppParser.I16, 0);
+	}
+	public U32(): TerminalNode {
+		return this.getToken(FppParser.U32, 0);
+	}
+	public I32(): TerminalNode {
+		return this.getToken(FppParser.I32, 0);
+	}
+	public U64(): TerminalNode {
+		return this.getToken(FppParser.U64, 0);
+	}
+	public I64(): TerminalNode {
+		return this.getToken(FppParser.I64, 0);
+	}
+	public F32(): TerminalNode {
+		return this.getToken(FppParser.F32, 0);
+	}
+	public F64(): TerminalNode {
+		return this.getToken(FppParser.F64, 0);
+	}
+	public BOOL(): TerminalNode {
+		return this.getToken(FppParser.BOOL, 0);
+	}
+	public STRING(): TerminalNode {
+		return this.getToken(FppParser.STRING, 0);
+	}
+	public SIZE(): TerminalNode {
+		return this.getToken(FppParser.SIZE, 0);
+	}
+	public LIT_INT(): TerminalNode {
+		return this.getToken(FppParser.LIT_INT, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_primitiveType;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10569,28 +9131,18 @@ export class PrimitiveTypeContext extends ParserRuleContext {
 
 
 export class TypeNameContext extends ParserRuleContext {
-	public primitiveType(): PrimitiveTypeContext | undefined {
-		return this.tryGetRuleContext(0, PrimitiveTypeContext);
-	}
-	public qualIdent(): QualIdentContext | undefined {
-		return this.tryGetRuleContext(0, QualIdentContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_typeName; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterTypeName) {
-			listener.enterTypeName(this);
-		}
+	public primitiveType(): PrimitiveTypeContext {
+		return this.getTypedRuleContext(PrimitiveTypeContext, 0) as PrimitiveTypeContext;
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitTypeName) {
-			listener.exitTypeName(this);
-		}
+	public qualIdent(): QualIdentContext {
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_typeName;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10604,31 +9156,18 @@ export class TypeNameContext extends ParserRuleContext {
 
 
 export class CommaDelimContext extends ParserRuleContext {
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_commaDelim; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterCommaDelim) {
-			listener.enterCommaDelim(this);
-		}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitCommaDelim) {
-			listener.exitCommaDelim(this);
-		}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_commaDelim;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10642,31 +9181,18 @@ export class CommaDelimContext extends ParserRuleContext {
 
 
 export class SemiDelimContext extends ParserRuleContext {
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_semiDelim; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterSemiDelim) {
-			listener.enterSemiDelim(this);
-		}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitSemiDelim) {
-			listener.exitSemiDelim(this);
-		}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_semiDelim;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10680,49 +9206,30 @@ export class SemiDelimContext extends ParserRuleContext {
 
 
 export class ArrayExprContext extends ParserRuleContext {
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	public commaDelim(): CommaDelimContext[];
-	public commaDelim(i: number): CommaDelimContext;
-	public commaDelim(i?: number): CommaDelimContext | CommaDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(CommaDelimContext);
-		} else {
-			return this.getRuleContext(i, CommaDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_arrayExpr; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterArrayExpr) {
-			listener.enterArrayExpr(this);
-		}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitArrayExpr) {
-			listener.exitArrayExpr(this);
-		}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public expr_list(): ExprContext[] {
+		return this.getTypedRuleContexts(ExprContext) as ExprContext[];
+	}
+	public expr(i: number): ExprContext {
+		return this.getTypedRuleContext(ExprContext, i) as ExprContext;
+	}
+	public commaDelim_list(): CommaDelimContext[] {
+		return this.getTypedRuleContexts(CommaDelimContext) as CommaDelimContext[];
+	}
+	public commaDelim(i: number): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, i) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_arrayExpr;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10738,26 +9245,18 @@ export class ArrayExprContext extends ParserRuleContext {
 export class StructAssignmentContext extends ParserRuleContext {
 	public _name!: Token;
 	public _value!: ExprContext;
-	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_structAssignment; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStructAssignment) {
-			listener.enterStructAssignment(this);
-		}
+	public IDENTIFIER(): TerminalNode {
+		return this.getToken(FppParser.IDENTIFIER, 0);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStructAssignment) {
-			listener.exitStructAssignment(this);
-		}
+	public expr(): ExprContext {
+		return this.getTypedRuleContext(ExprContext, 0) as ExprContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_structAssignment;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10771,49 +9270,30 @@ export class StructAssignmentContext extends ParserRuleContext {
 
 
 export class StructExprContext extends ParserRuleContext {
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	public structAssignment(): StructAssignmentContext[];
-	public structAssignment(i: number): StructAssignmentContext;
-	public structAssignment(i?: number): StructAssignmentContext | StructAssignmentContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(StructAssignmentContext);
-		} else {
-			return this.getRuleContext(i, StructAssignmentContext);
-		}
-	}
-	public commaDelim(): CommaDelimContext[];
-	public commaDelim(i: number): CommaDelimContext;
-	public commaDelim(i?: number): CommaDelimContext | CommaDelimContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(CommaDelimContext);
-		} else {
-			return this.getRuleContext(i, CommaDelimContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_structExpr; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterStructExpr) {
-			listener.enterStructExpr(this);
-		}
+	public NL_list(): TerminalNode[] {
+	    	return this.getTokens(FppParser.NL);
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitStructExpr) {
-			listener.exitStructExpr(this);
-		}
+	public NL(i: number): TerminalNode {
+		return this.getToken(FppParser.NL, i);
+	}
+	public structAssignment_list(): StructAssignmentContext[] {
+		return this.getTypedRuleContexts(StructAssignmentContext) as StructAssignmentContext[];
+	}
+	public structAssignment(i: number): StructAssignmentContext {
+		return this.getTypedRuleContext(StructAssignmentContext, i) as StructAssignmentContext;
+	}
+	public commaDelim_list(): CommaDelimContext[] {
+		return this.getTypedRuleContexts(CommaDelimContext) as CommaDelimContext[];
+	}
+	public commaDelim(i: number): CommaDelimContext {
+		return this.getTypedRuleContext(CommaDelimContext, i) as CommaDelimContext;
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_structExpr;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10832,44 +9312,39 @@ export class ExprContext extends ParserRuleContext {
 	public _p!: ExprContext;
 	public _op!: Token;
 	public _right!: ExprContext;
-	public expr(): ExprContext[];
-	public expr(i: number): ExprContext;
-	public expr(i?: number): ExprContext | ExprContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ExprContext);
-		} else {
-			return this.getRuleContext(i, ExprContext);
-		}
-	}
-	public arrayExpr(): ArrayExprContext | undefined {
-		return this.tryGetRuleContext(0, ArrayExprContext);
-	}
-	public structExpr(): StructExprContext | undefined {
-		return this.tryGetRuleContext(0, StructExprContext);
-	}
-	public qualIdent(): QualIdentContext | undefined {
-		return this.tryGetRuleContext(0, QualIdentContext);
-	}
-	public LIT_BOOLEAN(): TerminalNode | undefined { return this.tryGetToken(FppParser.LIT_BOOLEAN, 0); }
-	public LIT_FLOAT(): TerminalNode | undefined { return this.tryGetToken(FppParser.LIT_FLOAT, 0); }
-	public LIT_INT(): TerminalNode | undefined { return this.tryGetToken(FppParser.LIT_INT, 0); }
-	public LIT_STRING(): TerminalNode | undefined { return this.tryGetToken(FppParser.LIT_STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+	constructor(parser?: FppParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
+    	this.parser = parser;
 	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_expr; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterExpr) {
-			listener.enterExpr(this);
-		}
+	public expr_list(): ExprContext[] {
+		return this.getTypedRuleContexts(ExprContext) as ExprContext[];
 	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitExpr) {
-			listener.exitExpr(this);
-		}
+	public expr(i: number): ExprContext {
+		return this.getTypedRuleContext(ExprContext, i) as ExprContext;
+	}
+	public arrayExpr(): ArrayExprContext {
+		return this.getTypedRuleContext(ArrayExprContext, 0) as ArrayExprContext;
+	}
+	public structExpr(): StructExprContext {
+		return this.getTypedRuleContext(StructExprContext, 0) as StructExprContext;
+	}
+	public qualIdent(): QualIdentContext {
+		return this.getTypedRuleContext(QualIdentContext, 0) as QualIdentContext;
+	}
+	public LIT_BOOLEAN(): TerminalNode {
+		return this.getToken(FppParser.LIT_BOOLEAN, 0);
+	}
+	public LIT_FLOAT(): TerminalNode {
+		return this.getToken(FppParser.LIT_FLOAT, 0);
+	}
+	public LIT_INT(): TerminalNode {
+		return this.getToken(FppParser.LIT_INT, 0);
+	}
+	public LIT_STRING(): TerminalNode {
+		return this.getToken(FppParser.LIT_STRING, 0);
+	}
+    public get ruleIndex(): number {
+    	return FppParser.RULE_expr;
 	}
 	// @Override
 	public accept<Result>(visitor: FppVisitor<Result>): Result {
@@ -10880,138 +9355,3 @@ export class ExprContext extends ParserRuleContext {
 		}
 	}
 }
-
-
-export class PostAnnotationContext extends ParserRuleContext {
-	public ANNOTATION(): TerminalNode { return this.getToken(FppParser.ANNOTATION, 0); }
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_postAnnotation; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterPostAnnotation) {
-			listener.enterPostAnnotation(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitPostAnnotation) {
-			listener.exitPostAnnotation(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: FppVisitor<Result>): Result {
-		if (visitor.visitPostAnnotation) {
-			return visitor.visitPostAnnotation(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class PostMultiAnnotationContext extends ParserRuleContext {
-	public ANNOTATION(): TerminalNode[];
-	public ANNOTATION(i: number): TerminalNode;
-	public ANNOTATION(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.ANNOTATION);
-		} else {
-			return this.getToken(FppParser.ANNOTATION, i);
-		}
-	}
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_postMultiAnnotation; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterPostMultiAnnotation) {
-			listener.enterPostMultiAnnotation(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitPostMultiAnnotation) {
-			listener.exitPostMultiAnnotation(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: FppVisitor<Result>): Result {
-		if (visitor.visitPostMultiAnnotation) {
-			return visitor.visitPostMultiAnnotation(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class PreAnnotationContext extends ParserRuleContext {
-	public ANNOTATION(): TerminalNode[];
-	public ANNOTATION(i: number): TerminalNode;
-	public ANNOTATION(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.ANNOTATION);
-		} else {
-			return this.getToken(FppParser.ANNOTATION, i);
-		}
-	}
-	public NL(): TerminalNode[];
-	public NL(i: number): TerminalNode;
-	public NL(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(FppParser.NL);
-		} else {
-			return this.getToken(FppParser.NL, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return FppParser.RULE_preAnnotation; }
-	// @Override
-	public enterRule(listener: FppListener): void {
-		if (listener.enterPreAnnotation) {
-			listener.enterPreAnnotation(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: FppListener): void {
-		if (listener.exitPreAnnotation) {
-			listener.exitPreAnnotation(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: FppVisitor<Result>): Result {
-		if (visitor.visitPreAnnotation) {
-			return visitor.visitPreAnnotation(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-

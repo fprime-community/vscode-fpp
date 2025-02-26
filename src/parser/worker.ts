@@ -1,13 +1,14 @@
 import {
-    ANTLRErrorListener,
+    ErrorListener,
     BufferedTokenStream,
     CharStreams,
+    CommonTokenStream,
     RecognitionException,
     Recognizer
-} from 'antlr4ts';
+} from 'antlr4';
 
-import { FppParser } from '../grammar/FppParser';
-import { FppLexer } from '../grammar/FppLexer';
+import FppParser from '../grammar/FppParser';
+import FppLexer from '../grammar/FppLexer';
 
 import * as Fpp from './ast';
 
@@ -19,13 +20,13 @@ import { IFppMessage, IDiagnostic, IFppWorkerRequest } from './message';
 import { TextDecoder } from 'util';
 
 
-class SyntaxErrorListener implements ANTLRErrorListener<any> {
+class SyntaxErrorListener implements ErrorListener<any> {
     diagnostics: IDiagnostic[] = [];
 
     constructor(private readonly source: string) { }
 
     syntaxError(
-        recognizer: Recognizer<any, any>,
+        recognizer: Recognizer<any>,
         offendingSymbol: any,
         line: number,
         charPositionInLine: number,
@@ -35,7 +36,7 @@ class SyntaxErrorListener implements ANTLRErrorListener<any> {
             source: this.source,
             range: [
                 line - 1, charPositionInLine,
-                line - 1, charPositionInLine + (e?.getOffendingToken(recognizer)?.text?.length || 1)
+                line - 1, charPositionInLine + (e?.offendingToken?.text.length ?? 1)
             ],
             message
         });
@@ -79,12 +80,12 @@ async function parse(
     lexer.removeErrorListeners();
     lexer.addErrorListener(listener);
 
-    const tokenStream = new BufferedTokenStream(lexer);
+    const tokenStream = new CommonTokenStream(lexer);
     const parser = new FppParser(tokenStream);
     parser.removeErrorListeners();
     parser.addErrorListener(listener);
 
-    const visitor = new AstVisitor([...pathStack, path], scope, parse);
+    const visitor = new AstVisitor(tokenStream, [...pathStack, path], scope, parse);
     let out: Fpp.TranslationUnit<Fpp.Member>;
     switch (context) {
         case IncludeContext.module:
@@ -121,13 +122,13 @@ parentPort?.on("message", async (message: IFppWorkerRequest) => {
         lexer.removeErrorListeners();
         lexer.addErrorListener(listener);
 
-        const tokenStream = new BufferedTokenStream(lexer);
+        const tokenStream = new CommonTokenStream(lexer);
         const parser = new FppParser(tokenStream);
         parser.removeErrorListeners();
         parser.addErrorListener(listener);
 
         // Lower the ANTLR parsing tree to an AST
-        const visitor = new AstVisitor([message.path], [], parse);
+        const visitor = new AstVisitor(tokenStream, [message.path], [], parse);
         const ast = visitor.visitProg(parser.prog());
 
         // Wait for any includes to finish up
