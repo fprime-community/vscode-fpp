@@ -84,7 +84,7 @@ export class FppAnnotator extends MemberTraverser {
         parent!: FppAnnotator;
 
         identifier(ast: Fpp.IdentifierExpr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
-            const constant = this.parent.identifier(ast.value, scope, SymbolType.constant);
+            const constant = this.parent.identifier(ast.value, scope, SymbolType.constant) as Fpp.ConstantDefinition | undefined;
 
             if (!constant) {
                 this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
@@ -98,8 +98,16 @@ export class FppAnnotator extends MemberTraverser {
                 };
             }
 
-            const value = this.traverse((constant as Fpp.ConstantDefinition).value!, constant.scope, validator);
-            (constant as Fpp.ConstantDefinition).value!.evaluated = value;
+            const value = this.traverse(constant.value!, constant.scope, validator);
+            constant.value!.evaluated = value;
+            if (constant.type === "EnumMember") {
+                return {
+                    type: Fpp.PrimExprType.integer,
+                    value: (value as Fpp.IntExprValue).value,
+                    enumMember: constant,
+                };
+            }
+
             return value;
         }
 
@@ -302,8 +310,7 @@ export class FppAnnotator extends MemberTraverser {
 
     private expr(expr: Fpp.Expr | undefined, scope: Fpp.QualifiedIdentifier, expectedReturn: Fpp.TypeName) {
         if (expr) {
-            const resolvedReturnType = this.exprTrav.resolveType(expectedReturn, scope);
-            return this.exprTrav.traverse(expr, scope, new TypeNameValidator(expectedReturn, resolvedReturnType));
+            return this.exprTrav.traverse(expr, scope, new TypeNameValidator(expectedReturn, scope));
         }
     }
 
@@ -320,12 +327,6 @@ export class FppAnnotator extends MemberTraverser {
     aliasTypeDecl(ast: Fpp.AliasTypeDecl, scope: Fpp.QualifiedIdentifier): void {
         this.semantic(ast.name, SymbolType.type);
         this.type(ast.fppType, scope);
-
-        // TODO(tumbar) Remove once its supported
-        this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
-            MemberTraverser.asRange(ast.location),
-            'Type aliases are not supported yet'
-        ));
     }
 
     arrayDecl(ast: Fpp.ArrayDecl, scope: Fpp.QualifiedIdentifier): void {
@@ -387,7 +388,8 @@ export class FppAnnotator extends MemberTraverser {
             const value = this.exprTrav.traverse(
                 member.value!, scope,
                 new TypeNameValidator(
-                    ast.fppType ?? { complex: false, type: "I32", location: Fpp.implicitLocation }
+                    ast.fppType ?? { complex: false, type: "I32", location: Fpp.implicitLocation },
+                    scope
                 )
             );
 

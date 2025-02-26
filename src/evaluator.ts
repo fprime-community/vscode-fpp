@@ -3,20 +3,60 @@ import * as vscode from 'vscode';
 import * as Fpp from './parser/ast';
 import { MemberTraverser } from "./traverser";
 
-export interface TypeValidator {
-    resolved?: Fpp.TypeDecl;
+export interface TypeResolver {
+    resolveType(typeName: Fpp.TypeName, scope: Fpp.QualifiedIdentifier): Fpp.TypeDecl | undefined;
+}
 
+function getUnderylingType(
+    resolver: TypeResolver,
+    typeName: Fpp.TypeName,
+    scope: Fpp.QualifiedIdentifier,
+): Fpp.TypeName {
+    if (typeName.complex) {
+        const decl = resolver.resolveType(typeName, scope);
+        if (decl?.type === "AliasTypeDecl") {
+            return getUnderylingType(resolver, decl.fppType, decl.scope);
+        }
+
+        return typeName;
+    } else {
+        return typeName;
+    }
+}
+
+function resolveUnderlyingType(
+    resolver: TypeResolver,
+    typeName: Fpp.TypeName,
+    scope: Fpp.QualifiedIdentifier,
+): Fpp.TypeDecl | undefined {
+    if (typeName.complex) {
+        const decl = resolver.resolveType(typeName, scope);
+        if (decl?.type === "AliasTypeDecl") {
+            return resolveUnderlyingType(resolver, decl.fppType, decl.scope);
+        }
+
+        return decl;
+    } else {
+        return undefined;
+    }
+}
+
+export interface TypeValidator {
     /**
      * Validates that the evaluated type is correct
      * @param value Evaluated value to validate type of
      * @returns Formatted error or undefined if no error occured
      */
-    validate?: (value: Fpp.ExprValue) => string | undefined;
+    validate?: (value: Fpp.ExprValue, resolver: TypeResolver) => string | undefined;
+
+    resolved?: (resolver: TypeResolver) => Fpp.TypeDecl | undefined;
 }
 
 export class TypeNameValidator implements TypeValidator {
-    constructor(public typeName: Fpp.TypeName, public resolved?: Fpp.TypeDecl) {
-    }
+    constructor(
+        readonly typeName: Fpp.TypeName,
+        readonly scope: Fpp.QualifiedIdentifier
+    ) { }
 
     private static readonly integerBounds = new Map<Fpp.IntegralTypeKey, [number, number]>([
         ["U8", [0, 255]],
@@ -25,19 +65,34 @@ export class TypeNameValidator implements TypeValidator {
         ["I16", [-32767, +32767]]
     ]);
 
-    validate(value: Fpp.ExprValue): string | undefined {
-        if (this.typeName.complex) {
-            // Make do any more work
-            // These are already validated before
+    resolved(resolver: TypeResolver): Fpp.TypeDecl | undefined {
+        return resolveUnderlyingType(resolver, this.typeName, this.scope);
+    }
+
+    validate(value: Fpp.ExprValue, resolver: TypeResolver): string | undefined {
+        const underyling = getUnderylingType(resolver, this.typeName, this.scope);
+
+        if (underyling.complex) {
+            const decl = resolveUnderlyingType(resolver, this.typeName, this.scope);
+            if (decl?.type === "EnumDecl") {
+                // Make sure this item is part of the enum decls
+                if (value.type !== Fpp.PrimExprType.integer) {
+                    return `Expected enum type, got ${value.type}`;
+                } else if (!value.enumMember) {
+                    return `Expected member of ${decl.name.value}`;
+                } else if (!decl.members.find((member) => member === value.enumMember)) {
+                    return `Expected member of ${decl.name.value}`;
+                }
+            }
         } else {
-            switch(this.typeName.type) {
+            switch (underyling.type) {
                 case 'string':
                     if (value.type !== Fpp.PrimExprType.string) {
                         return `Expected string, got ${value.type}`;
                     }
 
-                    if (this.typeName.size && value.value.length > this.typeName.size.value) {
-                        return `String too long ${value.value.length} > ${this.typeName.size.value}`;
+                    if (underyling.size && value.value.length > underyling.size.value) {
+                        return `String too long ${value.value.length} > ${underyling.size.value}`;
                     }
                     break;
                 case 'U8':
@@ -52,10 +107,10 @@ export class TypeNameValidator implements TypeValidator {
                         return `Expected integer, got ${value.type}`;
                     }
 
-                    const bounds = TypeNameValidator.integerBounds.get(this.typeName.type);
+                    const bounds = TypeNameValidator.integerBounds.get(underyling.type);
                     if (bounds) {
                         if (value.value < bounds[0] || value.value > bounds[1]) {
-                            return `${value.value} out of ${this.typeName.type} bounds [${bounds[0]}, ${bounds[1]}]`;
+                            return `${value.value} out of ${underyling.type} bounds [${bounds[0]}, ${bounds[1]}]`;
                         }
                     }
 
@@ -75,7 +130,7 @@ export class TypeNameValidator implements TypeValidator {
     }
 }
 
-export abstract class ExprTraverser {
+export abstract class ExprTraverser implements TypeResolver {
     private static readonly numberTypes = new Set<Fpp.PrimExprType>([
         Fpp.PrimExprType.integer,
         Fpp.PrimExprType.floating
@@ -90,14 +145,13 @@ export abstract class ExprTraverser {
     private static isNumericExpr(value: Fpp.ExprValue) {
         return ExprTraverser.numberTypes.has(value.type);
     }
-
     abstract resolveType(typeName: Fpp.TypeName, scope: Fpp.QualifiedIdentifier): Fpp.TypeDecl | undefined;
     abstract emit(uri: vscode.Uri, diagnostic: vscode.Diagnostic): void;
     abstract identifier(ast: Fpp.IdentifierExpr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue;
 
     private traverseImpl(ast: Fpp.Expr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
         switch (ast.type) {
-            case 'ArrayExpr': return this.arrayExpr(ast, scope, validator.resolved);
+            case 'ArrayExpr': return this.arrayExpr(ast, scope, validator.resolved?.(this));
             case 'BinaryExpr': return this.binaryExpr(ast, scope);
             case 'BooleanExpr': return this.booleanExpr(ast);
             case 'FloatLiteral': return this.floatLiteral(ast);
@@ -105,7 +159,7 @@ export abstract class ExprTraverser {
             case 'IntLiteral': return this.intLiteral(ast);
             case 'NegExpr': return this.negExpr(ast, scope);
             case 'StringLiteral': return this.stringLiteral(ast);
-            case 'StructExpr': return this.structExpr(ast, scope, validator.resolved);
+            case 'StructExpr': return this.structExpr(ast, scope, validator.resolved?.(this));
         }
     }
 
@@ -132,13 +186,13 @@ export abstract class ExprTraverser {
 
         try {
             const value = this.traverseImpl(ast, scope, validator);
-            const error = validator.validate?.(value);
+            const error = validator.validate?.(value, this);
             if (error) {
                 this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
                     MemberTraverser.asRange(ast.location), error)
                 );
             }
-    
+
             return value;
         } finally {
             this.traverseStack.pop();
@@ -146,12 +200,21 @@ export abstract class ExprTraverser {
     }
 
     protected arrayExpr(ast: Fpp.ArrayExpr, scope: Fpp.QualifiedIdentifier, resolved?: Fpp.TypeDecl): Fpp.ArrayExprValue {
-        let memberType: Fpp.TypeDecl | undefined;
         let memberValidator: TypeValidator;
 
         if (resolved && resolved.type === "ArrayDecl") {
-            memberType = this.resolveType(resolved.fppType, resolved.scope);
-            memberValidator = new TypeNameValidator(resolved.fppType, memberType);
+            memberValidator = new TypeNameValidator(resolved.fppType, resolved.scope);
+
+            const size = this.traverse(resolved.size, scope, ExprTraverser.intValidator).value;
+            if (typeof size === "number") {
+                if (ast.value.length !== size) {
+                    this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
+                        MemberTraverser.asRange(ast.location),
+                        `expected ${size} items in array value`
+                    ));
+                }
+            }
+
         } else {
             memberValidator = { validate: () => { return undefined; } };
         }
@@ -161,6 +224,14 @@ export abstract class ExprTraverser {
             value: ast.value.map(v => this.traverse(v, scope, memberValidator))
         };
     }
+
+    private static readonly intValidator: TypeValidator = {
+        validate(value: Fpp.ExprValue): string | undefined {
+            if (value.type !== Fpp.PrimExprType.integer) {
+                return "Expected integer expression";
+            }
+        }
+    };
 
     private static readonly numericValidator: TypeValidator = {
         validate(value: Fpp.ExprValue): string | undefined {
@@ -287,7 +358,10 @@ export abstract class ExprTraverser {
                     };
                 }
 
-                value[member.name.value] = this.traverse(member.value, scope, new TypeNameValidator(memberDefinition.fppType, memberType));
+                value[member.name.value] = this.traverse(
+                    member.value, scope,
+                    new TypeNameValidator(memberDefinition.fppType, memberDefinition.scope)
+                );
             }
 
             if (definedSet.has(member.name.value)) {

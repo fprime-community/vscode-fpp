@@ -733,6 +733,7 @@ interface ExprValueBase<T> {
 
 export interface IntExprValue extends ExprValueBase<number> {
     type: PrimExprType.integer;
+    enumMember?: EnumMember;
 }
 
 export interface FloatExprValue extends ExprValueBase<number> {
