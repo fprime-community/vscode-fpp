@@ -7315,6 +7315,7 @@ export class QueueFullBehaviorContext extends ParserRuleContext {
 	public ASSERT(): TerminalNode | undefined { return this.tryGetToken(FppParser.ASSERT, 0); }
 	public BLOCK(): TerminalNode | undefined { return this.tryGetToken(FppParser.BLOCK, 0); }
 	public DROP(): TerminalNode | undefined { return this.tryGetToken(FppParser.DROP, 0); }
+	public HOOK(): TerminalNode | undefined { return this.tryGetToken(FppParser.HOOK, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
