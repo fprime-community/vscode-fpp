@@ -51,7 +51,7 @@ structDecl:
     '}' (DEFAULT default_=structExpr)?
     ;
 
-queueFullBehavior: ASSERT | BLOCK | DROP;
+queueFullBehavior: ASSERT | BLOCK | DROP | HOOK;
 commandKind: ASYNC | GUARDED | SYNC;
 commandDecl:
     kind=commandKind COMMAND name=IDENTIFIER
