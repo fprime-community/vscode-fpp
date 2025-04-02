@@ -306,7 +306,7 @@ export interface Keyword<T extends string> extends Ast {
 }
 
 export type CommandKind = Keyword<"async" | "guarded" | "sync">;
-export type QueueFullBehavior = Keyword<"assert" | "block" | "drop">;
+export type QueueFullBehavior = Keyword<"assert" | "block" | "drop" | "hook">;
 
 export interface CommandDecl extends Decl {
     type: "CommandDecl";
