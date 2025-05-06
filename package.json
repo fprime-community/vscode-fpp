@@ -103,7 +103,7 @@
         "compile-worker": "yarn run esbuild-base ./src/parser/worker.ts --outfile=out/worker.js",
         "compile": "yarn run compile-extension && yarn run compile-worker",
         "watch": "tsc -watch -p ./",
-        "antlr": "antlr4ts -visitor src/grammar/Fpp.g4"
+        "antlr": "antlr4ts -visitor src/grammar/Fpp.g4 && node ./scripts/update-signatures.js src/signatures.json src/grammar/FppParser.ts"
     },
     "devDependencies": {
         "@types/antlr4": "^4.11.2",

@@ -28,7 +28,7 @@
             "formatLiteral": "Default string literal format to include in dictionary definition"
         },
         "stateMap": {
-            "offset": 268,
+            "offset": 270,
             "map": {
                 "array": [
                     0
@@ -80,7 +80,7 @@
             "queue-full-behavior": "specifies the behavior of the command when the input full is queue. This specifier is valid only if the kind of the command is async. If no specifier appears, then the default behavior is assert."
         },
         "stateMap": {
-            "offset": 350,
+            "offset": 352,
             "map": {
                 "commandKind": [
                     0
@@ -135,7 +135,7 @@
             "cpuExpr": "Specifies the CPU affinity for active components. The CPU affinity is optional for active components and is not allowed for queued or passive components."
         },
         "stateMap": {
-            "offset": 821,
+            "offset": 835,
             "map": {
                 "instance": [
                     0
@@ -195,7 +195,7 @@
             "componentInstance": "The qualified identifier must refer to a component instance."
         },
         "stateMap": {
-            "offset": 944,
+            "offset": 958,
             "map": {
                 "private": [
                     0,
@@ -232,7 +232,7 @@
             "type": "Member type"
         },
         "stateMap": {
-            "offset": 288,
+            "offset": 290,
             "map": {
                 "name": [
                     0
@@ -271,7 +271,7 @@
             "defaultExpr": "Specifies the default value associated with the type. The type of the expression must be convertible to T. If the expression specifies a value for a member with size greater than one, then the value is applied to each element."
         },
         "stateMap": {
-            "offset": 323,
+            "offset": 325,
             "map": {
                 "struct": [
                     0
@@ -305,7 +305,7 @@
             "saveOpcode": "Opcode of the command for saving the parameter to the database."
         },
         "stateMap": {
-            "offset": 367,
+            "offset": 369,
             "map": {
                 "param": [
                     0
@@ -367,7 +367,7 @@
             ]
         },
         "stateMap": {
-            "offset": 431,
+            "offset": 433,
             "map": {
                 "generalPortKind": [
                     0
@@ -429,7 +429,7 @@
             "highLimit": "Specifies the high limit for the channel"
         },
         "stateMap": {
-            "offset": 486,
+            "offset": 488,
             "map": {
                 "telemetry": [
                     0
@@ -490,7 +490,7 @@
             "throttleExpr": "Specifies the maximum number of times to emit the event before throttling it. The type of e must be convertible to Integer and must evaluate to an integer."
         },
         "stateMap": {
-            "offset": 752,
+            "offset": 766,
             "map": {
                 "event": [
                     0
@@ -568,7 +568,7 @@
             "queue-full-behavior": "Same as async input ports"
         },
         "stateMap": {
-            "offset": 777,
+            "offset": 791,
             "map": {
                 "internal": [
                     0
@@ -605,7 +605,7 @@
             "returnType": "Return type used when port is invoked in a synchronous context"
         },
         "stateMap": {
-            "offset": 934,
+            "offset": 948,
             "map": {
                 "port": [
                     0
@@ -635,7 +635,7 @@
             "input": "Reference to an input port instance"
         },
         "stateMap": {
-            "offset": 956,
+            "offset": 970,
             "map": {
                 "output": [
                     0
@@ -657,7 +657,7 @@
             "codeLiteral": "Code in a target language that is associated with the instance"
         },
         "stateMap": {
-            "offset": 815,
+            "offset": 829,
             "map": {
                 "phase": [
                     0,
@@ -683,7 +683,7 @@
             "idExpr": "Override default record id"
         },
         "stateMap": {
-            "offset": 790,
+            "offset": 804,
             "map": {
                 "product": [
                     0
@@ -724,7 +724,7 @@
             "dpPriority": "Override default container downlink priority"
         },
         "stateMap": {
-            "offset": 802,
+            "offset": 816,
             "map": {
                 "product": [
                     0
@@ -763,7 +763,7 @@
             "type": "Optional type name specifies the type T associated with the action. A value of type T will be passed into the function associated with the action when it is called"
         },
         "stateMap": {
-            "offset": 510,
+            "offset": 512,
             "map": {
                 "action": [
                     0
@@ -796,7 +796,7 @@
             "type": "Optional type name specifies the type T associated with the action. A value of type T will be passed into the function associated with the guard is evaluated"
         },
         "stateMap": {
-            "offset": 526,
+            "offset": 540,
             "map": {
                 "guard": [
                     0
@@ -819,7 +819,7 @@
             "type": "Optional type name specifies the type of the data carried by the signal"
         },
         "stateMap": {
-            "offset": 532,
+            "offset": 546,
             "map": {
                 "signal": [
                     0
@@ -845,7 +845,7 @@
             "queueFull": "Action to take when message queue has been filled"
         },
         "stateMap": {
-            "offset": 672,
+            "offset": 686,
             "map": {
                 "state": [
                     0
