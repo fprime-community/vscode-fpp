@@ -291,7 +291,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "TranslationUnit",
             location: this.loc(ctx),
-            members: ctx.moduleMember().map(this.visitModuleMember.bind(this)) as Fpp.ModuleMember[],
+            members: ctx.moduleMember().map(this.visitModuleMember.bind(this)),
             dependencies: []
         };
     }
@@ -306,7 +306,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "TranslationUnit",
             location: this.loc(ctx),
-            members: ctx.topologyMember().map(this.visitTopologyMember.bind(this)) as Fpp.TopologyMember[],
+            members: ctx.topologyMember().map(this.visitTopologyMember.bind(this)),
             dependencies: []
         };
     }
@@ -321,7 +321,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "TranslationUnit",
             location: this.loc(ctx),
-            members: ctx.componentMember().map(this.visitComponentMember.bind(this)) as Fpp.ComponentMember[],
+            members: ctx.componentMember().map(this.visitComponentMember.bind(this)),
             dependencies: []
         };
     }
@@ -1438,6 +1438,19 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return ctx.IDENTIFIER().map(v => this.identifier(v._symbol));
     }
 
+    visitStringType(ctx: FppParser.StringTypeContext): Fpp.StringPrimitiveType {
+        if (!ctx) {
+            return this.error();
+        }
+
+        return {
+            complex: false,
+            type: "string",
+            location: this.loc(ctx),
+            size: ctx._size ? this.visitExpr(ctx._size) : undefined
+        };
+    }
+
     visitPrimitiveType(ctx: FppParser.PrimitiveTypeContext): Fpp.TypeName {
         if (!ctx) {
             return this.error();
@@ -1447,11 +1460,6 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             complex: false,
             type: ctx.getChild(0).text! as Fpp.PrimitiveTypeKey,
             location: this.loc(ctx),
-            size: ctx._size ? {
-                type: "IntLiteral",
-                value: parseInt(ctx._size.text!),
-                location: this.locT(ctx._size)
-            } : undefined
         } as Fpp.TypeName;
     }
 
@@ -1462,6 +1470,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
 
         const complexType = ctx.qualIdent();
         const primitiveType = ctx.primitiveType();
+        const stringType = ctx.stringType();
         if (complexType) {
             return {
                 complex: true,
@@ -1469,7 +1478,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
                 type: this.visitQualIdent_(complexType)
             };
         } else if (primitiveType) {
-            return this.visitPrimitiveType(primitiveType!);
+            return this.visitPrimitiveType(primitiveType);
+        } else if (stringType) {
+            return this.visitStringType(stringType);
         } else {
             return this.error() as Fpp.TypeName;
         }
@@ -1798,6 +1809,10 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         if (!ctx) {
             return this.error();
         }
+
+        this.associate(ctx.STATE()._symbol, ctx.ruleIndex, "state");
+        this.associate(ctx.MACHINE()._symbol, ctx.ruleIndex, "machine");
+        this.associate(ctx._name, ctx.ruleIndex, "name");
 
         const name = this.identifier(ctx._name);
 

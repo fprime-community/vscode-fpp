@@ -317,6 +317,14 @@ export class FppAnnotator extends MemberTraverser {
     private type(typename: Fpp.TypeName, scope: Fpp.QualifiedIdentifier) {
         if (typename.complex) {
             this.identifier(typename.type, scope, SymbolType.type);
+        } else if (typename.type === "string") {
+            if (typename.size) {
+                this.expr(typename.size, scope, {
+                    complex: false,
+                    type: "U32",
+                    location: Fpp.implicitLocation
+                });
+            }
         }
     }
 

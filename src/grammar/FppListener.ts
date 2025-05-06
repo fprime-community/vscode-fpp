@@ -87,6 +87,7 @@ import { FormalParameterListContext } from "./FppParser";
 import { QualIdentContext } from "./FppParser";
 import { IntTypeContext } from "./FppParser";
 import { PrimitiveTypeContext } from "./FppParser";
+import { StringTypeContext } from "./FppParser";
 import { TypeNameContext } from "./FppParser";
 import { CommaDelimContext } from "./FppParser";
 import { SemiDelimContext } from "./FppParser";
@@ -1027,6 +1028,17 @@ export interface FppListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitPrimitiveType?: (ctx: PrimitiveTypeContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `FppParser.stringType`.
+	 * @param ctx the parse tree
+	 */
+	enterStringType?: (ctx: StringTypeContext) => void;
+	/**
+	 * Exit a parse tree produced by `FppParser.stringType`.
+	 * @param ctx the parse tree
+	 */
+	exitStringType?: (ctx: StringTypeContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `FppParser.typeName`.

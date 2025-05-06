@@ -117,7 +117,7 @@ telemetryChannelDecl:
     ;
 
 actionDef: ACTION name=IDENTIFIER (':' type=typeName)?;
-choiceDef: CHOICE name=IDENTIFIER '{' IF guard=IDENTIFIER then=transitionExpr ELSE else=transitionExpr '}';
+choiceDef: CHOICE name=IDENTIFIER '{' NL* IF guard=IDENTIFIER then=transitionExpr ELSE else=transitionExpr NL* '}';
 guardDef: GUARD name=IDENTIFIER (':' type=typeName)?;
 signalDef: SIGNAL name=IDENTIFIER (':' type=typeName)?;
 
@@ -351,8 +351,9 @@ qualIdent: IDENTIFIER ('.' IDENTIFIER)*;
 
 // PRIM_TYPE:  U8 | I8 | U16 | I16 | U32 | I32 | U64 | I64 | F32 | F64 | BOOL;
 intType:  U8 | I8 | U16 | I16 | U32 | I32 | U64 | I64;
-primitiveType: type=(U8 | I8 | U16 | I16 | U32 | I32 | U64 | I64 | F32 | F64 | BOOL) | type=STRING (SIZE size=LIT_INT)?;
-typeName: primitiveType | qualIdent;
+primitiveType: U8 | I8 | U16 | I16 | U32 | I32 | U64 | I64 | F32 | F64 | BOOL;
+stringType: STRING (SIZE size=expr)?;
+typeName: stringType | primitiveType | qualIdent;
 
 commaDelim: ',' NL* | NL+;
 semiDelim: ';' NL* | NL+;
@@ -397,13 +398,13 @@ fragment SHORT_STRING: '"' ( STRING_ESCAPE_SEQ | ~[\\\r\n\f"])* '"';
 // Comments, standard whitespace, and line continuations are all skiped
 NL: [\n];
 WS: [ \r\t]+ -> skip;
-WS_NL: '\\'~[\n]*[\n] -> skip;
-COMMENT: [#]~[\n]* -> skip;
+WS_NL: '\\'~[ ]*[\n] -> skip;
+COMMENT: [#]~[\n]+[\n]+ -> skip;
 
-ANNOTATION: [@]~[\n]*;
-postAnnotation: ANNOTATION NL+;
-postMultiAnnotation: (ANNOTATION NL)* ANNOTATION NL+;
-preAnnotation: (ANNOTATION NL)+;
+ANNOTATION: [@]~[\n]*[\n];
+postAnnotation: ANNOTATION NL*;
+postMultiAnnotation: ANNOTATION+ NL*;
+preAnnotation: ANNOTATION+;
 
 LIT_BOOLEAN: FALSE | TRUE;
 LIT_STRING: LONG_STRING | SHORT_STRING;
@@ -528,4 +529,4 @@ WARNING: 'warning';
 WITH: 'with';
 YELLOW: 'yellow';
 
-IDENTIFIER: [$]? [A-Za-z_][a-zA-Z_0-9]*;
+IDENTIFIER: [$]?[A-Za-z_][a-zA-Z_0-9]*;

@@ -87,6 +87,7 @@ import { FormalParameterListContext } from "./FppParser";
 import { QualIdentContext } from "./FppParser";
 import { IntTypeContext } from "./FppParser";
 import { PrimitiveTypeContext } from "./FppParser";
+import { StringTypeContext } from "./FppParser";
 import { TypeNameContext } from "./FppParser";
 import { CommaDelimContext } from "./FppParser";
 import { SemiDelimContext } from "./FppParser";
@@ -694,6 +695,13 @@ export interface FppVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitPrimitiveType?: (ctx: PrimitiveTypeContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `FppParser.stringType`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitStringType?: (ctx: StringTypeContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `FppParser.typeName`.

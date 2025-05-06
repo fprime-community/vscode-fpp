@@ -62,7 +62,7 @@ export interface PrimitiveType extends TypeBase {
 export interface StringPrimitiveType extends TypeBase {
     complex: false;
     type: "string";
-    size?: LiteralIntExpr;
+    size?: Expr;
 }
 
 export interface ComplexType extends TypeBase {

@@ -91,8 +91,11 @@ export class TypeNameValidator implements TypeValidator {
                         return `Expected string, got ${value.type}`;
                     }
 
-                    if (underyling.size && value.value.length > underyling.size.value) {
-                        return `String too long ${value.value.length} > ${underyling.size.value}`;
+                    if (underyling.size) {
+                        const strLenMax = (underyling.size.evaluated?.value as number ?? 0);
+                        if (underyling.size && value.value.length > strLenMax) {
+                            return `String too long ${value.value.length} > ${strLenMax}`;
+                        }
                     }
                     break;
                 case 'U8':

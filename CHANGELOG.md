@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.17] - 2025-05-06
+
+- Fixed some subtle parsing issues with comments and annotations
+- Fixed parsing errors with non-literal string type sizes
+- Fixed parsing issue with choice definitions
+- Added type checking on string size type
+
+## [1.0.16] - 2025-04-14
+
+- Update QueueFullBehavior to recognize hook keyword
+
+## [1.0.15] - 2025-02-26
+
+- Fix recursive type checking in complex expr types
+
 ## [1.0.14] - 2025-01-31
 
 - Missed state annotation on top-level state machine initial transisition

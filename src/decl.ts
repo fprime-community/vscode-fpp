@@ -763,6 +763,14 @@ export class DeclCollector extends MemberTraverser {
         }
     }
 
+    /**
+     * Check if a definition already exists
+     * If it does, add an error on the duplicate symbol and return false
+     * @param name Fully qualified name of definition
+     * @param type Definition type
+     * @param token Ast identifier associated with the definition
+     * @returns true if this definition conflicts
+     */
     private check(name: string, type: SymbolType, token: Fpp.Identifier): boolean {
         const t = this.get(name, type);
         if (t) {
