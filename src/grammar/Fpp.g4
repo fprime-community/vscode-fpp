@@ -306,6 +306,7 @@ locationKind:
     | PORT
     | TOPOLOGY
     | TYPE
+    | STATE MACHINE
     ;
 locationStmt:
     LOCATE kind=locationKind
@@ -398,13 +399,13 @@ fragment SHORT_STRING: '"' ( STRING_ESCAPE_SEQ | ~[\\\r\n\f"])* '"';
 // Comments, standard whitespace, and line continuations are all skiped
 NL: [\n];
 WS: [ \r\t]+ -> skip;
-WS_NL: '\\'~[ ]*[\n] -> skip;
-COMMENT: [#]~[\n]+[\n]+ -> skip;
+WS_NL: '\\'[ ]*[\n] -> skip;
+COMMENT: [#]~[\n]* -> skip;
 
 ANNOTATION: [@]~[\n]*[\n];
 postAnnotation: ANNOTATION NL*;
 postMultiAnnotation: ANNOTATION+ NL*;
-preAnnotation: ANNOTATION+;
+preAnnotation: ANNOTATION+ NL*;
 
 LIT_BOOLEAN: FALSE | TRUE;
 LIT_STRING: LONG_STRING | SHORT_STRING;

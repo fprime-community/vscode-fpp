@@ -98,8 +98,8 @@ export class DeclCollector extends MemberTraverser {
     components = new Map<string, Fpp.ComponentDecl>();
     componentInstances = new Map<string, Fpp.ComponentInstanceDecl>();
     constants = new Map<string, Fpp.ConstantDefinition>();
-    generalInputPortInstances = new Map<string, Fpp.GeneralPortInstanceDecl>();
-    generalOutputPortInstances = new Map<string, Fpp.GeneralPortInstanceDecl>();
+    inputPortInstances = new Map<string, Fpp.PortInstanceDecl>();
+    outputPortInstances = new Map<string, Fpp.PortInstanceDecl>();
     generalInputPortDecl = new Map<string, Fpp.GeneralPortInstanceDecl>();
     generalOutputPortDecl = new Map<string, Fpp.GeneralPortInstanceDecl>();
     graphGroups = new Map<string, Fpp.DirectGraphDecl>();
@@ -143,22 +143,55 @@ export class DeclCollector extends MemberTraverser {
 
         private update(ast: Fpp.ComponentInstanceDecl, member: Fpp.ComponentMember, componentScope: Fpp.QualifiedIdentifier) {
             switch (member.type) {
-                case 'GeneralPortInstanceDecl':
+                case 'GeneralPortInstanceDecl': {
                     const portName = MemberTraverser.flat(componentScope, member.name);
                     if (member.kind.isOutput) {
-                        this.parent.generalOutputPortInstances.set(portName, member);
+                        this.parent.outputPortInstances.set(portName, member);
                         this.parent.translationUnitDeclarations.get(ast.location.source)!.add(
                             DiangosicManager.asRange(ast.name.location),
                             [SymbolType.outputPortInstance, portName]
                         );
                     } else {
-                        this.parent.generalInputPortInstances.set(portName, member);
+                        this.parent.inputPortInstances.set(portName, member);
                         this.parent.translationUnitDeclarations.get(ast.location.source)!.add(
                             DiangosicManager.asRange(ast.name.location),
                             [SymbolType.inputPortInstance, portName]
                         );
                     }
                     break;
+                }
+                case 'SpecialPortInstanceDecl': {
+                    const portName = MemberTraverser.flat(componentScope, member.name);
+                    switch (member.kind.kind.value) {
+                        case 'commandRecv':
+                        case 'commandReg':
+                        case 'commandResp':
+                        case 'event':
+                        case 'paramGet':
+                        case 'paramSet':
+                        case 'telemetry':
+                        case 'textEvent':
+                        case 'timeGet':
+                            // Auto-ports
+                            break;
+                        case 'productGet':
+                        case 'productRequest':
+                        case 'productSend':
+                            this.parent.outputPortInstances.set(portName, member);
+                            this.parent.translationUnitDeclarations.get(ast.location.source)!.add(
+                                DiangosicManager.asRange(ast.name.location),
+                                [SymbolType.outputPortInstance, portName]
+                            );
+                            break;
+                        case 'productRecv':
+                            this.parent.inputPortInstances.set(portName, member);
+                            this.parent.translationUnitDeclarations.get(ast.location.source)!.add(
+                                DiangosicManager.asRange(ast.name.location),
+                                [SymbolType.inputPortInstance, portName]
+                            );
+                    }
+                    break;
+                }
                 case 'IncludeStmt':
                     if (member.resolved) {
                         for (const m of member.resolved.members) {
@@ -208,10 +241,14 @@ export class DeclCollector extends MemberTraverser {
                         this.componentInstances.delete(decl);
                         break;
                     case SymbolType.inputPortInstance:
-                        this.generalInputPortInstances.delete(decl);
+                        this.inputPortInstances.delete(decl);
                         break;
                     case SymbolType.outputPortInstance:
-                        this.generalOutputPortInstances.delete(decl);
+                        this.outputPortInstances.delete(decl);
+                        break;
+                    case SymbolType.specialPort:
+                        this.inputPortInstances.delete(decl);
+                        this.outputPortInstances.delete(decl);
                         break;
                     case SymbolType.inputPortDecl:
                         this.generalInputPortDecl.delete(decl);
@@ -272,7 +309,6 @@ export class DeclCollector extends MemberTraverser {
                         break;
 
                     case SymbolType.modifier:
-                    case SymbolType.specialPort:
                     case SymbolType.formalParameter:
                     case SymbolType.module:
                         // These cannot be referenced directly
@@ -709,7 +745,6 @@ export class DeclCollector extends MemberTraverser {
         switch (type) {
             case SymbolType.module:
             case SymbolType.modifier:
-            case SymbolType.specialPort:
             case SymbolType.formalParameter:
             default:
                 break;
@@ -728,10 +763,13 @@ export class DeclCollector extends MemberTraverser {
                 return this.ports.get(name);
             case SymbolType.type:
                 return this.types.get(name);
+            case SymbolType.specialPort:
+                this.inputPortInstances.get(name) ?? this.outputPortInstances.get(name);
+                break;
             case SymbolType.inputPortInstance:
-                return this.generalInputPortInstances.get(name);
+                return this.inputPortInstances.get(name);
             case SymbolType.outputPortInstance:
-                return this.generalOutputPortInstances.get(name);
+                return this.outputPortInstances.get(name);
             case SymbolType.inputPortDecl:
                 return this.generalInputPortDecl.get(name);
             case SymbolType.outputPortDecl:

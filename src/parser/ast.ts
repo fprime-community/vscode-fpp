@@ -357,6 +357,10 @@ export interface SpecialOutputPortInstance extends PortInstance {
         | "telemetry"
         | "textEvent"
         | "timeGet"
+        | "productGet"
+        | "productRecv"
+        | "productRequest"
+        | "productSend"
     >;
 }
 

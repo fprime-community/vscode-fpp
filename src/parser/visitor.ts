@@ -637,6 +637,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         const telemetryK = ctx.TELEMETRY();
         const textK = ctx.TEXT();
         const timeK = ctx.TIME();
+        const productK = ctx.PRODUCT();
+        const requestK = ctx.REQUEST();
+        const sendK = ctx.SEND();
 
         let kind;
         if (commandK) {
@@ -670,6 +673,18 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             kind = this.keywordT<"event">(eventK.symbol);
         } else if (timeK && getK) {
             kind = this.keywordsT([timeK.symbol, getK.symbol], "timeGet");
+        } else if (productK) {
+            if (getK) {
+                kind = this.keywordsT([productK.symbol, getK.symbol], "productGet");
+            } else if (requestK) {
+                kind = this.keywordsT([productK.symbol, requestK.symbol], "productRequest");
+            } else if (sendK) {
+                kind = this.keywordsT([productK.symbol, sendK.symbol], "productSend");
+            } else if (recvK) {
+                kind = this.keywordsT([productK.symbol, recvK.symbol], "productRecv");
+            } else {
+                return this.error();
+            }
         } else {
             return this.error();
         }
