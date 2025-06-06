@@ -1,0 +1,18 @@
+.sprotty-node {
+    fill: var(--vscode-button-background)
+}
+
+.sprotty-node.selected {
+    stroke-width: 2;
+    stroke: var(--vscode-button-secondaryForeground);
+}
+
+.comp-label {
+    fill: var(--vscode-foreground);
+}
+
+.sprotty-port {
+    fill: white;
+    stroke: purple;
+    stroke-width: 3;
+}

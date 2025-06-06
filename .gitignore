@@ -1,8 +1,12 @@
-out
+**/out
 dist
-node_modules
+pack
+**/node_modules
 .vscode-test/
 *.vsix
 .DS_Store
 
 src/grammar/venv
+
+**/package-lock.json
+**/*.tsbuildinfo

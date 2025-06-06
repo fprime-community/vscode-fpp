@@ -1,0 +1,18 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+    "jsx": "react",
+    "rootDir": "../", // rootDir is packages/ because webview/ needs to access files from extension/, e.g., models.
+    "outDir": "out",
+    "lib": [
+      "ES2022",
+      "dom"
+    ],
+    "declaration": false,
+    "declarationMap": false,
+    "types": [] // Disables automatic inclusion of global @types/* packages. In this case, the hoisted @types/node package and the DOM package have type conflicts.
+  },
+  "include": [
+    "src"
+, "../extension/src/diagram/models.ts"  ],
+}
