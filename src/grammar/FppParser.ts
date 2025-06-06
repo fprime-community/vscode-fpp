@@ -1512,10 +1512,20 @@ export class FppParser extends Parser {
 				this.state = 447;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === FppParser.ASYNC) {
+				if (_la === FppParser.ASYNC || _la === FppParser.GUARDED || _la === FppParser.SYNC) {
 					{
 					this.state = 446;
-					this.match(FppParser.ASYNC);
+					_la = this._input.LA(1);
+					if (!(_la === FppParser.ASYNC || _la === FppParser.GUARDED || _la === FppParser.SYNC)) {
+					this._errHandler.recoverInline(this);
+					} else {
+						if (this._input.LA(1) === Token.EOF) {
+							this.matchedEOF = true;
+						}
+
+						this._errHandler.reportMatch(this);
+						this.consume();
+					}
 					}
 				}
 
@@ -7374,7 +7384,7 @@ export class FppParser extends Parser {
 		"\x02\u01B7\u01C8\x07~\x02\x02\u01B8\u01B9\x07\x7F\x02\x02\u01B9\u01C8" +
 		"\x07A\x02\x02\u01BA\u01BB\x07\x81\x02\x02\u01BB\u01C8\x07F\x02\x02\u01BC" +
 		"\u01BD\x07h\x02\x02\u01BD\u01C8\x07F\x02\x02\u01BE\u01BF\x07h\x02\x02" +
-		"\u01BF\u01C8\x07p\x02\x02\u01C0\u01C2\x07,\x02\x02\u01C1\u01C0\x03\x02" +
+		"\u01BF\u01C8\x07p\x02\x02\u01C0\u01C2\t\x03\x02\x02\u01C1\u01C0\x03\x02" +
 		"\x02\x02\u01C1\u01C2\x03\x02\x02\x02\u01C2\u01C3\x03\x02\x02\x02\u01C3" +
 		"\u01C4\x07h\x02\x02\u01C4\u01C8\x07l\x02\x02\u01C5\u01C6\x07h\x02\x02" +
 		"\u01C6\u01C8\x07s\x02\x02\u01C7\u01AC\x03\x02\x02\x02\u01C7\u01AE\x03" +
@@ -8737,6 +8747,8 @@ export class SpecialPortKindContext extends ParserRuleContext {
 	public PRODUCT(): TerminalNode | undefined { return this.tryGetToken(FppParser.PRODUCT, 0); }
 	public REQUEST(): TerminalNode | undefined { return this.tryGetToken(FppParser.REQUEST, 0); }
 	public ASYNC(): TerminalNode | undefined { return this.tryGetToken(FppParser.ASYNC, 0); }
+	public GUARDED(): TerminalNode | undefined { return this.tryGetToken(FppParser.GUARDED, 0); }
+	public SYNC(): TerminalNode | undefined { return this.tryGetToken(FppParser.SYNC, 0); }
 	public SEND(): TerminalNode | undefined { return this.tryGetToken(FppParser.SEND, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);

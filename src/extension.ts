@@ -31,6 +31,7 @@ function documentSymbolKind(type: SymbolType): vscode.SymbolKind | undefined {
         case SymbolType.componentInstance: return vscode.SymbolKind.Variable;
         case SymbolType.constant: return vscode.SymbolKind.Constant;
         case SymbolType.port: return vscode.SymbolKind.Interface;
+        case SymbolType.interface: return vscode.SymbolKind.Interface;
         case SymbolType.type: return vscode.SymbolKind.Enum;
         case SymbolType.inputPortDecl: return vscode.SymbolKind.Interface;
         case SymbolType.outputPortDecl: return vscode.SymbolKind.Interface;
@@ -528,6 +529,7 @@ class FppExtension implements
             [SymbolType.topology, [this.project.decl.topologies, vscode.CompletionItemKind.Module]],
             [SymbolType.component, [this.project.decl.components, vscode.CompletionItemKind.Class]],
             [SymbolType.componentInstance, [this.project.decl.componentInstances, vscode.CompletionItemKind.Variable]],
+            [SymbolType.interface, [this.project.decl.interfaces, vscode.CompletionItemKind.Interface]],
             [SymbolType.constant, [this.project.decl.constants, vscode.CompletionItemKind.EnumMember]],
             [SymbolType.port, [this.project.decl.ports, vscode.CompletionItemKind.Class]],
             [SymbolType.type, [this.project.decl.types, vscode.CompletionItemKind.Class]],

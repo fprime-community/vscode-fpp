@@ -71,6 +71,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
                 }
 
             } catch (e) {
+                console.error(e);
                 const loc = this.loc(ctx);
                 product.errors.push({
                     source: this.source,
@@ -98,11 +99,19 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
     }
 
     private resolvePath(lit: Fpp.StringLiteral): Fpp.StringLiteral {
-        return {
-            location: lit.location,
-            value: fs.realpathSync(path.resolve(path.dirname(lit.location.source), lit.value), { encoding: "utf-8" })
-            // value: path.resolve(path.dirname(lit.location.source), lit.value)
-        };
+        try {
+            return {
+                location: lit.location,
+                value: fs.realpathSync(path.resolve(path.dirname(lit.location.source), lit.value), { encoding: "utf-8" })
+                // value: path.resolve(path.dirname(lit.location.source), lit.value)
+            };
+        } catch (e) {
+            return {
+                isError: true,
+                location: lit.location,
+                value: lit.value,
+            };
+        }
     }
 
     private loc(ctx: ParserRuleContext): Fpp.Location {
@@ -994,12 +1003,9 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             const currentContext = this.includeContextStack[this.includeContextStack.length - 1];
 
             const parsePromise = this.onInclude(outAst.include.value, this.sourceStack, this.scope, currentContext);
-            this.promises.push([ctx,
+            this.promises.push([
+                ctx,
                 parsePromise.then(v => { outAst.resolved = v[1]; return v[0]; })
-                    .catch((err) => {
-                        console.error(`Failed to include: ${outAst.include.value}: ${err}`);
-                        throw err;
-                    })
             ]);
         }
 

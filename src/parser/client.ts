@@ -43,7 +43,7 @@ export class FppMessage {
                     new RangeAssociator<RangeRuleAssociation>(v[1])
                 ])
             ),
-            msg.syntaxErrors.map((diag) => ([
+            msg.diagnosics.map((diag) => ([
                 diag.source, new vscode.Diagnostic(
                     new vscode.Range(...diag.range),
                     diag.message

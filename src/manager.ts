@@ -205,7 +205,7 @@ export abstract class FppProjectManager {
                 },
                 path: document.path,
                 ranges: [],
-                syntaxErrors: [],
+                diagnosics: [],
                 version: -1,
             });
         } else {

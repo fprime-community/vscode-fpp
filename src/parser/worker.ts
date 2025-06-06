@@ -141,7 +141,7 @@ parentPort?.on("message", async (message: IFppWorkerRequest) => {
             ast,
             path: message.path,
             ranges: Array.from(product.ranges.entries()),
-            syntaxErrors: listener.diagnostics.concat(product.errors),
+            diagnosics: listener.diagnostics.concat(product.errors),
             version: message.version
         };
 

@@ -12,7 +12,7 @@ export interface IFppMessage {
     ast: Fpp.TranslationUnit;
     path: string;
     ranges: [string, IRangeAssociation][];
-    syntaxErrors: IDiagnostic[];
+    diagnosics: IDiagnostic[];
     version: number;
 }
 

@@ -90,7 +90,7 @@ specialPortKind:
     | TIME GET
     | PRODUCT GET
     | PRODUCT REQUEST
-    | ASYNC? PRODUCT RECV
+    | (ASYNC | GUARDED | SYNC)? PRODUCT RECV
     | PRODUCT SEND
     ;
 
