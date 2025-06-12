@@ -19,6 +19,10 @@ import { isKeyword } from './keywords';
 import { generateSignature, signaturesDefinitions } from './signature';
 import { locs, LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from './locs';
 
+import { registerDefaultCommands } from 'sprotty-vscode';
+import { FppWebviewPanelManager } from './diagram/manager';
+import { CodelensProvider } from './codelens';
+import { SetModelAction } from 'sprotty-protocol';
 
 function documentSymbolKind(type: SymbolType): vscode.SymbolKind | undefined {
     switch (type) {
@@ -81,7 +85,7 @@ class FppExtension implements
     vscode.SignatureHelpProvider,
     vscode.Disposable {
 
-    private project: FppProject;
+    readonly project: FppProject;
 
     private subscriptions: vscode.Disposable[];
     private componentsProvider: ComponentsProvider;
@@ -795,6 +799,9 @@ class FppExtension implements
 export function activate(context: vscode.ExtensionContext) {
     const extension = new FppExtension(context);
 
+    // When pushing Disposible into context.subscriptions,
+    // the extension automatically calls dispose() on each
+    // item in the array.
     context.subscriptions.push(
         extension,
         vscode.commands.registerCommand('fpp.reload', extension.reload.bind(extension)),
@@ -897,7 +904,44 @@ export function activate(context: vscode.ExtensionContext) {
             if (!locs(context)) {
                 extension.searchForLocs().then((f) => extension.setProjectLocs(f));
             }
+        }),
+        vscode.workspace.onDidSaveTextDocument((document) => {
+            // Re-render diagram on save.
+            if (document.languageId === 'fpp') {
+                vscode.commands.executeCommand('fpp.updateDiagram');
+            }
         })
+    );
+
+    // Set up webview panel manager for freestyle webviews.
+    const webviewPanelManager = new FppWebviewPanelManager({
+        extensionUri: context.extensionUri,
+        defaultDiagramType: 'fppDiagrams',
+        supportedFileExtensions: ['.fpp'],
+        singleton: true
+    }, extension.project);
+    registerDefaultCommands(webviewPanelManager, context, { extensionPrefix: 'fpp' });
+    console.log("Instantiated FPP webview panel manager.");
+
+    // Register command to update diagram on save.
+    context.subscriptions.push(
+        vscode.commands.registerCommand('fpp.updateDiagram', () => {
+            webviewPanelManager.handleOnSaveUpdateDiagram();
+        })
+    );
+
+    // Set up CodeLens provider to have neat buttons float above definitions.
+    const codelensProvider = new CodelensProvider(extension.project);
+    context.subscriptions.push(
+        vscode.languages.registerCodeLensProvider("*", codelensProvider),
+        vscode.commands.registerCommand("fpp.enableCodeLens", () => {
+            vscode.workspace.getConfiguration("fpp").update("enableCodeLens", true, true);
+        }),
+        vscode.commands.registerCommand("fpp.disableCodeLens", () => {
+            vscode.workspace.getConfiguration("fpp").update("enableCodeLens", false, true);
+        }),
+        vscode.commands.registerCommand("fpp.visualizeConnectionGroup",
+            (elemName: string) => webviewPanelManager.handleCodeLensDisplayConnectionGroup(elemName))
     );
 }
 

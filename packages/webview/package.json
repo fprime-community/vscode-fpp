@@ -1,0 +1,49 @@
+{
+  "name": "fpp-webview",
+  "version": "0.0.1",
+  "description": "An FPP diagram in a VSCode extension (webview)",
+  "private": true,
+  "license": "",
+  "keywords": [
+    "fpp",
+    "vscode",
+    "diagram",
+    "layout",
+    "sprotty"
+  ],
+  "homepage": "https://github.com/fprime-community/vscode-fpp",
+  "bugs": "https://github.com/fprime-community/vscode-fpp/issues",
+  "author": {
+    "name": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fprime-community/vscode-fpp.git",
+    "directory": "src"
+  },
+  "files": [
+    "lib",
+    "src",
+    "css"
+  ],
+  "dependencies": {
+    "reflect-metadata": "^0.2.2",
+    "shx": "^0.4.0",
+    "sprotty": "^1.2.0",
+    "sprotty-vscode-webview": "^1.0.0"
+  },
+  "devDependencies": {
+    "css-loader": "^6.8.1",
+    "file-loader": "^6.2.0",
+    "source-map-loader": "^4.0.1",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.5.1"
+  },
+  "scripts": {
+    "prepare": "yarn run clean && yarn run build",
+    "clean": "shx rm -rf out/ ../../pack/webview",
+    "build": "esbuild src/main.ts --bundle --outfile=../../pack/webview/webview.js --target=es2022 --platform=browser --loader:.ts=ts --loader:.css=css --sourcemap --minify",
+    "typecheck": "tsc -p ./",
+    "watch": "yarn run typecheck --watch"
+  }
+}
