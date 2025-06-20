@@ -97,37 +97,34 @@ export class ComponentDictionary {
 
 export class DeclCollector extends MemberTraverser {
     // Declarations map with their fully qualified id
-    components = new Map<string, Fpp.ComponentDecl>();
-    componentInstances = new Map<string, Fpp.ComponentInstanceDecl>();
-    interfaces = new Map<string, Fpp.InterfaceDecl>();
-    constants = new Map<string, Fpp.ConstantDefinition>();
-    inputPortInstances = new Map<string, Fpp.PortInstanceDecl>();
-    outputPortInstances = new Map<string, Fpp.PortInstanceDecl>();
-    generalInputPortDecl = new Map<string, Fpp.GeneralPortInstanceDecl>();
-    generalOutputPortDecl = new Map<string, Fpp.GeneralPortInstanceDecl>();
-    graphGroups = new Map<string, Fpp.DirectGraphDecl>();
-    ports = new Map<string, Fpp.PortDecl>();
-    topologies = new Map<string, Fpp.TopologyDecl>();
-    types = new Map<string, Fpp.TypeDecl>();
-    commands = new Map<string, Fpp.CommandDecl>();
-    events = new Map<string, Fpp.EventDecl>();
-    parameters = new Map<string, Fpp.ParamDecl>();
-    telemetry = new Map<string, Fpp.TelemetryChannelDecl>();
-    records = new Map<string, Fpp.ProductRecordDecl>();
-    containers = new Map<string, Fpp.ProductContainerDecl>();
-
-    stateMachines = new Map<string, Fpp.StateMachineDecl>();
-    stateMachineInstances = new Map<string, Fpp.StateMachineInstance>();
-    actions = new Map<string, Fpp.ActionDef>();
-    guards = new Map<string, Fpp.GuardDef>();
-    signals = new Map<string, Fpp.SignalDef>();
-
+    actions                 = new Map<string, Fpp.ActionDef>();
+    commands                = new Map<string, Fpp.CommandDecl>();
+    components              = new Map<string, Fpp.ComponentDecl>();
+    componentInstances      = new Map<string, Fpp.ComponentInstanceDecl>();
+    constants               = new Map<string, Fpp.ConstantDefinition>();
+    containers              = new Map<string, Fpp.ProductContainerDecl>();
+    dictionary              = new Map<string, ComponentDictionary>();
+    events                  = new Map<string, Fpp.EventDecl>();
+    generalInputPortDecl    = new Map<string, Fpp.GeneralPortInstanceDecl>();
+    generalOutputPortDecl   = new Map<string, Fpp.GeneralPortInstanceDecl>();
+    graphGroups             = new Map<string, Fpp.DirectGraphDecl>();
+    guards                  = new Map<string, Fpp.GuardDef>();
+    inputPortInstances      = new Map<string, Fpp.PortInstanceDecl>();
+    interfaces              = new Map<string, Fpp.InterfaceDecl>();
+    outputPortInstances     = new Map<string, Fpp.PortInstanceDecl>();
+    parameters              = new Map<string, Fpp.ParamDecl>();
+    ports                   = new Map<string, Fpp.PortDecl>();
+    records                 = new Map<string, Fpp.ProductRecordDecl>();
+    references              = new ReferenceTracker<vscode.Range>();
+    signals                 = new Map<string, Fpp.SignalDef>();
     // States have a special key encoding:
     // normal.qualified.ident.for.statemachine|state.qual.ident
-    states = new Map<string, Fpp.StateDef | Fpp.ChoiceDef>();
-
-    dictionary = new Map<string, ComponentDictionary>();
-    references = new ReferenceTracker<vscode.Range>();
+    states                  = new Map<string, Fpp.StateDef | Fpp.ChoiceDef>();
+    stateMachines           = new Map<string, Fpp.StateMachineDecl>();
+    stateMachineInstances   = new Map<string, Fpp.StateMachineInstance>();
+    telemetry               = new Map<string, Fpp.TelemetryChannelDecl>();
+    topologies              = new Map<string, Fpp.TopologyDecl>();
+    types                   = new Map<string, Fpp.TypeDecl>();
 
     // Keep track of which files define what
     // This way we can clean and refresh a single file's declarations
