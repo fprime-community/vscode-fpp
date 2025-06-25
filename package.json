@@ -1,126 +1,22 @@
 {
-    "name": "fpp",
-    "displayName": "FPP",
-    "description": "FPrime-Prime Language Support",
-    "author": {
-        "name": "Andrei Tumbar",
-        "email": "andrei.tumbar@jpl.nasa.gov"
-    },
-    "publisher": "jet-propulsion-laboratory",
-    "repository": {
-        "url": "https://github.com/fprime-community/vscode-fpp",
-        "type": "git"
-    },
-    "version": "1.0.20",
-    "icon": "fprime-logo.png",
-    "engines": {
-        "vscode": "^1.78.0"
-    },
-    "categories": [
-        "Programming Languages"
-    ],
-    "activationEvents": [],
-    "main": "./out/extension.js",
-    "contributes": {
-        "commands": [
-            {
-                "command": "fpp.reload",
-                "title": "FPP: Reload Project"
-            },
-            {
-                "command": "fpp.select",
-                "title": "FPP: Select Locs file inside workspace"
-            },
-            {
-                "command": "fpp.close",
-                "title": "FPP: Close Project"
-            },
-            {
-                "command": "fpp.open",
-                "title": "FPP: Open Project"
-            },
-            {
-                "command": "fpp.load",
-                "title": "FPP: Load Locs File as Project"
-            }
-        ],
-        "languages": [
-            {
-                "id": "fpp",
-                "aliases": [
-                    "FPrimePrime",
-                    "fpp"
-                ],
-                "extensions": [
-                    ".fpp",
-                    ".fppi"
-                ],
-                "configuration": "./syntax/language-configuration.json"
-            }
-        ],
-        "grammars": [
-            {
-                "language": "fpp",
-                "scopeName": "source.fpp",
-                "path": "./syntax/fpp.tmLanguage.json"
-            }
-        ],
-        "views": {
-            "explorer": [
-                {
-                    "id": "fpp.components",
-                    "name": "FPP Components"
-                }
-            ]
-        },
-        "configuration": {
-            "title": "FPP",
-            "type": "object",
-            "properties": {
-                "fpp.locsSearch": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "markdownDescription": "Glob patterns in order of priority to search for an `locs.fpp` on project startup if no other locs is selected",
-                    "default": [
-                        "**/build-fprime-automatic-native/locs.fpp",
-                        "**/build-fprime-*/locs.fpp"
-                    ]
-                },
-                "fpp.locsExclude": {
-                    "type": "string",
-                    "markdownDescription": "Glob pattern path to exclude from `locs.fpp` search"
-                }
-            }
-        }
-    },
-    "scripts": {
-        "vscode:prepublish": "yarn clean && yarn run compile",
-        "clean": "rm -rf out/",
-        "esbuild-base": "esbuild --bundle --external:vscode --target=ES2021 --format=cjs --platform=node --minify",
-        "compile-extension": "yarn run esbuild-base ./src/extension.ts --outfile=out/extension.js",
-        "compile-worker": "yarn run esbuild-base ./src/parser/worker.ts --outfile=out/worker.js",
-        "compile": "yarn run compile-extension && yarn run compile-worker",
-        "watch": "tsc -watch -p ./",
-        "antlr": "antlr4ts -visitor src/grammar/Fpp.g4 && node ./scripts/update-signatures.js src/signatures.json src/grammar/FppParser.ts"
-    },
-    "devDependencies": {
-        "@types/antlr4": "^4.11.2",
-        "@types/glob": "^8.0.0",
-        "@types/mocha": "^10.0.0",
-        "@types/node": "16.x",
-        "@types/vscode": "^1.78.0",
-        "@typescript-eslint/eslint-plugin": "^5.42.0",
-        "@typescript-eslint/parser": "^5.42.0",
-        "@vscode/test-electron": "^2.2.0",
-        "antlr4ts": "^0.5.0-alpha.4",
-        "antlr4ts-cli": "^0.5.0-alpha.4",
-        "esbuild": "^0.18.5",
-        "eslint": "^8.26.0",
-        "glob": "^8.0.3",
-        "mocha": "^10.1.0",
-        "typescript": "^4.8.4"
-    },
-    "dependencies": {}
+  "name": "vscode-fpp-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "antlr": "yarn workspace fpp antlr",
+    "build": "yarn workspaces run build",
+    "clean": "yarn workspaces run clean",
+    "lint": "yarn workspaces run lint",
+    "typecheck": "yarn workspaces run typecheck",
+    "watch": "yarn workspaces run watch",
+    "prepublishOnly": "yarn build",
+    "package": "yarn build && yarn workspace fpp package"
+  },
+  "devDependencies": {
+    "@types/uuid": "^10.0.0",
+    "shx": "^0.4.0",
+    "typescript": "^5.4.5"
+  }
 }

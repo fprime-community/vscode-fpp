@@ -1,0 +1,216 @@
+{
+    "name": "fpp",
+    "displayName": "FPP",
+    "description": "FPrime-Prime Language Support",
+    "author": {
+        "name": "Andrei Tumbar",
+        "email": "andrei.tumbar@jpl.nasa.gov"
+    },
+    "publisher": "jet-propulsion-laboratory",
+    "repository": {
+        "url": "https://github.com/fprime-community/vscode-fpp",
+        "type": "git"
+    },
+    "version": "1.0.20",
+    "icon": "fprime-logo.png",
+    "engines": {
+        "vscode": "^1.78.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [],
+    "main": "./pack/extension/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "fpp.reload",
+                "title": "FPP: Reload Project"
+            },
+            {
+                "command": "fpp.select",
+                "title": "FPP: Select Locs file inside workspace"
+            },
+            {
+                "command": "fpp.close",
+                "title": "FPP: Close Project"
+            },
+            {
+                "command": "fpp.open",
+                "title": "FPP: Open Project"
+            },
+            {
+                "command": "fpp.load",
+                "title": "FPP: Load Locs File as Project"
+            },
+            {
+                "command": "fpp.diagram.open",
+                "title": "Open FPP Diagram",
+                "icon": "$(telescope)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.fit",
+                "title": "Fit FPP Diagram",
+                "icon": "$(arrow-both)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.center",
+                "title": "Center FPP Diagram",
+                "icon": "$(layout-centered)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.export",
+                "title": "Export FPP Diagram",
+                "icon": "$(desktop-download)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.enableCodeLens",
+                "title": "Enable FPP CodeLens",
+                "category": "FPP CodeLens"
+            },
+            {
+                "command": "fpp.disableCodeLens",
+                "title": "Disable FPP Codelens",
+                "category": "FPP CodeLens"
+            }
+        ],
+        "languages": [
+            {
+                "id": "fpp",
+                "aliases": [
+                    "FPrimePrime",
+                    "fpp"
+                ],
+                "extensions": [
+                    ".fpp",
+                    ".fppi"
+                ],
+                "configuration": "./syntax/language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "fpp",
+                "scopeName": "source.fpp",
+                "path": "./syntax/fpp.tmLanguage.json"
+            }
+        ],
+        "views": {
+            "explorer": [
+                {
+                    "id": "fpp.components",
+                    "name": "FPP Components"
+                }
+            ]
+        },
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'",
+                    "group": "navigation"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.fit",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.center",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.export",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "resourceExtname == '.fpp'",
+                    "group": "navigation"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "FPP",
+            "type": "object",
+            "properties": {
+                "fpp.locsSearch": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "markdownDescription": "Glob patterns in order of priority to search for an `locs.fpp` on project startup if no other locs is selected",
+                    "default": [
+                        "**/build-fprime-automatic-native/locs.fpp",
+                        "**/build-fprime-*/locs.fpp"
+                    ]
+                },
+                "fpp.locsExclude": {
+                    "type": "string",
+                    "markdownDescription": "Glob pattern path to exclude from `locs.fpp` search"
+                },
+                "fpp.enableCodeLens": {
+                    "type": "boolean",
+                    "default": true
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "yarn clean && yarn run build",
+        "build": "yarn run compile-extension && yarn run compile-worker",
+        "clean": "shx rm -rf out ./pack/extension ./*.vsix",
+        "esbuild-base": "esbuild --bundle --external:vscode --target=ES2021 --format=cjs --platform=node --minify",
+        "compile-extension": "yarn run esbuild-base src/extension.ts --outfile=./pack/extension/extension.js",
+        "compile-worker": "yarn run esbuild-base src/parser/worker.ts --outfile=./pack/extension/worker.js",
+        "typecheck": "tsc -p ./",
+        "watch": "yarn run typecheck -watch",
+        "antlr": "antlr4ts -visitor src/grammar/Fpp.g4 && node ./scripts/update-signatures.js src/signatures.json src/grammar/FppParser.ts",
+        "package": "vsce package"
+    },
+    "devDependencies": {
+        "@types/antlr4": "^4.11.2",
+        "@types/glob": "^8.0.0",
+        "@types/mocha": "^10.0.0",
+        "@types/uuid": "^10.0.0",
+        "@types/vscode": "^1.78.0",
+        "@typescript-eslint/eslint-plugin": "^5.42.0",
+        "@typescript-eslint/parser": "^5.42.0",
+        "@vscode/test-electron": "^2.2.0",
+        "antlr4ts": "^0.5.0-alpha.4",
+        "antlr4ts-cli": "^0.5.0-alpha.4",
+        "esbuild": "^0.18.5",
+        "eslint": "^8.26.0",
+        "glob": "^8.0.3",
+        "mocha": "^10.1.0",
+        "shx": "^0.4.0",
+        "sprotty-vscode": "^1.0.0",
+        "typescript": "^5.4.5"
+    },
+    "dependencies": {
+        "elkjs": "^0.10.0",
+        "sprotty-elk": "^1.4.0",
+        "uuid": "^11.1.0"
+    }
+}
