@@ -11,7 +11,7 @@
         "url": "https://github.com/fprime-community/vscode-fpp",
         "type": "git"
     },
-    "version": "1.0.21",
+    "version": "1.0.22",
     "icon": "fprime-logo.png",
     "engines": {
         "vscode": "^1.78.0"
@@ -20,7 +20,7 @@
         "Programming Languages"
     ],
     "activationEvents": [],
-    "main": "./out/extension.js",
+    "main": "./out/pack/extension/extension.js",
     "contributes": {
         "commands": [
             {
@@ -42,6 +42,30 @@
             {
                 "command": "fpp.load",
                 "title": "FPP: Load Locs File as Project"
+            },
+            {
+                "command": "fpp.diagram.open",
+                "title": "Open FPP Diagram",
+                "icon": "$(telescope)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.fit",
+                "title": "Fit FPP Diagram",
+                "icon": "$(arrow-both)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.center",
+                "title": "Center FPP Diagram",
+                "icon": "$(layout-centered)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.export",
+                "title": "Export FPP Diagram",
+                "icon": "$(desktop-download)",
+                "category": "FPP Diagram"
             }
         ],
         "languages": [
@@ -73,6 +97,50 @@
                 }
             ]
         },
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'",
+                    "group": "navigation"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.fit",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.center",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.export",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "resourceExtname == '.fpp'",
+                    "group": "navigation"
+                }
+            ]
+        },
         "configuration": {
             "title": "FPP",
             "type": "object",
@@ -91,25 +159,31 @@
                 "fpp.locsExclude": {
                     "type": "string",
                     "markdownDescription": "Glob pattern path to exclude from `locs.fpp` search"
+                },
+                "fpp.enableCodeLens": {
+                    "type": "boolean",
+                    "default": true
                 }
             }
         }
     },
     "scripts": {
-        "vscode:prepublish": "yarn clean && yarn run compile",
-        "clean": "rm -rf out/",
+        "vscode:prepublish": "yarn clean && yarn run build",
+        "build": "yarn run compile-extension && yarn run compile-worker && yarn run compile-webview",
+        "clean": "shx rm -rf out *.vsix",
         "esbuild-base": "esbuild --bundle --external:vscode --target=ES2021 --format=cjs --platform=node --minify",
-        "compile-extension": "yarn run esbuild-base ./src/extension.ts --outfile=out/extension.js",
-        "compile-worker": "yarn run esbuild-base ./src/parser/worker.ts --outfile=out/worker.js",
-        "compile": "yarn run compile-extension && yarn run compile-worker",
-        "watch": "tsc -watch -p ./",
-        "antlr": "antlr4ts -visitor src/grammar/Fpp.g4 && node ./scripts/update-signatures.js src/signatures.json src/grammar/FppParser.ts"
+        "compile-extension": "yarn run esbuild-base src/extension.ts --outfile=./out/pack/extension/extension.js",
+        "compile-worker": "yarn run esbuild-base src/parser/worker.ts --outfile=./out/pack/extension/worker.js",
+        "compile-webview": "esbuild webview/src/main.ts --bundle --outfile=./out/pack/webview/webview.js --target=es2022 --platform=browser --loader:.ts=ts --loader:.css=css --sourcemap --minify",
+        "typecheck": "tsc -p ./ && tsc -p webview/",
+        "watch": "yarn run typecheck -watch",
+        "antlr": "antlr4ts -visitor src/grammar/Fpp.g4 && node ./scripts/update-signatures.js src/signatures.json src/grammar/FppParser.ts",
+        "package": "vsce package"
     },
     "devDependencies": {
         "@types/antlr4": "^4.11.2",
         "@types/glob": "^8.0.0",
         "@types/mocha": "^10.0.0",
-        "@types/node": "16.x",
         "@types/vscode": "^1.78.0",
         "@typescript-eslint/eslint-plugin": "^5.42.0",
         "@typescript-eslint/parser": "^5.42.0",
@@ -120,7 +194,20 @@
         "eslint": "^8.26.0",
         "glob": "^8.0.3",
         "mocha": "^10.1.0",
-        "typescript": "^4.8.4"
+        "shx": "^0.4.0",
+        "sprotty-vscode": "^1.0.0",
+        "typescript": "^5.4.5",
+        "css-loader": "^6.8.1",
+        "file-loader": "^6.2.0",
+        "source-map-loader": "^4.0.1",
+        "style-loader": "^3.3.3",
+        "ts-loader": "^9.5.1"
     },
-    "dependencies": {}
+    "dependencies": {
+        "reflect-metadata": "^0.2.2",
+        "elkjs": "^0.10.0",
+        "sprotty": "^1.2.0",
+        "sprotty-elk": "^1.4.0",
+        "sprotty-vscode-webview": "^1.0.0"
+    }
 }

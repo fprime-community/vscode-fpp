@@ -73,9 +73,24 @@ the generated files.
 $ yarn antlr
 ```
 
-To build a VSIX file you can use:
+To build the extension into bundled JavaScript:
+
 ```
-$ vsce package
+$ yarn build
+```
+
+Once the extension is built, there should be an `out/` directory at the project root.
+You can then test the extension by clicking "Run and Debug" and then clicking the run button on "Run Extension"
+to launch an development VSCode environment.
+
+To package the extension into a VSIX file you can use:
+```
+$ yarn package
 ```
 
 This will generate a `.vsix` file, from which an extension can be installed in VSCode following instructions: [Install from a VSIX](https://code.visualstudio.com/docs/editor/extension-marketplace#_install-from-a-vsix)
+
+To clean the build artifacts, you can use:
+```
+$ yarn clean
+```

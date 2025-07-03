@@ -228,7 +228,7 @@ export abstract class ExprTraverser implements TypeResolver {
         };
     }
 
-    private static readonly intValidator: TypeValidator = {
+    public static readonly intValidator: TypeValidator = {
         validate(value: Fpp.ExprValue): string | undefined {
             if (value.type !== Fpp.PrimExprType.integer) {
                 return "Expected integer expression";

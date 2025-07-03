@@ -1,0 +1,93 @@
+.sprotty-node {
+    fill: var(--vscode-button-background)
+}
+
+.sprotty-node.selected {
+    stroke-width: 2;
+    fill: var(--vscode-list-focusHighlightForeground);
+    /* fill: var(--vscode-editor-selectionHighlightBackground); A very nice muted color. */
+}
+
+.sprotty-label {
+    fill: var(--vscode-foreground);
+}
+
+.sprotty-port {
+    fill: var(--vscode-foreground);
+    stroke: #7b337d;
+    stroke-width: 1;
+}
+
+.sprotty-edge .sprotty-label {
+    fill: var(--vscode-editorActiveLineNumber-foreground);
+}
+
+.sprotty-edge {
+    fill: none;
+    stroke: var(--vscode-editorActiveLineNumber-foreground);
+    stroke-width: 2px;
+}
+
+.sprotty-edge-arrow {
+    fill: var(--vscode-editorActiveLineNumber-foreground);
+    stroke-width: 0;
+}
+
+.sprotty-edge>.sprotty-routing-handle {
+    fill: var(--vscode-editor-selectionBackground);
+    stroke: none;
+    z-index: 1000;
+}
+
+.sprotty-edge>.sprotty-routing-handle[data-kind='line'] {
+    opacity: 0.35;
+}
+
+.sprotty-edge.selected {
+    stroke: orange;
+    stroke-width: 3px;
+}
+
+.sprotty-edge.mouseover {
+    stroke: orange;
+    stroke-width: 3px;
+}
+
+.sprotty-edge.mouseover:not(.selected) {
+    stroke-width: 3px;
+}
+
+.sprotty-hidden {
+    width: 0px;
+    height: 0px;
+}
+
+.component-active {
+    stroke: #3FB984;
+    /* Green expresses the notion of "go". */
+    stroke-width: 2px;
+}
+
+.component-queued {
+    /* Queued components do not have special borders. */
+}
+
+.component-passive {
+    stroke: #fe92a8;
+    /* Red expresses the notion of "caution", because the component is synchronous. */
+    stroke-width: 2px;
+}
+
+.port-sync {
+    fill: #fe92a8;
+    /* Red expresses the notion of "caution", because the component is synchronous. */
+}
+
+.port-async {
+    /* Async ports do not have special borders. */
+}
+
+.port-guarded {
+    fill: #FDD35C;
+    /* Yellow expresses the notion of "wait", because the port is guarded. */
+}
