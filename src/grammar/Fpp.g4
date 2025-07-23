@@ -172,7 +172,7 @@ stateMachineInstance: STATE MACHINE INSTANCE name=IDENTIFIER ':' stateMachine=qu
 enumMember: name=IDENTIFIER ('=' value=expr)?;
 enumMemberN: preAnnotation? enumMember (','? (NL? postAnnotation)? | commaDelim);
 enumMemberL: preAnnotation? enumMember (','? (NL? postAnnotation)? | commaDelim);
-enumDecl: ENUM name=IDENTIFIER (':' type=intType)?
+enumDecl: ENUM name=IDENTIFIER (':' type=typeName)?
     '{'
         NL* (enumMemberN* enumMemberL)? NL*
     '}' (DEFAULT default_=expr)?

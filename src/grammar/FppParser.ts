@@ -3179,7 +3179,7 @@ export class FppParser extends Parser {
 				this.state = 776;
 				this.match(FppParser.T__3);
 				this.state = 777;
-				_localctx._type = this.intType();
+				_localctx._type = this.typeName();
 				}
 			}
 
@@ -7538,7 +7538,7 @@ export class FppParser extends Parser {
 		"\x03\x02\x02\x02\u0305\u0307\x05\xC2b\x02\u0306\u02FD\x03\x02\x02\x02" +
 		"\u0306\u0305\x03\x02\x02\x02\u0307_\x03\x02\x02\x02\u0308\u0309\x07@\x02" +
 		"\x02\u0309\u030C\x07\x8A\x02\x02\u030A\u030B\x07\x06\x02\x02\u030B\u030D" +
-		"\x05\xBA^\x02\u030C\u030A\x03\x02\x02\x02\u030C\u030D\x03\x02\x02\x02" +
+		"\x05\xC0a\x02\u030C\u030A\x03\x02\x02\x02\u030C\u030D\x03\x02\x02\x02" +
 		"\u030D\u030E\x03\x02\x02\x02\u030E\u0312\x07\b\x02\x02\u030F\u0311\x07" +
 		"\x13\x02\x02\u0310\u030F\x03\x02\x02\x02\u0311\u0314\x03\x02\x02\x02\u0312" +
 		"\u0310\x03\x02\x02\x02\u0312\u0313\x03\x02\x02\x02\u0313\u031C\x03\x02" +
@@ -10038,7 +10038,7 @@ export class EnumMemberLContext extends ParserRuleContext {
 
 export class EnumDeclContext extends ParserRuleContext {
 	public _name!: Token;
-	public _type!: IntTypeContext;
+	public _type!: TypeNameContext;
 	public _default_!: ExprContext;
 	public ENUM(): TerminalNode { return this.getToken(FppParser.ENUM, 0); }
 	public IDENTIFIER(): TerminalNode { return this.getToken(FppParser.IDENTIFIER, 0); }
@@ -10055,8 +10055,8 @@ export class EnumDeclContext extends ParserRuleContext {
 		return this.tryGetRuleContext(0, EnumMemberLContext);
 	}
 	public DEFAULT(): TerminalNode | undefined { return this.tryGetToken(FppParser.DEFAULT, 0); }
-	public intType(): IntTypeContext | undefined {
-		return this.tryGetRuleContext(0, IntTypeContext);
+	public typeName(): TypeNameContext | undefined {
+		return this.tryGetRuleContext(0, TypeNameContext);
 	}
 	public expr(): ExprContext | undefined {
 		return this.tryGetRuleContext(0, ExprContext);

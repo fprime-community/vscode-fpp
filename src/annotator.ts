@@ -402,6 +402,18 @@ export class FppAnnotator extends MemberTraverser {
 
             member.annotatedValue = `= ${value.value}`;
         }
+
+        if (ast.fppType) {
+            this.type(ast.fppType, scope);
+        }
+
+        if (ast.default_) {
+            this.expr(ast.default_, [...scope, ast.name], ast.fppType ?? {
+                complex: false,
+                type: "I32",
+                location: Fpp.implicitLocation
+            });
+        }
     }
 
     commandDecl(ast: Fpp.CommandDecl, scope: Fpp.QualifiedIdentifier): void {
