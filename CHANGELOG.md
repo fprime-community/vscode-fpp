@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.24] - 2025-07-23
+
+- Annotate enum default value and support any typename for enum underyling type.
+
+## [1.0.23] - 2025-07-23
+
+- Fixed a packaging issue
+
+## [1.0.22] - 2025-07-23
+
+- FPP Topology Diagrams as a webview
+
+## [1.0.21] - 2025-07-02
+
+- Resolve imported port interfaces in component definitions
+
+## [1.0.20] - 2025-06-06
+
+- Improve handling of broken includes
+
 ## [1.0.19] - 2025-05-06
 
 - Added interfaces (a future feature)
