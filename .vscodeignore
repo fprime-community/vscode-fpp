@@ -2,6 +2,7 @@
 .*
 **/*
 
+!syntax/*
 !dist/*
 !fprime-logo.png
 !CHANGELOG.md

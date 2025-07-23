@@ -11,7 +11,7 @@
         "url": "https://github.com/fprime-community/vscode-fpp",
         "type": "git"
     },
-    "version": "1.0.22",
+    "version": "1.0.23",
     "icon": "fprime-logo.png",
     "engines": {
         "vscode": "^1.78.0"
