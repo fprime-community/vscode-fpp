@@ -168,8 +168,8 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "yarn package",
-        "package": "webpack --mode production --devtool hidden-source-map",
+        "vscode:prepublish": "rm -rf dist && yarn package",
+        "package": "webpack --mode production",
         "compile": "webpack --mode development",
         "watch": "webpack --mode development --watch",
         "antlr": "antlr4ts -visitor src/grammar/Fpp.g4 && node ./scripts/update-signatures.js src/signatures.json src/grammar/FppParser.ts"
