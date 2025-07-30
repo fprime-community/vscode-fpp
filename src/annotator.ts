@@ -399,7 +399,7 @@ export class FppAnnotator extends MemberTraverser {
                     this.emit(
                         vscode.Uri.file(member.location.source),
                         new vscode.Diagnostic(
-                            MemberTraverser.asRange(member.location),
+                            MemberTraverser.asRange(member.name.location),
                             `No member '${member.name.value}'`
                         )
                     );
