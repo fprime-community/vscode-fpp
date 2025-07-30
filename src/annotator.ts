@@ -374,16 +374,46 @@ export class FppAnnotator extends MemberTraverser {
             this.type(member.fppType, scope);
         }
 
+        const structType = new Map<string, Fpp.StructMember>();
+
         if (ast.members.length > 0) {
             const record: [string, string][] = [];
-            const memberString = ast.members.map(member => {
+            const memberString = ast.members.map(member =>
+                `${member.name.value}: ${DeclCollector.typeName(member.fppType) + (member.size ? `[${member.size.evaluated?.value ?? 1}]` : '')}`
+            ).join(', ');
+
+            for (const member of ast.members) {
                 record.push([member.name.value, member.annotation ?? '']);
-                return `${member.name.value}: ${DeclCollector.typeName(member.fppType) + (member.size ? `[${member.size.evaluated?.value ?? 1}]` : '')}`;
-            }).join(', ');
+                structType.set(member.name.value, member);
+            }
 
             ast.annotatedMemberName = "member";
             ast.annotatedValue = `{${memberString}}`;
             ast.annotatedMembers = record;
+        }
+
+        if (ast.default_) {
+            for (const member of ast.default_.value) {
+                const memberDef = structType.get(member.name.value);
+                if (!memberDef) {
+                    this.emit(
+                        vscode.Uri.file(member.location.source),
+                        new vscode.Diagnostic(
+                            MemberTraverser.asRange(member.location),
+                            `No member '${member.name.value}'`
+                        )
+                    );
+                } else {
+                    this.semantic(member.name, SymbolType.formalParameter);
+                    this.addDefinition(
+                        member.location.source,
+                        FppAnnotator.asRange(member.name.location),
+                        memberDef
+                    );
+
+                    this.expr(member.value, scope, memberDef.fppType);
+                }
+            }
         }
     }
 
