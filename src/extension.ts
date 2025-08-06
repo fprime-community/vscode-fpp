@@ -8,9 +8,9 @@ import * as Settings from './settings';
 import { CompletionRelevantInfo, getCandidates } from './completion';
 import { declRules, ignoreTokens } from './parser/common';
 import { FppProject } from './project';
-import { FppAnnotator, tokenParents } from './annotator';
-import { MemberTraverser } from './traverser';
-import { DeclCollector, SymbolType, fppLegend, tokenTypeNames } from './decl';
+import { FppAnnotator, tokenParents } from './passes/annotator';
+import { MemberTraverser } from './passes/traverser';
+import { DeclCollector, SymbolType, fppLegend, tokenTypeNames } from './passes/decl';
 import { DiangosicManager } from './diagnostics';
 import { RangeAssociation } from './associator';
 import { ComponentsProvider } from './dictionary';
@@ -21,7 +21,6 @@ import { locs, LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from '.
 
 import { registerDefaultCommands } from 'sprotty-vscode';
 import { DiagramType, FppWebviewPanelManager } from './diagram/manager';
-import { CodelensProvider } from './codelens';
 
 function documentSymbolKind(type: SymbolType): vscode.SymbolKind | undefined {
     switch (type) {
@@ -88,8 +87,11 @@ class FppExtension implements
 
     private subscriptions: vscode.Disposable[];
     private componentsProvider: ComponentsProvider;
+    private _onDidChangeCodeLenses = new vscode.EventEmitter<void>();
 
     onDidChangeSemanticTokens: vscode.Event<void>;
+    onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
+
 
     constructor(
         private readonly context: vscode.ExtensionContext
@@ -140,7 +142,13 @@ class FppExtension implements
                         vscode.languages.registerSignatureHelpProvider(this.project.documentSelector, this, " ", ",", "[", "(", "{", "=", ":"),
                         vscode.languages.registerReferenceProvider(this.project.documentSelector, this),
                         vscode.languages.registerDocumentSymbolProvider(this.project.documentSelector, this),
+                        vscode.languages.registerCodeLensProvider(this.project.documentSelector, this),
                         vscode.window.registerTreeDataProvider('fpp.components', this.componentsProvider),
+                        vscode.workspace.onDidChangeConfiguration((cfg) => {
+                            if (cfg.affectsConfiguration("fpp.enableCodeLens")) {
+                                this._onDidChangeCodeLenses.fire();
+                            }
+                        }),
                     ];
                 });
         });
@@ -787,6 +795,154 @@ class FppExtension implements
         };
     }
 
+    async provideCodeLenses(
+        document: vscode.TextDocument,
+        _token: vscode.CancellationToken
+    ): Promise<vscode.CodeLens[]> {
+
+        if (vscode.workspace.getConfiguration("fpp").get("enableCodeLens", true)) {
+
+            const text = document.getText();
+            const lenses: vscode.CodeLens[] = [];
+
+            // This regex matches the word "connections" as a whole word, followed by one or more spaces,
+            // then captures the next word (the group name) in a capture group.
+            // - \bconnections: matches the word "connections" as a whole word
+            // - \s+: matches one or more whitespace characters after "connections"
+            // - (\w+): captures the group name (one or more word characters) after the whitespace
+            // - \s*: matches optional whitespace after the group name
+            // - (?:\{)?: optionally matches a "{" character (non-capturing, may be on the same or next line)
+            // Example match: "connections Downlink" will capture "Downlink" as match[1].
+            const regexConnGroups = /\bconnections\s+(\w+)\s*(?:\{)?/gm;
+
+            // This regex matches component declarations like "active component", "passive component", or "queued component",
+            // followed by the component name, and optionally a "{" character.
+            // - \b: matches a word boundary to ensure matching at the start of a word
+            // - (?:active|passive|queued): non-capturing group that matches "active", "passive", or "queued"
+            // - \s+: matches one or more whitespace characters after the type
+            // - component: matches the literal word "component"
+            // - \s+: matches one or more whitespace characters after "component"
+            // - (\w+): captures the component name (one or more word characters) after the whitespace
+            // - \s*: matches optional whitespace after the component name
+            // - (?:\{)?: optionally matches a "{" character (non-capturing, may be on the same or next line)
+            // Example match: "active component MyComponent {" will capture "MyComponent" as match[1]
+            const regexComponent = /\b(?:active|passive|queued)\s+component\s+(\w+)\s*(?:\{)?/gm;
+
+            // This regex matches topology declarations like "topology MyTopology {", capturing the topology name.
+            // - \b: matches a word boundary to ensure matching at the start of a word
+            // - topology: matches the literal word "topology"
+            // - \s+: matches one or more whitespace characters after "topology"
+            // - (\w+): captures the topology name (one or more word characters) after the whitespace
+            // - \s*: matches optional whitespace after the topology name
+            // - (?:\{)?: optionally matches a "{" character (non-capturing, may be on the same or next line)
+            // Example match: "topology MyTopology {" will capture "MyTopology" as match[1]
+            const regexTopology = /\btopology\s+(\w+)\s*(?:\{)?/gm;
+
+            let matchConnGroups: RegExpExecArray | null;
+            let matchComponents: RegExpExecArray | null;
+            let matchTopology: RegExpExecArray | null;
+
+            while ((matchConnGroups = regexConnGroups.exec(text))) {
+                const elemName = matchConnGroups[1];
+                const offsetInMatch = matchConnGroups[0].indexOf(elemName);
+                const offsetInDoc = matchConnGroups.index + offsetInMatch;
+                const position = document.positionAt(offsetInDoc);
+                const range = new vscode.Range(position, position);
+
+                // Try to resolve the matched name.
+                let association = await this.getAssociation(document, position);
+                if (!association) {
+                    continue;
+                }
+                const definition = association!.value;
+                const fullName = FppAnnotator.flat(definition.scope, definition.name);
+                const lens = new vscode.CodeLens(range, {
+                    title: `Open in Diagram: ${elemName}`,
+                    tooltip: 'Click to visualize this connection group',
+                    command: 'fpp.displayDiagram',
+                    arguments: [DiagramType.ConnectionGroup, fullName]
+                });
+                lenses.push(lens);
+            }
+
+            while ((matchComponents = regexComponent.exec(text))) {
+                const elemName = matchComponents[1];
+                const offsetInMatch = matchComponents[0].indexOf(elemName);
+                const offsetInDoc = matchComponents.index + offsetInMatch;
+                const position = document.positionAt(offsetInDoc);
+                const range = new vscode.Range(position, position);
+
+                // Try to resolve the matched name.
+                let association = await this.getAssociation(document, position);
+                if (!association) {
+                    continue;
+                }
+                const definition = association!.value;
+                const fullName = FppAnnotator.flat(definition.scope, definition.name);
+                const lens = new vscode.CodeLens(range, {
+                    title: `Open in Diagram: ${elemName}`,
+                    tooltip: 'Click to visualize this component',
+                    command: 'fpp.displayDiagram',
+                    arguments: [DiagramType.Component, fullName]
+                });
+                lenses.push(lens);
+            }
+
+            while ((matchTopology = regexTopology.exec(text))) {
+                const elemName = matchTopology[1];
+                const offsetInMatch = matchTopology[0].indexOf(elemName);
+                const offsetInDoc = matchTopology.index + offsetInMatch;
+                const position = document.positionAt(offsetInDoc);
+                const range = new vscode.Range(position, position);
+
+                // Try to resolve the matched name.
+                let association = await this.getAssociation(document, position);
+                if (!association) {
+                    continue;
+                }
+                const definition = association!.value;
+                const fullName = FppAnnotator.flat(definition.scope, definition.name);
+                const lens = new vscode.CodeLens(range, {
+                    title: `Open in Diagram: ${elemName}`,
+                    tooltip: 'Click to visualize this topology',
+                    command: 'fpp.displayDiagram',
+                    arguments: [DiagramType.Topology, fullName]
+                });
+                lenses.push(lens);
+            }
+
+            return lenses;
+        }
+        return [];
+    }
+
+    // Called right before CodeLens is rendered for the user.
+    public resolveCodeLens(codeLens: vscode.CodeLens, _token: vscode.CancellationToken) {
+        if (vscode.workspace.getConfiguration("fpp").get("enableCodeLens", true)) {
+            // Usually for registering commands, in our case,
+            // commands have been registered.
+            return codeLens;
+        }
+        return null;
+    }
+
+    private async getAssociation(document: vscode.TextDocument, position: vscode.Position): Promise<RangeAssociation<Fpp.Decl> | undefined> {
+        let association: RangeAssociation<Fpp.Decl> | undefined;
+
+        // Check if this definition exists
+        const declAssociation = this.project.decl.translationUnitDeclarations.get(document.uri.path)?.getAssociation(position);
+        if (declAssociation) {
+            const { range, value } = declAssociation;
+            const decl = this.project.decl.get(value[1], value[0]);
+            association = decl ? { range: range, value: decl } : undefined;
+        }
+        else {
+            // Check if we are hovering over a variable reference
+            association = (await this.project.get(document)).definitions.get(document.uri.path)?.getAssociation(position);
+        }
+        return association;
+    }
+
     dispose() {
         this.subscriptions.map(e => e.dispose());
         this.subscriptions = [];
@@ -930,9 +1086,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     // Set up CodeLens provider to have neat buttons float above definitions.
-    const codelensProvider = new CodelensProvider(extension.project);
     context.subscriptions.push(
-        vscode.languages.registerCodeLensProvider("*", codelensProvider),
         vscode.commands.registerCommand("fpp.displayDiagram",
             (diagramType: DiagramType, elemName: string) => webviewPanelManager.displayDiagram(diagramType, elemName)
         ),

@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import * as Fpp from './parser/ast';
 
-import { ComponentDictionary, DeclCollector, SymbolType, tokenTypeNames } from './decl';
-import { MemberTraverser } from './traverser';
+import { ComponentDictionary, DeclCollector, SymbolType, tokenTypeNames } from './passes/decl';
+import { MemberTraverser } from './passes/traverser';
 import { ConsolidatingItem, ConsolidatingTree } from './consolidate';
-import { tokenParents } from './annotator';
+import { tokenParents } from './passes/annotator';
 
 
 abstract class DictionaryEntry implements ConsolidatingItem {

@@ -3,12 +3,12 @@ import * as path from 'path';
 
 import * as fs from 'fs';
 
-import * as Fpp from './parser/ast';
-import { RangeAssociator } from './associator';
+import * as Fpp from '../parser/ast';
+import { RangeAssociator } from '../associator';
 import { DeclCollector, SymbolType, fppLegend, tokenTypeNames } from './decl';
 import { MemberTraverser } from './traverser';
-import { DiangosicManager } from './diagnostics';
-import { ExprTraverser, TypeNameValidator, TypeValidator } from './evaluator';
+import { DiangosicManager } from '../diagnostics';
+import { ExprTraverser, TypeNameValidator, TypeValidator } from '../evaluator';
 
 
 export let symLinkCache = new Map<string, string>();
@@ -131,9 +131,16 @@ export class FppAnnotator extends MemberTraverser {
     }
 
     clear(source: string) {
+        super.clear(source);
         this.tokens.delete(source);
         this.definitions.delete(source);
         this.links.delete(source);
+    }
+
+    clearAll() {
+        this.tokens.clear();
+        this.definitions.clear();
+        this.links.clear();
     }
 
     pass(ast: Fpp.TranslationUnit, scope: Fpp.QualifiedIdentifier = []): void {

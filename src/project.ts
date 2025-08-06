@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { FppProjectManager } from './manager';
 import { EntireWorkspaceScanner, LocsFileScanner, WorkspaceFileScanner } from './workspace';
-import { symLinkCache } from './annotator';
+import { symLinkCache } from './passes/annotator';
 
 export class FppProject extends FppProjectManager implements vscode.Disposable {
     private files = new Set<string>();
@@ -80,6 +80,8 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
 
         this.files = await this.workspace?.scan(progress, token) ?? new Set();
 
+        this.refreshAnalysis();
+
         this.loadingProject = false;
     }
 
@@ -111,25 +113,6 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
         }
     }
 
-    async index() {
-        this.projectSelect.busy = true;
-
-        try {
-            await vscode.window.withProgress({
-                location: vscode.ProgressLocation.Notification,
-                title: "Indexing FPP Project",
-                cancellable: true
-            }, this.scan.bind(this));
-        } catch (e) {
-            console.error(e);
-            vscode.window.showErrorMessage(`Failed to load workspace: ${e}`);
-            this.projectSelect.text = "FPP workspace load failed";
-            this.projectSelect.severity = vscode.LanguageStatusSeverity.Error;
-        } finally {
-            this.projectSelect.busy = false;
-        }
-    }
-
     async locsFile(locsFile: vscode.Uri | undefined) {
         if (!locsFile) {
             this.workspace = undefined;
@@ -138,14 +121,14 @@ export class FppProject extends FppProjectManager implements vscode.Disposable {
         } else {
             this.workspace = new LocsFileScanner(this, locsFile);
             this.refreshLanguageStatus();
-            await this.index();
+            await this.reload();
         }
     }
 
     async workspaceScan() {
         this.workspace = new EntireWorkspaceScanner(this);
         this.refreshLanguageStatus();
-        await this.index();
+        await this.reload();
     }
 
     dispose() {

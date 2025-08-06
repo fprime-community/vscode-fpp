@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import * as Fpp from './parser/ast';
-import { MemberTraverser } from "./traverser";
+import { MemberTraverser } from "./passes/traverser";
 
 export interface TypeResolver {
     resolveType(typeName: Fpp.TypeName, scope: Fpp.QualifiedIdentifier): Fpp.TypeDecl | undefined;

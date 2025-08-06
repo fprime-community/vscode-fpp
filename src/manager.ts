@@ -5,10 +5,11 @@ import * as path from 'path';
 
 import { TextDecoder } from 'util';
 
-import { FppAnnotator } from "./annotator";
-import { DeclCollector } from "./decl";
+import { FppAnnotator } from "./passes/annotator";
+import { DeclCollector } from "./passes/decl";
 import { DiangosicManager } from "./diagnostics";
 import { DocumentOrFile, FppMessage, FppWorker } from "./parser/client";
+import { PortInstancePass } from './passes/portInstance';
 
 export interface ParsingOptions {
     /**
@@ -21,12 +22,12 @@ export interface ParsingOptions {
     /**
      * Don't run the file through the declaration collector
      */
-    disableDecl?: boolean;
+    // disableDecl?: boolean;
 
     /**
      * Don't run the file through the annotator
      */
-    disableAnnotations?: boolean;
+    // disableAnnotations?: boolean;
 
     /**
      * Normally, parsing a document will trigger open
@@ -43,6 +44,7 @@ export interface ParsingOptions {
 const textDecoder = new TextDecoder();
 export abstract class FppProjectManager {
     readonly decl: DeclCollector = new DeclCollector();
+    readonly portInstancePass = new PortInstancePass(this.decl);
 
     private asts = new Map<string, FppMessage>();
     private fppiVersions = new Map<string, number>();
@@ -50,7 +52,6 @@ export abstract class FppProjectManager {
     private worker = new FppWorker();
     private syntaxListener: DiangosicManager;
 
-    private hasComponentInstances = new Set<string>();
     protected parentFiles = new Map<string, Set<string>>();
 
     private _onRefresh = new vscode.EventEmitter<void>();
@@ -71,20 +72,21 @@ export abstract class FppProjectManager {
     clear(path: string) {
         this.decl.clearDecls(path);
         this.asts.delete(path);
-        this.hasComponentInstances.delete(path);
         this.annotations.get(path)?.dispose();
         this.annotations.delete(path);
         this.syntaxListener.flush(path);
         this.syntaxListener.flush(path);
+        this.syntaxListener.clear(path);
     }
 
     clearAll() {
+        this.decl.clearAll();
+
         for (const path of this.asts.keys()) {
             this.clear(path);
         }
 
         this.asts.clear();
-        this.hasComponentInstances.clear();
         this._onRefresh.fire();
     }
 
@@ -99,8 +101,20 @@ export abstract class FppProjectManager {
     }
 
 
-    refreshAnnotations() {
-        // Move through all files and re-annotate them
+    refreshAnalysis() {
+        this.decl.clearAll();
+
+        // Initial declaration pass
+        for (const [uri, ast] of this.asts.entries()) {
+            this.decl.pass(ast.ast);
+        }
+
+        // Port instance pass
+        for (const [uri, ast] of this.asts.entries()) {
+            this.portInstancePass.pass(ast.ast);
+        }
+
+        // Annotation pass
         for (const ast of this.asts.values()) {
             this.annotations.get(ast.path)?.pass(ast.ast);
         }
@@ -249,29 +263,6 @@ export abstract class FppProjectManager {
             this.annotations.set(key, annotator);
         }
 
-        if (!this.inProject(key)) {
-            options.disableDecl = true;
-        }
-
-        if (!options.disableDecl) {
-            this.decl.hasComponentInstances = false;
-
-            this.decl.pass(msg.ast);
-
-            // Keep track of files that have component instances
-            // This is important since instances create an extra depth
-            // of annotation dependencies
-            if (this.decl.hasComponentInstances) {
-                this.hasComponentInstances.add(key);
-            } else {
-                this.hasComponentInstances.delete(key);
-            }
-        }
-
-        if (!options.disableAnnotations) {
-            annotator.pass(msg.ast);
-        }
-
         this.syntaxListener.flush(key);
         this.syntaxListener.flush(key);
         for (const [uriStr, err] of msg.syntaxErrors) {
@@ -279,8 +270,8 @@ export abstract class FppProjectManager {
         }
         this.syntaxListener.flush(key);
 
-        if (!options.disableRefresh && !options.disableAnnotations) {
-            this.refreshAnnotations();
+        if (!options.disableRefresh) {
+            this.refreshAnalysis();
         }
 
         return msg;

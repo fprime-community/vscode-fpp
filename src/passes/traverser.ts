@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import * as Fpp from './parser/ast';
-import { DiangosicManager } from './diagnostics';
+import * as Fpp from '../parser/ast';
+import { DiangosicManager } from '../diagnostics';
 
 export abstract class MemberTraverser extends DiangosicManager {
     private passSemaphore: number = 0;

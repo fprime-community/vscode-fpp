@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 
 import { FppProjectManager } from './manager';
-import { MemberTraverser } from './traverser';
+import { MemberTraverser } from './passes/traverser';
 import * as Fpp from './parser/ast';
-import { symLinkCache } from './annotator';
 
 export interface WorkspaceFileScanner {
     label(): string;
@@ -46,7 +45,7 @@ export class LocsFileScanner implements WorkspaceFileScanner {
                     uri,
                     () => {
                         return this.parent.project.parse(uri, this.token, {
-                            disableAnnotations: true
+                            disableRefresh: true,
                         });
                     }
                 ]);
@@ -79,7 +78,7 @@ export class LocsFileScanner implements WorkspaceFileScanner {
         // Parse the locs file
         const { ast } = await this.project.parse(this.locsFile, token, {
             forceReparse: true,
-            disableAnnotations: true
+            disableRefresh: true,
         });
 
         // Parse the locs file
@@ -111,7 +110,7 @@ export class LocsFileScanner implements WorkspaceFileScanner {
         });
 
         // Force reparse of locs
-        this.project.refreshAnnotations();
+        this.project.refreshAnalysis();
         await this.project.parse(this.locsFile, token, {
             forceReparse: true
         });
@@ -150,7 +149,7 @@ export class EntireWorkspaceScanner implements WorkspaceFileScanner {
                 });
 
                 await this.project.parse(uri, token, {
-                    disableAnnotations: true
+                    disableRefresh: true,
                 });
             } catch { }
         }
@@ -162,7 +161,7 @@ export class EntireWorkspaceScanner implements WorkspaceFileScanner {
         });
 
         // Refresh project annotations
-        this.project.refreshAnnotations();
+        this.project.refreshAnalysis();
 
         return new Set(allFppFiles.map(v => v.path));
     }

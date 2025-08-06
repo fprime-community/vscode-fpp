@@ -1,5 +1,5 @@
 import { ComponentDecl, InterfaceImportStmt } from "./parser/ast";
-import { MemberTraverser } from "./traverser";
+import { MemberTraverser } from "./passes/traverser";
 
 /**
  * Get the interface decl from combining the def scope and the interface name.
