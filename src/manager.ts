@@ -242,25 +242,27 @@ export abstract class FppProjectManager {
         // Wait for the document to be parsed in the other thread
         const msg = await this.worker.parse(document, token);
 
-        // Update our knowledge of the AST
-        this.asts.set(key, msg);
+        if (this.inProject(key)) {
+            // Update our knowledge of the AST
+            this.asts.set(key, msg);
 
-        for (const dep of msg.ast.dependencies) {
-            this.clear(dep);
-            let pfs = this.parentFiles.get(dep);
-            if (!pfs) {
-                pfs = new Set();
-                this.parentFiles.set(dep, pfs);
+            for (const dep of msg.ast.dependencies) {
+                this.clear(dep);
+                let pfs = this.parentFiles.get(dep);
+                if (!pfs) {
+                    pfs = new Set();
+                    this.parentFiles.set(dep, pfs);
+                }
+
+                pfs.add(key);
             }
 
-            pfs.add(key);
-        }
-
-        // Create an annotator for this file
-        let annotator = this.annotations.get(key);
-        if (!annotator) {
-            annotator = new FppAnnotator(this.decl);
-            this.annotations.set(key, annotator);
+            // Create an annotator for this file
+            let annotator = this.annotations.get(key);
+            if (!annotator) {
+                annotator = new FppAnnotator(this.decl);
+                this.annotations.set(key, annotator);
+            }
         }
 
         this.syntaxListener.flush(key);
@@ -270,7 +272,7 @@ export abstract class FppProjectManager {
         }
         this.syntaxListener.flush(key);
 
-        if (!options.disableRefresh) {
+        if (!options.disableRefresh && this.inProject(key)) {
             this.refreshAnalysis();
         }
 

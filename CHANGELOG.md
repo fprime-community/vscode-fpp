@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.27] - 2025-08-06
+
+- Do not run analysis on files outside of the workspace
+
+## [1.0.26] - 2025-08-06
+
+- Run the entire compiler analysis on change to remove flakey diagnostics
+- Fix codelens attempting to parse _all_ files in VSCode as an FPP
+
 ## [1.0.25] - 2025-07-30
 
 - Annotate struct default expressions
