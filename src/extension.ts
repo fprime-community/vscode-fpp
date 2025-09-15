@@ -838,10 +838,23 @@ class FppExtension implements
             // Example match: "topology MyTopology {" will capture "MyTopology" as match[1]
             const regexTopology = /\btopology\s+(\w+)\s*(?:\{)?/gm;
 
+            // This regex matches state machine declarations like "state machine MyStateMachine {", capturing the state machine name.
+            // - \b: matches a word boundary to ensure matching at the start of a word
+            // - state: matches the literal word "state"
+            // - \s+: matches one or more whitespace characters after "state"
+            // - machine: matches the literal word "machine"
+            // - \s+: matches one or more whitespace characters after "machine"
+            // - (\w+): captures the state machine name (one or more word characters) after the whitespace
+            // - \s*: matches optional whitespace after the state machine name
+            // - (?:\{)?: optionally matches a "{" character (non-capturing, may be on the same or next line)
+            // Example match: "state machine MyStateMachine {" will capture "MyStateMachine" as match[1]
+            const regexStateMachine = /\bstate\s+machine\s+(\w+)\s*(?:\{)?/gm;
+
             let matchConnGroups: RegExpExecArray | null;
             let matchComponents: RegExpExecArray | null;
             let matchTopology: RegExpExecArray | null;
 
+            // Add codelens for connection groups.
             while ((matchConnGroups = regexConnGroups.exec(text))) {
                 const elemName = matchConnGroups[1];
                 const offsetInMatch = matchConnGroups[0].indexOf(elemName);
@@ -865,6 +878,7 @@ class FppExtension implements
                 lenses.push(lens);
             }
 
+            // Add codelens for components.
             while ((matchComponents = regexComponent.exec(text))) {
                 const elemName = matchComponents[1];
                 const offsetInMatch = matchComponents[0].indexOf(elemName);
@@ -888,6 +902,7 @@ class FppExtension implements
                 lenses.push(lens);
             }
 
+            // Add codelens for topologies.
             while ((matchTopology = regexTopology.exec(text))) {
                 const elemName = matchTopology[1];
                 const offsetInMatch = matchTopology[0].indexOf(elemName);
@@ -907,6 +922,30 @@ class FppExtension implements
                     tooltip: 'Click to visualize this topology',
                     command: 'fpp.displayDiagram',
                     arguments: [DiagramType.Topology, fullName]
+                });
+                lenses.push(lens);
+            }
+
+            // Add codelens for state machines.
+            while ((matchTopology = regexStateMachine.exec(text))) {
+                const elemName = matchTopology[1];
+                const offsetInMatch = matchTopology[0].indexOf(elemName);
+                const offsetInDoc = matchTopology.index + offsetInMatch;
+                const position = document.positionAt(offsetInDoc);
+                const range = new vscode.Range(position, position);
+
+                // Try to resolve the matched name.
+                let association = await this.getAssociation(document, position);
+                if (!association) {
+                    continue;
+                }
+                const definition = association!.value;
+                const fullName = FppAnnotator.flat(definition.scope, definition.name);
+                const lens = new vscode.CodeLens(range, {
+                    title: `Open in Diagram: ${elemName}`,
+                    tooltip: 'Click to visualize this state machine',
+                    command: 'fpp.displayDiagram',
+                    arguments: [DiagramType.StateMachine, fullName]
                 });
                 lenses.push(lens);
             }
@@ -1078,18 +1117,26 @@ export function activate(context: vscode.ExtensionContext) {
     registerDefaultCommands(webviewPanelManager, context, { extensionPrefix: 'fpp' });
     console.log("Instantiated FPP webview panel manager.");
 
-    // Register command to update diagram on save.
+    // Register command to update diagram, so that we can call this command on save (registered elsewhere).
     context.subscriptions.push(
         vscode.commands.registerCommand('fpp.updateDiagram', () => {
             webviewPanelManager.updateDiagram();
         })
     );
 
-    // Set up CodeLens provider to have neat buttons float above definitions.
+    // Set up CodeLens provider to have neat buttons floating above keywords.
     context.subscriptions.push(
         vscode.commands.registerCommand("fpp.displayDiagram",
             (diagramType: DiagramType, elemName: string) => webviewPanelManager.displayDiagram(diagramType, elemName)
         ),
+    );
+
+    // Register command to toggle whether to hide unused ports.
+    context.subscriptions.push(
+        vscode.commands.registerCommand('fpp.diagram.toggle-unused-ports', () => {
+            webviewPanelManager.diagramConfig.hideUnusedPorts = !webviewPanelManager.diagramConfig.hideUnusedPorts;
+            webviewPanelManager.updateDiagram();
+        })
     );
 }
 
