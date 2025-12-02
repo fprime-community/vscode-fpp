@@ -27,18 +27,18 @@ progComponent:
 
 abstractTypeDecl: TYPE name=IDENTIFIER;
 
-aliasTypeDecl: TYPE name=IDENTIFIER '=' type=typeName;
+aliasTypeDecl: DICTIONARY? TYPE name=IDENTIFIER '=' type=typeName;
 
 arrayDefault: arrayExpr | scalarExpr;
 
 arrayDecl:
-    ARRAY name=IDENTIFIER '=' '[' size=expr ']'
+    DICTIONARY? ARRAY name=IDENTIFIER '=' '[' size=expr ']'
     type=typeName
     (DEFAULT default_=arrayDefault)?
     (FORMAT format=LIT_STRING)?
     ;
 
-constantDecl: CONSTANT name=IDENTIFIER '=' value=expr;
+constantDecl: DICTIONARY? CONSTANT name=IDENTIFIER '=' value=expr;
 
 structMember:
     name=IDENTIFIER ':' ('[' size=expr ']')?
@@ -48,7 +48,7 @@ structMember:
 structMemberN: preAnnotation? structMember (','? postMultiAnnotation | commaDelim);
 structMemberL: preAnnotation? structMember (','? postMultiAnnotation | commaDelim)?;
 structDecl:
-    STRUCT name=IDENTIFIER '{'
+    DICTIONARY? STRUCT name=IDENTIFIER '{'
         NL* (structMemberN* structMemberL)?
     '}' (DEFAULT default_=structExpr)?
     ;
@@ -172,7 +172,7 @@ stateMachineInstance: STATE MACHINE INSTANCE name=IDENTIFIER ':' stateMachine=qu
 enumMember: name=IDENTIFIER ('=' value=expr)?;
 enumMemberN: preAnnotation? enumMember (','? (NL? postAnnotation)? | commaDelim);
 enumMemberL: preAnnotation? enumMember (','? (NL? postAnnotation)? | commaDelim);
-enumDecl: ENUM name=IDENTIFIER (':' type=typeName)?
+enumDecl: DICTIONARY? ENUM name=IDENTIFIER (':' type=typeName)?
     '{'
         NL* (enumMemberN* enumMemberL)? NL*
     '}' (DEFAULT default_=expr)?
@@ -347,10 +347,10 @@ interfaceDecl:
 locationKind:
     INSTANCE
     | COMPONENT
-    | CONSTANT
+    | DICTIONARY? CONSTANT
     | PORT
     | TOPOLOGY
-    | TYPE
+    | DICTIONARY? TYPE
     | STATE MACHINE
     | INTERFACE
     ;
@@ -509,6 +509,7 @@ CONTAINER: 'container';
 CPU: 'cpu';
 DEFAULT: 'default';
 DIAGNOSTIC: 'diagnostic';
+DICTIONARY: 'dictionary';
 DO: 'do';
 DROP: 'drop';
 ELSE: 'else';
