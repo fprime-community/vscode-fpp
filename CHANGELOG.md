@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.28] - 2025-12-02
+
+- Added dictionary modifiers to type and constant definitions
+
 ## [1.0.27] - 2025-08-06
 
 - Do not run analysis on files outside of the workspace
