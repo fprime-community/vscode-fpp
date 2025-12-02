@@ -8,7 +8,6 @@ import { ProgTopologyContext } from "./FppParser";
 import { ProgComponentContext } from "./FppParser";
 import { AbstractTypeDeclContext } from "./FppParser";
 import { AliasTypeDeclContext } from "./FppParser";
-import { ArrayDefaultContext } from "./FppParser";
 import { ArrayDeclContext } from "./FppParser";
 import { ConstantDeclContext } from "./FppParser";
 import { StructMemberContext } from "./FppParser";
@@ -101,11 +100,16 @@ import { StringTypeContext } from "./FppParser";
 import { TypeNameContext } from "./FppParser";
 import { CommaDelimContext } from "./FppParser";
 import { SemiDelimContext } from "./FppParser";
+import { ExprDotContext } from "./FppParser";
+import { ExprSubscriptContext } from "./FppParser";
+import { ExprUnaryContext } from "./FppParser";
+import { ExprMulDivContext } from "./FppParser";
+import { ExprAddSubContext } from "./FppParser";
+import { ExprContext } from "./FppParser";
+import { ExprPrimaryContext } from "./FppParser";
 import { ArrayExprContext } from "./FppParser";
 import { StructAssignmentContext } from "./FppParser";
 import { StructExprContext } from "./FppParser";
-import { ScalarExprContext } from "./FppParser";
-import { ExprContext } from "./FppParser";
 import { PostAnnotationContext } from "./FppParser";
 import { PostMultiAnnotationContext } from "./FppParser";
 import { PreAnnotationContext } from "./FppParser";
@@ -153,13 +157,6 @@ export interface FppVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitAliasTypeDecl?: (ctx: AliasTypeDeclContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by `FppParser.arrayDefault`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitArrayDefault?: (ctx: ArrayDefaultContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `FppParser.arrayDecl`.
@@ -806,6 +803,55 @@ export interface FppVisitor<Result> extends ParseTreeVisitor<Result> {
 	visitSemiDelim?: (ctx: SemiDelimContext) => Result;
 
 	/**
+	 * Visit a parse tree produced by `FppParser.exprDot`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitExprDot?: (ctx: ExprDotContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `FppParser.exprSubscript`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitExprSubscript?: (ctx: ExprSubscriptContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `FppParser.exprUnary`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitExprUnary?: (ctx: ExprUnaryContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `FppParser.exprMulDiv`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitExprMulDiv?: (ctx: ExprMulDivContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `FppParser.exprAddSub`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitExprAddSub?: (ctx: ExprAddSubContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `FppParser.expr`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitExpr?: (ctx: ExprContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `FppParser.exprPrimary`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitExprPrimary?: (ctx: ExprPrimaryContext) => Result;
+
+	/**
 	 * Visit a parse tree produced by `FppParser.arrayExpr`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -825,20 +871,6 @@ export interface FppVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitStructExpr?: (ctx: StructExprContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by `FppParser.scalarExpr`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitScalarExpr?: (ctx: ScalarExprContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by `FppParser.expr`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitExpr?: (ctx: ExprContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `FppParser.postAnnotation`.

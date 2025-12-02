@@ -400,23 +400,6 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         };
     }
 
-    visitArrayDefault(ctx: FppParser.ArrayDefaultContext): Fpp.ArrayExpr | Fpp.ScalarExpr {
-        if (!ctx) {
-            return this.error();
-        }
-
-        const arrayExpr = ctx.arrayExpr();
-        const scalarExpr = ctx.scalarExpr();
-
-        if (arrayExpr) {
-            return this.visitArrayExpr(arrayExpr);
-        } else if (scalarExpr) {
-            return this.visitScalarExpr(scalarExpr);
-        } else {
-            return this.error();
-        }
-    }
-
     visitArrayDecl(ctx: FppParser.ArrayDeclContext): Fpp.ArrayDecl {
         if (!ctx) {
             return this.error();
@@ -441,7 +424,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             location: this.loc(ctx),
             fppType: this.visitTypeName(ctx._type),
             size: this.visitExpr(ctx._size),
-            default_: default_ ? this.visitArrayDefault(default_) : undefined,
+            default_: default_ ? this.visitExpr(default_) : undefined,
             format: format ? this.stringLiteral(format) : undefined
         };
     }
@@ -1587,7 +1570,7 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         return {
             type: "ArrayExpr",
             location: this.loc(ctx),
-            value: ctx.scalarExpr().map((v) => this.visitScalarExpr(v))
+            value: ctx.expr().map((v) => this.visitExpr(v))
         };
     }
 
@@ -1615,12 +1598,22 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
         };
     }
 
-    visitScalarExpr(ctx: FppParser.ScalarExprContext): Fpp.ScalarExpr {
+    visitExprPrimary(ctx: FppParser.ExprPrimaryContext): Fpp.Expr {
         if (!ctx) {
             return this.error();
         }
 
-        if (ctx.LIT_FLOAT()) {
+        if (ctx.arrayExpr()) {
+            return this.visitArrayExpr(ctx.arrayExpr()!);
+        } else if (ctx.structExpr()) {
+            return this.visitStructExpr(ctx.structExpr()!);
+        } else if (ctx.IDENTIFIER()) {
+            return {
+                type: "Identifier",
+                name: this.identifier(ctx.IDENTIFIER()!._symbol),
+                location: this.loc(ctx)
+            };
+        } else if (ctx.LIT_FLOAT()) {
             return {
                 type: "FloatLiteral",
                 value: parseFloat(ctx.LIT_FLOAT()!.text),
@@ -1645,28 +1638,8 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
                 location: this.loc(ctx),
                 value: ctx.LIT_BOOLEAN()!.text === "true"
             };
-        } else if (ctx.qualIdent()) {
-            return {
-                type: "Identifier",
-                value: this.visitQualIdent_(ctx.qualIdent()!),
-                location: this.loc(ctx)
-            };
-        } else if (ctx._unary) {
-            return {
-                type: "NegExpr",
-                location: this.loc(ctx),
-                value: this.visitScalarExpr(ctx._unary)
-            };
-        } else if (ctx._op) {
-            return {
-                type: "BinaryExpr",
-                location: this.loc(ctx),
-                left: this.visitScalarExpr(ctx._left),
-                right: this.visitScalarExpr(ctx._right),
-                operator: this.keywordT(ctx._op)
-            };
         } else {
-            return this.visitScalarExpr(ctx._p);
+            return this.error();
         }
     }
 
@@ -1675,16 +1648,56 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             return this.error();
         }
 
-        const arrayExpr = ctx.arrayExpr();
-        const structExpr = ctx.structExpr();
-        const scalarExpr = ctx.scalarExpr();
+        const left = ctx.expr();
+        const dot = ctx.exprDot();
+        const subscript = ctx.exprSubscript();
+        const unary = ctx.exprSubscript();
+        const addSub = ctx.exprAddSub();
+        const mulDiv = ctx.exprMulDiv();
+        const primary = ctx.exprPrimary();
 
-        if (arrayExpr) {
-            return this.visitArrayExpr(arrayExpr);
-        } else if (structExpr) {
-            return this.visitStructExpr(structExpr);
-        } else if (scalarExpr) {
-            return this.visitScalarExpr(scalarExpr);
+        if (left) {
+            if (dot) {
+                return {
+                    type: "Dot",
+                    location: this.loc(ctx),
+                    e: this.visitExpr(left),
+                    id: this.identifier(dot._member)
+                };
+            } else if (subscript) {
+                return {
+                    type: "Subscript",
+                    location: this.loc(ctx),
+                    e1: this.visitExpr(left),
+                    e2: this.visitExpr(subscript.expr())
+                };
+            } else if (unary) {
+                return {
+                    type: "NegExpr",
+                    location: this.loc(ctx),
+                    value: this.visitExpr(left),
+                };
+            } else if (addSub) {
+                return {
+                    type: "BinaryExpr",
+                    location: this.loc(ctx),
+                    left: this.visitExpr(left),
+                    right: this.visitExpr(addSub._right),
+                    operator: this.keywordT(addSub._op)
+                };
+            } else if (mulDiv) {
+                return {
+                    type: "BinaryExpr",
+                    location: this.loc(ctx),
+                    left: this.visitExpr(left),
+                    right: this.visitExpr(mulDiv._right),
+                    operator: this.keywordT(mulDiv._op)
+                };
+            } else {
+                return this.error();
+            }
+        } else if (primary) {
+            return this.visitExprPrimary(primary);
         } else {
             return this.error();
         }

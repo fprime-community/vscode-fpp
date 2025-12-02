@@ -270,7 +270,7 @@ export interface StateMachineInstance extends Decl {
 export interface ArrayDecl extends Decl {
     type: "ArrayDecl";
     fppType: TypeName;
-    default_?: ArrayExpr | ScalarExpr;
+    default_?: Expr;
     size: Expr;
     format?: StringLiteral;
 }
@@ -656,8 +656,18 @@ export interface BasicExpr extends Ast {
     evaluated?: ExprValue;
 }
 export interface IdentifierExpr extends BasicExpr {
-    type: "Identifier";
-    value: QualifiedIdentifier;
+    type: "Identifier",
+    name: Identifier
+}
+export interface DotExpr extends BasicExpr {
+    type: "Dot";
+    e: Expr;
+    id: Identifier;
+}
+export interface SubscriptExpr extends BasicExpr {
+    type: "Subscript";
+    e1: Expr;
+    e2: Expr;
 }
 export interface LiteralIntExpr extends BasicExpr {
     type: "IntLiteral";
@@ -676,13 +686,6 @@ export interface ArrayExpr extends BasicExpr {
     type: "ArrayExpr";
     value: Expr[];
 };
-
-export type PrimaryExpr = (
-    IdentifierExpr |
-    LiteralIntExpr |
-    LiteralFloatExpr |
-    LiteralStringExpr
-);
 
 export interface NegExpr extends BasicExpr {
     type: "NegExpr";
@@ -712,17 +715,18 @@ export interface StructExpr extends BasicExpr {
     value: StructAssignment[];
 };
 
-export type ScalarExpr = (
-    | BinaryExpr
-    | NegExpr
-    | BooleanExpr
-    | PrimaryExpr
-);
-
 export type Expr = (
     | StructExpr
     | ArrayExpr
-    | ScalarExpr
+    | BinaryExpr
+    | NegExpr
+    | BooleanExpr
+    | DotExpr
+    | IdentifierExpr
+    | SubscriptExpr
+    | LiteralIntExpr
+    | LiteralFloatExpr
+    | LiteralStringExpr
 );
 
 export type QualifiedIdentifier = readonly Identifier[];

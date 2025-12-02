@@ -150,7 +150,7 @@ export abstract class ExprTraverser implements TypeResolver {
     }
     abstract resolveType(typeName: Fpp.TypeName, scope: Fpp.QualifiedIdentifier): Fpp.TypeDecl | undefined;
     abstract emit(uri: vscode.Uri, diagnostic: vscode.Diagnostic): void;
-    abstract identifier(ast: Fpp.IdentifierExpr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue;
+    abstract constantUse(ast: Fpp.ExprValue, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue;
 
     private traverseImpl(ast: Fpp.Expr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
         switch (ast.type) {
@@ -158,7 +158,9 @@ export abstract class ExprTraverser implements TypeResolver {
             case 'BinaryExpr': return this.binaryExpr(ast, scope);
             case 'BooleanExpr': return this.booleanExpr(ast);
             case 'FloatLiteral': return this.floatLiteral(ast);
-            case 'Identifier': return this.identifier(ast, scope, validator);
+            case 'Identifier': return this.constantUse(ast, scope, validator);
+            case 'Dot': 
+            case 'Subscript':
             case 'IntLiteral': return this.intLiteral(ast);
             case 'NegExpr': return this.negExpr(ast, scope);
             case 'StringLiteral': return this.stringLiteral(ast);

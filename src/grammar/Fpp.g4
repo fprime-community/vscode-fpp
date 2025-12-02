@@ -29,12 +29,10 @@ abstractTypeDecl: TYPE name=IDENTIFIER;
 
 aliasTypeDecl: TYPE name=IDENTIFIER '=' type=typeName;
 
-arrayDefault: arrayExpr | scalarExpr;
-
 arrayDecl:
     ARRAY name=IDENTIFIER '=' '[' size=expr ']'
     type=typeName
-    (DEFAULT default_=arrayDefault)?
+    (DEFAULT default_=expr)?
     (FORMAT format=LIT_STRING)?
     ;
 
@@ -407,32 +405,41 @@ commaDelim: ',' NL* | NL+;
 semiDelim: ';' NL* | NL+;
 
 //////////////////////
-// Helper definitions
+// Expression definitions
 //////////////////////
 
-arrayExpr:
-    '[' NL* (scalarExpr (commaDelim scalarExpr)*)? ']'
+exprDot: '.' member=IDENTIFIER;
+exprSubscript: '[' index=expr ']';
+exprUnary: '-' expr;
+exprMulDiv: op=('*' | '/') right=expr;
+exprAddSub: op=('+' | '-') right=expr;
+
+expr:
+    expr exprDot
+    | expr exprSubscript
+    | exprUnary
+    | expr exprMulDiv
+    | expr exprAddSub
+    | exprPrimary
     ;
 
-structAssignment: name=IDENTIFIER '=' value=expr;
-structExpr: '{' NL* (structAssignment (commaDelim structAssignment)* commaDelim?)? '}';
-scalarExpr:
-    '-' unary=scalarExpr
-    | left=scalarExpr op=('*' | '/') right=scalarExpr
-    | left=scalarExpr op=('+' | '-') right=scalarExpr
-    | qualIdent
+exprPrimary:
+    arrayExpr
+    | structExpr
+    | IDENTIFIER
     | LIT_BOOLEAN
     | LIT_FLOAT
     | LIT_INT
     | LIT_STRING
-    | '(' p=scalarExpr ')'
+    | '(' p=expr ')'
     ;
 
-expr:
-    arrayExpr
-    | structExpr
-    | scalarExpr
+arrayExpr:
+    '[' NL* (expr (commaDelim expr)*)? ']'
     ;
+
+structAssignment: name=IDENTIFIER '=' value=expr;
+structExpr: '{' NL* (structAssignment (commaDelim structAssignment)* commaDelim?)? '}';
 
 //////////////////////
 // Token definitions

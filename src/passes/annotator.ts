@@ -83,7 +83,7 @@ export class FppAnnotator extends MemberTraverser {
     exprTrav = new class extends ExprTraverser {
         parent!: FppAnnotator;
 
-        identifier(ast: Fpp.IdentifierExpr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
+        constantUse(ast: Fpp.Expr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
             const constant = this.parent.identifier(ast.value, scope, SymbolType.constant) as Fpp.ConstantDefinition | undefined;
 
             if (!constant) {
