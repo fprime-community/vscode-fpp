@@ -55,7 +55,7 @@
             "patterns": [
                 {
                     "name": "keyword.control.export.fpp",
-                    "match": "\\b(?<![$])(active|async|sync|passive|queued|guarded)\\b"
+                    "match": "\\b(?<![$])(active|async|dictionary|sync|passive|queued|guarded)\\b"
                 }
             ]
         },
