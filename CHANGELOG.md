@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.30] - 2025-12-03
+
+- Make diagram opening only reject if there are FPP errors in the editor
+
 ## [1.0.29] - 2025-12-02
 
 - Rework the parsing and evaluation of constant expressions
