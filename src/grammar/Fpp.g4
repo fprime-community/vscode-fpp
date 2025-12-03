@@ -435,11 +435,11 @@ exprPrimary:
     ;
 
 arrayExpr:
-    '[' NL* (expr (commaDelim expr)*)? ']'
+    '[' NL* (expr commaDelim)* expr? NL* ']'
     ;
 
 structAssignment: name=IDENTIFIER '=' value=expr;
-structExpr: '{' NL* (structAssignment (commaDelim structAssignment)* commaDelim?)? '}';
+structExpr: '{' NL* (structAssignment commaDelim)* structAssignment? NL* '}';
 
 //////////////////////
 // Token definitions

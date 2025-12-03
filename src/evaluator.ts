@@ -150,7 +150,10 @@ export abstract class ExprTraverser implements TypeResolver {
     }
     abstract resolveType(typeName: Fpp.TypeName, scope: Fpp.QualifiedIdentifier): Fpp.TypeDecl | undefined;
     abstract emit(uri: vscode.Uri, diagnostic: vscode.Diagnostic): void;
-    abstract constantUse(ast: Fpp.ExprValue, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue;
+
+    abstract identifierExpr(ast: Fpp.IdentifierExpr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue;
+    abstract dotExpr(ast: Fpp.DotExpr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue;
+    abstract subscriptExpr(ast: Fpp.SubscriptExpr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue;
 
     private traverseImpl(ast: Fpp.Expr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
         switch (ast.type) {
@@ -158,9 +161,9 @@ export abstract class ExprTraverser implements TypeResolver {
             case 'BinaryExpr': return this.binaryExpr(ast, scope);
             case 'BooleanExpr': return this.booleanExpr(ast);
             case 'FloatLiteral': return this.floatLiteral(ast);
-            case 'Identifier': return this.constantUse(ast, scope, validator);
-            case 'Dot': 
-            case 'Subscript':
+            case 'Identifier': return this.identifierExpr(ast, scope, validator);
+            case 'Dot': return this.dotExpr(ast, scope, validator);
+            case 'Subscript': return this.subscriptExpr(ast, scope, validator);
             case 'IntLiteral': return this.intLiteral(ast);
             case 'NegExpr': return this.negExpr(ast, scope);
             case 'StringLiteral': return this.stringLiteral(ast);
@@ -191,14 +194,23 @@ export abstract class ExprTraverser implements TypeResolver {
 
         try {
             const value = this.traverseImpl(ast, scope, validator);
+            if (value.type === Fpp.PrimExprType.error) {
+                // We already emitted an error, we don't need any more errors
+                return Fpp.errorValue;
+            }
+
             const error = validator.validate?.(value, this);
             if (error) {
                 this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
                     MemberTraverser.asRange(ast.location), error)
                 );
+
+                ast.evaluated = Fpp.errorValue;
+            } else {
+                ast.evaluated = value;
             }
 
-            return value;
+            return ast.evaluated;
         } finally {
             this.traverseStack.pop();
         }
@@ -325,9 +337,13 @@ export abstract class ExprTraverser implements TypeResolver {
         const value: Record<string, Fpp.ExprValue> = {};
 
         if (!resolved || resolved.type !== "StructDecl") {
+            for (const member of ast.value) {
+                value[member.name.value] = this.traverse(member.value, scope, {});
+            }
+
             return {
                 type: Fpp.PrimExprType.struct,
-                value: {}
+                value
             };
         }
 

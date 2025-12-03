@@ -750,6 +750,7 @@ export type TypeDecl = AbstractTypeDecl | AliasTypeDecl | StructDecl | ArrayDecl
 export type ConstantDefinition = ConstantDecl | EnumMember;
 
 export enum PrimExprType {
+    error = "error",
     integer = "integer",
     floating = "floating",
     boolean = "boolean",
@@ -758,9 +759,19 @@ export enum PrimExprType {
     struct = "struct",
 }
 
+export const errorValue: ExprValue = {
+    type: PrimExprType.error,
+    value: null
+};
+
 interface ExprValueBase<T> {
     type: PrimExprType;
     value: T;
+}
+
+export interface ErrorValue extends ExprValueBase<null> {
+    type: PrimExprType.error;
+    enumMember?: EnumMember;
 }
 
 export interface IntExprValue extends ExprValueBase<number> {
@@ -792,6 +803,7 @@ export interface StructExprValue extends ExprValueBase<Record<string, ExprValue>
 export type NumericExprValue = IntExprValue | FloatExprValue;
 
 export type ExprValue = (
+    | ErrorValue
     | IntExprValue
     | FloatExprValue
     | BoolExprValue

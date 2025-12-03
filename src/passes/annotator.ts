@@ -83,19 +83,16 @@ export class FppAnnotator extends MemberTraverser {
     exprTrav = new class extends ExprTraverser {
         parent!: FppAnnotator;
 
-        constantUse(ast: Fpp.Expr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
-            const constant = this.parent.identifier(ast.value, scope, SymbolType.constant) as Fpp.ConstantDefinition | undefined;
+        constantUse(node: Fpp.BasicExpr, use: Fpp.QualifiedIdentifier, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
+            const constant = this.parent.identifier(use, scope, SymbolType.constant) as Fpp.ConstantDefinition | undefined;
 
             if (!constant) {
-                this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
-                    MemberTraverser.asRange(ast.location),
+                this.emit(vscode.Uri.file(node.location.source), new vscode.Diagnostic(
+                    MemberTraverser.asRange(node.location),
                     'Unresolved reference'
                 ));
 
-                return {
-                    type: Fpp.PrimExprType.integer,
-                    value: 0
-                };
+                return Fpp.errorValue;
             }
 
             const value = this.traverse(constant.value!, constant.scope, validator);
@@ -109,6 +106,159 @@ export class FppAnnotator extends MemberTraverser {
             }
 
             return value;
+        }
+
+        identifierExpr(ast: Fpp.IdentifierExpr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
+            ast.evaluated = this.constantUse(ast, [ast.name], scope, validator);
+            return ast.evaluated;
+        }
+
+        dotExpr(ast: Fpp.DotExpr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
+            // There are two cases since FPP is syntactically ambigious here:
+            //   1. This dot expression is actually a qualified identifier use of a constant
+            //   2. This dot expression is an actual expression that selects a member of a struct
+
+            // If this expression is a qualified identfier, the left side may be a constant or the entire expression could be a constant
+            function asQualIdent(e: Fpp.Expr): Fpp.QualifiedIdentifier | null {
+                switch (e.type) {
+                    case 'Dot':
+                        const left = asQualIdent(e.e);
+                        if (left) {
+                            return [...left, e.id];
+                        } else {
+                            return null;
+                        }
+                    case 'Identifier':
+                        return [e.name];
+                    default:
+                        return null;
+                }
+            }
+
+            const memberSelection = (leftValue: Fpp.ExprValue, member: Fpp.Identifier): Fpp.ExprValue => {
+                if (leftValue.type === Fpp.PrimExprType.error) {
+                    return Fpp.errorValue;
+                }
+
+                if (leftValue.type !== Fpp.PrimExprType.struct) {
+                    this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
+                        MemberTraverser.asRange(member.location),
+                        `Expected an struct value, got '${leftValue.type}'`
+                    ));
+
+                    return Fpp.errorValue;
+                }
+
+                if (leftValue.value[member.value] === undefined) {
+                    this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
+                        MemberTraverser.asRange(member.location),
+                        `Struct value has no member '${member.value}'`
+                    ));
+
+                    return Fpp.errorValue;
+                }
+
+                this.parent.semantic(member, SymbolType.constant);
+                return leftValue.value[member.value];
+            };
+
+            const qid = asQualIdent(ast);
+            if (qid) {
+                // The expression is member selection or a use
+
+                // Try to look up the symbol
+                const constantSymbol = this.parent.decl.resolve(qid, scope, SymbolType.constant);
+                if (constantSymbol) {
+                    return this.constantUse(ast, qid, scope, validator);
+                } else {
+                    // The left side could be a value selection
+                    // Keep trying until we find the constant definition
+                    let constantQid = [...qid];
+                    const memberSelections = [];
+                    while (constantQid.length >= 2) {
+                        // Remove the last identifier
+                        memberSelections.push(constantQid.pop()!);
+
+                        // Look up the symbol
+                        const constant = this.parent.decl.resolve(constantQid, scope, SymbolType.constant);
+                        if (constant) {
+                            const constantValue = this.constantUse({
+                                type: "",
+                                location: {
+                                    source: constantQid[0].location.source,
+                                    start: constantQid[0].location.start,
+                                    end: constantQid[constantQid.length - 1].location.end,
+                                }
+                            }, qid, scope, {});
+
+                            // Apply all the member selections to the value
+                            return memberSelections.reverse().reduce(memberSelection, constantValue);
+                        }
+                    }
+
+                    // We reached the end of the line, this must be an invalid symbol selection
+                    this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
+                        MemberTraverser.asRange(ast.location),
+                        'Unresolved reference'
+                    ));
+
+                    return Fpp.errorValue;
+                }
+            } else {
+                // Member selection of a literal
+                const leftValue = this.traverse(ast.e, scope, {});
+                return memberSelection(leftValue, ast.id);
+            }
+        }
+
+        subscriptExpr(ast: Fpp.SubscriptExpr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
+            const arrValue = this.traverse(ast.e1, scope, validator);
+            const idxValue = this.traverse(
+                ast.e2,
+                scope,
+                new TypeNameValidator({
+                    complex: false,
+                    type: "I32",
+                    location: Fpp.implicitLocation,
+                }, scope)
+            );
+
+            if (arrValue.type === Fpp.PrimExprType.error || idxValue.type === Fpp.PrimExprType.error) {
+                return Fpp.errorValue;
+            }
+
+            if (arrValue.type !== Fpp.PrimExprType.array) {
+                this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
+                    MemberTraverser.asRange(ast.e1.location),
+                    `Expected an array value, got '${arrValue.type}'`
+                ));
+
+                return Fpp.errorValue;
+            }
+
+            if (idxValue.type === Fpp.PrimExprType.integer) {
+                if (idxValue.value < 0) {
+                    this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
+                        MemberTraverser.asRange(ast.e2.location),
+                        'Index cannot be negative'
+                    ));
+
+                    return Fpp.errorValue;
+                }
+
+                if (idxValue.value >= arrValue.value.length) {
+                    this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(
+                        MemberTraverser.asRange(ast.e2.location),
+                        `Index (${idxValue.value}) out of range [0, ${arrValue.value.length})`
+                    ));
+
+                    return Fpp.errorValue;
+                } else {
+                    return arrValue.value[idxValue.value];
+                }
+            } else {
+                return Fpp.errorValue;
+            }
         }
 
         resolveType(typeName: Fpp.TypeName, scope: Fpp.QualifiedIdentifier): Fpp.TypeDecl | undefined {
