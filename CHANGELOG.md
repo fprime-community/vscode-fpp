@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.29] - 2025-12-02
+
+- Rework the parsing and evaluation of constant expressions
+
 ## [1.0.28] - 2025-12-02
 
 - Added dictionary modifiers to type and constant definitions
