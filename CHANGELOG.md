@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.31] - 2025-12-03
+
+- Fixes "WORKER is not a constructor" error
+- Fixes expressions not getting highlighted or analyzed at all due to a premature optimization.
+
 ## [1.0.30] - 2025-12-03
 
 - Make diagram opening only reject if there are FPP errors in the editor
