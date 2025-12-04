@@ -105,12 +105,12 @@ export abstract class FppProjectManager {
         this.decl.clearAll();
 
         // Initial declaration pass
-        for (const [uri, ast] of this.asts.entries()) {
+        for (const [_, ast] of this.asts.entries()) {
             this.decl.pass(ast.ast);
         }
 
         // Port instance pass
-        for (const [uri, ast] of this.asts.entries()) {
+        for (const [_, ast] of this.asts.entries()) {
             this.portInstancePass.pass(ast.ast);
         }
 

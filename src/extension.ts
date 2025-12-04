@@ -92,7 +92,6 @@ class FppExtension implements
     onDidChangeSemanticTokens: vscode.Event<void>;
     onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
-
     constructor(
         private readonly context: vscode.ExtensionContext
     ) {

@@ -31,7 +31,7 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
     private elkEngine: ElkLayoutEngine = new FppLayoutEngine(
         () => new ELK({
             workerFactory: function (url) { // the value of 'url' is irrelevant here
-                const { WORKER } = require('elkjs/lib/elk-worker.min.js'); // Use elk-worker.js for debugging
+                const { Worker: WORKER } = require('elkjs/lib/elk-worker.min.js'); // Use elk-worker.js for debugging
                 return new WORKER(url);
             }
         }),

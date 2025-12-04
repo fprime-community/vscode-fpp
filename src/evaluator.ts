@@ -174,10 +174,6 @@ export abstract class ExprTraverser implements TypeResolver {
     private traverseStack: Fpp.Expr[] = [];
 
     traverse(ast: Fpp.Expr, scope: Fpp.QualifiedIdentifier, validator: TypeValidator): Fpp.ExprValue {
-        if (ast.evaluated) {
-            return ast.evaluated;
-        }
-
         // Make sure we don't stack overflow trying to resolve the constant's value
         if (this.traverseStack.includes(ast)) {
             this.emit(vscode.Uri.file(ast.location.source), new vscode.Diagnostic(MemberTraverser.asRange(ast.location),
