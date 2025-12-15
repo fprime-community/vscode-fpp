@@ -690,7 +690,12 @@ export class AstVisitor extends AbstractParseTreeVisitor<Fpp.Ast> implements Fpp
             } else if (sendK) {
                 kind = this.keywordsT([productK.symbol, sendK.symbol], "productSend");
             } else if (recvK) {
-                kind = this.keywordsT([productK.symbol, recvK.symbol], "productRecv");
+                return {
+                    location: this.loc(ctx),
+                    kind: this.keywordsT([productK.symbol, recvK.symbol], "productRecv"),
+                    isOutput: false,
+                    isSpecial: true
+                };
             } else {
                 return this.error();
             }
