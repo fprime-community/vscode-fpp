@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.32] - 2025-12-15
+
+- `product recv` is an input not output port
+
 ## [1.0.31] - 2025-12-03
 
 - Fixes "WORKER is not a constructor" error

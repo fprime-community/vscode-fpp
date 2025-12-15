@@ -358,16 +358,18 @@ export interface SpecialOutputPortInstance extends PortInstance {
         | "textEvent"
         | "timeGet"
         | "productGet"
-        | "productRecv"
         | "productRequest"
         | "productSend"
     >;
 }
 
-export interface CommandRecvPortInstance extends PortInstance {
+export interface SpecialInputPortInstance extends PortInstance {
     isOutput: false;
     isSpecial: true;
-    kind: Keyword<"commandRecv">;
+    kind: Keyword<
+        | "commandRecv"
+        | "productRecv"
+    >;
 }
 
 export type GeneralPortKind = (
@@ -376,7 +378,7 @@ export type GeneralPortKind = (
 );
 
 export type SpecialPortKind = (
-    | CommandRecvPortInstance
+    | SpecialInputPortInstance
     | SpecialOutputPortInstance
 );
 
