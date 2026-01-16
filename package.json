@@ -11,7 +11,7 @@
         "url": "https://github.com/fprime-community/vscode-fpp",
         "type": "git"
     },
-    "version": "1.0.27",
+    "version": "1.0.32",
     "icon": "fprime-logo.png",
     "engines": {
         "vscode": "^1.78.0"
@@ -45,25 +45,25 @@
             },
             {
                 "command": "fpp.diagram.open",
-                "title": "Open FPP Diagram",
+                "title": "FPP: Open Diagram",
                 "icon": "$(telescope)",
                 "category": "FPP Diagram"
             },
             {
                 "command": "fpp.diagram.fit",
-                "title": "Fit FPP Diagram",
+                "title": "FPP: Fit Diagram",
                 "icon": "$(arrow-both)",
                 "category": "FPP Diagram"
             },
             {
                 "command": "fpp.diagram.center",
-                "title": "Center FPP Diagram",
+                "title": "FPP: Center Diagram",
                 "icon": "$(layout-centered)",
                 "category": "FPP Diagram"
             },
             {
                 "command": "fpp.diagram.export",
-                "title": "Export FPP Diagram",
+                "title": "FPP: Export Diagram",
                 "icon": "$(desktop-download)",
                 "category": "FPP Diagram"
             },
@@ -181,7 +181,7 @@
     "scripts": {
         "vscode:prepublish": "rm -rf dist && yarn package",
         "package": "webpack --mode production",
-        "compile": "webpack --mode development",
+        "build": "webpack --mode development",
         "watch": "webpack --mode development --watch",
         "antlr": "antlr4ts -visitor src/grammar/Fpp.g4 && node ./scripts/update-signatures.js src/signatures.json src/grammar/FppParser.ts"
     },

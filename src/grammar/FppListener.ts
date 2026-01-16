@@ -8,7 +8,6 @@ import { ProgTopologyContext } from "./FppParser";
 import { ProgComponentContext } from "./FppParser";
 import { AbstractTypeDeclContext } from "./FppParser";
 import { AliasTypeDeclContext } from "./FppParser";
-import { ArrayDefaultContext } from "./FppParser";
 import { ArrayDeclContext } from "./FppParser";
 import { ConstantDeclContext } from "./FppParser";
 import { StructMemberContext } from "./FppParser";
@@ -101,11 +100,16 @@ import { StringTypeContext } from "./FppParser";
 import { TypeNameContext } from "./FppParser";
 import { CommaDelimContext } from "./FppParser";
 import { SemiDelimContext } from "./FppParser";
+import { ExprDotContext } from "./FppParser";
+import { ExprSubscriptContext } from "./FppParser";
+import { ExprUnaryContext } from "./FppParser";
+import { ExprMulDivContext } from "./FppParser";
+import { ExprAddSubContext } from "./FppParser";
+import { ExprContext } from "./FppParser";
+import { ExprPrimaryContext } from "./FppParser";
 import { ArrayExprContext } from "./FppParser";
 import { StructAssignmentContext } from "./FppParser";
 import { StructExprContext } from "./FppParser";
-import { ScalarExprContext } from "./FppParser";
-import { ExprContext } from "./FppParser";
 import { PostAnnotationContext } from "./FppParser";
 import { PostMultiAnnotationContext } from "./FppParser";
 import { PreAnnotationContext } from "./FppParser";
@@ -170,17 +174,6 @@ export interface FppListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitAliasTypeDecl?: (ctx: AliasTypeDeclContext) => void;
-
-	/**
-	 * Enter a parse tree produced by `FppParser.arrayDefault`.
-	 * @param ctx the parse tree
-	 */
-	enterArrayDefault?: (ctx: ArrayDefaultContext) => void;
-	/**
-	 * Exit a parse tree produced by `FppParser.arrayDefault`.
-	 * @param ctx the parse tree
-	 */
-	exitArrayDefault?: (ctx: ArrayDefaultContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `FppParser.arrayDecl`.
@@ -1195,6 +1188,83 @@ export interface FppListener extends ParseTreeListener {
 	exitSemiDelim?: (ctx: SemiDelimContext) => void;
 
 	/**
+	 * Enter a parse tree produced by `FppParser.exprDot`.
+	 * @param ctx the parse tree
+	 */
+	enterExprDot?: (ctx: ExprDotContext) => void;
+	/**
+	 * Exit a parse tree produced by `FppParser.exprDot`.
+	 * @param ctx the parse tree
+	 */
+	exitExprDot?: (ctx: ExprDotContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `FppParser.exprSubscript`.
+	 * @param ctx the parse tree
+	 */
+	enterExprSubscript?: (ctx: ExprSubscriptContext) => void;
+	/**
+	 * Exit a parse tree produced by `FppParser.exprSubscript`.
+	 * @param ctx the parse tree
+	 */
+	exitExprSubscript?: (ctx: ExprSubscriptContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `FppParser.exprUnary`.
+	 * @param ctx the parse tree
+	 */
+	enterExprUnary?: (ctx: ExprUnaryContext) => void;
+	/**
+	 * Exit a parse tree produced by `FppParser.exprUnary`.
+	 * @param ctx the parse tree
+	 */
+	exitExprUnary?: (ctx: ExprUnaryContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `FppParser.exprMulDiv`.
+	 * @param ctx the parse tree
+	 */
+	enterExprMulDiv?: (ctx: ExprMulDivContext) => void;
+	/**
+	 * Exit a parse tree produced by `FppParser.exprMulDiv`.
+	 * @param ctx the parse tree
+	 */
+	exitExprMulDiv?: (ctx: ExprMulDivContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `FppParser.exprAddSub`.
+	 * @param ctx the parse tree
+	 */
+	enterExprAddSub?: (ctx: ExprAddSubContext) => void;
+	/**
+	 * Exit a parse tree produced by `FppParser.exprAddSub`.
+	 * @param ctx the parse tree
+	 */
+	exitExprAddSub?: (ctx: ExprAddSubContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `FppParser.expr`.
+	 * @param ctx the parse tree
+	 */
+	enterExpr?: (ctx: ExprContext) => void;
+	/**
+	 * Exit a parse tree produced by `FppParser.expr`.
+	 * @param ctx the parse tree
+	 */
+	exitExpr?: (ctx: ExprContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `FppParser.exprPrimary`.
+	 * @param ctx the parse tree
+	 */
+	enterExprPrimary?: (ctx: ExprPrimaryContext) => void;
+	/**
+	 * Exit a parse tree produced by `FppParser.exprPrimary`.
+	 * @param ctx the parse tree
+	 */
+	exitExprPrimary?: (ctx: ExprPrimaryContext) => void;
+
+	/**
 	 * Enter a parse tree produced by `FppParser.arrayExpr`.
 	 * @param ctx the parse tree
 	 */
@@ -1226,28 +1296,6 @@ export interface FppListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitStructExpr?: (ctx: StructExprContext) => void;
-
-	/**
-	 * Enter a parse tree produced by `FppParser.scalarExpr`.
-	 * @param ctx the parse tree
-	 */
-	enterScalarExpr?: (ctx: ScalarExprContext) => void;
-	/**
-	 * Exit a parse tree produced by `FppParser.scalarExpr`.
-	 * @param ctx the parse tree
-	 */
-	exitScalarExpr?: (ctx: ScalarExprContext) => void;
-
-	/**
-	 * Enter a parse tree produced by `FppParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	enterExpr?: (ctx: ExprContext) => void;
-	/**
-	 * Exit a parse tree produced by `FppParser.expr`.
-	 * @param ctx the parse tree
-	 */
-	exitExpr?: (ctx: ExprContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `FppParser.postAnnotation`.

@@ -270,7 +270,7 @@ export interface StateMachineInstance extends Decl {
 export interface ArrayDecl extends Decl {
     type: "ArrayDecl";
     fppType: TypeName;
-    default_?: ArrayExpr | ScalarExpr;
+    default_?: Expr;
     size: Expr;
     format?: StringLiteral;
 }
@@ -358,16 +358,18 @@ export interface SpecialOutputPortInstance extends PortInstance {
         | "textEvent"
         | "timeGet"
         | "productGet"
-        | "productRecv"
         | "productRequest"
         | "productSend"
     >;
 }
 
-export interface CommandRecvPortInstance extends PortInstance {
+export interface SpecialInputPortInstance extends PortInstance {
     isOutput: false;
     isSpecial: true;
-    kind: Keyword<"commandRecv">;
+    kind: Keyword<
+        | "commandRecv"
+        | "productRecv"
+    >;
 }
 
 export type GeneralPortKind = (
@@ -376,7 +378,7 @@ export type GeneralPortKind = (
 );
 
 export type SpecialPortKind = (
-    | CommandRecvPortInstance
+    | SpecialInputPortInstance
     | SpecialOutputPortInstance
 );
 
@@ -656,8 +658,18 @@ export interface BasicExpr extends Ast {
     evaluated?: ExprValue;
 }
 export interface IdentifierExpr extends BasicExpr {
-    type: "Identifier";
-    value: QualifiedIdentifier;
+    type: "Identifier",
+    name: Identifier
+}
+export interface DotExpr extends BasicExpr {
+    type: "Dot";
+    e: Expr;
+    id: Identifier;
+}
+export interface SubscriptExpr extends BasicExpr {
+    type: "Subscript";
+    e1: Expr;
+    e2: Expr;
 }
 export interface LiteralIntExpr extends BasicExpr {
     type: "IntLiteral";
@@ -676,13 +688,6 @@ export interface ArrayExpr extends BasicExpr {
     type: "ArrayExpr";
     value: Expr[];
 };
-
-export type PrimaryExpr = (
-    IdentifierExpr |
-    LiteralIntExpr |
-    LiteralFloatExpr |
-    LiteralStringExpr
-);
 
 export interface NegExpr extends BasicExpr {
     type: "NegExpr";
@@ -712,17 +717,18 @@ export interface StructExpr extends BasicExpr {
     value: StructAssignment[];
 };
 
-export type ScalarExpr = (
-    | BinaryExpr
-    | NegExpr
-    | BooleanExpr
-    | PrimaryExpr
-);
-
 export type Expr = (
     | StructExpr
     | ArrayExpr
-    | ScalarExpr
+    | BinaryExpr
+    | NegExpr
+    | BooleanExpr
+    | DotExpr
+    | IdentifierExpr
+    | SubscriptExpr
+    | LiteralIntExpr
+    | LiteralFloatExpr
+    | LiteralStringExpr
 );
 
 export type QualifiedIdentifier = readonly Identifier[];
@@ -746,6 +752,7 @@ export type TypeDecl = AbstractTypeDecl | AliasTypeDecl | StructDecl | ArrayDecl
 export type ConstantDefinition = ConstantDecl | EnumMember;
 
 export enum PrimExprType {
+    error = "error",
     integer = "integer",
     floating = "floating",
     boolean = "boolean",
@@ -754,9 +761,19 @@ export enum PrimExprType {
     struct = "struct",
 }
 
+export const errorValue: ExprValue = {
+    type: PrimExprType.error,
+    value: null
+};
+
 interface ExprValueBase<T> {
     type: PrimExprType;
     value: T;
+}
+
+export interface ErrorValue extends ExprValueBase<null> {
+    type: PrimExprType.error;
+    enumMember?: EnumMember;
 }
 
 export interface IntExprValue extends ExprValueBase<number> {
@@ -788,6 +805,7 @@ export interface StructExprValue extends ExprValueBase<Record<string, ExprValue>
 export type NumericExprValue = IntExprValue | FloatExprValue;
 
 export type ExprValue = (
+    | ErrorValue
     | IntExprValue
     | FloatExprValue
     | BoolExprValue

@@ -92,7 +92,6 @@ class FppExtension implements
     onDidChangeSemanticTokens: vscode.Event<void>;
     onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
-
     constructor(
         private readonly context: vscode.ExtensionContext
     ) {
@@ -860,7 +859,7 @@ class FppExtension implements
                     title: `Open in Diagram: ${elemName}`,
                     tooltip: 'Click to visualize this connection group',
                     command: 'fpp.displayDiagram',
-                    arguments: [DiagramType.ConnectionGroup, fullName]
+                    arguments: [DiagramType.connectionGroup, fullName]
                 });
                 lenses.push(lens);
             }
@@ -883,7 +882,7 @@ class FppExtension implements
                     title: `Open in Diagram: ${elemName}`,
                     tooltip: 'Click to visualize this component',
                     command: 'fpp.displayDiagram',
-                    arguments: [DiagramType.Component, fullName]
+                    arguments: [DiagramType.component, fullName]
                 });
                 lenses.push(lens);
             }
@@ -906,7 +905,7 @@ class FppExtension implements
                     title: `Open in Diagram: ${elemName}`,
                     tooltip: 'Click to visualize this topology',
                     command: 'fpp.displayDiagram',
-                    arguments: [DiagramType.Topology, fullName]
+                    arguments: [DiagramType.topology, fullName]
                 });
                 lenses.push(lens);
             }

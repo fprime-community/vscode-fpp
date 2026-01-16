@@ -27,18 +27,16 @@ progComponent:
 
 abstractTypeDecl: TYPE name=IDENTIFIER;
 
-aliasTypeDecl: TYPE name=IDENTIFIER '=' type=typeName;
-
-arrayDefault: arrayExpr | scalarExpr;
+aliasTypeDecl: DICTIONARY? TYPE name=IDENTIFIER '=' type=typeName;
 
 arrayDecl:
-    ARRAY name=IDENTIFIER '=' '[' size=expr ']'
+    DICTIONARY? ARRAY name=IDENTIFIER '=' '[' size=expr ']'
     type=typeName
-    (DEFAULT default_=arrayDefault)?
+    (DEFAULT default_=expr)?
     (FORMAT format=LIT_STRING)?
     ;
 
-constantDecl: CONSTANT name=IDENTIFIER '=' value=expr;
+constantDecl: DICTIONARY? CONSTANT name=IDENTIFIER '=' value=expr;
 
 structMember:
     name=IDENTIFIER ':' ('[' size=expr ']')?
@@ -48,7 +46,7 @@ structMember:
 structMemberN: preAnnotation? structMember (','? postMultiAnnotation | commaDelim);
 structMemberL: preAnnotation? structMember (','? postMultiAnnotation | commaDelim)?;
 structDecl:
-    STRUCT name=IDENTIFIER '{'
+    DICTIONARY? STRUCT name=IDENTIFIER '{'
         NL* (structMemberN* structMemberL)?
     '}' (DEFAULT default_=structExpr)?
     ;
@@ -172,7 +170,7 @@ stateMachineInstance: STATE MACHINE INSTANCE name=IDENTIFIER ':' stateMachine=qu
 enumMember: name=IDENTIFIER ('=' value=expr)?;
 enumMemberN: preAnnotation? enumMember (','? (NL? postAnnotation)? | commaDelim);
 enumMemberL: preAnnotation? enumMember (','? (NL? postAnnotation)? | commaDelim);
-enumDecl: ENUM name=IDENTIFIER (':' type=typeName)?
+enumDecl: DICTIONARY? ENUM name=IDENTIFIER (':' type=typeName)?
     '{'
         NL* (enumMemberN* enumMemberL)? NL*
     '}' (DEFAULT default_=expr)?
@@ -347,10 +345,10 @@ interfaceDecl:
 locationKind:
     INSTANCE
     | COMPONENT
-    | CONSTANT
+    | DICTIONARY? CONSTANT
     | PORT
     | TOPOLOGY
-    | TYPE
+    | DICTIONARY? TYPE
     | STATE MACHINE
     | INTERFACE
     ;
@@ -407,32 +405,41 @@ commaDelim: ',' NL* | NL+;
 semiDelim: ';' NL* | NL+;
 
 //////////////////////
-// Helper definitions
+// Expression definitions
 //////////////////////
 
-arrayExpr:
-    '[' NL* (scalarExpr (commaDelim scalarExpr)*)? ']'
+exprDot: '.' member=IDENTIFIER;
+exprSubscript: '[' index=expr ']';
+exprUnary: '-' expr;
+exprMulDiv: op=('*' | '/') right=expr;
+exprAddSub: op=('+' | '-') right=expr;
+
+expr:
+    expr exprDot
+    | expr exprSubscript
+    | exprUnary
+    | expr exprMulDiv
+    | expr exprAddSub
+    | exprPrimary
     ;
 
-structAssignment: name=IDENTIFIER '=' value=expr;
-structExpr: '{' NL* (structAssignment (commaDelim structAssignment)* commaDelim?)? '}';
-scalarExpr:
-    '-' unary=scalarExpr
-    | left=scalarExpr op=('*' | '/') right=scalarExpr
-    | left=scalarExpr op=('+' | '-') right=scalarExpr
-    | qualIdent
+exprPrimary:
+    arrayExpr
+    | structExpr
+    | IDENTIFIER
     | LIT_BOOLEAN
     | LIT_FLOAT
     | LIT_INT
     | LIT_STRING
-    | '(' p=scalarExpr ')'
+    | '(' p=expr ')'
     ;
 
-expr:
-    arrayExpr
-    | structExpr
-    | scalarExpr
+arrayExpr:
+    '[' NL* (expr commaDelim)* expr? NL* ']'
     ;
+
+structAssignment: name=IDENTIFIER '=' value=expr;
+structExpr: '{' NL* (structAssignment commaDelim)* structAssignment? NL* '}';
 
 //////////////////////
 // Token definitions
@@ -509,6 +516,7 @@ CONTAINER: 'container';
 CPU: 'cpu';
 DEFAULT: 'default';
 DIAGNOSTIC: 'diagnostic';
+DICTIONARY: 'dictionary';
 DO: 'do';
 DROP: 'drop';
 ELSE: 'else';

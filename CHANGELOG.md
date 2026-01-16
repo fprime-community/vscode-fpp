@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.32] - 2025-12-15
+
+- `product recv` is an input not output port
+
+## [1.0.31] - 2025-12-03
+
+- Fixes "WORKER is not a constructor" error
+- Fixes expressions not getting highlighted or analyzed at all due to a premature optimization.
+
+## [1.0.30] - 2025-12-03
+
+- Make diagram opening only reject if there are FPP errors in the editor
+
+## [1.0.29] - 2025-12-02
+
+- Rework the parsing and evaluation of constant expressions
+
+## [1.0.28] - 2025-12-02
+
+- Added dictionary modifiers to type and constant definitions
+
 ## [1.0.27] - 2025-08-06
 
 - Do not run analysis on files outside of the workspace

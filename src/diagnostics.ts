@@ -65,6 +65,8 @@ export class DiangosicManager implements vscode.Disposable {
     }
 
     emit(uri: vscode.Uri, diagnostic: vscode.Diagnostic) {
+        diagnostic.source = "fpp";
+
         if (!this.pendingDiagnostics.has(uri.path)) {
             this.pendingDiagnostics.set(uri.path, [diagnostic]);
         } else {

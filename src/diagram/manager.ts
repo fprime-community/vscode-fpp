@@ -22,27 +22,32 @@ import { FppDiagramConfig } from "./layout-config";
 // FIXME: Why can't this be moved into layout-config.ts?
 // Codelens disappear after moving.
 export enum DiagramType {
-    Component,
-    ConnectionGroup,
-    Topology
+    component,
+    connectionGroup,
+    topology
 }
 
 export class FppWebviewPanelManager extends WebviewPanelManager {
-
     public diagramConfig: FppDiagramConfig = new FppDiagramConfig();
-
     private sGraph: SGraph | undefined;
     private elkEngine: ElkLayoutEngine = new FppLayoutEngine(
         () => new ELK({
             workerFactory: function (url) { // the value of 'url' is irrelevant here
-                const { Worker } = require('elkjs/lib/elk-worker.min.js'); // Use elk-worker.js for debugging
-                return new Worker(url);
+                const { Worker: WORKER } = require('elkjs/lib/elk-worker.min.js'); // Use elk-worker.js for debugging
+                return new WORKER(url);
             }
         }),
         undefined,
         this.diagramConfig);
 
-    constructor(readonly options: WebviewPanelManagerOptions, readonly fppProject: FppProject) {
+    /* Private variables for remembering the current displayed diagram to handle diagram update on save */
+    private currentDiagramType: DiagramType | undefined;
+    private fullyQualifiedName: string = "";
+
+    constructor(
+        readonly options: WebviewPanelManagerOptions,
+        readonly fppProject: FppProject
+    ) {
         super(options);
     }
 
@@ -85,16 +90,16 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
      */
     protected addRequestModelHandler(endpoint: WebviewEndpoint) {
         const handler = async (action: RequestModelAction) => {
-            switch (this.diagramConfig.currentDiagramType) {
-                case DiagramType.Component:
+            switch (this.currentDiagramType) {
+                case DiagramType.component:
                     this.sGraph = await GraphGenerator.component(
                         this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                     break;
-                case DiagramType.ConnectionGroup:
+                case DiagramType.connectionGroup:
                     this.sGraph = await GraphGenerator.connectionGroup(
                         this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                     break;
-                case DiagramType.Topology:
+                case DiagramType.topology:
                     this.sGraph = await GraphGenerator.topology(
                         this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                     break;
@@ -150,7 +155,11 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
      */
     public async displayDiagram(diagramType: DiagramType, fullyQualifiedName: string) {
         // Do not render if errors are detected in the editor. Diagrams can be incorrect when there are errors.
-        if (await this.errorsDetectedInCurrentEditor()) return;
+        if (this.errorsDetectedInCurrentEditor()) {
+            vscode.window.showWarningMessage("Cannot render diagram due to errors in the editor. To resolve them, try clicking {} at the bottom-right corner and reload locs.fpp from a build cache.");
+            return;
+        }
+
         // Store diagram type and fully qualified name for potential re-render on save.
         this.diagramConfig.currentDiagramType = diagramType;
         this.diagramConfig.fullyQualifiedName = fullyQualifiedName;
@@ -166,13 +175,13 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
         }
         // Generate a corresponding SGraph.
         switch (diagramType) {
-            case DiagramType.Component:
+            case DiagramType.component:
                 this.sGraph = await GraphGenerator.component(this.fppProject.decl, this.diagramConfig, fullyQualifiedName);
                 break;
-            case DiagramType.ConnectionGroup:
+            case DiagramType.connectionGroup:
                 this.sGraph = await GraphGenerator.connectionGroup(this.fppProject.decl, this.diagramConfig, fullyQualifiedName);
                 break;
-            case DiagramType.Topology:
+            case DiagramType.topology:
                 this.sGraph = await GraphGenerator.topology(this.fppProject.decl, this.diagramConfig, fullyQualifiedName);
                 break;
             default:
@@ -196,16 +205,20 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
             return;
         }
         // Do not render if errors are detected in the editor. Diagrams can be incorrect when there are errors.
-        if (await this.errorsDetectedInCurrentEditor()) return;
-        switch (this.diagramConfig.currentDiagramType) {
-            case DiagramType.Component:
-                this.sGraph = await GraphGenerator.component(this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
+        if (this.errorsDetectedInCurrentEditor()) {
+            vscode.window.showWarningMessage("Cannot render diagram due to errors in the editor. To resolve them, try clicking {} at the bottom-right corner and reload locs.fpp from a build cache.");
+            return;
+        }
+
+        switch (this.currentDiagramType) {
+            case DiagramType.component:
+                this.sGraph = await GraphGenerator.component(this.fppProject.decl, this.diagramConfig, this.fullyQualifiedName);
                 break;
-            case DiagramType.ConnectionGroup:
-                this.sGraph = await GraphGenerator.connectionGroup(this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
+            case DiagramType.connectionGroup:
+                this.sGraph = await GraphGenerator.connectionGroup(this.fppProject.decl, this.diagramConfig, this.fullyQualifiedName);
                 break;
-            case DiagramType.Topology:
-                this.sGraph = await GraphGenerator.topology(this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
+            case DiagramType.topology:
+                this.sGraph = await GraphGenerator.topology(this.fppProject.decl, this.diagramConfig, this.fullyQualifiedName);
                 break;
             default:
                 console.error("Unsupported DiagramType: ", this.diagramConfig.currentDiagramType);
@@ -240,23 +253,19 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
      * 
      * @returns True if there are errors, false otherwise
      */
-    private async errorsDetectedInCurrentEditor(): Promise<boolean> {
+    private errorsDetectedInCurrentEditor(): boolean {
         const currentFileUri = vscode.window.activeTextEditor?.document.uri;
-        const allDiagnostics = vscode.languages.getDiagnostics();
-        const fppDiagnostics = allDiagnostics.filter(diagnostic => {
-            // Each element in allDiagnostics is a tuple [uri, diag]
-            const uri = diagnostic[0];
-            const diagArr = diagnostic[1];
-            // Check if the URI is the current file in the active editor,
-            // and there are items (i.e., errors) in the diagnostic array.
-            return (uri.path === currentFileUri?.path)
-                && diagArr.length > 0;
-        });
-        if (fppDiagnostics.length > 0) {
-            vscode.window.showWarningMessage("Cannot render diagram due to errors in the editor. To resolve them, try clicking {} at the bottom-right corner and reload locs.fpp from a build cache.");
-            return true;
+        if (currentFileUri) {
+            const diags = vscode.languages.getDiagnostics(currentFileUri);
+            const hasErrors = diags.filter((diag) => (
+                diag.source === "fpp" &&
+                diag.severity === vscode.DiagnosticSeverity.Error
+            )).length > 0;
+
+            return hasErrors;
+        } else {
+            return false;
         }
-        return false;
     }
 
     private async openDiagramFromCurrentEditor(): Promise<WebviewEndpoint | undefined> {
