@@ -40,10 +40,6 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
         undefined,
         this.diagramConfig);
 
-    /* Private variables for remembering the current displayed diagram to handle diagram update on save */
-    private currentDiagramType: DiagramType | undefined;
-    private fullyQualifiedName: string = "";
-
     constructor(
         readonly options: WebviewPanelManagerOptions,
         readonly fppProject: FppProject
@@ -90,7 +86,7 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
      */
     protected addRequestModelHandler(endpoint: WebviewEndpoint) {
         const handler = async (action: RequestModelAction) => {
-            switch (this.currentDiagramType) {
+            switch (this.diagramConfig.currentDiagramType) {
                 case DiagramType.component:
                     this.sGraph = await GraphGenerator.component(
                         this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
@@ -210,15 +206,15 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
             return;
         }
 
-        switch (this.currentDiagramType) {
+        switch (this.diagramConfig.currentDiagramType) {
             case DiagramType.component:
-                this.sGraph = await GraphGenerator.component(this.fppProject.decl, this.diagramConfig, this.fullyQualifiedName);
+                this.sGraph = await GraphGenerator.component(this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                 break;
             case DiagramType.connectionGroup:
-                this.sGraph = await GraphGenerator.connectionGroup(this.fppProject.decl, this.diagramConfig, this.fullyQualifiedName);
+                this.sGraph = await GraphGenerator.connectionGroup(this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                 break;
             case DiagramType.topology:
-                this.sGraph = await GraphGenerator.topology(this.fppProject.decl, this.diagramConfig, this.fullyQualifiedName);
+                this.sGraph = await GraphGenerator.topology(this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                 break;
             default:
                 console.error("Unsupported DiagramType: ", this.diagramConfig.currentDiagramType);
