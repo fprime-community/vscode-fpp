@@ -3,7 +3,12 @@ import { DefaultLayoutConfigurator } from "sprotty-elk";
 import { SGraph, SEdge, SNode, SLabel } from 'sprotty-protocol';
 import { SModelIndex } from "sprotty-protocol";
 import { PortSNode } from "../../common/models";
-import { DiagramType } from "./manager";
+
+export enum DiagramType {
+    component,
+    connectionGroup,
+    topology
+}
 
 export class FppDiagramConfig extends DefaultLayoutConfigurator {
 
@@ -16,6 +21,9 @@ export class FppDiagramConfig extends DefaultLayoutConfigurator {
     protected override graphOptions(sgraph: SGraph, index: SModelIndex): LayoutOptions | undefined {
         return {
             'elk.algorithm': 'layered',
+            // Apply some spacing at the graph level to ensure the layered algorithm picks it up.
+            'elk.spacing.labelPortHorizontal': '5',
+            'elk.spacing.portPort': '10',
         };
     }
 
@@ -23,12 +31,9 @@ export class FppDiagramConfig extends DefaultLayoutConfigurator {
     protected override nodeOptions(snode: SNode, index: SModelIndex): LayoutOptions | undefined {
         return {
             "elk.nodeLabels.placement": "INSIDE, H_CENTER, V_CENTER",
-            "elk.portLabels.placement": "NEXT_TO_PORT_OF_POSSIBLE",
             "elk.portLabels.nextToPortIfPossible": 'true',
             'elk.portConstraints': 'FIXED_SIDE', // So that elk.port.side can take effect.
-            "elk.nodeSize.constraints": "PORTS, NODE_LABELS, MINIMUM_SIZE",
-            "elk.spacing.labelPortHorizontal": "5", // Does not seem to take effect.
-            "elk.spacing.portPort": "15", // Does not seem to take effect.
+            "elk.nodeSize.constraints": "PORTS, PORT_LABELS, NODE_LABELS, MINIMUM_SIZE",
         };
     }
 

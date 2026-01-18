@@ -7,7 +7,7 @@ import type { ComponentSNode, PortSNode } from '../../common/models';
 import { getInterfaceFullnameFromImport } from '../util';
 import { FppAnnotator } from '../passes/annotator';
 import { ExprTraverser } from '../evaluator';
-import { FppDiagramConfig } from './layout-config';
+import { DiagramType, FppDiagramConfig } from './layout-config';
 
 /** 
  * The additional FPP information attached to ELK nodes
@@ -300,7 +300,7 @@ export class GraphGenerator {
         });
 
         // Check if hideUnusedPorts is true. If so, only keep the ports used by checking against outer connections.
-        if (diagramConfig.hideUnusedPorts) {
+        if (diagramConfig.hideUnusedPorts && diagramConfig.currentDiagramType !== DiagramType.component) {
             let portsUsed = connections?.flatMap(conn => conn.sources.concat(conn.targets));
             node.ports = node.ports!.filter(port => portsUsed?.includes(port.id));
         }

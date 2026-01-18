@@ -20,7 +20,8 @@ import { generateSignature, signaturesDefinitions } from './signature';
 import { locs, LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from './locs';
 
 import { registerDefaultCommands } from 'sprotty-vscode';
-import { DiagramType, FppWebviewPanelManager } from './diagram/manager';
+import { FppWebviewPanelManager } from './diagram/manager';
+import { DiagramType } from './diagram/layout-config';
 
 function documentSymbolKind(type: SymbolType): vscode.SymbolKind | undefined {
     switch (type) {

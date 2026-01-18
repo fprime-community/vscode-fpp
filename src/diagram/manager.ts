@@ -17,15 +17,7 @@ import { GraphGenerator } from "./generator";
 import { ElkLayoutEngine } from "sprotty-elk/lib/elk-layout";
 import ELK from 'elkjs/lib/elk-api.js';
 import { FppLayoutEngine } from "./layout";
-import { FppDiagramConfig } from "./layout-config";
-
-// FIXME: Why can't this be moved into layout-config.ts?
-// Codelens disappear after moving.
-export enum DiagramType {
-    component,
-    connectionGroup,
-    topology
-}
+import { FppDiagramConfig, DiagramType } from "./layout-config";
 
 export class FppWebviewPanelManager extends WebviewPanelManager {
     public diagramConfig: FppDiagramConfig = new FppDiagramConfig();
