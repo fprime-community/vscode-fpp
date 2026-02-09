@@ -10,7 +10,7 @@
  * from the CodeLens buttons (buttons floating above definitions).
  */
 import { createWebviewPanel, SprottyDiagramIdentifier, WebviewEndpoint, WebviewPanelManager, WebviewPanelManagerOptions } from "sprotty-vscode";
-import { RequestModelAction, ComputedBoundsAction, UpdateModelAction, FitToScreenAction, SGraph, RequestBoundsAction, applyBounds } from 'sprotty-protocol';
+import { RequestModelAction, ComputedBoundsAction, UpdateModelAction, FitToScreenAction, SGraph, RequestBoundsAction, applyBounds, SelectAllAction } from 'sprotty-protocol';
 import * as vscode from "vscode";
 import { FppProject } from "../project";
 import { GraphGenerator } from "./generator";
@@ -161,6 +161,9 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
             // action handler. So here we simply return.
             return;
         }
+        // Clear selection before switching views.
+        const deselectAll = SelectAllAction.create({ select: false });
+        await activeEndpoint.sendAction(deselectAll);
         // Generate a corresponding SGraph.
         switch (diagramType) {
             case DiagramType.component:
@@ -225,6 +228,10 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
     }
 
     private async sendUpdateAndFitActions(endpoint: WebviewEndpoint, graph: SGraph) {
+        // Clear selection before updating the model.
+        const deselectAll = SelectAllAction.create({ select: false });
+        await endpoint.sendAction(deselectAll);
+        
         const msgUpdate = UpdateModelAction.create(graph);
         await endpoint.sendAction(msgUpdate);
         const msgFit = FitToScreenAction.create([]);
