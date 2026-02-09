@@ -20,7 +20,8 @@ import { generateSignature, signaturesDefinitions } from './signature';
 import { locs, LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from './locs';
 
 import { registerDefaultCommands } from 'sprotty-vscode';
-import { DiagramType, FppWebviewPanelManager } from './diagram/manager';
+import { FppWebviewPanelManager } from './diagram/manager';
+import { DiagramType } from './diagram/layout-config';
 
 function documentSymbolKind(type: SymbolType): vscode.SymbolKind | undefined {
     switch (type) {
@@ -1077,18 +1078,26 @@ export function activate(context: vscode.ExtensionContext) {
     registerDefaultCommands(webviewPanelManager, context, { extensionPrefix: 'fpp' });
     console.log("Instantiated FPP webview panel manager.");
 
-    // Register command to update diagram on save.
+    // Register command to update diagram, so that we can call this command on save (registered elsewhere).
     context.subscriptions.push(
         vscode.commands.registerCommand('fpp.updateDiagram', () => {
             webviewPanelManager.updateDiagram();
         })
     );
 
-    // Set up CodeLens provider to have neat buttons float above definitions.
+    // Set up CodeLens provider to have neat buttons floating above keywords.
     context.subscriptions.push(
         vscode.commands.registerCommand("fpp.displayDiagram",
             (diagramType: DiagramType, elemName: string) => webviewPanelManager.displayDiagram(diagramType, elemName)
         ),
+    );
+
+    // Register command to toggle whether to hide unused ports.
+    context.subscriptions.push(
+        vscode.commands.registerCommand('fpp.diagram.toggle-unused-ports', () => {
+            webviewPanelManager.diagramConfig.hideUnusedPorts = !webviewPanelManager.diagramConfig.hideUnusedPorts;
+            webviewPanelManager.updateDiagram();
+        })
     );
 }
 

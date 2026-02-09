@@ -7,6 +7,7 @@ import type { ComponentSNode, PortSNode } from '../../common/models';
 import { getInterfaceFullnameFromImport } from '../util';
 import { FppAnnotator } from '../passes/annotator';
 import { ExprTraverser } from '../evaluator';
+import { DiagramType, FppDiagramConfig } from './layout-config';
 
 /** 
  * The additional FPP information attached to ELK nodes
@@ -20,7 +21,7 @@ interface FppData {
     componentKind?: string, // active, queued, passive
 
     // Port data
-    portKind?: string, // Tracking kind of GeneralInputPortInstance and GeneralInputPortInstance
+    portKind?: string, // Storing the `kind` field of GeneralInputPortInstance and GeneralInputPortInstance
     isOutput?: boolean,
 }
 
@@ -47,15 +48,18 @@ export class GraphGenerator {
         return {
             // type: 'graph',
             id: 'root',
-            layoutOptions: {
-                'elk.algorithm': 'layered',
-            },
             children: [],
             edges: [],
         };
     }
 
-    static async component(decl: DeclCollector, fullyQualifiedComponentName: string): Promise<SGraph | undefined> {
+    /**
+     * Generate an SGraph that renders a component definition (not a component instance).
+     * @param decl The DeclCollector with all info about the FPP files
+     * @param fullyQualifiedComponentName The name of the component definition to be rendered
+     * @returns An SGraph to be sent to webview
+     */
+    static async component(decl: DeclCollector, diagramConfig: FppDiagramConfig, fullyQualifiedComponentName: string): Promise<SGraph | undefined> {
         const elkGraph: FppElkNode = this.initElkGraph();
         const compDecl = decl.components.get(fullyQualifiedComponentName)!;
         if (!compDecl) {
@@ -63,7 +67,7 @@ export class GraphGenerator {
             return;
         }
 
-        elkGraph.children?.push(this.createElkNodeComponent(decl, undefined, compDecl));
+        elkGraph.children?.push(this.createElkNodeComponent(decl, diagramConfig, undefined, compDecl, undefined));
 
         // Convert to SGraph
         const sGraph: SGraph = this.convertElkGraphToSGraph(elkGraph);
@@ -76,7 +80,7 @@ export class GraphGenerator {
      * @param decl The DeclCollector with all info about the FPP files
      * @returns An SGraph to be sent to webview
      */
-    static async topology(decl: DeclCollector, fullyQualifiedTopologyName: string, elkGraph: FppElkNode | undefined = undefined): Promise<SGraph | undefined> {
+    static async topology(decl: DeclCollector, diagramConfig: FppDiagramConfig, fullyQualifiedTopologyName: string, elkGraph: FppElkNode | undefined = undefined): Promise<SGraph | undefined> {
         if (!elkGraph) {
             elkGraph = this.initElkGraph();
         }
@@ -88,7 +92,7 @@ export class GraphGenerator {
         topologyDecl?.members.map(member => {
             if (member.type === 'TopologyImportStmt') {
                 const subtopologyName = MemberTraverser.flat(member.symbol);
-                this.topology(decl, subtopologyName, elkGraph);
+                this.topology(decl, diagramConfig, subtopologyName, elkGraph);
             }
         });
 
@@ -104,14 +108,6 @@ export class GraphGenerator {
             }
         });
 
-        // Create an ELK node for each component instance.
-        usedComponentInstances.forEach(e => {
-            const elkNode = this.createElkNodeFromComponentInstance(decl, e);
-            if (elkNode) {
-                elkGraph.children?.push(elkNode);
-            }
-        });
-
         // Iterate over all connection groups in the current topology and draw an ELK edge for each.
         const topologyConnGroups = topologyDecl?.members.filter(m => m.type === 'DirectGraphDecl') ?? [];
         topologyConnGroups.forEach(connGroup => {
@@ -119,6 +115,14 @@ export class GraphGenerator {
                 const edge: FppElkEdge = this.createElkEdge(decl, connGroup, conn, idx);
                 elkGraph.edges?.push(edge);
             });
+        });
+
+        // Create an ELK node for each component instance.
+        usedComponentInstances.forEach(instance => {
+            const elkNode = this.createElkNodeFromComponentInstance(decl, diagramConfig, instance, elkGraph.edges);
+            if (elkNode) {
+                elkGraph.children?.push(elkNode);
+            }
         });
 
         // Convert to SGraph
@@ -134,7 +138,7 @@ export class GraphGenerator {
      * @param fullyQualifiedGraphGroupName Fully qualified name of the connection group to generate the graph for
      * @returns An SGraph to be sent to webview
      */
-    static async connectionGroup(decl: DeclCollector, fullyQualifiedGraphGroupName: string): Promise<SGraph | undefined> {
+    static async connectionGroup(decl: DeclCollector, diagramConfig: FppDiagramConfig, fullyQualifiedGraphGroupName: string): Promise<SGraph | undefined> {
         const elkGraph: FppElkNode = this.initElkGraph();
         const graphGroup = decl.graphGroups.get(fullyQualifiedGraphGroupName)!;
         if (!graphGroup) {
@@ -169,18 +173,18 @@ export class GraphGenerator {
             }
         });
 
-        // Generate a component ELK node for each component instance.
-        compInstances.forEach(e => {
-            const elkNode = this.createElkNodeFromComponentInstance(decl, e);
-            if (elkNode) {
-                elkGraph.children?.push(elkNode);
-            }
-        });
-
         // Draw all connections in this connection group.
         graphGroup.connections.forEach((conn, idx) => {
             const edge: FppElkEdge = this.createElkEdge(decl, graphGroup, conn, idx);
             elkGraph.edges?.push(edge);
+        });
+
+        // Generate a component ELK node for each component instance.
+        compInstances.forEach(instance => {
+            const elkNode = this.createElkNodeFromComponentInstance(decl, diagramConfig, instance, elkGraph.edges);
+            if (elkNode) {
+                elkGraph.children?.push(elkNode);
+            }
         });
 
         // Convert to SGraph
@@ -193,7 +197,14 @@ export class GraphGenerator {
     /* Helper functions for generating ELK / Sprotty components */
     /************************************************************/
 
-    static createElkNodeFromComponentInstance(decl: DeclCollector, componentInstanceDecl: ComponentInstanceDecl): FppElkNode | undefined {
+    /**
+     * A helper method for building an ELK model for an FPP component instance
+     * @param decl The decl collector
+     * @param diagramConfig Configurations for what to render and ELK layout options
+     * @param componentInstanceDecl A component instance to be rendered
+     * @param connections A list of connections in the diagram containing the component. This field is only used when hiding unused ports (i.e., diagramConfig.hideUnusedPorts === true).
+     */
+    static createElkNodeFromComponentInstance(decl: DeclCollector, diagramConfig: FppDiagramConfig, componentInstanceDecl: ComponentInstanceDecl, connections: ElkExtendedEdge[] | undefined): FppElkNode | undefined {
         // For each instance, look up the ComponentDecl.
         const resolved = decl.resolve(
             componentInstanceDecl.fppType.type,
@@ -208,30 +219,29 @@ export class GraphGenerator {
         const componentDecl = decl.get(componentName, SymbolType.component) as ComponentDecl;
 
         // Instantiate a component FppElkNode for the component type.
-        const node = this.createElkNodeComponent(decl, componentInstanceDecl, componentDecl);
+        const node = this.createElkNodeComponent(decl, diagramConfig, componentInstanceDecl, componentDecl, connections);
         return node;
     }
 
     /**
-     * A helper method for building an Sprotty model for an FPP component
-     * @param comp ComponentDecl from decl collector
-     * @param uid Component instance name, which is supposed to be unique.
+     * A helper method for building an ELK model for an FPP component
+     * @param decl The decl collector
+     * @param diagramConfig Configurations for what to render and ELK layout options
+     * @param instance A component instance to be rendered (by displaying the instance name).
+     * If this is undefined, only the component definition is rendered (without displaying instance names).
+     * @param comp A component definition to be rendered
+     * @param connections A list of connections in the diagram containing the component.
+     * If this component is inside a larger diagram, the `connections` field is used to compute
+     * a list of ports used by this component. If `diagramConfig.hideUnusedPorts` is true,
+     * unused ports are hidden to simplify the diagram.
      */
-    static createElkNodeComponent(decl: DeclCollector, instance: ComponentInstanceDecl | undefined, comp: ComponentDecl): FppElkNode {
+    static createElkNodeComponent(decl: DeclCollector, diagramConfig: FppDiagramConfig, instance: ComponentInstanceDecl | undefined, comp: ComponentDecl, connections: ElkExtendedEdge[] | undefined): FppElkNode {
         // Instantiate an SNode for the component.
         const compId = instance ? `${instance.scope.map(e => e.value).join('.')}.${instance.name.value}` : `uninstantiatedComponent`; // DeploymentName.componentInstanceName
         const compClassName = comp.name.value;
         const compInstanceName = instance ? instance.name.value : "";
         var node: FppElkNode = {
             id: compId,
-            layoutOptions: {
-                "elk.nodeLabels.placement": "INSIDE, H_CENTER, V_CENTER",
-                "elk.portLabels.placement": "NEXT_TO_PORT_OF_POSSIBLE",
-                "elk.portLabels.nextToPortIfPossible": 'true',
-                'elk.portConstraints': 'FIXED_SIDE', // So that elk.port.side can take effect.
-                "elk.nodeSize.constraints": "PORTS, NODE_LABELS, MINIMUM_SIZE",
-                "elk.spacing.labelPortHorizontal": "5",
-            },
             // IMPORTANT: x, y must be set, otherwise mysterious runtime errors could occur during ELK layout.
             // Set x, y both to 0, since layout will set them later.
             // But we do need to explicitly set them for the Sprotty front-end
@@ -261,14 +271,14 @@ export class GraphGenerator {
         comp.members.forEach((m, i) => {
             if (GraphGenerator.isPortInstanceDecl(m)) {
                 const portId = `${compId}.${m.name.value}`;
-                node.ports!.push(...GraphGenerator.createElkNodePort(m, portId, decl));
+                node.ports!.push(...GraphGenerator.createElkNodePort(decl, m, portId));
             }
             // Handle ports imported from include statememts.
             else if (GraphGenerator.isIncludeStmt(m)) {
                 m.resolved?.members.forEach(member => {
                     if (GraphGenerator.isPortInstanceDecl(member)) {
                         const portId = `${compId}.${member.name.value}`;
-                        node.ports!.push(...GraphGenerator.createElkNodePort(member, portId, decl));
+                        node.ports!.push(...GraphGenerator.createElkNodePort(decl, member, portId));
                     }
                 });
             }
@@ -283,16 +293,28 @@ export class GraphGenerator {
                 interfaceDecl?.members.forEach(member => {
                     if (GraphGenerator.isPortInstanceDecl(member)) {
                         const portId = `${compId}.${member.name.value}`;
-                        node.ports!.push(...GraphGenerator.createElkNodePort(member, portId, decl));
+                        node.ports!.push(...GraphGenerator.createElkNodePort(decl, member, portId));
                     }
                 });
             }
         });
 
+        // Check if hideUnusedPorts is true. If so, only keep the ports used by checking against outer connections.
+        if (diagramConfig.hideUnusedPorts && diagramConfig.currentDiagramType !== DiagramType.component) {
+            let portsUsed = connections?.flatMap(conn => conn.sources.concat(conn.targets));
+            node.ports = node.ports!.filter(port => portsUsed?.includes(port.id));
+        }
+
         return node;
     }
 
-    static createElkNodePort(port: PortInstanceDecl, portIdPrefix: string, decl: DeclCollector): FppElkPort[] {
+    /**
+     * A helper method for building an ELK model for an FPP port
+     * @param decl The decl collector
+     * @param port A port instance to be rendered
+     * @param portIdPrefix A prefix string for making the port's ELK id unique
+     */
+    static createElkNodePort(decl: DeclCollector, port: PortInstanceDecl, portIdPrefix: string): FppElkPort[] {
         // Extract the name and the kind of the port.
         // If portKind is empty, then special colors will not be applied.
         const portName = port.name.value;
@@ -325,9 +347,6 @@ export class GraphGenerator {
                 x: 0, y: 0,
                 height: 10,
                 width: 10,
-                layoutOptions: {
-                    'elk.port.side': port.kind.isOutput ? 'EAST' : 'WEST',
-                },
                 labels: [
                     // For now, each port label has fix width and height.
                     // If size is not set, ELK sets it to 0, 0, not ideal.
@@ -348,6 +367,13 @@ export class GraphGenerator {
         return portNodes;
     }
 
+    /**
+     * A helper method for building an ELK model for an FPP connection
+     * @param decl The decl collector
+     * @param directGraphDecl A connection group this connection belongs to
+     * @param conn The connection to be rendered
+     * @param idx The connection index for creating a unique ELK id
+     */
     static createElkEdge(decl: DeclCollector, directGraphDecl: DirectGraphDecl, conn: Connection, idx: number): FppElkEdge {
         const annotator = new FppAnnotator(decl);
         const scope = directGraphDecl.scope;
@@ -361,10 +387,10 @@ export class GraphGenerator {
         let sourceFullyQualifiedName = sourceResolve
             ? `${MemberTraverser.flat(scope)}.${MemberTraverser.flat(sourceId)}`
             : MemberTraverser.flat(sourceId);
-        // Resolve source index from expression.
+        // Resolve an integer source port index from expression.
         let sourceIndex = 0;
         if (conn.source.index) {
-            const sourceIndexExpr = annotator.exprTrav.traverse(conn.source.index, directGraphDecl.scope, ExprTraverser.intValidator);
+            const sourceIndexExpr = annotator.exprTrav.traverse(conn.source.index, scope, ExprTraverser.intValidator);
             sourceIndex = (sourceIndexExpr as IntExprValue).value;
         }
 
@@ -374,10 +400,10 @@ export class GraphGenerator {
         let destFullyQualifiedName = destResolve
             ? `${MemberTraverser.flat(scope)}.${MemberTraverser.flat(destId)}`
             : MemberTraverser.flat(destId);
-        // Resolve dest index from expression.
+        // Resolve an integer destination port index from expression.
         let destIndex = 0;
         if (conn.destination.index) {
-            const destIndexExpr = annotator.exprTrav.traverse(conn.destination.index, directGraphDecl.scope, ExprTraverser.intValidator);
+            const destIndexExpr = annotator.exprTrav.traverse(conn.destination.index, scope, ExprTraverser.intValidator);
             destIndex = (destIndexExpr as IntExprValue).value;
         }
 

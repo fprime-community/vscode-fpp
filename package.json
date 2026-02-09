@@ -66,6 +66,12 @@
                 "title": "FPP: Export Diagram",
                 "icon": "$(desktop-download)",
                 "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.toggle-unused-ports",
+                "title": "Show/Hide Unused Ports",
+                "icon": "$(activate-breakpoints)",
+                "category": "FPP Diagram"
             }
         ],
         "languages": [
@@ -129,6 +135,11 @@
                 },
                 {
                     "command": "fpp.diagram.export",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.toggle-unused-ports",
                     "when": "fppDiagrams-focused == true",
                     "group": "navigation"
                 }

@@ -9,25 +9,19 @@
  * 2. the extension actively sending messages to the webview, upon user request
  * from the CodeLens buttons (buttons floating above definitions).
  */
-import { createFileUri, createWebviewPanel, SprottyDiagramIdentifier, WebviewEndpoint, WebviewPanelManager, WebviewPanelManagerOptions } from "sprotty-vscode";
-import { RequestModelAction, ComputedBoundsAction, UpdateModelAction, FitToScreenAction, SGraph, RequestBoundsAction, applyBounds } from 'sprotty-protocol';
+import { createWebviewPanel, SprottyDiagramIdentifier, WebviewEndpoint, WebviewPanelManager, WebviewPanelManagerOptions } from "sprotty-vscode";
+import { RequestModelAction, ComputedBoundsAction, UpdateModelAction, FitToScreenAction, SGraph, RequestBoundsAction, applyBounds, SelectAllAction } from 'sprotty-protocol';
 import * as vscode from "vscode";
 import { FppProject } from "../project";
 import { GraphGenerator } from "./generator";
 import { ElkLayoutEngine } from "sprotty-elk/lib/elk-layout";
 import ELK from 'elkjs/lib/elk-api.js';
 import { FppLayoutEngine } from "./layout";
-import { FppDiagramLayoutConfigurator } from "./layout-config";
-
-export enum DiagramType {
-    component,
-    connectionGroup,
-    topology
-}
+import { FppDiagramConfig, DiagramType } from "./layout-config";
 
 export class FppWebviewPanelManager extends WebviewPanelManager {
+    public diagramConfig: FppDiagramConfig = new FppDiagramConfig();
     private sGraph: SGraph | undefined;
-    private diagramConfig: FppDiagramLayoutConfigurator = new FppDiagramLayoutConfigurator();
     private elkEngine: ElkLayoutEngine = new FppLayoutEngine(
         () => new ELK({
             workerFactory: function (url) { // the value of 'url' is irrelevant here
@@ -37,10 +31,6 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
         }),
         undefined,
         this.diagramConfig);
-
-    /* Private variables for remembering the current displayed diagram to handle diagram update on save */
-    private currentDiagramType: DiagramType | undefined;
-    private fullyQualifiedName: string = "";
 
     constructor(
         readonly options: WebviewPanelManagerOptions,
@@ -88,18 +78,18 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
      */
     protected addRequestModelHandler(endpoint: WebviewEndpoint) {
         const handler = async (action: RequestModelAction) => {
-            switch (this.currentDiagramType) {
+            switch (this.diagramConfig.currentDiagramType) {
                 case DiagramType.component:
                     this.sGraph = await GraphGenerator.component(
-                        this.fppProject.decl, this.fullyQualifiedName);
+                        this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                     break;
                 case DiagramType.connectionGroup:
                     this.sGraph = await GraphGenerator.connectionGroup(
-                        this.fppProject.decl, this.fullyQualifiedName);
+                        this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                     break;
                 case DiagramType.topology:
                     this.sGraph = await GraphGenerator.topology(
-                        this.fppProject.decl, this.fullyQualifiedName);
+                        this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                     break;
             }
             if (!this.sGraph) {
@@ -159,8 +149,8 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
         }
 
         // Store diagram type and fully qualified name for potential re-render on save.
-        this.currentDiagramType = diagramType;
-        this.fullyQualifiedName = fullyQualifiedName;
+        this.diagramConfig.currentDiagramType = diagramType;
+        this.diagramConfig.fullyQualifiedName = fullyQualifiedName;
         // Check if webview is active.
         let activeEndpoint = this.findOpenedWebview();
         if (!activeEndpoint) {
@@ -171,16 +161,19 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
             // action handler. So here we simply return.
             return;
         }
+        // Clear selection before switching views.
+        const deselectAll = SelectAllAction.create({ select: false });
+        await activeEndpoint.sendAction(deselectAll);
         // Generate a corresponding SGraph.
         switch (diagramType) {
             case DiagramType.component:
-                this.sGraph = await GraphGenerator.component(this.fppProject.decl, fullyQualifiedName);
+                this.sGraph = await GraphGenerator.component(this.fppProject.decl, this.diagramConfig, fullyQualifiedName);
                 break;
             case DiagramType.connectionGroup:
-                this.sGraph = await GraphGenerator.connectionGroup(this.fppProject.decl, fullyQualifiedName);
+                this.sGraph = await GraphGenerator.connectionGroup(this.fppProject.decl, this.diagramConfig, fullyQualifiedName);
                 break;
             case DiagramType.topology:
-                this.sGraph = await GraphGenerator.topology(this.fppProject.decl, fullyQualifiedName);
+                this.sGraph = await GraphGenerator.topology(this.fppProject.decl, this.diagramConfig, fullyQualifiedName);
                 break;
             default:
                 vscode.window.showErrorMessage('Unsupport diagram type: ', diagramType);
@@ -208,18 +201,18 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
             return;
         }
 
-        switch (this.currentDiagramType) {
+        switch (this.diagramConfig.currentDiagramType) {
             case DiagramType.component:
-                this.sGraph = await GraphGenerator.component(this.fppProject.decl, this.fullyQualifiedName);
+                this.sGraph = await GraphGenerator.component(this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                 break;
             case DiagramType.connectionGroup:
-                this.sGraph = await GraphGenerator.connectionGroup(this.fppProject.decl, this.fullyQualifiedName);
+                this.sGraph = await GraphGenerator.connectionGroup(this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                 break;
             case DiagramType.topology:
-                this.sGraph = await GraphGenerator.topology(this.fppProject.decl, this.fullyQualifiedName);
+                this.sGraph = await GraphGenerator.topology(this.fppProject.decl, this.diagramConfig, this.diagramConfig.fullyQualifiedName);
                 break;
             default:
-                console.error("Unsupported DiagramType: ", this.currentDiagramType);
+                console.error("Unsupported DiagramType: ", this.diagramConfig.currentDiagramType);
                 return;
         }
         const msgRequestBounds = RequestBoundsAction.create(this.sGraph!);
@@ -235,6 +228,10 @@ export class FppWebviewPanelManager extends WebviewPanelManager {
     }
 
     private async sendUpdateAndFitActions(endpoint: WebviewEndpoint, graph: SGraph) {
+        // Clear selection before updating the model.
+        const deselectAll = SelectAllAction.create({ select: false });
+        await endpoint.sendAction(deselectAll);
+        
         const msgUpdate = UpdateModelAction.create(graph);
         await endpoint.sendAction(msgUpdate);
         const msgFit = FitToScreenAction.create([]);
