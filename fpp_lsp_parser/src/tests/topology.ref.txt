@@ -31,17 +31,21 @@ ROOT@0..7126
           DEF_ENUM_CONSTANT@235..245
             NAME@235..245
               IDENT@235..245 "rateGroup1"
-          EOL@245..250 "\n    "
+          EOL@245..246 "\n"
+          WHITESPACE@246..250 "    "
           DEF_ENUM_CONSTANT@250..260
             NAME@250..260
               IDENT@250..260 "rateGroup2"
-          EOL@260..265 "\n    "
+          EOL@260..261 "\n"
+          WHITESPACE@261..265 "    "
           DEF_ENUM_CONSTANT@265..275
             NAME@265..275
               IDENT@265..275 "rateGroup3"
-          EOL@275..278 "\n  "
+          EOL@275..276 "\n"
+          WHITESPACE@276..278 "  "
         RIGHT_CURLY@278..279 "}"
-      EOL@279..285 "\n\n\n\n  "
+      EOL@279..283 "\n\n\n\n"
+      WHITESPACE@283..285 "  "
       DEF_TOPOLOGY@285..7122
         TOPOLOGY_KW@285..293 "topology"
         WHITESPACE@293..294 " "
@@ -68,7 +72,8 @@ ROOT@0..7126
               IDENT@491..498 "CdhCore"
               DOT@498..499 "."
               IDENT@499..510 "Subtopology"
-          EOL@510..515 "\n    "
+          EOL@510..511 "\n"
+          WHITESPACE@511..515 "    "
           SPEC_INSTANCE@515..542
             IMPORT_KW@515..521 "import"
             WHITESPACE@521..522 " "
@@ -76,7 +81,8 @@ ROOT@0..7126
               IDENT@522..530 "ComCcsds"
               DOT@530..531 "."
               IDENT@531..542 "Subtopology"
-          EOL@542..547 "\n    "
+          EOL@542..543 "\n"
+          WHITESPACE@543..547 "    "
           SPEC_INSTANCE@547..578
             IMPORT_KW@547..553 "import"
             WHITESPACE@553..554 " "
@@ -84,7 +90,8 @@ ROOT@0..7126
               IDENT@554..566 "FileHandling"
               DOT@566..567 "."
               IDENT@567..578 "Subtopology"
-          EOL@578..583 "\n    "
+          EOL@578..579 "\n"
+          WHITESPACE@579..583 "    "
           SPEC_INSTANCE@583..614
             IMPORT_KW@583..589 "import"
             WHITESPACE@589..590 " "
@@ -92,127 +99,166 @@ ROOT@0..7126
               IDENT@590..602 "DataProducts"
               DOT@602..603 "."
               IDENT@603..614 "Subtopology"
-          EOL@614..812 "\n\n    # ------------- ..."
+          EOL@614..616 "\n\n"
+          WHITESPACE@616..620 "    "
+          COMMENT@620..692 "# ------------------- ..."
+          EOL@692..693 "\n"
+          WHITESPACE@693..697 "    "
+          COMMENT@697..729 "# Instances used in t ..."
+          EOL@729..730 "\n"
+          WHITESPACE@730..734 "    "
+          COMMENT@734..806 "# ------------------- ..."
+          EOL@806..808 "\n\n"
+          WHITESPACE@808..812 "    "
           SPEC_INSTANCE@812..824
             INSTANCE_KW@812..820 "instance"
             WHITESPACE@820..821 " "
             QUAL_IDENT@821..824
               IDENT@821..824 "SG1"
-          EOL@824..829 "\n    "
+          EOL@824..825 "\n"
+          WHITESPACE@825..829 "    "
           SPEC_INSTANCE@829..841
             INSTANCE_KW@829..837 "instance"
             WHITESPACE@837..838 " "
             QUAL_IDENT@838..841
               IDENT@838..841 "SG2"
-          EOL@841..846 "\n    "
+          EOL@841..842 "\n"
+          WHITESPACE@842..846 "    "
           SPEC_INSTANCE@846..858
             INSTANCE_KW@846..854 "instance"
             WHITESPACE@854..855 " "
             QUAL_IDENT@855..858
               IDENT@855..858 "SG3"
-          EOL@858..863 "\n    "
+          EOL@858..859 "\n"
+          WHITESPACE@859..863 "    "
           SPEC_INSTANCE@863..875
             INSTANCE_KW@863..871 "instance"
             WHITESPACE@871..872 " "
             QUAL_IDENT@872..875
               IDENT@872..875 "SG4"
-          EOL@875..880 "\n    "
+          EOL@875..876 "\n"
+          WHITESPACE@876..880 "    "
           SPEC_INSTANCE@880..892
             INSTANCE_KW@880..888 "instance"
             WHITESPACE@888..889 " "
             QUAL_IDENT@889..892
               IDENT@889..892 "SG5"
-          EOL@892..897 "\n    "
+          EOL@892..893 "\n"
+          WHITESPACE@893..897 "    "
           SPEC_INSTANCE@897..914
             INSTANCE_KW@897..905 "instance"
             WHITESPACE@905..906 " "
             QUAL_IDENT@906..914
               IDENT@906..914 "blockDrv"
-          EOL@914..919 "\n    "
+          EOL@914..915 "\n"
+          WHITESPACE@915..919 "    "
           SPEC_INSTANCE@919..937
             INSTANCE_KW@919..927 "instance"
             WHITESPACE@927..928 " "
             QUAL_IDENT@928..937
               IDENT@928..937 "posixTime"
-          EOL@937..942 "\n    "
+          EOL@937..938 "\n"
+          WHITESPACE@938..942 "    "
           SPEC_INSTANCE@942..959
             INSTANCE_KW@942..950 "instance"
             WHITESPACE@950..951 " "
             QUAL_IDENT@951..959
               IDENT@951..959 "pingRcvr"
-          EOL@959..964 "\n    "
+          EOL@959..960 "\n"
+          WHITESPACE@960..964 "    "
           SPEC_INSTANCE@964..987
             INSTANCE_KW@964..972 "instance"
             WHITESPACE@972..973 " "
             QUAL_IDENT@973..987
               IDENT@973..987 "rateGroup1Comp"
-          EOL@987..992 "\n    "
+          EOL@987..988 "\n"
+          WHITESPACE@988..992 "    "
           SPEC_INSTANCE@992..1015
             INSTANCE_KW@992..1000 "instance"
             WHITESPACE@1000..1001 " "
             QUAL_IDENT@1001..1015
               IDENT@1001..1015 "rateGroup2Comp"
-          EOL@1015..1020 "\n    "
+          EOL@1015..1016 "\n"
+          WHITESPACE@1016..1020 "    "
           SPEC_INSTANCE@1020..1043
             INSTANCE_KW@1020..1028 "instance"
             WHITESPACE@1028..1029 " "
             QUAL_IDENT@1029..1043
               IDENT@1029..1043 "rateGroup3Comp"
-          EOL@1043..1048 "\n    "
+          EOL@1043..1044 "\n"
+          WHITESPACE@1044..1048 "    "
           SPEC_INSTANCE@1048..1076
             INSTANCE_KW@1048..1056 "instance"
             WHITESPACE@1056..1057 " "
             QUAL_IDENT@1057..1076
               IDENT@1057..1076 "rateGroupDriverComp"
-          EOL@1076..1081 "\n    "
+          EOL@1076..1077 "\n"
+          WHITESPACE@1077..1081 "    "
           SPEC_INSTANCE@1081..1102
             INSTANCE_KW@1081..1089 "instance"
             WHITESPACE@1089..1090 " "
             QUAL_IDENT@1090..1102
               IDENT@1090..1102 "recvBuffComp"
-          EOL@1102..1107 "\n    "
+          EOL@1102..1103 "\n"
+          WHITESPACE@1103..1107 "    "
           SPEC_INSTANCE@1107..1128
             INSTANCE_KW@1107..1115 "instance"
             WHITESPACE@1115..1116 " "
             QUAL_IDENT@1116..1128
               IDENT@1116..1128 "sendBuffComp"
-          EOL@1128..1133 "\n    "
+          EOL@1128..1129 "\n"
+          WHITESPACE@1129..1133 "    "
           SPEC_INSTANCE@1133..1150
             INSTANCE_KW@1133..1141 "instance"
             WHITESPACE@1141..1142 " "
             QUAL_IDENT@1142..1150
               IDENT@1142..1150 "typeDemo"
-          EOL@1150..1155 "\n    "
+          EOL@1150..1151 "\n"
+          WHITESPACE@1151..1155 "    "
           SPEC_INSTANCE@1155..1179
             INSTANCE_KW@1155..1163 "instance"
             WHITESPACE@1163..1164 " "
             QUAL_IDENT@1164..1179
               IDENT@1164..1179 "systemResources"
-          EOL@1179..1184 "\n    "
+          EOL@1179..1180 "\n"
+          WHITESPACE@1180..1184 "    "
           SPEC_INSTANCE@1184..1199
             INSTANCE_KW@1184..1192 "instance"
             WHITESPACE@1192..1193 " "
             QUAL_IDENT@1193..1199
               IDENT@1193..1199 "dpDemo"
-          EOL@1199..1204 "\n    "
+          EOL@1199..1200 "\n"
+          WHITESPACE@1200..1204 "    "
           SPEC_INSTANCE@1204..1223
             INSTANCE_KW@1204..1212 "instance"
             WHITESPACE@1212..1213 " "
             QUAL_IDENT@1213..1223
               IDENT@1213..1223 "linuxTimer"
-          EOL@1223..1228 "\n    "
+          EOL@1223..1224 "\n"
+          WHITESPACE@1224..1228 "    "
           SPEC_INSTANCE@1228..1246
             INSTANCE_KW@1228..1236 "instance"
             WHITESPACE@1236..1237 " "
             QUAL_IDENT@1237..1246
               IDENT@1237..1246 "comDriver"
-          EOL@1246..1251 "\n    "
+          EOL@1246..1247 "\n"
+          WHITESPACE@1247..1251 "    "
           SPEC_INSTANCE@1251..1266
             INSTANCE_KW@1251..1259 "instance"
             WHITESPACE@1259..1260 " "
             QUAL_IDENT@1260..1266
               IDENT@1260..1266 "cmdSeq"
-          EOL@1266..1458 "\n\n    # ------------- ..."
+          EOL@1266..1268 "\n\n"
+          WHITESPACE@1268..1272 "    "
+          COMMENT@1272..1344 "# ------------------- ..."
+          EOL@1344..1345 "\n"
+          WHITESPACE@1345..1349 "    "
+          COMMENT@1349..1375 "# Pattern graph speci ..."
+          EOL@1375..1376 "\n"
+          WHITESPACE@1376..1380 "    "
+          COMMENT@1380..1452 "# ------------------- ..."
+          EOL@1452..1454 "\n\n"
+          WHITESPACE@1454..1458 "    "
           SPEC_CONNECTION_GRAPH_PATTERN@1458..1502
             COMMAND_KW@1458..1465 "command"
             WHITESPACE@1465..1466 " "
@@ -224,7 +270,8 @@ ROOT@0..7126
               IDENT@1487..1494 "CdhCore"
               DOT@1494..1495 "."
               IDENT@1495..1502 "cmdDisp"
-          EOL@1502..1508 "\n\n    "
+          EOL@1502..1504 "\n\n"
+          WHITESPACE@1504..1508 "    "
           SPEC_CONNECTION_GRAPH_PATTERN@1508..1549
             EVENT_KW@1508..1513 "event"
             WHITESPACE@1513..1514 " "
@@ -236,7 +283,8 @@ ROOT@0..7126
               IDENT@1535..1542 "CdhCore"
               DOT@1542..1543 "."
               IDENT@1543..1549 "events"
-          EOL@1549..1555 "\n\n    "
+          EOL@1549..1551 "\n\n"
+          WHITESPACE@1551..1555 "    "
           SPEC_CONNECTION_GRAPH_PATTERN@1555..1601
             TELEMETRY_KW@1555..1564 "telemetry"
             WHITESPACE@1564..1565 " "
@@ -248,7 +296,8 @@ ROOT@0..7126
               IDENT@1586..1593 "CdhCore"
               DOT@1593..1594 "."
               IDENT@1594..1601 "tlmSend"
-          EOL@1601..1607 "\n\n    "
+          EOL@1601..1603 "\n\n"
+          WHITESPACE@1603..1607 "    "
           SPEC_CONNECTION_GRAPH_PATTERN@1607..1657
             TEXT_KW@1607..1611 "text"
             WHITESPACE@1611..1612 " "
@@ -262,7 +311,8 @@ ROOT@0..7126
               IDENT@1639..1646 "CdhCore"
               DOT@1646..1647 "."
               IDENT@1647..1657 "textLogger"
-          EOL@1657..1663 "\n\n    "
+          EOL@1657..1659 "\n\n"
+          WHITESPACE@1659..1663 "    "
           SPEC_CONNECTION_GRAPH_PATTERN@1663..1706
             HEALTH_KW@1663..1669 "health"
             WHITESPACE@1669..1670 " "
@@ -274,7 +324,8 @@ ROOT@0..7126
               IDENT@1691..1698 "CdhCore"
               DOT@1698..1699 "."
               IDENT@1699..1706 "$health"
-          EOL@1706..1712 "\n\n    "
+          EOL@1706..1708 "\n\n"
+          WHITESPACE@1708..1712 "    "
           SPEC_CONNECTION_GRAPH_PATTERN@1712..1757
             PARAM_KW@1712..1717 "param"
             WHITESPACE@1717..1718 " "
@@ -286,7 +337,8 @@ ROOT@0..7126
               IDENT@1739..1751 "FileHandling"
               DOT@1751..1752 "."
               IDENT@1752..1757 "prmDb"
-          EOL@1757..1763 "\n\n    "
+          EOL@1757..1759 "\n\n"
+          WHITESPACE@1759..1763 "    "
           SPEC_CONNECTION_GRAPH_PATTERN@1763..1798
             TIME_KW@1763..1767 "time"
             WHITESPACE@1767..1768 " "
@@ -296,7 +348,29 @@ ROOT@0..7126
             WHITESPACE@1788..1789 " "
             QUAL_IDENT@1789..1798
               IDENT@1789..1798 "posixTime"
-          EOL@1798..2201 "\n\n    # ------------- ..."
+          EOL@1798..1800 "\n\n"
+          WHITESPACE@1800..1804 "    "
+          COMMENT@1804..1876 "# ------------------- ..."
+          EOL@1876..1877 "\n"
+          WHITESPACE@1877..1881 "    "
+          COMMENT@1881..1900 "# Telemetry packets"
+          EOL@1900..1901 "\n"
+          WHITESPACE@1901..1905 "    "
+          COMMENT@1905..1977 "# ------------------- ..."
+          EOL@1977..1979 "\n\n"
+          WHITESPACE@1979..1983 "    "
+          COMMENT@1983..2010 "# include \"RefPackets ..."
+          EOL@2010..2012 "\n\n"
+          WHITESPACE@2012..2016 "    "
+          COMMENT@2016..2088 "# ------------------- ..."
+          EOL@2088..2089 "\n"
+          WHITESPACE@2089..2093 "    "
+          COMMENT@2093..2118 "# Direct graph specif ..."
+          EOL@2118..2119 "\n"
+          WHITESPACE@2119..2123 "    "
+          COMMENT@2123..2195 "# ------------------- ..."
+          EOL@2195..2197 "\n\n"
+          WHITESPACE@2197..2201 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@2201..4144
             CONNECTIONS_KW@2201..2212 "connections"
             WHITESPACE@2212..2213 " "
@@ -324,7 +398,11 @@ ROOT@0..7126
                     IDENT@2291..2310 "rateGroupDriverComp"
                     DOT@2310..2311 "."
                     IDENT@2311..2318 "CycleIn"
-              EOL@2318..2347 "\n\n      # Rate group  ..."
+              EOL@2318..2320 "\n\n"
+              WHITESPACE@2320..2326 "      "
+              COMMENT@2326..2340 "# Rate group 1"
+              EOL@2340..2341 "\n"
+              WHITESPACE@2341..2347 "      "
               CONNECTION@2347..2430
                 CONNECTION_FROM@2347..2404
                   PORT_INSTANCE_IDENTIFIER@2347..2375
@@ -349,7 +427,8 @@ ROOT@0..7126
                     IDENT@2408..2422 "rateGroup1Comp"
                     DOT@2422..2423 "."
                     IDENT@2423..2430 "CycleIn"
-              EOL@2430..2437 "\n      "
+              EOL@2430..2431 "\n"
+              WHITESPACE@2431..2437 "      "
               CONNECTION@2437..2488
                 CONNECTION_FROM@2437..2473
                   PORT_INSTANCE_IDENTIFIER@2437..2470
@@ -370,7 +449,8 @@ ROOT@0..7126
                     IDENT@2477..2480 "SG1"
                     DOT@2480..2481 "."
                     IDENT@2481..2488 "schedIn"
-              EOL@2488..2495 "\n      "
+              EOL@2488..2489 "\n"
+              WHITESPACE@2489..2495 "      "
               CONNECTION@2495..2546
                 CONNECTION_FROM@2495..2531
                   PORT_INSTANCE_IDENTIFIER@2495..2528
@@ -391,7 +471,8 @@ ROOT@0..7126
                     IDENT@2535..2538 "SG2"
                     DOT@2538..2539 "."
                     IDENT@2539..2546 "schedIn"
-              EOL@2546..2553 "\n      "
+              EOL@2546..2547 "\n"
+              WHITESPACE@2547..2553 "      "
               CONNECTION@2553..2612
                 CONNECTION_FROM@2553..2589
                   PORT_INSTANCE_IDENTIFIER@2553..2586
@@ -414,7 +495,8 @@ ROOT@0..7126
                     IDENT@2601..2608 "tlmSend"
                     DOT@2608..2609 "."
                     IDENT@2609..2612 "Run"
-              EOL@2612..2619 "\n      "
+              EOL@2612..2613 "\n"
+              WHITESPACE@2613..2619 "      "
               CONNECTION@2619..2688
                 CONNECTION_FROM@2619..2655
                   PORT_INSTANCE_IDENTIFIER@2619..2652
@@ -437,7 +519,8 @@ ROOT@0..7126
                     IDENT@2672..2684 "fileDownlink"
                     DOT@2684..2685 "."
                     IDENT@2685..2688 "Run"
-              EOL@2688..2695 "\n      "
+              EOL@2688..2689 "\n"
+              WHITESPACE@2689..2695 "      "
               CONNECTION@2695..2754
                 CONNECTION_FROM@2695..2731
                   PORT_INSTANCE_IDENTIFIER@2695..2728
@@ -458,7 +541,8 @@ ROOT@0..7126
                     IDENT@2735..2750 "systemResources"
                     DOT@2750..2751 "."
                     IDENT@2751..2754 "run"
-              EOL@2754..2761 "\n      "
+              EOL@2754..2755 "\n"
+              WHITESPACE@2755..2761 "      "
               CONNECTION@2761..2822
                 CONNECTION_FROM@2761..2797
                   PORT_INSTANCE_IDENTIFIER@2761..2794
@@ -481,7 +565,8 @@ ROOT@0..7126
                     IDENT@2810..2818 "comQueue"
                     DOT@2818..2819 "."
                     IDENT@2819..2822 "run"
-              EOL@2822..2829 "\n      "
+              EOL@2822..2823 "\n"
+              WHITESPACE@2823..2829 "      "
               CONNECTION@2829..2888
                 CONNECTION_FROM@2829..2865
                   PORT_INSTANCE_IDENTIFIER@2829..2862
@@ -504,7 +589,8 @@ ROOT@0..7126
                     IDENT@2877..2884 "cmdDisp"
                     DOT@2884..2885 "."
                     IDENT@2885..2888 "run"
-              EOL@2888..2895 "\n      "
+              EOL@2888..2889 "\n"
+              WHITESPACE@2889..2895 "      "
               CONNECTION@2895..2962
                 CONNECTION_FROM@2895..2931
                   PORT_INSTANCE_IDENTIFIER@2895..2928
@@ -527,7 +613,11 @@ ROOT@0..7126
                     IDENT@2944..2954 "aggregator"
                     DOT@2954..2955 "."
                     IDENT@2955..2962 "timeout"
-              EOL@2962..2991 "\n\n      # Rate group  ..."
+              EOL@2962..2964 "\n\n"
+              WHITESPACE@2964..2970 "      "
+              COMMENT@2970..2984 "# Rate group 2"
+              EOL@2984..2985 "\n"
+              WHITESPACE@2985..2991 "      "
               CONNECTION@2991..3074
                 CONNECTION_FROM@2991..3048
                   PORT_INSTANCE_IDENTIFIER@2991..3019
@@ -552,7 +642,10 @@ ROOT@0..7126
                     IDENT@3052..3066 "rateGroup2Comp"
                     DOT@3066..3067 "."
                     IDENT@3067..3074 "CycleIn"
-              EOL@3074..3143 "\n#      rateGroup2Com ..."
+              EOL@3074..3075 "\n"
+              COMMENT@3075..3136 "#      rateGroup2Comp ..."
+              EOL@3136..3137 "\n"
+              WHITESPACE@3137..3143 "      "
               CONNECTION@3143..3203
                 CONNECTION_FROM@3143..3179
                   PORT_INSTANCE_IDENTIFIER@3143..3176
@@ -573,7 +666,8 @@ ROOT@0..7126
                     IDENT@3183..3195 "sendBuffComp"
                     DOT@3195..3196 "."
                     IDENT@3196..3203 "SchedIn"
-              EOL@3203..3210 "\n      "
+              EOL@3203..3204 "\n"
+              WHITESPACE@3204..3210 "      "
               CONNECTION@3210..3261
                 CONNECTION_FROM@3210..3246
                   PORT_INSTANCE_IDENTIFIER@3210..3243
@@ -594,7 +688,8 @@ ROOT@0..7126
                     IDENT@3250..3253 "SG3"
                     DOT@3253..3254 "."
                     IDENT@3254..3261 "schedIn"
-              EOL@3261..3268 "\n      "
+              EOL@3261..3262 "\n"
+              WHITESPACE@3262..3268 "      "
               CONNECTION@3268..3319
                 CONNECTION_FROM@3268..3304
                   PORT_INSTANCE_IDENTIFIER@3268..3301
@@ -615,7 +710,8 @@ ROOT@0..7126
                     IDENT@3308..3311 "SG4"
                     DOT@3311..3312 "."
                     IDENT@3312..3319 "schedIn"
-              EOL@3319..3326 "\n      "
+              EOL@3319..3320 "\n"
+              WHITESPACE@3320..3326 "      "
               CONNECTION@3326..3376
                 CONNECTION_FROM@3326..3362
                   PORT_INSTANCE_IDENTIFIER@3326..3359
@@ -636,7 +732,11 @@ ROOT@0..7126
                     IDENT@3366..3372 "dpDemo"
                     DOT@3372..3373 "."
                     IDENT@3373..3376 "run"
-              EOL@3376..3455 "\n      #connection to ..."
+              EOL@3376..3377 "\n"
+              WHITESPACE@3377..3383 "      "
+              COMMENT@3383..3448 "#connection to FileMa ..."
+              EOL@3448..3449 "\n"
+              WHITESPACE@3449..3455 "      "
               CONNECTION@3455..3527
                 CONNECTION_FROM@3455..3491
                   PORT_INSTANCE_IDENTIFIER@3455..3488
@@ -659,7 +759,11 @@ ROOT@0..7126
                     IDENT@3508..3519 "fileManager"
                     DOT@3519..3520 "."
                     IDENT@3520..3527 "schedIn"
-              EOL@3527..3556 "\n\n      # Rate group  ..."
+              EOL@3527..3529 "\n\n"
+              WHITESPACE@3529..3535 "      "
+              COMMENT@3535..3549 "# Rate group 3"
+              EOL@3549..3550 "\n"
+              WHITESPACE@3550..3556 "      "
               CONNECTION@3556..3639
                 CONNECTION_FROM@3556..3613
                   PORT_INSTANCE_IDENTIFIER@3556..3584
@@ -684,7 +788,8 @@ ROOT@0..7126
                     IDENT@3617..3631 "rateGroup3Comp"
                     DOT@3631..3632 "."
                     IDENT@3632..3639 "CycleIn"
-              EOL@3639..3646 "\n      "
+              EOL@3639..3640 "\n"
+              WHITESPACE@3640..3646 "      "
               CONNECTION@3646..3705
                 CONNECTION_FROM@3646..3682
                   PORT_INSTANCE_IDENTIFIER@3646..3679
@@ -707,7 +812,8 @@ ROOT@0..7126
                     IDENT@3694..3701 "$health"
                     DOT@3701..3702 "."
                     IDENT@3702..3705 "Run"
-              EOL@3705..3712 "\n      "
+              EOL@3705..3706 "\n"
+              WHITESPACE@3706..3712 "      "
               CONNECTION@3712..3763
                 CONNECTION_FROM@3712..3748
                   PORT_INSTANCE_IDENTIFIER@3712..3745
@@ -728,7 +834,8 @@ ROOT@0..7126
                     IDENT@3752..3755 "SG5"
                     DOT@3755..3756 "."
                     IDENT@3756..3763 "schedIn"
-              EOL@3763..3770 "\n      "
+              EOL@3763..3764 "\n"
+              WHITESPACE@3764..3770 "      "
               CONNECTION@3770..3824
                 CONNECTION_FROM@3770..3806
                   PORT_INSTANCE_IDENTIFIER@3770..3803
@@ -749,7 +856,8 @@ ROOT@0..7126
                     IDENT@3810..3818 "blockDrv"
                     DOT@3818..3819 "."
                     IDENT@3819..3824 "Sched"
-              EOL@3824..3831 "\n      "
+              EOL@3824..3825 "\n"
+              WHITESPACE@3825..3831 "      "
               CONNECTION@3831..3906
                 CONNECTION_FROM@3831..3867
                   PORT_INSTANCE_IDENTIFIER@3831..3864
@@ -772,7 +880,8 @@ ROOT@0..7126
                     IDENT@3880..3898 "commsBufferManager"
                     DOT@3898..3899 "."
                     IDENT@3899..3906 "schedIn"
-              EOL@3906..3913 "\n      "
+              EOL@3906..3907 "\n"
+              WHITESPACE@3907..3913 "      "
               CONNECTION@3913..3989
                 CONNECTION_FROM@3913..3949
                   PORT_INSTANCE_IDENTIFIER@3913..3946
@@ -795,7 +904,8 @@ ROOT@0..7126
                     IDENT@3966..3981 "dpBufferManager"
                     DOT@3981..3982 "."
                     IDENT@3982..3989 "schedIn"
-              EOL@3989..3996 "\n      "
+              EOL@3989..3990 "\n"
+              WHITESPACE@3990..3996 "      "
               CONNECTION@3996..4065
                 CONNECTION_FROM@3996..4032
                   PORT_INSTANCE_IDENTIFIER@3996..4029
@@ -818,7 +928,8 @@ ROOT@0..7126
                     IDENT@4049..4057 "dpWriter"
                     DOT@4057..4058 "."
                     IDENT@4058..4065 "schedIn"
-              EOL@4065..4072 "\n      "
+              EOL@4065..4066 "\n"
+              WHITESPACE@4066..4072 "      "
               CONNECTION@4072..4138
                 CONNECTION_FROM@4072..4108
                   PORT_INSTANCE_IDENTIFIER@4072..4105
@@ -841,9 +952,11 @@ ROOT@0..7126
                     IDENT@4125..4130 "dpMgr"
                     DOT@4130..4131 "."
                     IDENT@4131..4138 "schedIn"
-              EOL@4138..4143 "\n    "
+              EOL@4138..4139 "\n"
+              WHITESPACE@4139..4143 "    "
             RIGHT_CURLY@4143..4144 "}"
-          EOL@4144..4150 "\n\n    "
+          EOL@4144..4146 "\n\n"
+          WHITESPACE@4146..4150 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@4150..4731
             CONNECTIONS_KW@4150..4161 "connections"
             WHITESPACE@4161..4162 " "
@@ -873,7 +986,8 @@ ROOT@0..7126
                     IDENT@4258..4276 "commsBufferManager"
                     DOT@4276..4277 "."
                     IDENT@4277..4292 "bufferGetCallee"
-              EOL@4292..4299 "\n      "
+              EOL@4292..4293 "\n"
+              WHITESPACE@4293..4299 "      "
               CONNECTION@4299..4366
                 CONNECTION_FROM@4299..4319
                   PORT_INSTANCE_IDENTIFIER@4299..4319
@@ -890,7 +1004,13 @@ ROOT@0..7126
                     IDENT@4335..4353 "commsBufferManager"
                     DOT@4353..4354 "."
                     IDENT@4354..4366 "bufferSendIn"
-              EOL@4366..4419 "\n      \n      # ComDr ..."
+              EOL@4366..4367 "\n"
+              WHITESPACE@4367..4373 "      "
+              EOL@4373..4374 "\n"
+              WHITESPACE@4374..4380 "      "
+              COMMENT@4380..4412 "# ComDriver <-> ComSt ..."
+              EOL@4412..4413 "\n"
+              WHITESPACE@4413..4419 "      "
               CONNECTION@4419..4487
                 CONNECTION_FROM@4419..4434
                   PORT_INSTANCE_IDENTIFIER@4419..4434
@@ -907,7 +1027,8 @@ ROOT@0..7126
                     IDENT@4467..4474 "comStub"
                     DOT@4474..4475 "."
                     IDENT@4475..4487 "drvReceiveIn"
-              EOL@4487..4494 "\n      "
+              EOL@4487..4488 "\n"
+              WHITESPACE@4488..4494 "      "
               CONNECTION@4494..4556
                 CONNECTION_FROM@4494..4530
                   PORT_INSTANCE_IDENTIFIER@4494..4530
@@ -924,7 +1045,13 @@ ROOT@0..7126
                     IDENT@4534..4543 "comDriver"
                     DOT@4543..4544 "."
                     IDENT@4544..4556 "recvReturnIn"
-              EOL@4556..4611 "\n      \n      # ComSt ..."
+              EOL@4556..4557 "\n"
+              WHITESPACE@4557..4563 "      "
+              EOL@4563..4564 "\n"
+              WHITESPACE@4564..4570 "      "
+              COMMENT@4570..4604 "# ComStub <-> ComDriv ..."
+              EOL@4604..4605 "\n"
+              WHITESPACE@4605..4611 "      "
               CONNECTION@4611..4662
                 CONNECTION_FROM@4611..4638
                   PORT_INSTANCE_IDENTIFIER@4611..4638
@@ -941,7 +1068,8 @@ ROOT@0..7126
                     IDENT@4647..4656 "comDriver"
                     DOT@4656..4657 "."
                     IDENT@4657..4662 "$send"
-              EOL@4662..4669 "\n      "
+              EOL@4662..4663 "\n"
+              WHITESPACE@4663..4669 "      "
               CONNECTION@4669..4725
                 CONNECTION_FROM@4669..4684
                   PORT_INSTANCE_IDENTIFIER@4669..4684
@@ -958,9 +1086,11 @@ ROOT@0..7126
                     IDENT@4705..4712 "comStub"
                     DOT@4712..4713 "."
                     IDENT@4713..4725 "drvConnected"
-              EOL@4725..4730 "\n    "
+              EOL@4725..4726 "\n"
+              WHITESPACE@4726..4730 "    "
             RIGHT_CURLY@4730..4731 "}"
-          EOL@4731..4737 "\n\n    "
+          EOL@4731..4733 "\n\n"
+          WHITESPACE@4733..4737 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@4737..5709
             CONNECTIONS_KW@4737..4748 "connections"
             WHITESPACE@4748..4749 " "
@@ -985,7 +1115,8 @@ ROOT@0..7126
                     IDENT@4782..4790 "blockDrv"
                     DOT@4790..4791 "."
                     IDENT@4791..4799 "BufferIn"
-              EOL@4799..4806 "\n      "
+              EOL@4799..4800 "\n"
+              WHITESPACE@4800..4806 "      "
               CONNECTION@4806..4845
                 CONNECTION_FROM@4806..4824
                   PORT_INSTANCE_IDENTIFIER@4806..4824
@@ -1000,7 +1131,14 @@ ROOT@0..7126
                     IDENT@4828..4840 "recvBuffComp"
                     DOT@4840..4841 "."
                     IDENT@4841..4845 "Data"
-              EOL@4845..5062 "\n\n      ### Moved thi ..."
+              EOL@4845..4847 "\n\n"
+              WHITESPACE@4847..4853 "      "
+              COMMENT@4853..4966 "### Moved this out of ..."
+              EOL@4966..4967 "\n"
+              WHITESPACE@4967..4973 "      "
+              COMMENT@4973..5055 "# Synchronous request ..."
+              EOL@5055..5056 "\n"
+              WHITESPACE@5056..5062 "      "
               CONNECTION@5062..5114
                 CONNECTION_FROM@5062..5079
                   PORT_INSTANCE_IDENTIFIER@5062..5079
@@ -1017,7 +1155,11 @@ ROOT@0..7126
                     IDENT@5096..5101 "dpMgr"
                     DOT@5101..5102 "."
                     IDENT@5102..5114 "productGetIn"
-              EOL@5114..5150 "\n      # Asynchronous ..."
+              EOL@5114..5115 "\n"
+              WHITESPACE@5115..5121 "      "
+              COMMENT@5121..5143 "# Asynchronous request"
+              EOL@5143..5144 "\n"
+              WHITESPACE@5144..5150 "      "
               CONNECTION@5150..5210
                 CONNECTION_FROM@5150..5171
                   PORT_INSTANCE_IDENTIFIER@5150..5171
@@ -1034,7 +1176,8 @@ ROOT@0..7126
                     IDENT@5188..5193 "dpMgr"
                     DOT@5193..5194 "."
                     IDENT@5194..5210 "productRequestIn"
-              EOL@5210..5217 "\n      "
+              EOL@5210..5211 "\n"
+              WHITESPACE@5211..5217 "      "
               CONNECTION@5217..5275
                 CONNECTION_FROM@5217..5254
                   PORT_INSTANCE_IDENTIFIER@5217..5254
@@ -1051,7 +1194,11 @@ ROOT@0..7126
                     IDENT@5258..5261 "SG1"
                     DOT@5261..5262 "."
                     IDENT@5262..5275 "productRecvIn"
-              EOL@5275..5305 "\n      # Send filled  ..."
+              EOL@5275..5276 "\n"
+              WHITESPACE@5276..5282 "      "
+              COMMENT@5282..5298 "# Send filled DP"
+              EOL@5298..5299 "\n"
+              WHITESPACE@5299..5305 "      "
               CONNECTION@5305..5359
                 CONNECTION_FROM@5305..5323
                   PORT_INSTANCE_IDENTIFIER@5305..5323
@@ -1068,7 +1215,11 @@ ROOT@0..7126
                     IDENT@5340..5345 "dpMgr"
                     DOT@5345..5346 "."
                     IDENT@5346..5359 "productSendIn"
-              EOL@5359..5394 "\n      # Synchronous  ..."
+              EOL@5359..5360 "\n"
+              WHITESPACE@5360..5366 "      "
+              COMMENT@5366..5387 "# Synchronous request"
+              EOL@5387..5388 "\n"
+              WHITESPACE@5388..5394 "      "
               CONNECTION@5394..5449
                 CONNECTION_FROM@5394..5414
                   PORT_INSTANCE_IDENTIFIER@5394..5414
@@ -1085,7 +1236,11 @@ ROOT@0..7126
                     IDENT@5431..5436 "dpMgr"
                     DOT@5436..5437 "."
                     IDENT@5437..5449 "productGetIn"
-              EOL@5449..5479 "\n      # Send filled  ..."
+              EOL@5449..5450 "\n"
+              WHITESPACE@5450..5456 "      "
+              COMMENT@5456..5472 "# Send filled DP"
+              EOL@5472..5473 "\n"
+              WHITESPACE@5473..5479 "      "
               CONNECTION@5479..5536
                 CONNECTION_FROM@5479..5500
                   PORT_INSTANCE_IDENTIFIER@5479..5500
@@ -1102,7 +1257,11 @@ ROOT@0..7126
                     IDENT@5517..5522 "dpMgr"
                     DOT@5522..5523 "."
                     IDENT@5523..5536 "productSendIn"
-              EOL@5536..5572 "\n      # Asynchronous ..."
+              EOL@5536..5537 "\n"
+              WHITESPACE@5537..5543 "      "
+              COMMENT@5543..5565 "# Asynchronous request"
+              EOL@5565..5566 "\n"
+              WHITESPACE@5566..5572 "      "
               CONNECTION@5572..5635
                 CONNECTION_FROM@5572..5596
                   PORT_INSTANCE_IDENTIFIER@5572..5596
@@ -1119,7 +1278,8 @@ ROOT@0..7126
                     IDENT@5613..5618 "dpMgr"
                     DOT@5618..5619 "."
                     IDENT@5619..5635 "productRequestIn"
-              EOL@5635..5642 "\n      "
+              EOL@5635..5636 "\n"
+              WHITESPACE@5636..5642 "      "
               CONNECTION@5642..5703
                 CONNECTION_FROM@5642..5679
                   PORT_INSTANCE_IDENTIFIER@5642..5679
@@ -1136,9 +1296,11 @@ ROOT@0..7126
                     IDENT@5683..5689 "dpDemo"
                     DOT@5689..5690 "."
                     IDENT@5690..5703 "productRecvIn"
-              EOL@5703..5708 "\n    "
+              EOL@5703..5704 "\n"
+              WHITESPACE@5704..5708 "    "
             RIGHT_CURLY@5708..5709 "}"
-          EOL@5709..5715 "\n\n    "
+          EOL@5709..5711 "\n\n"
+          WHITESPACE@5711..5715 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@5715..6364
             CONNECTIONS_KW@5715..5726 "connections"
             WHITESPACE@5726..5727 " "
@@ -1182,7 +1344,8 @@ ROOT@0..7126
                           DOT@5889..5890 "."
                           IDENT@5890..5896 "EVENTS"
                   RIGHT_SQUARE@5896..5897 "]"
-              EOL@5897..5904 "\n      "
+              EOL@5897..5898 "\n"
+              WHITESPACE@5898..5904 "      "
               CONNECTION@5904..6017
                 CONNECTION_FROM@5904..5927
                   PORT_INSTANCE_IDENTIFIER@5904..5927
@@ -1214,7 +1377,11 @@ ROOT@0..7126
                           DOT@6006..6007 "."
                           IDENT@6007..6016 "TELEMETRY"
                   RIGHT_SQUARE@6016..6017 "]"
-              EOL@6017..6058 "\n\n      # Router <->  ..."
+              EOL@6017..6019 "\n\n"
+              WHITESPACE@6019..6025 "      "
+              COMMENT@6025..6051 "# Router <-> CmdDispa ..."
+              EOL@6051..6052 "\n"
+              WHITESPACE@6052..6058 "      "
               CONNECTION@6058..6121
                 CONNECTION_FROM@6058..6090
                   PORT_INSTANCE_IDENTIFIER@6058..6090
@@ -1233,7 +1400,8 @@ ROOT@0..7126
                     IDENT@6103..6110 "cmdDisp"
                     DOT@6110..6111 "."
                     IDENT@6111..6121 "seqCmdBuff"
-              EOL@6121..6128 "\n      "
+              EOL@6121..6122 "\n"
+              WHITESPACE@6122..6128 "      "
               CONNECTION@6128..6199
                 CONNECTION_FROM@6128..6156
                   PORT_INSTANCE_IDENTIFIER@6128..6156
@@ -1252,7 +1420,8 @@ ROOT@0..7126
                     IDENT@6173..6185 "fprimeRouter"
                     DOT@6185..6186 "."
                     IDENT@6186..6199 "cmdResponseIn"
-              EOL@6199..6206 "\n      "
+              EOL@6199..6200 "\n"
+              WHITESPACE@6200..6206 "      "
               CONNECTION@6206..6249
                 CONNECTION_FROM@6206..6219
                   PORT_INSTANCE_IDENTIFIER@6206..6219
@@ -1269,7 +1438,8 @@ ROOT@0..7126
                     IDENT@6231..6238 "cmdDisp"
                     DOT@6238..6239 "."
                     IDENT@6239..6249 "seqCmdBuff"
-              EOL@6249..6256 "\n      "
+              EOL@6249..6250 "\n"
+              WHITESPACE@6250..6256 "      "
               CONNECTION@6256..6308
                 CONNECTION_FROM@6256..6284
                   PORT_INSTANCE_IDENTIFIER@6256..6284
@@ -1286,7 +1456,8 @@ ROOT@0..7126
                     IDENT@6288..6294 "cmdSeq"
                     DOT@6294..6295 "."
                     IDENT@6295..6308 "cmdResponseIn"
-              EOL@6308..6315 "\n      "
+              EOL@6308..6309 "\n"
+              WHITESPACE@6309..6315 "      "
               CONNECTION@6315..6358
                 CONNECTION_FROM@6315..6332
                   PORT_INSTANCE_IDENTIFIER@6315..6332
@@ -1303,9 +1474,11 @@ ROOT@0..7126
                     IDENT@6344..6351 "tlmSend"
                     DOT@6351..6352 "."
                     IDENT@6352..6358 "TlmGet"
-              EOL@6358..6363 "\n    "
+              EOL@6358..6359 "\n"
+              WHITESPACE@6359..6363 "    "
             RIGHT_CURLY@6363..6364 "}"
-          EOL@6364..6370 "\n\n    "
+          EOL@6364..6366 "\n\n"
+          WHITESPACE@6366..6370 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@6370..6886
             CONNECTIONS_KW@6370..6381 "connections"
             WHITESPACE@6381..6382 " "
@@ -1350,7 +1523,8 @@ ROOT@0..7126
                           DOT@6551..6552 "."
                           IDENT@6552..6556 "FILE"
                   RIGHT_SQUARE@6556..6557 "]"
-              EOL@6557..6564 "\n      "
+              EOL@6557..6558 "\n"
+              WHITESPACE@6558..6564 "      "
               CONNECTION@6564..6675
                 CONNECTION_FROM@6564..6633
                   PORT_INSTANCE_IDENTIFIER@6564..6597
@@ -1382,7 +1556,13 @@ ROOT@0..7126
                     IDENT@6650..6662 "fileDownlink"
                     DOT@6662..6663 "."
                     IDENT@6663..6675 "bufferReturn"
-              EOL@6675..6719 "\n      \n      # Route ..."
+              EOL@6675..6676 "\n"
+              WHITESPACE@6676..6682 "      "
+              EOL@6682..6683 "\n"
+              WHITESPACE@6683..6689 "      "
+              COMMENT@6689..6712 "# Router <-> FileUplink"
+              EOL@6712..6713 "\n"
+              WHITESPACE@6713..6719 "      "
               CONNECTION@6719..6792
                 CONNECTION_FROM@6719..6748
                   PORT_INSTANCE_IDENTIFIER@6719..6748
@@ -1401,7 +1581,8 @@ ROOT@0..7126
                     IDENT@6769..6779 "fileUplink"
                     DOT@6779..6780 "."
                     IDENT@6780..6792 "bufferSendIn"
-              EOL@6792..6799 "\n      "
+              EOL@6792..6793 "\n"
+              WHITESPACE@6793..6799 "      "
               CONNECTION@6799..6880
                 CONNECTION_FROM@6799..6836
                   PORT_INSTANCE_IDENTIFIER@6799..6836
@@ -1420,9 +1601,11 @@ ROOT@0..7126
                     IDENT@6849..6861 "fprimeRouter"
                     DOT@6861..6862 "."
                     IDENT@6862..6880 "fileBufferReturnIn"
-              EOL@6880..6885 "\n    "
+              EOL@6880..6881 "\n"
+              WHITESPACE@6881..6885 "    "
             RIGHT_CURLY@6885..6886 "}"
-          EOL@6886..6892 "\n\n    "
+          EOL@6886..6888 "\n\n"
+          WHITESPACE@6888..6892 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@6892..7117
             CONNECTIONS_KW@6892..6903 "connections"
             WHITESPACE@6903..6904 " "
@@ -1453,7 +1636,8 @@ ROOT@0..7126
                     IDENT@7014..7026 "fileDownlink"
                     DOT@7026..7027 "."
                     IDENT@7027..7035 "SendFile"
-              EOL@7035..7042 "\n      "
+              EOL@7035..7036 "\n"
+              WHITESPACE@7036..7042 "      "
               CONNECTION@7042..7111
                 CONNECTION_FROM@7042..7080
                   PORT_INSTANCE_IDENTIFIER@7042..7080
@@ -1472,9 +1656,11 @@ ROOT@0..7126
                     IDENT@7097..7102 "dpCat"
                     DOT@7102..7103 "."
                     IDENT@7103..7111 "fileDone"
-              EOL@7111..7116 "\n    "
+              EOL@7111..7112 "\n"
+              WHITESPACE@7112..7116 "    "
             RIGHT_CURLY@7116..7117 "}"
-          EOL@7117..7121 "\n\n  "
+          EOL@7117..7119 "\n\n"
+          WHITESPACE@7119..7121 "  "
         RIGHT_CURLY@7121..7122 "}"
       EOL@7122..7124 "\n\n"
     RIGHT_CURLY@7124..7125 "}"

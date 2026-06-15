@@ -1,5 +1,6 @@
 ROOT@0..1047
-  EOL@0..18 "@ State machine M\n"
+  PRE_ANNOTATION@0..17 "@ State machine M"
+  EOL@17..18 "\n"
   DEF_STATE_MACHINE@18..1046
     STATE_KW@18..23 "state"
     WHITESPACE@23..24 " "
@@ -20,19 +21,31 @@ ROOT@0..1047
         WHITESPACE@59..60 " "
         NAME@60..62
           IDENT@60..62 "a1"
-      EOL@62..80 "\n\n  @ Action a2\n  "
+      EOL@62..64 "\n\n"
+      WHITESPACE@64..66 "  "
+      PRE_ANNOTATION@66..77 "@ Action a2"
+      EOL@77..78 "\n"
+      WHITESPACE@78..80 "  "
       DEF_ACTION@80..89
         ACTION_KW@80..86 "action"
         WHITESPACE@86..87 " "
         NAME@87..89
           IDENT@87..89 "a2"
-      EOL@89..107 "\n\n  @ Action a3\n  "
+      EOL@89..91 "\n\n"
+      WHITESPACE@91..93 "  "
+      PRE_ANNOTATION@93..104 "@ Action a3"
+      EOL@104..105 "\n"
+      WHITESPACE@105..107 "  "
       DEF_ACTION@107..116
         ACTION_KW@107..113 "action"
         WHITESPACE@113..114 " "
         NAME@114..116
           IDENT@114..116 "a3"
-      EOL@116..134 "\n\n  @ Action a4\n  "
+      EOL@116..118 "\n\n"
+      WHITESPACE@118..120 "  "
+      PRE_ANNOTATION@120..131 "@ Action a4"
+      EOL@131..132 "\n"
+      WHITESPACE@132..134 "  "
       DEF_ACTION@134..148
         ACTION_KW@134..140 "action"
         WHITESPACE@140..141 " "
@@ -42,13 +55,21 @@ ROOT@0..1047
         WHITESPACE@144..145 " "
         TYPE_NAME@145..148
           U32_KW@145..148 "U32"
-      EOL@148..165 "\n\n  @ Guard g1\n  "
+      EOL@148..150 "\n\n"
+      WHITESPACE@150..152 "  "
+      PRE_ANNOTATION@152..162 "@ Guard g1"
+      EOL@162..163 "\n"
+      WHITESPACE@163..165 "  "
       DEF_GUARD@165..173
         GUARD_KW@165..170 "guard"
         WHITESPACE@170..171 " "
         NAME@171..173
           IDENT@171..173 "g1"
-      EOL@173..190 "\n\n  @ Guard g2\n  "
+      EOL@173..175 "\n\n"
+      WHITESPACE@175..177 "  "
+      PRE_ANNOTATION@177..187 "@ Guard g2"
+      EOL@187..188 "\n"
+      WHITESPACE@188..190 "  "
       DEF_GUARD@190..203
         GUARD_KW@190..195 "guard"
         WHITESPACE@195..196 " "
@@ -58,7 +79,11 @@ ROOT@0..1047
         WHITESPACE@199..200 " "
         TYPE_NAME@200..203
           U32_KW@200..203 "U32"
-      EOL@203..221 "\n\n  @ Signal s1\n  "
+      EOL@203..205 "\n\n"
+      WHITESPACE@205..207 "  "
+      PRE_ANNOTATION@207..218 "@ Signal s1"
+      EOL@218..219 "\n"
+      WHITESPACE@219..221 "  "
       DEF_SIGNAL@221..235
         SIGNAL_KW@221..227 "signal"
         WHITESPACE@227..228 " "
@@ -68,37 +93,61 @@ ROOT@0..1047
         WHITESPACE@231..232 " "
         TYPE_NAME@232..235
           U32_KW@232..235 "U32"
-      EOL@235..253 "\n\n  @ Signal s2\n  "
+      EOL@235..237 "\n\n"
+      WHITESPACE@237..239 "  "
+      PRE_ANNOTATION@239..250 "@ Signal s2"
+      EOL@250..251 "\n"
+      WHITESPACE@251..253 "  "
       DEF_SIGNAL@253..262
         SIGNAL_KW@253..259 "signal"
         WHITESPACE@259..260 " "
         NAME@260..262
           IDENT@260..262 "s2"
-      EOL@262..280 "\n\n  @ Signal s3\n  "
+      EOL@262..264 "\n\n"
+      WHITESPACE@264..266 "  "
+      PRE_ANNOTATION@266..277 "@ Signal s3"
+      EOL@277..278 "\n"
+      WHITESPACE@278..280 "  "
       DEF_SIGNAL@280..289
         SIGNAL_KW@280..286 "signal"
         WHITESPACE@286..287 " "
         NAME@287..289
           IDENT@287..289 "s3"
-      EOL@289..307 "\n\n  @ Signal s4\n  "
+      EOL@289..291 "\n\n"
+      WHITESPACE@291..293 "  "
+      PRE_ANNOTATION@293..304 "@ Signal s4"
+      EOL@304..305 "\n"
+      WHITESPACE@305..307 "  "
       DEF_SIGNAL@307..316
         SIGNAL_KW@307..313 "signal"
         WHITESPACE@313..314 " "
         NAME@314..316
           IDENT@314..316 "s4"
-      EOL@316..334 "\n\n  @ Signal s5\n  "
+      EOL@316..318 "\n\n"
+      WHITESPACE@318..320 "  "
+      PRE_ANNOTATION@320..331 "@ Signal s5"
+      EOL@331..332 "\n"
+      WHITESPACE@332..334 "  "
       DEF_SIGNAL@334..343
         SIGNAL_KW@334..340 "signal"
         WHITESPACE@340..341 " "
         NAME@341..343
           IDENT@341..343 "s5"
-      EOL@343..361 "\n\n  @ Signal s6\n  "
+      EOL@343..345 "\n\n"
+      WHITESPACE@345..347 "  "
+      PRE_ANNOTATION@347..358 "@ Signal s6"
+      EOL@358..359 "\n"
+      WHITESPACE@359..361 "  "
       DEF_SIGNAL@361..370
         SIGNAL_KW@361..367 "signal"
         WHITESPACE@367..368 " "
         NAME@368..370
           IDENT@368..370 "s6"
-      EOL@370..397 "\n\n  @ Initial transit ..."
+      EOL@370..372 "\n\n"
+      WHITESPACE@372..374 "  "
+      PRE_ANNOTATION@374..394 "@ Initial transition"
+      EOL@394..395 "\n"
+      WHITESPACE@395..397 "  "
       SPEC_INITIAL_TRANSITION@397..422
         INITIAL_KW@397..404 "initial"
         WHITESPACE@404..405 " "
@@ -118,7 +167,11 @@ ROOT@0..1047
           WHITESPACE@420..421 " "
           QUAL_IDENT@421..422
             IDENT@421..422 "C"
-      EOL@422..439 "\n\n  @ Choice C\n  "
+      EOL@422..424 "\n\n"
+      WHITESPACE@424..426 "  "
+      PRE_ANNOTATION@426..436 "@ Choice C"
+      EOL@436..437 "\n"
+      WHITESPACE@437..439 "  "
       DEF_CHOICE@439..480
         CHOICE_KW@439..445 "choice"
         WHITESPACE@445..446 " "
@@ -149,13 +202,21 @@ ROOT@0..1047
               IDENT@476..478 "S2"
         WHITESPACE@478..479 " "
         RIGHT_CURLY@479..480 "}"
-      EOL@480..497 "\n\n  @ State S1\n  "
+      EOL@480..482 "\n\n"
+      WHITESPACE@482..484 "  "
+      PRE_ANNOTATION@484..494 "@ State S1"
+      EOL@494..495 "\n"
+      WHITESPACE@495..497 "  "
       DEF_STATE@497..505
         STATE_KW@497..502 "state"
         WHITESPACE@502..503 " "
         NAME@503..505
           IDENT@503..505 "S1"
-      EOL@505..522 "\n\n  @ State S2\n  "
+      EOL@505..507 "\n\n"
+      WHITESPACE@507..509 "  "
+      PRE_ANNOTATION@509..519 "@ State S2"
+      EOL@519..520 "\n"
+      WHITESPACE@520..522 "  "
       DEF_STATE@522..1043
         STATE_KW@522..527 "state"
         WHITESPACE@527..528 " "
@@ -183,7 +244,8 @@ ROOT@0..1047
                   IDENT@553..555 "a2"
               WHITESPACE@555..556 " "
               RIGHT_CURLY@556..557 "}"
-          EOL@557..562 "\n    "
+          EOL@557..558 "\n"
+          WHITESPACE@558..562 "    "
           SPEC_STATE_EXIT@562..580
             EXIT_KW@562..566 "exit"
             WHITESPACE@566..567 " "
@@ -201,7 +263,11 @@ ROOT@0..1047
                   IDENT@576..578 "a2"
               WHITESPACE@578..579 " "
               RIGHT_CURLY@579..580 "}"
-          EOL@580..611 "\n\n    @ Initial trans ..."
+          EOL@580..582 "\n\n"
+          WHITESPACE@582..586 "    "
+          PRE_ANNOTATION@586..606 "@ Initial transition"
+          EOL@606..607 "\n"
+          WHITESPACE@607..611 "    "
           SPEC_INITIAL_TRANSITION@611..641
             INITIAL_KW@611..618 "initial"
             WHITESPACE@618..619 " "
@@ -225,7 +291,11 @@ ROOT@0..1047
               WHITESPACE@638..639 " "
               QUAL_IDENT@639..641
                 IDENT@639..641 "S3"
-          EOL@641..662 "\n\n    @ Choice C\n    "
+          EOL@641..643 "\n\n"
+          WHITESPACE@643..647 "    "
+          PRE_ANNOTATION@647..657 "@ Choice C"
+          EOL@657..658 "\n"
+          WHITESPACE@658..662 "    "
           DEF_CHOICE@662..734
             CHOICE_KW@662..668 "choice"
             WHITESPACE@668..669 " "
@@ -288,13 +358,21 @@ ROOT@0..1047
                   IDENT@730..732 "S3"
             WHITESPACE@732..733 " "
             RIGHT_CURLY@733..734 "}"
-          EOL@734..755 "\n\n    @ State S3\n    "
+          EOL@734..736 "\n\n"
+          WHITESPACE@736..740 "    "
+          PRE_ANNOTATION@740..750 "@ State S3"
+          EOL@750..751 "\n"
+          WHITESPACE@751..755 "    "
           DEF_STATE@755..763
             STATE_KW@755..760 "state"
             WHITESPACE@760..761 " "
             NAME@761..763
               IDENT@761..763 "S3"
-          EOL@763..792 "\n\n    @ Transition to ..."
+          EOL@763..765 "\n\n"
+          WHITESPACE@765..769 "    "
+          PRE_ANNOTATION@769..787 "@ Transition to S1"
+          EOL@787..788 "\n"
+          WHITESPACE@788..792 "    "
           SPEC_STATE_TRANSITION@792..821
             ON_KW@792..794 "on"
             WHITESPACE@794..795 " "
@@ -321,7 +399,8 @@ ROOT@0..1047
               WHITESPACE@819..820 " "
               QUAL_IDENT@820..821
                 IDENT@820..821 "C"
-          EOL@821..826 "\n    "
+          EOL@821..822 "\n"
+          WHITESPACE@822..826 "    "
           SPEC_STATE_TRANSITION@826..846
             ON_KW@826..828 "on"
             WHITESPACE@828..829 " "
@@ -337,7 +416,11 @@ ROOT@0..1047
               WHITESPACE@843..844 " "
               QUAL_IDENT@844..846
                 IDENT@844..846 "S1"
-          EOL@846..875 "\n\n    @ Transition to ..."
+          EOL@846..848 "\n\n"
+          WHITESPACE@848..852 "    "
+          PRE_ANNOTATION@852..870 "@ Transition to S1"
+          EOL@870..871 "\n"
+          WHITESPACE@871..875 "    "
           SPEC_STATE_TRANSITION@875..895
             ON_KW@875..877 "on"
             WHITESPACE@877..878 " "
@@ -353,7 +436,11 @@ ROOT@0..1047
               WHITESPACE@892..893 " "
               QUAL_IDENT@893..895
                 IDENT@893..895 "S1"
-          EOL@895..924 "\n\n    @ Transition to ..."
+          EOL@895..897 "\n\n"
+          WHITESPACE@897..901 "    "
+          PRE_ANNOTATION@901..919 "@ Transition to S1"
+          EOL@919..920 "\n"
+          WHITESPACE@920..924 "    "
           SPEC_STATE_TRANSITION@924..938
             ON_KW@924..926 "on"
             WHITESPACE@926..927 " "
@@ -364,7 +451,11 @@ ROOT@0..1047
               WHITESPACE@935..936 " "
               QUAL_IDENT@936..938
                 IDENT@936..938 "S1"
-          EOL@938..970 "\n\n    @ Internal tran ..."
+          EOL@938..940 "\n\n"
+          WHITESPACE@940..944 "    "
+          PRE_ANNOTATION@944..965 "@ Internal transition"
+          EOL@965..966 "\n"
+          WHITESPACE@966..970 "    "
           SPEC_STATE_TRANSITION@970..991
             ON_KW@970..972 "on"
             WHITESPACE@972..973 " "
@@ -385,7 +476,11 @@ ROOT@0..1047
                   IDENT@987..989 "a1"
               WHITESPACE@989..990 " "
               RIGHT_CURLY@990..991 "}"
-          EOL@991..1023 "\n\n    @ Internal tran ..."
+          EOL@991..993 "\n\n"
+          WHITESPACE@993..997 "    "
+          PRE_ANNOTATION@997..1018 "@ Internal transition"
+          EOL@1018..1019 "\n"
+          WHITESPACE@1019..1023 "    "
           SPEC_STATE_TRANSITION@1023..1038
             ON_KW@1023..1025 "on"
             WHITESPACE@1025..1026 " "
@@ -401,7 +496,8 @@ ROOT@0..1047
                   IDENT@1034..1036 "a1"
               WHITESPACE@1036..1037 " "
               RIGHT_CURLY@1037..1038 "}"
-          EOL@1038..1042 "\n\n  "
+          EOL@1038..1040 "\n\n"
+          WHITESPACE@1040..1042 "  "
         RIGHT_CURLY@1042..1043 "}"
       EOL@1043..1045 "\n\n"
     RIGHT_CURLY@1045..1046 "}"

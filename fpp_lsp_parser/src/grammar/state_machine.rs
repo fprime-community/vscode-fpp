@@ -13,7 +13,10 @@ pub(super) fn def_state_machine(p: &mut Parser) {
     let m = p.start();
     p.bump(STATE_KW);
     p.expect(MACHINE_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     if p.at(LEFT_CURLY) {
         member_list(
             p,
@@ -58,7 +61,10 @@ fn def_state(p: &mut Parser) {
     assert!(p.at(STATE_KW));
     let m = p.start();
     p.bump(STATE_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
 
     if p.at(LEFT_CURLY) {
         member_list(
@@ -93,7 +99,10 @@ fn def_signal(p: &mut Parser) {
     assert!(p.at(SIGNAL_KW));
     let m = p.start();
     p.bump(SIGNAL_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
 
     if p.eat(COLON) {
         types::type_name(p);
@@ -106,7 +115,10 @@ fn def_action(p: &mut Parser) {
     assert!(p.at(ACTION_KW));
     let m = p.start();
     p.bump(ACTION_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
 
     if p.eat(COLON) {
         types::type_name(p);
@@ -119,7 +131,10 @@ fn def_guard(p: &mut Parser) {
     assert!(p.at(GUARD_KW));
     let m = p.start();
     p.bump(GUARD_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
 
     if p.eat(COLON) {
         types::type_name(p);
@@ -132,7 +147,10 @@ fn def_choice(p: &mut Parser) {
     assert!(p.at(CHOICE_KW));
     let m = p.start();
     p.bump(CHOICE_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
 
     p.expect(LEFT_CURLY);
     p.expect(IF_KW);

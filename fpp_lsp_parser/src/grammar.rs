@@ -43,8 +43,15 @@ fn name_r(p: &mut Parser<'_>, recovery: TokenSet) {
     }
 }
 
-fn name(p: &mut Parser<'_>) {
-    name_r(p, TokenSet::EMPTY);
+fn name(p: &mut Parser<'_>) -> bool {
+    let m = p.start();
+    if p.eat(IDENT) {
+        m.complete(p, NAME);
+        true
+    } else {
+        m.abandon(p);
+        false
+    }
 }
 
 fn name_ref_r(p: &mut Parser<'_>, recovery: TokenSet) {

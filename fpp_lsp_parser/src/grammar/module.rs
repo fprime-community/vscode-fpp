@@ -4,7 +4,10 @@ pub(super) fn def_module(p: &mut Parser) {
     assert!(p.at(MODULE_KW));
     let m = p.start();
     p.bump(MODULE_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     if p.at(LEFT_CURLY) {
         member_list(
             p,
@@ -81,7 +84,10 @@ fn def_component_instance(p: &mut Parser) {
     assert!(p.at(INSTANCE_KW));
     let m = p.start();
     p.bump(INSTANCE_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
 
     p.expect(COLON);
     qual_ident(p);
@@ -155,7 +161,10 @@ fn def_interface(p: &mut Parser) {
     assert!(p.at(INTERFACE_KW));
     let m = p.start();
     p.bump(INTERFACE_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
 
     if p.at(LEFT_CURLY) {
         member_list(
@@ -209,7 +218,10 @@ fn def_port(p: &mut Parser) {
     assert!(p.at(PORT_KW));
     let m = p.start();
     p.bump(PORT_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     formal_param_list(p);
 
     if p.eat(RIGHT_ARROW) {

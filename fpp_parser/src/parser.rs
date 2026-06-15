@@ -856,9 +856,16 @@ impl<'a> Parser<'a> {
         self.consume(Colon)?;
         let component = self.qual_ident()?;
 
-        self.consume_keyword(Base)?;
-        self.consume_keyword(Id)?;
-        let base_id = self.expr()?;
+        let base_id = {
+            match self.peek(0) {
+                Keyword(Base) => {
+                    self.next();
+                    self.consume_keyword(Id)?;
+                    Some(self.expr()?)
+                }
+                _ => None,
+            }
+        };
 
         let impl_type = {
             match self.peek(0) {

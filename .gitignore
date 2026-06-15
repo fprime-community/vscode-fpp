@@ -24,3 +24,6 @@ Thumbs.db
 *.log
 *.bak
 *.tmp
+
+# Ignore any AI files
+CLAUDE.md

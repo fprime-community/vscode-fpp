@@ -4,7 +4,10 @@ pub(super) fn def_topology(p: &mut Parser) {
     assert!(p.at(TOPOLOGY_KW));
     let m = p.start();
     p.bump(TOPOLOGY_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
 
     if p.at(IMPLEMENTS_KW) {
         let m = p.start();
@@ -79,7 +82,10 @@ fn spec_top_port(p: &mut Parser) {
     assert!(p.at(PORT_KW));
     let m = p.start();
     p.bump(PORT_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     if !p.expect(EQUALS) {
         m.abandon(p);
         return;
@@ -95,7 +101,10 @@ fn spec_tlm_packet_set(p: &mut Parser) {
     p.bump(TELEMETRY_KW);
     p.bump(PACKETS_KW);
 
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     if p.at(LEFT_CURLY) {
         member_list(
             p,
@@ -147,7 +156,10 @@ fn spec_tlm_packet(p: &mut Parser) {
     assert!(p.at(PACKET_KW));
     let m = p.start();
     p.bump(PACKET_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
 
     expr_opt(p, ID_KW, ID);
 
@@ -229,7 +241,10 @@ fn spec_connection_graph_direct(p: &mut Parser) {
     let m = p.start();
     p.bump(CONNECTIONS_KW);
 
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     if p.at(LEFT_CURLY) {
         member_list(
             p,

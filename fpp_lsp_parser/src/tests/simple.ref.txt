@@ -20,7 +20,8 @@ ROOT@0..87
         EXPR@28..29
           EXPR_LITERAL@28..29
             LITERAL_INT@28..29 "1"
-      EOL@29..34 "\n    "
+      EOL@29..30 "\n"
+      WHITESPACE@30..34 "    "
       DEF_CONSTANT@34..52
         CONSTANT_KW@34..42 "constant"
         WHITESPACE@42..43 " "
@@ -39,7 +40,8 @@ ROOT@0..87
               WHITESPACE@50..51 " "
             EXPR_LITERAL@51..52
               LITERAL_INT@51..52 "3"
-      EOL@52..57 "\n    "
+      EOL@52..53 "\n"
+      WHITESPACE@53..57 "    "
       DEF_CONSTANT@57..83
         CONSTANT_KW@57..65 "constant"
         WHITESPACE@65..66 " "

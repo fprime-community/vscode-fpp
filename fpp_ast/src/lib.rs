@@ -242,7 +242,7 @@ pub struct DefComponent {
 pub struct DefComponentInstance {
     pub name: Name,
     pub component: QualIdent,
-    pub base_id: Expr,
+    pub base_id: Option<Expr>,
     #[visitable(ignore)]
     pub impl_type: Option<LitString>,
     #[visitable(ignore)]

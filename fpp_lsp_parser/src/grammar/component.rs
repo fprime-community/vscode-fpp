@@ -10,7 +10,10 @@ pub(super) fn def_component(p: &mut Parser) {
     }
 
     p.expect(COMPONENT_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
 
     if p.at(LEFT_CURLY) {
         member_list(
@@ -77,7 +80,10 @@ fn spec_state_machine_instance(p: &mut Parser) {
     p.expect(MACHINE_KW);
     p.expect(INSTANCE_KW);
 
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     p.expect(COLON);
     qual_ident(p);
 
@@ -137,7 +143,10 @@ fn spec_port_instance_general(p: &mut Parser) {
     }
 
     p.expect(PORT_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     p.expect(COLON);
     index_or_size_opt(p);
 
@@ -214,7 +223,10 @@ fn spec_port_instance_special(p: &mut Parser) {
     }
 
     p.expect(PORT_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     expr_opt(p, PRIORITY_KW, PRIORITY);
     queue_full_opt(p);
     m.complete(p, SPEC_PORT_INSTANCE_SPECIAL);
@@ -225,7 +237,10 @@ fn spec_internal_port(p: &mut Parser) {
     let m = p.start();
     p.bump(INTERNAL_KW);
     p.expect(PORT_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     formal_param_list(p);
     expr_opt(p, PRIORITY_KW, PRIORITY);
     queue_full_opt(p);
@@ -239,7 +254,10 @@ fn spec_container(p: &mut Parser) {
     p.bump(PRODUCT_KW);
     p.bump(CONTAINER_KW);
 
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     expr_opt(p, ID_KW, ID);
     if p.eat(DEFAULT_KW) {
         p.expect(PRIORITY_KW);
@@ -257,7 +275,10 @@ fn spec_record(p: &mut Parser) {
     p.bump(PRODUCT_KW);
     p.bump(RECORD_KW);
 
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     p.expect(COLON);
     types::type_name(p);
 
@@ -271,7 +292,10 @@ fn spec_event(p: &mut Parser) {
     assert!(p.at(EVENT_KW));
     let m = p.start();
     p.bump(EVENT_KW);
-    name(p);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
     formal_param_list(p);
 
     p.expect(SEVERITY_KW);

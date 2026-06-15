@@ -14,10 +14,10 @@
   = note: expected one of type, array, constant, enum, struct, component, active, passive, queued, interface, module, port, state, topology, include, locate
   = note: got +
 
-  --> [ local path prefix ]/parse-error.fpp:14:17
+  --> [ local path prefix ]/parse-error.fpp:14:11
    |
 14 |     async input i: d -> d
-   |                 ^ included from [ local path prefix ]/include-parse-error.fpp:1:1
+   |           ^^^^^ included from [ local path prefix ]/include-parse-error.fpp:1:1
    |
    = note: expected port
    = note: got identifier

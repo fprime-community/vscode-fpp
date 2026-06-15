@@ -1562,15 +1562,17 @@ TransUnit(
                             end: [ local path prefix ]/syntax.fpp:118:18,
                         },
                     },
-                    base_id: Expr {
-                        kind: LiteralInt(
-                            "0x100",
-                        ),
-                        node_id: Span {
-                            start: [ local path prefix ]/syntax.fpp:118:27,
-                            end: [ local path prefix ]/syntax.fpp:118:32,
+                    base_id: Some(
+                        Expr {
+                            kind: LiteralInt(
+                                "0x100",
+                            ),
+                            node_id: Span {
+                                start: [ local path prefix ]/syntax.fpp:118:27,
+                                end: [ local path prefix ]/syntax.fpp:118:32,
+                            },
                         },
-                    },
+                    ),
                     impl_type: None,
                     file: None,
                     queue_size: None,
@@ -1604,15 +1606,17 @@ TransUnit(
                             end: [ local path prefix ]/syntax.fpp:122:18,
                         },
                     },
-                    base_id: Expr {
-                        kind: LiteralInt(
-                            "0x200",
-                        ),
-                        node_id: Span {
-                            start: [ local path prefix ]/syntax.fpp:122:27,
-                            end: [ local path prefix ]/syntax.fpp:122:32,
+                    base_id: Some(
+                        Expr {
+                            kind: LiteralInt(
+                                "0x200",
+                            ),
+                            node_id: Span {
+                                start: [ local path prefix ]/syntax.fpp:122:27,
+                                end: [ local path prefix ]/syntax.fpp:122:32,
+                            },
                         },
-                    },
+                    ),
                     impl_type: Some(
                         LitString {
                             data: "T",
@@ -2137,205 +2141,203 @@ TransUnit(
                                 "Public instance specifier",
                             ],
                         },
-                        SpecConnectionGraph {
-                            kind: Direct {
-                                name: Name {
-                                    data: "C",
-                                    node_id: Span {
-                                        start: [ local path prefix ]/syntax.fpp:183:17,
-                                        end: [ local path prefix ]/syntax.fpp:183:18,
-                                    },
+                        SpecDirectConnectionGraph {
+                            name: Name {
+                                data: "C",
+                                node_id: Span {
+                                    start: [ local path prefix ]/syntax.fpp:183:17,
+                                    end: [ local path prefix ]/syntax.fpp:183:18,
                                 },
-                                connections: [
-                                    Connection {
-                                        is_unmatched: false,
-                                        from_port: PortInstanceIdentifier {
-                                            interface_instance: Ident {
-                                                data: "i1",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:184:7,
-                                                    end: [ local path prefix ]/syntax.fpp:184:9,
-                                                },
-                                            },
-                                            port_name: Ident {
-                                                data: "p",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:184:10,
-                                                    end: [ local path prefix ]/syntax.fpp:184:11,
-                                                },
-                                            },
+                            },
+                            connections: [
+                                Connection {
+                                    is_unmatched: false,
+                                    from_port: PortInstanceIdentifier {
+                                        interface_instance: Ident {
+                                            data: "i1",
                                             node_id: Span {
                                                 start: [ local path prefix ]/syntax.fpp:184:7,
+                                                end: [ local path prefix ]/syntax.fpp:184:9,
+                                            },
+                                        },
+                                        port_name: Ident {
+                                            data: "p",
+                                            node_id: Span {
+                                                start: [ local path prefix ]/syntax.fpp:184:10,
                                                 end: [ local path prefix ]/syntax.fpp:184:11,
                                             },
                                         },
-                                        from_index: Some(
-                                            Expr {
-                                                kind: LiteralInt(
-                                                    "0",
-                                                ),
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:184:12,
-                                                    end: [ local path prefix ]/syntax.fpp:184:13,
-                                                },
+                                        node_id: Span {
+                                            start: [ local path prefix ]/syntax.fpp:184:7,
+                                            end: [ local path prefix ]/syntax.fpp:184:11,
+                                        },
+                                    },
+                                    from_index: Some(
+                                        Expr {
+                                            kind: LiteralInt(
+                                                "0",
+                                            ),
+                                            node_id: Span {
+                                                start: [ local path prefix ]/syntax.fpp:184:12,
+                                                end: [ local path prefix ]/syntax.fpp:184:13,
                                             },
-                                        ),
-                                        to_port: PortInstanceIdentifier {
-                                            interface_instance: Ident {
-                                                data: "i2",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:184:18,
-                                                    end: [ local path prefix ]/syntax.fpp:184:20,
-                                                },
-                                            },
-                                            port_name: Ident {
-                                                data: "p",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:184:21,
-                                                    end: [ local path prefix ]/syntax.fpp:184:22,
-                                                },
-                                            },
+                                        },
+                                    ),
+                                    to_port: PortInstanceIdentifier {
+                                        interface_instance: Ident {
+                                            data: "i2",
                                             node_id: Span {
                                                 start: [ local path prefix ]/syntax.fpp:184:18,
+                                                end: [ local path prefix ]/syntax.fpp:184:20,
+                                            },
+                                        },
+                                        port_name: Ident {
+                                            data: "p",
+                                            node_id: Span {
+                                                start: [ local path prefix ]/syntax.fpp:184:21,
                                                 end: [ local path prefix ]/syntax.fpp:184:22,
                                             },
                                         },
-                                        to_index: Some(
-                                            Expr {
-                                                kind: LiteralInt(
-                                                    "1",
-                                                ),
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:184:23,
-                                                    end: [ local path prefix ]/syntax.fpp:184:24,
-                                                },
-                                            },
-                                        ),
                                         node_id: Span {
-                                            start: [ local path prefix ]/syntax.fpp:184:7,
-                                            end: [ local path prefix ]/syntax.fpp:184:25,
+                                            start: [ local path prefix ]/syntax.fpp:184:18,
+                                            end: [ local path prefix ]/syntax.fpp:184:22,
                                         },
                                     },
-                                    Connection {
-                                        is_unmatched: true,
-                                        from_port: PortInstanceIdentifier {
-                                            interface_instance: Ident {
-                                                data: "i1",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:185:17,
-                                                    end: [ local path prefix ]/syntax.fpp:185:19,
-                                                },
+                                    to_index: Some(
+                                        Expr {
+                                            kind: LiteralInt(
+                                                "1",
+                                            ),
+                                            node_id: Span {
+                                                start: [ local path prefix ]/syntax.fpp:184:23,
+                                                end: [ local path prefix ]/syntax.fpp:184:24,
                                             },
-                                            port_name: Ident {
-                                                data: "p1",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:185:20,
-                                                    end: [ local path prefix ]/syntax.fpp:185:22,
-                                                },
-                                            },
+                                        },
+                                    ),
+                                    node_id: Span {
+                                        start: [ local path prefix ]/syntax.fpp:184:7,
+                                        end: [ local path prefix ]/syntax.fpp:184:25,
+                                    },
+                                },
+                                Connection {
+                                    is_unmatched: true,
+                                    from_port: PortInstanceIdentifier {
+                                        interface_instance: Ident {
+                                            data: "i1",
                                             node_id: Span {
                                                 start: [ local path prefix ]/syntax.fpp:185:17,
+                                                end: [ local path prefix ]/syntax.fpp:185:19,
+                                            },
+                                        },
+                                        port_name: Ident {
+                                            data: "p1",
+                                            node_id: Span {
+                                                start: [ local path prefix ]/syntax.fpp:185:20,
                                                 end: [ local path prefix ]/syntax.fpp:185:22,
                                             },
                                         },
-                                        from_index: Some(
-                                            Expr {
-                                                kind: LiteralInt(
-                                                    "0",
-                                                ),
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:185:23,
-                                                    end: [ local path prefix ]/syntax.fpp:185:24,
-                                                },
+                                        node_id: Span {
+                                            start: [ local path prefix ]/syntax.fpp:185:17,
+                                            end: [ local path prefix ]/syntax.fpp:185:22,
+                                        },
+                                    },
+                                    from_index: Some(
+                                        Expr {
+                                            kind: LiteralInt(
+                                                "0",
+                                            ),
+                                            node_id: Span {
+                                                start: [ local path prefix ]/syntax.fpp:185:23,
+                                                end: [ local path prefix ]/syntax.fpp:185:24,
                                             },
-                                        ),
-                                        to_port: PortInstanceIdentifier {
-                                            interface_instance: Ident {
-                                                data: "i2",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:185:29,
-                                                    end: [ local path prefix ]/syntax.fpp:185:31,
-                                                },
-                                            },
-                                            port_name: Ident {
-                                                data: "p2",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:185:32,
-                                                    end: [ local path prefix ]/syntax.fpp:185:34,
-                                                },
-                                            },
+                                        },
+                                    ),
+                                    to_port: PortInstanceIdentifier {
+                                        interface_instance: Ident {
+                                            data: "i2",
                                             node_id: Span {
                                                 start: [ local path prefix ]/syntax.fpp:185:29,
+                                                end: [ local path prefix ]/syntax.fpp:185:31,
+                                            },
+                                        },
+                                        port_name: Ident {
+                                            data: "p2",
+                                            node_id: Span {
+                                                start: [ local path prefix ]/syntax.fpp:185:32,
                                                 end: [ local path prefix ]/syntax.fpp:185:34,
                                             },
                                         },
-                                        to_index: Some(
-                                            Expr {
-                                                kind: LiteralInt(
-                                                    "0",
-                                                ),
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:185:35,
-                                                    end: [ local path prefix ]/syntax.fpp:185:36,
-                                                },
-                                            },
-                                        ),
                                         node_id: Span {
-                                            start: [ local path prefix ]/syntax.fpp:185:7,
-                                            end: [ local path prefix ]/syntax.fpp:185:37,
+                                            start: [ local path prefix ]/syntax.fpp:185:29,
+                                            end: [ local path prefix ]/syntax.fpp:185:34,
                                         },
                                     },
-                                    Connection {
-                                        is_unmatched: true,
-                                        from_port: PortInstanceIdentifier {
-                                            interface_instance: Ident {
-                                                data: "i1",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:186:17,
-                                                    end: [ local path prefix ]/syntax.fpp:186:19,
-                                                },
+                                    to_index: Some(
+                                        Expr {
+                                            kind: LiteralInt(
+                                                "0",
+                                            ),
+                                            node_id: Span {
+                                                start: [ local path prefix ]/syntax.fpp:185:35,
+                                                end: [ local path prefix ]/syntax.fpp:185:36,
                                             },
-                                            port_name: Ident {
-                                                data: "p1",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:186:20,
-                                                    end: [ local path prefix ]/syntax.fpp:186:22,
-                                                },
-                                            },
+                                        },
+                                    ),
+                                    node_id: Span {
+                                        start: [ local path prefix ]/syntax.fpp:185:7,
+                                        end: [ local path prefix ]/syntax.fpp:185:37,
+                                    },
+                                },
+                                Connection {
+                                    is_unmatched: true,
+                                    from_port: PortInstanceIdentifier {
+                                        interface_instance: Ident {
+                                            data: "i1",
                                             node_id: Span {
                                                 start: [ local path prefix ]/syntax.fpp:186:17,
+                                                end: [ local path prefix ]/syntax.fpp:186:19,
+                                            },
+                                        },
+                                        port_name: Ident {
+                                            data: "p1",
+                                            node_id: Span {
+                                                start: [ local path prefix ]/syntax.fpp:186:20,
                                                 end: [ local path prefix ]/syntax.fpp:186:22,
                                             },
                                         },
-                                        from_index: None,
-                                        to_port: PortInstanceIdentifier {
-                                            interface_instance: Ident {
-                                                data: "i2",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:186:26,
-                                                    end: [ local path prefix ]/syntax.fpp:186:28,
-                                                },
-                                            },
-                                            port_name: Ident {
-                                                data: "p2",
-                                                node_id: Span {
-                                                    start: [ local path prefix ]/syntax.fpp:186:29,
-                                                    end: [ local path prefix ]/syntax.fpp:186:31,
-                                                },
-                                            },
+                                        node_id: Span {
+                                            start: [ local path prefix ]/syntax.fpp:186:17,
+                                            end: [ local path prefix ]/syntax.fpp:186:22,
+                                        },
+                                    },
+                                    from_index: None,
+                                    to_port: PortInstanceIdentifier {
+                                        interface_instance: Ident {
+                                            data: "i2",
                                             node_id: Span {
                                                 start: [ local path prefix ]/syntax.fpp:186:26,
+                                                end: [ local path prefix ]/syntax.fpp:186:28,
+                                            },
+                                        },
+                                        port_name: Ident {
+                                            data: "p2",
+                                            node_id: Span {
+                                                start: [ local path prefix ]/syntax.fpp:186:29,
                                                 end: [ local path prefix ]/syntax.fpp:186:31,
                                             },
                                         },
-                                        to_index: None,
                                         node_id: Span {
-                                            start: [ local path prefix ]/syntax.fpp:186:7,
+                                            start: [ local path prefix ]/syntax.fpp:186:26,
                                             end: [ local path prefix ]/syntax.fpp:186:31,
                                         },
                                     },
-                                ],
-                            },
+                                    to_index: None,
+                                    node_id: Span {
+                                        start: [ local path prefix ]/syntax.fpp:186:7,
+                                        end: [ local path prefix ]/syntax.fpp:186:31,
+                                    },
+                                },
+                            ],
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:183:5,
                                 end: [ local path prefix ]/syntax.fpp:187:6,
@@ -2347,40 +2349,38 @@ TransUnit(
                                 "Direct connection graph specifier",
                             ],
                         },
-                        SpecConnectionGraph {
-                            kind: Pattern {
-                                kind: Command,
-                                source: Ident {
-                                    data: "i1",
+                        SpecPatternConnectionGraph {
+                            kind: Command,
+                            source: Ident {
+                                data: "i1",
+                                node_id: Span {
+                                    start: [ local path prefix ]/syntax.fpp:191:34,
+                                    end: [ local path prefix ]/syntax.fpp:191:36,
+                                },
+                            },
+                            targets: [
+                                Ident {
+                                    data: "i2",
                                     node_id: Span {
-                                        start: [ local path prefix ]/syntax.fpp:191:34,
-                                        end: [ local path prefix ]/syntax.fpp:191:36,
+                                        start: [ local path prefix ]/syntax.fpp:191:39,
+                                        end: [ local path prefix ]/syntax.fpp:191:41,
                                     },
                                 },
-                                targets: [
-                                    Ident {
-                                        data: "i2",
-                                        node_id: Span {
-                                            start: [ local path prefix ]/syntax.fpp:191:39,
-                                            end: [ local path prefix ]/syntax.fpp:191:41,
-                                        },
+                                Ident {
+                                    data: "i3",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/syntax.fpp:191:43,
+                                        end: [ local path prefix ]/syntax.fpp:191:45,
                                     },
-                                    Ident {
-                                        data: "i3",
-                                        node_id: Span {
-                                            start: [ local path prefix ]/syntax.fpp:191:43,
-                                            end: [ local path prefix ]/syntax.fpp:191:45,
-                                        },
+                                },
+                                Ident {
+                                    data: "i4",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/syntax.fpp:191:47,
+                                        end: [ local path prefix ]/syntax.fpp:191:49,
                                     },
-                                    Ident {
-                                        data: "i4",
-                                        node_id: Span {
-                                            start: [ local path prefix ]/syntax.fpp:191:47,
-                                            end: [ local path prefix ]/syntax.fpp:191:49,
-                                        },
-                                    },
-                                ],
-                            },
+                                },
+                            ],
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:191:5,
                                 end: [ local path prefix ]/syntax.fpp:191:51,

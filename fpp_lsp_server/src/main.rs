@@ -29,7 +29,6 @@ fn setup_stderr_logging(level: tracing_subscriber::filter::LevelFilter) -> anyho
         .with(
             stderr_layer
                 .with_ansi(false)
-                .without_time()
                 .with_target(false)
                 .with_file(true)
                 .with_line_number(true)
