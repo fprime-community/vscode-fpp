@@ -83,9 +83,6 @@ pub mod semantics {
     mod generic_scope;
 }
 
-#[cfg(test)]
-mod test;
-
 pub fn resolve_includes<Reader: FileReader>(
     a: &mut Analysis,
     reader: Reader,

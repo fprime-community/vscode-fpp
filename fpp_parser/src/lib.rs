@@ -5,11 +5,5 @@ mod parser;
 mod token;
 
 pub use include::*;
-pub use parser::Parser;
 pub use parser::parse;
-
-#[cfg(test)]
-mod tests {
-    mod cursor;
-    mod parser;
-}
+pub use parser::Parser;

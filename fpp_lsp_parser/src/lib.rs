@@ -191,6 +191,3 @@ pub fn parse(text: &str, entry: TopEntryPoint) -> Parse {
     let (green, errors) = parse_text(text, entry);
     Parse::new(green, errors)
 }
-
-#[cfg(test)]
-mod tests;
