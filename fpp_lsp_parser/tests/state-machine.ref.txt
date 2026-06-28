@@ -12,10 +12,10 @@ ROOT@0..1047
     LEFT_CURLY@34..35 "{"
     EOL@35..37 "\n\n"
     WHITESPACE@37..39 "  "
-    PRE_ANNOTATION@39..50 "@ Action a1"
-    EOL@50..51 "\n"
-    WHITESPACE@51..53 "  "
-    STATE_MACHINE_MEMBER_LIST@53..1045
+    STATE_MACHINE_MEMBER_LIST@39..1045
+      PRE_ANNOTATION@39..50 "@ Action a1"
+      EOL@50..51 "\n"
+      WHITESPACE@51..53 "  "
       DEF_ACTION@53..62
         ACTION_KW@53..59 "action"
         WHITESPACE@59..60 " "

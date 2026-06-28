@@ -10,10 +10,10 @@ ROOT@0..6806
     LEFT_CURLY@61..62 "{"
     EOL@62..64 "\n\n"
     WHITESPACE@64..66 "  "
-    PRE_ANNOTATION@66..92 "@ Abstract type defin ..."
-    EOL@92..93 "\n"
-    WHITESPACE@93..95 "  "
-    MODULE_MEMBER_LIST@95..5296
+    MODULE_MEMBER_LIST@66..5296
+      PRE_ANNOTATION@66..92 "@ Abstract type defin ..."
+      EOL@92..93 "\n"
+      WHITESPACE@93..95 "  "
       DEF_ABSTRACT_TYPE@95..101
         TYPE_KW@95..99 "type"
         WHITESPACE@99..100 " "
@@ -107,10 +107,10 @@ ROOT@0..6806
         LEFT_CURLY@431..432 "{"
         EOL@432..433 "\n"
         WHITESPACE@433..437 "    "
-        PRE_ANNOTATION@437..470 "@ General port instan ..."
-        EOL@470..471 "\n"
-        WHITESPACE@471..475 "    "
-        INTERFACE_MEMBER_LIST@475..749
+        INTERFACE_MEMBER_LIST@437..749
+          PRE_ANNOTATION@437..470 "@ General port instan ..."
+          EOL@470..471 "\n"
+          WHITESPACE@471..475 "    "
           SPEC_PORT_INSTANCE_GENERAL@475..520
             SYNC_KW@475..479 "sync"
             WHITESPACE@479..480 " "
@@ -1056,10 +1056,10 @@ ROOT@0..6806
         LEFT_CURLY@3303..3304 "{"
         EOL@3304..3305 "\n"
         WHITESPACE@3305..3309 "    "
-        PRE_ANNOTATION@3309..3325 "@ Init specifier"
-        EOL@3325..3326 "\n"
-        WHITESPACE@3326..3330 "    "
-        INIT_SPEC_LIST@3330..3420
+        INIT_SPEC_LIST@3309..3420
+          PRE_ANNOTATION@3309..3325 "@ Init specifier"
+          EOL@3325..3326 "\n"
+          WHITESPACE@3326..3330 "    "
           SPEC_INIT@3330..3395
             PHASE_KW@3330..3335 "phase"
             WHITESPACE@3335..3336 " "
@@ -1115,10 +1115,10 @@ ROOT@0..6806
         LEFT_CURLY@3560..3561 "{"
         EOL@3561..3562 "\n"
         WHITESPACE@3562..3566 "    "
-        PRE_ANNOTATION@3566..3569 "@ X"
-        EOL@3569..3570 "\n"
-        WHITESPACE@3570..3574 "    "
-        ENUM_MEMBER_LIST@3574..3618
+        ENUM_MEMBER_LIST@3566..3618
+          PRE_ANNOTATION@3566..3569 "@ X"
+          EOL@3569..3570 "\n"
+          WHITESPACE@3570..3574 "    "
           DEF_ENUM_CONSTANT@3574..3579
             NAME@3574..3575
               IDENT@3574..3575 "X"
@@ -1249,10 +1249,10 @@ ROOT@0..6806
         LEFT_CURLY@3905..3906 "{"
         EOL@3906..3907 "\n"
         WHITESPACE@3907..3911 "    "
-        PRE_ANNOTATION@3911..3914 "@ x"
-        EOL@3914..3915 "\n"
-        WHITESPACE@3915..3919 "    "
-        STRUCT_MEMBER_LIST@3919..3995
+        STRUCT_MEMBER_LIST@3911..3995
+          PRE_ANNOTATION@3911..3914 "@ x"
+          EOL@3914..3915 "\n"
+          WHITESPACE@3915..3919 "    "
           STRUCT_MEMBER@3919..3939
             NAME@3919..3920
               IDENT@3919..3920 "x"
@@ -1308,10 +1308,10 @@ ROOT@0..6806
         LEFT_CURLY@4058..4059 "{"
         EOL@4059..4061 "\n\n"
         WHITESPACE@4061..4065 "    "
-        PRE_ANNOTATION@4065..4092 "@ Public instance spe ..."
-        EOL@4092..4093 "\n"
-        WHITESPACE@4093..4097 "    "
-        TOPOLOGY_MEMBER_LIST@4097..4940
+        TOPOLOGY_MEMBER_LIST@4065..4940
+          PRE_ANNOTATION@4065..4092 "@ Public instance spe ..."
+          EOL@4092..4093 "\n"
+          WHITESPACE@4093..4097 "    "
           SPEC_INSTANCE@4097..4108
             INSTANCE_KW@4097..4105 "instance"
             WHITESPACE@4105..4106 " "
@@ -1477,10 +1477,10 @@ ROOT@0..6806
             LEFT_CURLY@4594..4595 "{"
             EOL@4595..4597 "\n\n"
             WHITESPACE@4597..4603 "      "
-            PRE_ANNOTATION@4603..4621 "@ Telemetry packet"
-            EOL@4621..4622 "\n"
-            WHITESPACE@4622..4628 "      "
-            TLM_PACKET_SET_MEMBER_LIST@4628..4802
+            TLM_PACKET_SET_MEMBER_LIST@4603..4802
+              PRE_ANNOTATION@4603..4621 "@ Telemetry packet"
+              EOL@4621..4622 "\n"
+              WHITESPACE@4622..4628 "      "
               SPEC_TLM_PACKET@4628..4688
                 PACKET_KW@4628..4634 "packet"
                 WHITESPACE@4634..4635 " "
@@ -1786,10 +1786,10 @@ ROOT@0..6806
     LEFT_CURLY@5587..5588 "{"
     EOL@5588..5590 "\n\n"
     WHITESPACE@5590..5592 "  "
-    PRE_ANNOTATION@5592..5604 "@ Arithmetic"
-    EOL@5604..5605 "\n"
-    WHITESPACE@5605..5607 "  "
-    MODULE_MEMBER_LIST@5607..6789
+    MODULE_MEMBER_LIST@5592..6789
+      PRE_ANNOTATION@5592..5604 "@ Arithmetic"
+      EOL@5604..5605 "\n"
+      WHITESPACE@5605..5607 "  "
       DEF_CONSTANT@5607..5649
         CONSTANT_KW@5607..5615 "constant"
         WHITESPACE@5615..5616 " "

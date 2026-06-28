@@ -333,6 +333,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "fpp_format"
+version = "0.1.0-a1"
+dependencies = [
+ "fpp_lsp_parser",
+ "pretty_assertions",
+]
+
+[[package]]
 name = "fpp_fs"
 version = "0.1.0-a1"
 dependencies = [

@@ -1,0 +1,11 @@
+[package]
+name = "fpp_format"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+fpp_lsp_parser = { path = "../fpp_lsp_parser" }
+
+[dev-dependencies]
+pretty_assertions = "1.4"

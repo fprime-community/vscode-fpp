@@ -59,6 +59,18 @@ impl LexedStr<'_> {
         self.len()
     }
 
+    /// Like eat_newlines but stops at annotations instead of consuming them
+    fn eat_newlines_without_annotations(&self, i: usize) -> usize {
+        for ii in i..self.len() {
+            match self.kind(ii) {
+                EOL | COMMENT | WHITESPACE => (),
+                _ => return ii,  // Stop at annotations or any other token
+            }
+        }
+
+        self.len()
+    }
+
     /// Compute the number of trivias at a point 'i'.
     /// Some trivias may be reduced into a 'psuedo' token, return the psuedo token
     /// as the second option in the tuple.
@@ -93,6 +105,13 @@ impl LexedStr<'_> {
                     }
 
                     let after = self.eat_newlines(i + 1);
+                    // For LEFT_CURLY, don't include annotations in RemoveAfter
+                    // They should be attached to the definitions inside, not to the brace
+                    let after = if self.kind(i) == LEFT_CURLY {
+                        self.eat_newlines_without_annotations(i + 1)
+                    } else {
+                        after
+                    };
                     return TriviaRegion::RemoveAfter(after - i - 1, self.kind(i));
                 }
 
@@ -250,7 +269,11 @@ impl Builder<'_, '_> {
 
         self.eat_whitespace_outer();
         (self.sink)(StrStep::Enter { kind });
-        self.eat_whitespace_inner();
+
+        // Don't emit annotations when entering member list nodes
+        // They should be attached to the individual member definitions instead
+        let emit_annotations = !Self::is_member_list(kind);
+        self.eat_whitespace_inner(emit_annotations);
     }
 
     fn exit(&mut self) {
@@ -298,7 +321,7 @@ impl Builder<'_, '_> {
         }
     }
 
-    fn eat_whitespace_inner(&mut self) {
+    fn eat_whitespace_inner(&mut self, emit_annotations: bool) {
         if self.pos >= self.lexed.len() {
             return;
         }
@@ -308,8 +331,16 @@ impl Builder<'_, '_> {
                 for _ in 0..n {
                     let kind = self.lexed.kind(self.pos);
                     match kind {
-                        WHITESPACE | PRE_ANNOTATION | POST_ANNOTATION => {
+                        WHITESPACE => {
                             self.do_token(kind, 1);
+                        }
+                        PRE_ANNOTATION | POST_ANNOTATION => {
+                            if emit_annotations {
+                                self.do_token(kind, 1);
+                            } else {
+                                // Don't emit, will be attached to next definition
+                                break;
+                            }
                         }
                         _ => break,
                     }
@@ -317,6 +348,22 @@ impl Builder<'_, '_> {
             }
             _ => (),
         }
+    }
+
+    fn is_member_list(kind: SyntaxKind) -> bool {
+        matches!(
+            kind,
+            MODULE_MEMBER_LIST
+                | COMPONENT_MEMBER_LIST
+                | INTERFACE_MEMBER_LIST
+                | STRUCT_MEMBER_LIST
+                | ENUM_MEMBER_LIST
+                | STATE_MACHINE_MEMBER_LIST
+                | STATE_MEMBER_LIST
+                | TOPOLOGY_MEMBER_LIST
+                | TLM_PACKET_SET_MEMBER_LIST
+                | TLM_PACKET_MEMBER_LIST
+        )
     }
 
     fn do_token(&mut self, kind: SyntaxKind, n_tokens: usize) {

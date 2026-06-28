@@ -11,7 +11,7 @@ members = [
     "fpp_lsp_parser",
     "fpp_macros",
     "fpp_parser",
-    "fpp_util",
+    "fpp_util", "fpp_format",
 ]
 
 # Exclude fpp_macros from test suite
