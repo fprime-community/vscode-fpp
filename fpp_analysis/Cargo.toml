@@ -5,6 +5,10 @@ version.workspace = true
 authors.workspace = true
 edition.workspace = true
 
+[features]
+
+disabled-tests = []
+
 [dependencies]
 fpp_ast = { path = "../fpp_ast" }
 fpp_core = { path = "../fpp_core" }
