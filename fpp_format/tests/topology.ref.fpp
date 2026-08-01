@@ -29,12 +29,12 @@ module TestTopology {
 
         @ Direct connections
         connections MainConnections {
-            compA.dataOut -> compB.dataIn
+            compA.dataOut    -> compB.dataIn
             compB.controlOut -> compC.controlIn
-            compC.statusOut -> compA.statusIn
+            compC.statusOut  -> compA.statusIn
 
             compA.portArray[0] -> compB.singlePort
-            compB.dataOut[1] -> compC.dataIn[1]
+            compB.dataOut[1]   -> compC.dataIn[1]
 
             unmatched compA.optionalOut -> compC.optionalIn
         }

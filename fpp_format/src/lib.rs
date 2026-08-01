@@ -216,6 +216,92 @@ module Outer {
         );
     }
 
+    /// Assert that formatted output reparses cleanly and is idempotent.
+    fn assert_stable(formatted: &str) {
+        let parse = parse(formatted, TopEntryPoint::Module);
+        assert!(
+            parse.errors().is_empty(),
+            "Formatted output failed to reparse: {:?}\nOutput:\n{}",
+            parse.errors(),
+            formatted
+        );
+        let again = format_text(formatted, FormatOptions::default()).unwrap();
+        assert_eq!(formatted, again, "Formatting not idempotent");
+    }
+
+    #[test]
+    fn test_long_command_explodes_clauses() {
+        // A command wider than max_line_width breaks each trailing clause onto
+        // its own `\`-continuation line.
+        let input = "module M { active component C { \
+            async command StartTest(testId: U32, timeout: F32) \
+            opcode 0x10 priority 5 assert } }";
+        let formatted = format_text(input, FormatOptions::default()).unwrap();
+
+        assert!(
+            formatted.contains("\\\n"),
+            "Expected `\\` continuations for exploded clauses:\n{}",
+            formatted
+        );
+        // Each clause on its own line.
+        assert!(
+            formatted.contains("opcode 0x10 \\\n"),
+            "clauses:\n{}",
+            formatted
+        );
+        assert!(
+            formatted.contains("priority 5 \\\n"),
+            "clauses:\n{}",
+            formatted
+        );
+        assert_stable(&formatted);
+    }
+
+    #[test]
+    fn test_short_spec_stays_inline() {
+        // A spec under the width limit keeps its clauses on one line.
+        let input = "module M { active component C { \
+            sync command Stop opcode 0x1 } }";
+        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        assert!(
+            !formatted.contains('\\'),
+            "Short spec should not be exploded:\n{}",
+            formatted
+        );
+        assert_stable(&formatted);
+    }
+
+    #[test]
+    fn test_connection_arrows_align() {
+        let input = "module M { topology T { \
+            connections C { a.longOutputName -> b.i, c.x -> d.y } } }";
+        let formatted = format_text(input, FormatOptions::default()).unwrap();
+
+        // Both arrows land in the same column.
+        let cols: Vec<usize> = formatted
+            .lines()
+            .filter(|l| l.contains("->"))
+            .map(|l| l.find("->").unwrap())
+            .collect();
+        assert_eq!(cols.len(), 2, "expected two connections:\n{}", formatted);
+        assert_eq!(cols[0], cols[1], "arrows not aligned:\n{}", formatted);
+        assert_stable(&formatted);
+    }
+
+    #[test]
+    fn test_telemetry_limits_indent() {
+        // Limit-sequence members indent one level past their brace.
+        let input = "module M { active component C { \
+            telemetry t: F32 low { yellow 1.0, red 2.0 } } }";
+        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        assert!(
+            formatted.contains("        yellow 1.0"),
+            "limit members should be indented:\n{}",
+            formatted
+        );
+        assert_stable(&formatted);
+    }
+
     #[test]
     fn test_trailing_newline() {
         // Phase 1: exactly one trailing newline

@@ -1,10 +1,25 @@
 use crate::FormatOptions;
-use crate::builder::FormatBuilder;
+use crate::builder::{AnchorKind, FormatBuilder};
 use fpp_lsp_parser::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken, WalkEvent};
+
+/// Tracks whether the enclosing specifier is being exploded (one clause per
+/// line) and whether its continuation indent has been opened yet.
+struct ExplodeFrame {
+    /// Whether this spec's clauses should each go on their own line.
+    exploding: bool,
+    /// Whether `indent()` has been called for this spec's clauses.
+    indented: bool,
+}
 
 /// Main formatter that walks the syntax tree and produces formatted output
 pub struct Formatter {
     builder: FormatBuilder,
+    /// Maximum rendered line width before a specifier's clauses are exploded.
+    max_line_width: usize,
+    /// Spaces per indent level (needed to measure flat width at a given depth).
+    indent_width: usize,
+    /// Stack of explode frames, one per enclosing explodable specifier.
+    explode_stack: Vec<ExplodeFrame>,
     /// Track depth of member-list nesting to know when COMMA is a separator
     member_list_depth: usize,
     /// Track if we've seen a blank line in recent whitespace (for preservation)
@@ -32,6 +47,9 @@ impl Formatter {
     pub fn new(options: FormatOptions) -> Self {
         Self {
             builder: FormatBuilder::new(options.indent_width),
+            max_line_width: options.max_line_width,
+            indent_width: options.indent_width,
+            explode_stack: Vec::new(),
             member_list_depth: 0,
             pending_blank_line: false,
             brace_depth: 0,
@@ -72,6 +90,25 @@ impl Formatter {
     /// Handle entering a node
     fn enter_node(&mut self, node: &SyntaxNode) {
         use SyntaxKind::*;
+
+        // Push an explode frame when entering an explodable specifier. Its
+        // clauses break onto continuation lines only if the whole spec would
+        // exceed the line width when rendered flat. During flat measurement we
+        // never explode (and must not recurse into flat_len).
+        if !self.builder.is_flat() && Self::is_explodable_spec(node.kind()) {
+            let exploding = self.flat_len(node) > self.max_line_width;
+            self.explode_stack.push(ExplodeFrame {
+                exploding,
+                indented: false,
+            });
+        }
+
+        // If this node begins a clause of the currently-exploding spec, break
+        // before it (node-wrapped clauses; bare-keyword clauses are handled in
+        // handle_token).
+        if self.is_node_clause_boundary(node) {
+            self.break_clause();
+        }
 
         match node.kind() {
             // Track choice nesting: inside a choice, FPP forbids bare newlines
@@ -128,6 +165,105 @@ impl Formatter {
         }
     }
 
+    /// Whether a specifier kind can have its trailing clauses exploded onto
+    /// separate lines. Equals `is_spec()` plus the three specs it omits.
+    fn is_explodable_spec(kind: SyntaxKind) -> bool {
+        use SyntaxKind::*;
+        kind.is_spec()
+            || matches!(
+                kind,
+                SPEC_CONTAINER | SPEC_RECORD | SPEC_STATE_MACHINE_INSTANCE
+            )
+    }
+
+    /// Whether the innermost enclosing spec is currently exploding.
+    fn top_exploding(&self) -> bool {
+        self.explode_stack.last().is_some_and(|f| f.exploding)
+    }
+
+    /// Emit a clause break: open the continuation indent once, then a `\`
+    /// continuation newline. No-op if the enclosing spec is not exploding.
+    fn break_clause(&mut self) {
+        if let Some(frame) = self.explode_stack.last_mut() {
+            if !frame.exploding {
+                return;
+            }
+            if !frame.indented {
+                self.builder.indent();
+                frame.indented = true;
+            }
+            self.builder.continuation_newline();
+        }
+    }
+
+    /// Whether `node` is the first element of a node-wrapped clause belonging to
+    /// the currently-exploding spec (its direct parent is that spec).
+    fn is_node_clause_boundary(&self, node: &SyntaxNode) -> bool {
+        use SyntaxKind::*;
+
+        if !self.top_exploding() {
+            return false;
+        }
+
+        let parent = match node.parent() {
+            Some(p) => p,
+            None => return false,
+        };
+        if !Self::is_explodable_spec(parent.kind()) {
+            return false;
+        }
+
+        match node.kind() {
+            OPCODE | PRIORITY | QUEUE_FULL | ID | FORMAT | EVENT_THROTTLE => true,
+            // `default <expr>` clause only appears as a clause in a param spec.
+            DEFAULT => parent.kind() == SPEC_PARAM,
+            _ => false,
+        }
+    }
+
+    /// Whether `token` is a bare keyword that introduces a clause of the
+    /// currently-exploding spec (its direct parent is that spec). Distinguishes
+    /// `high`/`low` limits (telemetry) from severity levels (event) by parent.
+    fn is_token_clause_boundary(&self, token: &SyntaxToken) -> bool {
+        use SyntaxKind::*;
+
+        if !self.top_exploding() {
+            return false;
+        }
+
+        let parent = match token.parent() {
+            Some(p) => p,
+            None => return false,
+        };
+
+        matches!(
+            (parent.kind(), token.kind()),
+            (SPEC_EVENT, SEVERITY_KW)
+                | (SPEC_TELEMETRY, UPDATE_KW | LOW_KW | HIGH_KW)
+                | (SPEC_PARAM, SET_KW | SAVE_KW)
+                | (SPEC_CONTAINER, DEFAULT_KW)
+                | (SPEC_RECORD, ARRAY_KW)
+        )
+    }
+
+    /// Measure the width of a node rendered on a single line (flat), including
+    /// the member indentation it sits at. Used to decide whether to explode.
+    fn flat_len(&self, node: &SyntaxNode) -> usize {
+        let mut probe = Formatter::new(FormatOptions {
+            indent_width: self.indent_width,
+            max_line_width: self.max_line_width,
+        });
+        probe.builder.set_flat(true);
+        for event in node.preorder_with_tokens() {
+            match event {
+                WalkEvent::Enter(element) => probe.handle_enter(element),
+                WalkEvent::Leave(element) => probe.handle_leave(element),
+            }
+        }
+        let rendered = probe.builder.output().trim_end().chars().count();
+        rendered + self.builder.indent_level() * self.indent_width
+    }
+
     /// Check if a node is a member directly in a member list
     fn is_list_member(&self, node: &SyntaxNode) -> bool {
         use SyntaxKind::*;
@@ -150,6 +286,8 @@ impl Formatter {
             EXPR_STRUCT_MEMBER | DEF_ENUM_CONSTANT | STRUCT_MEMBER | FORMAL_PARAM => true,
             // Connection, topology, state machine members
             CONNECTION | SPEC_INSTANCE | SPEC_TOP_PORT => true,
+            // Telemetry limit-sequence members (yellow/orange/red)
+            LIMIT => true,
             // Expression constructs that shouldn't break
             EXPR | EXPR_IDENT | EXPR_LITERAL | EXPR_BINARY | EXPR_UNARY | EXPR_POSTFIX
             | EXPR_ARRAY | EXPR_STRUCT | NAME | NAME_REF | TYPE_NAME => false,
@@ -162,6 +300,19 @@ impl Formatter {
     /// Handle leaving a node
     fn leave_node(&mut self, node: &SyntaxNode) {
         use SyntaxKind::*;
+
+        // Pop the explode frame for an explodable spec. If we opened a
+        // continuation indent for its clauses, close it now -- before the
+        // trailing-newline arm below emits the member separator, so the next
+        // member lands back at member indent.
+        if !self.builder.is_flat()
+            && Self::is_explodable_spec(node.kind())
+            && let Some(frame) = self.explode_stack.pop()
+            && frame.exploding
+            && frame.indented
+        {
+            self.builder.dedent();
+        }
 
         match node.kind() {
             DEF_CHOICE => {
@@ -315,6 +466,13 @@ impl Formatter {
     fn handle_token(&mut self, token: &SyntaxToken) {
         use SyntaxKind::*;
 
+        // Bare-keyword clause boundary: break before a keyword that introduces
+        // a clause of the currently-exploding spec, then fall through to normal
+        // handling for the keyword itself.
+        if self.is_token_clause_boundary(token) {
+            self.break_clause();
+        }
+
         match token.kind() {
             // Whitespace - check for blank lines (multiple newlines) to preserve
             WHITESPACE => {
@@ -389,9 +547,11 @@ impl Formatter {
 
             // Post-annotations stay INLINE after the item (same line)
             POST_ANNOTATION => {
-                // Add space before, stay on current line
+                // Add space before, stay on current line. Record an anchor so
+                // adjacent post-annotations align into a shared column.
                 self.builder.space();
-                self.builder.token(token.text());
+                self.builder
+                    .token_anchor(token.text(), AnchorKind::PostAnnotation);
                 // Don't emit newline - let the next member separator handle it
             }
 
@@ -543,7 +703,14 @@ impl Formatter {
             // Arrows
             RIGHT_ARROW => {
                 self.builder.space();
-                self.builder.token(token.text());
+                // A `->` in a topology connection aligns into a shared column;
+                // a port-return `->` (parent DEF_PORT) does not.
+                let in_connection = token.parent().is_some_and(|p| p.kind() == CONNECTION);
+                if in_connection {
+                    self.builder.token_anchor(token.text(), AnchorKind::Arrow);
+                } else {
+                    self.builder.token(token.text());
+                }
                 self.builder.space();
             }
 

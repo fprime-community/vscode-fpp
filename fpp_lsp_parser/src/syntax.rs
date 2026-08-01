@@ -347,6 +347,7 @@ impl SyntaxKind {
                 | SPEC_LOC
                 | SPEC_PORT_INSTANCE_GENERAL
                 | SPEC_PORT_INSTANCE_SPECIAL
+                | SPEC_PORT_INSTANCE_INTERNAL
                 | SPEC_RECORD
                 | SPEC_STATE_ENTRY
                 | SPEC_STATE_EXIT
@@ -523,6 +524,7 @@ impl SyntaxKind {
                 | TLM_PACKET_MEMBER_LIST
                 | TLM_PACKET_OMIT_MEMBER_LIST
                 | CONNECTION_MEMBER_LIST
+                | LIMIT_SEQUENCE
                 | INIT_SPEC_LIST
                 | FORMAL_PARAM_LIST
                 | EXPR_STRUCT_MEMBER_LIST

@@ -7,12 +7,12 @@ ROOT@0..127
     WHITESPACE@12..13 " "
     EQUALS@13..14 "="
     WHITESPACE@14..15 " "
-    INDEX_OR_SIZE@15..17
+    INDEX_OR_SIZE@15..18
       LEFT_SQUARE@15..16 "["
       EXPR@16..17
         EXPR_LITERAL@16..17
           LITERAL_INT@16..17 "3"
-    RIGHT_SQUARE@17..18 "]"
+      RIGHT_SQUARE@17..18 "]"
     WHITESPACE@18..19 " "
     TYPE_NAME@19..22
       U32_KW@19..22 "U32"

@@ -3,33 +3,49 @@ active component TestComponent {
     @ Command 1
     async command StartTest(
         testId: U32
-        timeout: F32 ) opcode 0x10 priority 5 assert
+        timeout: F32 ) \
+        opcode 0x10 \
+        priority 5 \
+        assert
 
     @ Command 2
     sync command StopTest
 
     @ Telemetry channels
-    telemetry temperature: F32 id 0x01 update always format "{} C" low {
-    yellow 10.0
-    orange 5.0
-    red 0.0
-    } high {
-    yellow 50.0
-    orange 60.0
-    red 70.0
-    }
+    telemetry temperature: F32 \
+        id 0x01 \
+        update always \
+        format "{} C" \
+        low {
+            yellow 10.0
+            orange 5.0
+            red 0.0
+        } \
+        high {
+            yellow 50.0
+            orange 60.0
+            red 70.0
+        }
 
     telemetry statusCode: U32 id 0x02
 
     @ Events
     event TestStarted(
-        testId: U32 ) severity activity high id 0x100 format "Test {} started" throttle 10
+        testId: U32 ) \
+        severity activity high \
+        id 0x100 \
+        format "Test {} started" \
+        throttle 10
 
     event TestFailed(
     ) severity fatal format "Test failed"
 
     @ Parameters
-    param maxIterations: U32 default 100 id 0x20 set opcode 0x21 save opcode 0x22
+    param maxIterations: U32 \
+        default 100 \
+        id 0x20 \
+        set opcode 0x21 \
+        save opcode 0x22
 
     external param configFile: string id 0x30
 

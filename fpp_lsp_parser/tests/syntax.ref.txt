@@ -54,12 +54,12 @@ ROOT@0..6806
         WHITESPACE@231..232 " "
         EQUALS@232..233 "="
         WHITESPACE@233..234 " "
-        INDEX_OR_SIZE@234..237
+        INDEX_OR_SIZE@234..238
           LEFT_SQUARE@234..235 "["
           EXPR@235..237
             EXPR_LITERAL@235..237
               LITERAL_INT@235..237 "10"
-        RIGHT_SQUARE@237..238 "]"
+          RIGHT_SQUARE@237..238 "]"
         WHITESPACE@238..239 " "
         TYPE_NAME@239..242
           U32_KW@239..242 "U32"
@@ -122,12 +122,12 @@ ROOT@0..6806
               IDENT@491..493 "pI"
             COLON@493..494 ":"
             WHITESPACE@494..495 " "
-            INDEX_OR_SIZE@495..498
+            INDEX_OR_SIZE@495..499
               LEFT_SQUARE@495..496 "["
               EXPR@496..498
                 EXPR_LITERAL@496..498
                   LITERAL_INT@496..498 "10"
-            RIGHT_SQUARE@498..499 "]"
+              RIGHT_SQUARE@498..499 "]"
             WHITESPACE@499..500 " "
             QUAL_IDENT@500..501
               IDENT@500..501 "P"
@@ -212,12 +212,12 @@ ROOT@0..6806
             WHITESPACE@849..850 " "
             EQUALS@850..851 "="
             WHITESPACE@851..852 " "
-            INDEX_OR_SIZE@852..854
+            INDEX_OR_SIZE@852..855
               LEFT_SQUARE@852..853 "["
               EXPR@853..854
                 EXPR_LITERAL@853..854
                   LITERAL_INT@853..854 "3"
-            RIGHT_SQUARE@854..855 "]"
+              RIGHT_SQUARE@854..855 "]"
             WHITESPACE@855..856 " "
             TYPE_NAME@856..859
               U32_KW@856..859 "U32"
@@ -237,12 +237,12 @@ ROOT@0..6806
                   IDENT@875..876 "x"
                 COLON@876..877 ":"
                 WHITESPACE@877..878 " "
-                INDEX_OR_SIZE@878..880
+                INDEX_OR_SIZE@878..881
                   LEFT_SQUARE@878..879 "["
                   EXPR@879..880
                     EXPR_LITERAL@879..880
                       LITERAL_INT@879..880 "3"
-                RIGHT_SQUARE@880..881 "]"
+                  RIGHT_SQUARE@880..881 "]"
                 WHITESPACE@881..882 " "
                 TYPE_NAME@882..885
                   U32_KW@882..885 "U32"
@@ -476,12 +476,12 @@ ROOT@0..6806
               IDENT@1441..1443 "p1"
             COLON@1443..1444 ":"
             WHITESPACE@1444..1445 " "
-            INDEX_OR_SIZE@1445..1448
+            INDEX_OR_SIZE@1445..1449
               LEFT_SQUARE@1445..1446 "["
               EXPR@1446..1448
                 EXPR_LITERAL@1446..1448
                   LITERAL_INT@1446..1448 "10"
-            RIGHT_SQUARE@1448..1449 "]"
+              RIGHT_SQUARE@1448..1449 "]"
             WHITESPACE@1449..1450 " "
             QUAL_IDENT@1450..1451
               IDENT@1450..1451 "P"
@@ -643,12 +643,12 @@ ROOT@0..6806
               IDENT@2198..2200 "p2"
             COLON@2200..2201 ":"
             WHITESPACE@2201..2202 " "
-            INDEX_OR_SIZE@2202..2205
+            INDEX_OR_SIZE@2202..2206
               LEFT_SQUARE@2202..2203 "["
               EXPR@2203..2205
                 EXPR_LITERAL@2203..2205
                   LITERAL_INT@2203..2205 "10"
-            RIGHT_SQUARE@2205..2206 "]"
+              RIGHT_SQUARE@2205..2206 "]"
             WHITESPACE@2206..2207 " "
             QUAL_IDENT@2207..2208
               IDENT@2207..2208 "P"
@@ -1341,12 +1341,12 @@ ROOT@0..6806
                     IDENT@4209..4211 "i1"
                     DOT@4211..4212 "."
                     IDENT@4212..4213 "p"
-                  INDEX_OR_SIZE@4213..4215
+                  INDEX_OR_SIZE@4213..4216
                     LEFT_SQUARE@4213..4214 "["
                     EXPR@4214..4215
                       EXPR_LITERAL@4214..4215
                         LITERAL_INT@4214..4215 "0"
-                  RIGHT_SQUARE@4215..4216 "]"
+                    RIGHT_SQUARE@4215..4216 "]"
                 WHITESPACE@4216..4217 " "
                 RIGHT_ARROW@4217..4219 "->"
                 WHITESPACE@4219..4220 " "
@@ -1355,12 +1355,12 @@ ROOT@0..6806
                     IDENT@4220..4222 "i2"
                     DOT@4222..4223 "."
                     IDENT@4223..4224 "p"
-                  INDEX_OR_SIZE@4224..4226
+                  INDEX_OR_SIZE@4224..4227
                     LEFT_SQUARE@4224..4225 "["
                     EXPR@4225..4226
                       EXPR_LITERAL@4225..4226
                         LITERAL_INT@4225..4226 "1"
-                  RIGHT_SQUARE@4226..4227 "]"
+                    RIGHT_SQUARE@4226..4227 "]"
               EOL@4227..4228 "\n"
               WHITESPACE@4228..4234 "      "
               CONNECTION@4234..4264
@@ -1371,12 +1371,12 @@ ROOT@0..6806
                     IDENT@4244..4246 "i1"
                     DOT@4246..4247 "."
                     IDENT@4247..4249 "p1"
-                  INDEX_OR_SIZE@4249..4251
+                  INDEX_OR_SIZE@4249..4252
                     LEFT_SQUARE@4249..4250 "["
                     EXPR@4250..4251
                       EXPR_LITERAL@4250..4251
                         LITERAL_INT@4250..4251 "0"
-                  RIGHT_SQUARE@4251..4252 "]"
+                    RIGHT_SQUARE@4251..4252 "]"
                 WHITESPACE@4252..4253 " "
                 RIGHT_ARROW@4253..4255 "->"
                 WHITESPACE@4255..4256 " "
@@ -1385,12 +1385,12 @@ ROOT@0..6806
                     IDENT@4256..4258 "i2"
                     DOT@4258..4259 "."
                     IDENT@4259..4261 "p2"
-                  INDEX_OR_SIZE@4261..4263
+                  INDEX_OR_SIZE@4261..4264
                     LEFT_SQUARE@4261..4262 "["
                     EXPR@4262..4263
                       EXPR_LITERAL@4262..4263
                         LITERAL_INT@4262..4263 "0"
-                  RIGHT_SQUARE@4263..4264 "]"
+                    RIGHT_SQUARE@4263..4264 "]"
               EOL@4264..4265 "\n"
               WHITESPACE@4265..4271 "      "
               CONNECTION@4271..4295
@@ -1674,12 +1674,12 @@ ROOT@0..6806
         WHITESPACE@5381..5382 " "
         EQUALS@5382..5383 "="
         WHITESPACE@5383..5384 " "
-        INDEX_OR_SIZE@5384..5387
+        INDEX_OR_SIZE@5384..5388
           LEFT_SQUARE@5384..5385 "["
           EXPR@5385..5387
             EXPR_LITERAL@5385..5387
               LITERAL_INT@5385..5387 "10"
-        RIGHT_SQUARE@5387..5388 "]"
+          RIGHT_SQUARE@5387..5388 "]"
         WHITESPACE@5388..5389 " "
         TYPE_NAME@5389..5392
           U32_KW@5389..5392 "U32"
@@ -1693,12 +1693,12 @@ ROOT@0..6806
         WHITESPACE@5412..5413 " "
         EQUALS@5413..5414 "="
         WHITESPACE@5414..5415 " "
-        INDEX_OR_SIZE@5415..5418
+        INDEX_OR_SIZE@5415..5419
           LEFT_SQUARE@5415..5416 "["
           EXPR@5416..5418
             EXPR_LITERAL@5416..5418
               LITERAL_INT@5416..5418 "10"
-        RIGHT_SQUARE@5418..5419 "]"
+          RIGHT_SQUARE@5418..5419 "]"
         WHITESPACE@5419..5420 " "
         TYPE_NAME@5420..5423
           F32_KW@5420..5423 "F32"
@@ -1712,12 +1712,12 @@ ROOT@0..6806
         WHITESPACE@5444..5445 " "
         EQUALS@5445..5446 "="
         WHITESPACE@5446..5447 " "
-        INDEX_OR_SIZE@5447..5450
+        INDEX_OR_SIZE@5447..5451
           LEFT_SQUARE@5447..5448 "["
           EXPR@5448..5450
             EXPR_LITERAL@5448..5450
               LITERAL_INT@5448..5450 "10"
-        RIGHT_SQUARE@5450..5451 "]"
+          RIGHT_SQUARE@5450..5451 "]"
         WHITESPACE@5451..5452 " "
         TYPE_NAME@5452..5456
           BOOL_KW@5452..5456 "bool"
@@ -1731,12 +1731,12 @@ ROOT@0..6806
         WHITESPACE@5479..5480 " "
         EQUALS@5480..5481 "="
         WHITESPACE@5481..5482 " "
-        INDEX_OR_SIZE@5482..5485
+        INDEX_OR_SIZE@5482..5486
           LEFT_SQUARE@5482..5483 "["
           EXPR@5483..5485
             EXPR_LITERAL@5483..5485
               LITERAL_INT@5483..5485 "10"
-        RIGHT_SQUARE@5485..5486 "]"
+          RIGHT_SQUARE@5485..5486 "]"
         WHITESPACE@5486..5487 " "
         TYPE_NAME@5487..5502
           STRING_KW@5487..5493 "string"
@@ -1756,12 +1756,12 @@ ROOT@0..6806
         WHITESPACE@5522..5523 " "
         EQUALS@5523..5524 "="
         WHITESPACE@5524..5525 " "
-        INDEX_OR_SIZE@5525..5528
+        INDEX_OR_SIZE@5525..5529
           LEFT_SQUARE@5525..5526 "["
           EXPR@5526..5528
             EXPR_LITERAL@5526..5528
               LITERAL_INT@5526..5528 "10"
-        RIGHT_SQUARE@5528..5529 "]"
+          RIGHT_SQUARE@5528..5529 "]"
         WHITESPACE@5529..5530 " "
         TYPE_NAME@5530..5535
           QUAL_IDENT@5530..5535
@@ -1912,12 +1912,12 @@ ROOT@0..6806
                       LITERAL_INT@5777..5778 "3"
                 WHITESPACE@5778..5779 " "
                 RIGHT_SQUARE@5779..5780 "]"
-              INDEX_OR_SIZE@5780..5782
+              INDEX_OR_SIZE@5780..5783
                 LEFT_SQUARE@5780..5781 "["
                 EXPR@5781..5782
                   EXPR_LITERAL@5781..5782
                     LITERAL_INT@5781..5782 "1"
-              RIGHT_SQUARE@5782..5783 "]"
+                RIGHT_SQUARE@5782..5783 "]"
       EOL@5783..5784 "\n"
       WHITESPACE@5784..5786 "  "
       POST_ANNOTATION@5786..5804 "@< Array Subscript"
@@ -1945,12 +1945,12 @@ ROOT@0..6806
                   IDENT@5854..5855 "b"
                 DOT@5855..5856 "."
                 IDENT@5856..5857 "c"
-              INDEX_OR_SIZE@5857..5859
+              INDEX_OR_SIZE@5857..5860
                 LEFT_SQUARE@5857..5858 "["
                 EXPR@5858..5859
                   EXPR_LITERAL@5858..5859
                     LITERAL_INT@5858..5859 "1"
-              RIGHT_SQUARE@5859..5860 "]"
+                RIGHT_SQUARE@5859..5860 "]"
       EOL@5860..5861 "\n"
       WHITESPACE@5861..5863 "  "
       POST_ANNOTATION@5863..5881 "@< Array Subscript"
@@ -1981,26 +1981,26 @@ ROOT@0..6806
                         IDENT@5953..5954 "b"
                       DOT@5954..5955 "."
                       IDENT@5955..5956 "c"
-                    INDEX_OR_SIZE@5956..5958
+                    INDEX_OR_SIZE@5956..5959
                       LEFT_SQUARE@5956..5957 "["
                       EXPR@5957..5958
                         EXPR_LITERAL@5957..5958
                           LITERAL_INT@5957..5958 "1"
-                    RIGHT_SQUARE@5958..5959 "]"
-                  INDEX_OR_SIZE@5959..5961
+                      RIGHT_SQUARE@5958..5959 "]"
+                  INDEX_OR_SIZE@5959..5962
                     LEFT_SQUARE@5959..5960 "["
                     EXPR@5960..5961
                       EXPR_LITERAL@5960..5961
                         LITERAL_INT@5960..5961 "2"
-                  RIGHT_SQUARE@5961..5962 "]"
+                    RIGHT_SQUARE@5961..5962 "]"
                 DOT@5962..5963 "."
                 IDENT@5963..5964 "s"
-              INDEX_OR_SIZE@5964..5967
+              INDEX_OR_SIZE@5964..5968
                 LEFT_SQUARE@5964..5965 "["
                 EXPR@5965..5967
                   EXPR_LITERAL@5965..5967
                     LITERAL_INT@5965..5967 "12"
-              RIGHT_SQUARE@5967..5968 "]"
+                RIGHT_SQUARE@5967..5968 "]"
       EOL@5968..5969 "\n"
       WHITESPACE@5969..5971 "  "
       POST_ANNOTATION@5971..5990 "@< Array Subscript "
