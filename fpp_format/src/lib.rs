@@ -21,8 +21,8 @@ pub struct FormatOptions {
 impl Default for FormatOptions {
     fn default() -> Self {
         Self {
-            indent_width: 2,
-            max_line_width: 100,
+            indent_width: 4,
+            max_line_width: 80,
         }
     }
 }
