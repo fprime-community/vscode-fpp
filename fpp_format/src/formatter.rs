@@ -273,23 +273,6 @@ impl Formatter {
         false
     }
 
-    /// Whether the next non-trivia sibling after `token` is a type name.
-    fn next_token_is_type(token: &SyntaxToken) -> bool {
-        use SyntaxKind::*;
-
-        let mut next = token.next_sibling_or_token();
-        while let Some(elem) = next {
-            match elem {
-                SyntaxElement::Token(t) if matches!(t.kind(), WHITESPACE | EOL) => {
-                    next = t.next_sibling_or_token();
-                }
-                SyntaxElement::Node(n) => return n.kind() == TYPE_NAME,
-                _ => return false,
-            }
-        }
-        false
-    }
-
     /// Check if a comment is trailing (on the same source line as preceding
     /// content) vs standalone (on its own line).
     ///
@@ -542,19 +525,17 @@ impl Formatter {
             }
 
             // Closing square brackets - no space before.
-            // In an array definition (`array A = [N] Type`) the `[N]` is an
-            // INDEX_OR_SIZE node and the `]` follows it as a sibling; a type name
-            // comes next and needs a separating space. In a subscript expression
-            // (`arr[3]`) there is no following type, so no space is added.
+            // Normally this marks array sizes but may be used in expressions
             RIGHT_SQUARE => {
                 self.builder.token(token.text());
 
-                let closes_array_size = token
-                    .prev_sibling_or_token()
-                    .and_then(|e| e.into_node())
-                    .is_some_and(|n| n.kind() == INDEX_OR_SIZE);
+                let is_subscript = token.parent_ancestors().nth(1).is_some_and(|n| {
+                    n.kind() == EXPR_SUBSCRIPT
+                        || n.kind() == CONNECTION_FROM
+                        || n.kind() == CONNECTION_TO
+                });
 
-                if closes_array_size && Self::next_token_is_type(token) {
+                if !is_subscript {
                     self.builder.space();
                 }
             }

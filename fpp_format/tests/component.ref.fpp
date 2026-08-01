@@ -34,8 +34,8 @@ active component TestComponent {
     external param configFile: string id 0x30
 
     @ Port instances
-    async input port dataIn: [10]DataPort priority 10 drop
-    output port dataOut: [5]DataPort
+    async input port dataIn: [10] DataPort priority 10 drop
+    output port dataOut: [5] DataPort
 
     sync input port controlIn: ControlPort priority 5 assert
 

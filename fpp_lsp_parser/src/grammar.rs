@@ -157,8 +157,8 @@ fn index_or_size(p: &mut Parser) {
     let m = p.start();
     p.bump(LEFT_SQUARE);
     expr::expr(p);
-    m.complete(p, INDEX_OR_SIZE);
     p.expect(RIGHT_SQUARE);
+    m.complete(p, INDEX_OR_SIZE);
 }
 
 fn index_or_size_opt(p: &mut Parser) {
