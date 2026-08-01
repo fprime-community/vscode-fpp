@@ -11,6 +11,7 @@ fpp_ast = { path = "../fpp_ast" }
 fpp_core = { path = "../fpp_core" }
 fpp_parser = { path = "../fpp_parser" }
 fpp_lsp_parser = { path = "../fpp_lsp_parser" }
+fpp_format = { path = "../fpp_format" }
 
 lsp-server = "=0.7.9"
 serde_json = "1.0.145"

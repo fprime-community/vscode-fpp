@@ -376,6 +376,7 @@ dependencies = [
  "fpp_analysis",
  "fpp_ast",
  "fpp_core",
+ "fpp_format",
  "fpp_lsp_parser",
  "fpp_parser",
  "ignore",

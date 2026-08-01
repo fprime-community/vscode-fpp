@@ -49,6 +49,8 @@ impl GlobalState {
             // .on::<lsp_request::PrepareRenameRequest>(handlers::handle_prepare_rename)
             // .on::<lsp_request::Rename>(handlers::handle_rename)
             .on::<lsp_request::References>(handlers::handle_references)
+            .on::<lsp_request::Formatting>(handlers::handle_formatting)
+            .on::<lsp_request::RangeFormatting>(handlers::handle_range_formatting)
             .finish();
     }
 }

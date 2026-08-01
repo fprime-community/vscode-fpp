@@ -17,10 +17,10 @@ use fpp_lsp_parser::{
 use lsp_types::{
     CompletionItem, CompletionItemKind, CompletionParams, CompletionResponse,
     DidChangeTextDocumentParams, DidChangeWatchedFilesParams, DidCloseTextDocumentParams,
-    DidOpenTextDocumentParams, DocumentDiagnosticReportResult, DocumentLink, FileChangeType,
-    GotoDefinitionParams, GotoDefinitionResponse, Hover, HoverParams, Location, Position, Range,
-    ReferenceParams, SemanticTokensFullDeltaResult, SemanticTokensRangeResult,
-    SemanticTokensResult, Uri,
+    DidOpenTextDocumentParams, DocumentDiagnosticReportResult, DocumentFormattingParams,
+    DocumentLink, DocumentRangeFormattingParams, FileChangeType, GotoDefinitionParams,
+    GotoDefinitionResponse, Hover, HoverParams, Location, Position, Range, ReferenceParams,
+    SemanticTokensFullDeltaResult, SemanticTokensRangeResult, SemanticTokensResult, TextEdit, Uri,
 };
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -752,4 +752,72 @@ pub fn handle_completion(
                 .collect(),
         )))
     }
+}
+
+pub fn handle_formatting(
+    state: &GlobalState,
+    request: DocumentFormattingParams,
+) -> Result<Option<Vec<TextEdit>>> {
+    let uri = request.text_document.uri;
+    let text: String = state.vfs.read_sync(uri.as_str())?;
+    let lines = state.vfs.get_lines(uri.as_str())?;
+
+    // Format the entire document
+    let formatted = match fpp_format::format_text(&text, fpp_format::FormatOptions::default()) {
+        Ok(formatted) => formatted,
+        Err(e) => {
+            tracing::warn!("Formatting failed: {}", e);
+            return Ok(None);
+        }
+    };
+
+    // If the text hasn't changed, return no edits
+    if text == formatted {
+        return Ok(None);
+    }
+
+    // Create a text edit that replaces the entire document
+    let text_len = fpp_lsp_parser::TextSize::from(text.len() as u32);
+    let text_range = fpp_lsp_parser::TextRange::new(0.into(), text_len);
+    let range = text_range_to_range(&lines, text_range);
+
+    Ok(Some(vec![TextEdit {
+        range,
+        new_text: formatted,
+    }]))
+}
+
+pub fn handle_range_formatting(
+    state: &GlobalState,
+    request: DocumentRangeFormattingParams,
+) -> Result<Option<Vec<TextEdit>>> {
+    // For initial implementation, format the entire document
+    // Future optimization: extract and format only the specified range
+    let uri = request.text_document.uri;
+    let text: String = state.vfs.read_sync(uri.as_str())?;
+    let lines = state.vfs.get_lines(uri.as_str())?;
+
+    // Format the entire document
+    let formatted = match fpp_format::format_text(&text, fpp_format::FormatOptions::default()) {
+        Ok(formatted) => formatted,
+        Err(e) => {
+            tracing::warn!("Range formatting failed: {}", e);
+            return Ok(None);
+        }
+    };
+
+    // If the text hasn't changed, return no edits
+    if text == formatted {
+        return Ok(None);
+    }
+
+    // Create a text edit that replaces the entire document
+    let text_len = fpp_lsp_parser::TextSize::from(text.len() as u32);
+    let text_range = fpp_lsp_parser::TextRange::new(0.into(), text_len);
+    let range = text_range_to_range(&lines, text_range);
+
+    Ok(Some(vec![TextEdit {
+        range,
+        new_text: formatted,
+    }]))
 }

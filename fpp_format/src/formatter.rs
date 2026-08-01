@@ -1,11 +1,34 @@
-use crate::builder::FormatBuilder;
 use crate::FormatOptions;
+use crate::builder::FormatBuilder;
 use fpp_lsp_parser::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken, WalkEvent};
 
 /// Main formatter that walks the syntax tree and produces formatted output
 pub struct Formatter {
     builder: FormatBuilder,
     options: FormatOptions,
+}
+
+/// Check if a syntax kind is a member list
+/// Items inside a member list should be indented
+fn is_member_list(kind: SyntaxKind) -> bool {
+    use SyntaxKind::*;
+    match kind {
+        MODULE_MEMBER_LIST
+        | DO_EXPR_MEMBER_LIST
+        | COMPONENT_MEMBER_LIST
+        | INTERFACE_MEMBER_LIST
+        | STRUCT_MEMBER_LIST
+        | ENUM_MEMBER_LIST
+        | STATE_MACHINE_MEMBER_LIST
+        | STATE_MEMBER_LIST
+        | TOPOLOGY_MEMBER_LIST
+        | TLM_PACKET_SET_MEMBER_LIST
+        | TLM_PACKET_MEMBER_LIST
+        | TLM_PACKET_OMIT_MEMBER_LIST
+        | CONNECTION_MEMBER_LIST
+        | INIT_SPEC_LIST => true,
+        _ => false,
+    }
 }
 
 impl Formatter {
@@ -58,29 +81,13 @@ impl Formatter {
             }
 
             // Member lists need indentation
-            MODULE_MEMBER_LIST
-            | COMPONENT_MEMBER_LIST
-            | INTERFACE_MEMBER_LIST
-            | STRUCT_MEMBER_LIST
-            | ENUM_MEMBER_LIST
-            | STATE_MACHINE_MEMBER_LIST
-            | STATE_MEMBER_LIST
-            | TOPOLOGY_MEMBER_LIST => {
+            list if is_member_list(list) => {
                 self.builder.newline();
                 self.builder.indent();
             }
 
-            // Definitions inside member lists
-            DEF_CONSTANT
-            | DEF_ABSTRACT_TYPE
-            | DEF_ALIAS_TYPE
-            | DEF_ARRAY
-            | DEF_STRUCT
-            | DEF_ENUM
-            | DEF_COMPONENT
-            | DEF_PORT
-            | DEF_INTERFACE
-            | DEF_STATE_MACHINE => {
+            // Definitions should have a newline
+            def if def.is_def() => {
                 // Add newline before definition if we're not at line start
                 if !self.builder.is_at_line_start() {
                     self.builder.newline();
@@ -112,20 +119,21 @@ impl Formatter {
 
         match node.kind() {
             // Member lists need dedentation
-            MODULE_MEMBER_LIST
-            | COMPONENT_MEMBER_LIST
-            | INTERFACE_MEMBER_LIST
-            | STRUCT_MEMBER_LIST
-            | ENUM_MEMBER_LIST
-            | STATE_MACHINE_MEMBER_LIST
-            | STATE_MEMBER_LIST
-            | TOPOLOGY_MEMBER_LIST => {
+            list if is_member_list(list) => {
                 self.builder.dedent();
             }
 
             // After binary operator, add space
             BINARY_OP => {
                 self.builder.space();
+            }
+
+            spec if spec.is_spec() => {
+                self.builder.newline();
+            }
+
+            def if def.is_def() => {
+                self.builder.newline();
             }
 
             _ => {}
@@ -151,6 +159,7 @@ impl Formatter {
                     // Inline comment - add space before
                     self.builder.space();
                     self.builder.token(token.text());
+                    self.builder.newline();
                 }
             }
 
@@ -165,6 +174,10 @@ impl Formatter {
 
             // Keywords - add space after
             keyword if keyword.is_keyword() => {
+                if !self.builder.is_at_line_start() {
+                    self.builder.space();
+                }
+
                 self.builder.token(token.text());
                 self.builder.space();
             }
@@ -185,8 +198,15 @@ impl Formatter {
                 self.builder.newline();
             }
 
+            COLON => {
+                // name: Type
+                self.builder.token(token.text());
+                self.builder.space();
+            }
+
             // Operators that need space around them
-            EQUALS | COLON => {
+            EQUALS => {
+                // Def = expr
                 self.builder.space();
                 self.builder.token(token.text());
                 self.builder.space();
