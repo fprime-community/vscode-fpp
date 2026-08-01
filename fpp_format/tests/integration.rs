@@ -1,4 +1,4 @@
-use fpp_format::{format_text, FormatOptions};
+use fpp_format::{FormatOptions, format_text};
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 use std::{env, fs};
@@ -21,8 +21,7 @@ fn run_test(file_path: &str) {
         Err(err) => panic!("failed to open {}: {}", source_file_path, err),
     };
 
-    let formatted = format_text(&src, FormatOptions::default())
-        .expect("formatting should succeed");
+    let formatted = format_text(&src, FormatOptions::default()).expect("formatting should succeed");
 
     match env::var("FPP_UPDATE_REF") {
         Ok(_) => {
@@ -60,4 +59,34 @@ fn multiple_definitions() {
 #[test]
 fn nested_module() {
     run_test("nested-module")
+}
+
+#[test]
+fn annotations() {
+    run_test("annotations")
+}
+
+#[test]
+fn array_struct() {
+    run_test("array-struct")
+}
+
+#[test]
+fn component() {
+    run_test("component")
+}
+
+#[test]
+fn port() {
+    run_test("port")
+}
+
+#[test]
+fn topology() {
+    run_test("topology")
+}
+
+#[test]
+fn state_machine() {
+    run_test("state-machine")
 }

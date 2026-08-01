@@ -503,4 +503,31 @@ impl SyntaxKind {
                 | YELLOW_KW
         )
     }
+
+    /// Check if this syntax kind is a member list that should be indented
+    /// Used by the formatter to determine indentation and member separation
+    #[inline]
+    pub fn is_member_list(self) -> bool {
+        matches!(
+            self,
+            MODULE_MEMBER_LIST
+                | DO_EXPR_MEMBER_LIST
+                | COMPONENT_MEMBER_LIST
+                | INTERFACE_MEMBER_LIST
+                | STRUCT_MEMBER_LIST
+                | ENUM_MEMBER_LIST
+                | STATE_MACHINE_MEMBER_LIST
+                | STATE_MEMBER_LIST
+                | TOPOLOGY_MEMBER_LIST
+                | TLM_PACKET_SET_MEMBER_LIST
+                | TLM_PACKET_MEMBER_LIST
+                | TLM_PACKET_OMIT_MEMBER_LIST
+                | CONNECTION_MEMBER_LIST
+                | INIT_SPEC_LIST
+                | FORMAL_PARAM_LIST
+                | EXPR_STRUCT_MEMBER_LIST
+                | EXPR_ARRAY_MEMBER_LIST
+                | PATTERN_TARGET_MEMBER_LIST
+        )
+    }
 }

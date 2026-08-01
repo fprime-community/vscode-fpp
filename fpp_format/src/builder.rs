@@ -9,6 +9,9 @@ pub enum Whitespace {
     Newline,
     /// Blank line (two newlines)
     BlankLine,
+    /// Backslash line continuation (` \` then newline). Used inside choice
+    /// blocks, where FPP forbids bare newlines.
+    ContinuationNewline,
 }
 
 /// Builder for constructing formatted output text
@@ -38,16 +41,19 @@ impl FormatBuilder {
     }
 
     /// Get the formatted output
-    pub fn finish(self) -> String {
+    pub fn finish(mut self) -> String {
+        // Ensure exactly one trailing newline
+        if !self.output.ends_with('\n') {
+            self.output.push('\n');
+        }
         self.output
     }
 
     /// Request a space before the next token
     pub fn space(&mut self) {
         // Upgrade to space if we don't have stronger whitespace pending
-        match self.pending_whitespace {
-            Whitespace::None => self.pending_whitespace = Whitespace::Space,
-            _ => {} // Keep stronger whitespace
+        if self.pending_whitespace == Whitespace::None {
+            self.pending_whitespace = Whitespace::Space;
         }
     }
 
@@ -66,6 +72,19 @@ impl FormatBuilder {
         self.pending_whitespace = Whitespace::BlankLine;
     }
 
+    /// Request a backslash line continuation before the next token. Emitted as
+    /// ` \` followed by a newline. Overrides a pending plain space/newline (a
+    /// choice block must not emit a bare newline), but never downgrades a
+    /// stronger blank line.
+    pub fn continuation_newline(&mut self) {
+        match self.pending_whitespace {
+            Whitespace::None | Whitespace::Space | Whitespace::Newline => {
+                self.pending_whitespace = Whitespace::ContinuationNewline;
+            }
+            _ => {} // Keep stronger whitespace
+        }
+    }
+
     /// Increase indentation level
     pub fn indent(&mut self) {
         self.indent_level += 1;
@@ -78,9 +97,14 @@ impl FormatBuilder {
         }
     }
 
-    /// Get current indentation level
-    pub fn current_indent(&self) -> usize {
+    /// Get the current indentation level (for save/restore).
+    pub fn indent_level(&self) -> usize {
         self.indent_level
+    }
+
+    /// Set the indentation level directly (for save/restore).
+    pub fn set_indent_level(&mut self, level: usize) {
+        self.indent_level = level;
     }
 
     /// Emit a token with the given text
@@ -124,6 +148,15 @@ impl FormatBuilder {
                 self.output.push('\n');
                 self.at_line_start = true;
             }
+            Whitespace::ContinuationNewline => {
+                // ` \` after the previous token, then a newline. At line start
+                // there is nothing to continue, so fall back to a plain newline.
+                if !self.at_line_start {
+                    self.output.push_str(" \\");
+                }
+                self.output.push('\n');
+                self.at_line_start = true;
+            }
         }
         self.pending_whitespace = Whitespace::None;
     }
@@ -131,11 +164,6 @@ impl FormatBuilder {
     /// Check if we're at the start of a line
     pub fn is_at_line_start(&self) -> bool {
         self.at_line_start
-    }
-
-    /// Force emit of pending whitespace (useful for comments)
-    pub fn flush_whitespace(&mut self) {
-        self.emit_pending_whitespace();
     }
 }
 
@@ -147,7 +175,7 @@ mod tests {
     fn test_basic_token() {
         let mut builder = FormatBuilder::new(2);
         builder.token("hello");
-        assert_eq!(builder.finish(), "hello");
+        assert_eq!(builder.finish(), "hello\n");
     }
 
     #[test]
@@ -156,7 +184,7 @@ mod tests {
         builder.token("hello");
         builder.space();
         builder.token("world");
-        assert_eq!(builder.finish(), "hello world");
+        assert_eq!(builder.finish(), "hello world\n");
     }
 
     #[test]
@@ -165,7 +193,7 @@ mod tests {
         builder.token("line1");
         builder.newline();
         builder.token("line2");
-        assert_eq!(builder.finish(), "line1\nline2");
+        assert_eq!(builder.finish(), "line1\nline2\n");
     }
 
     #[test]
@@ -178,7 +206,7 @@ mod tests {
         builder.dedent();
         builder.newline();
         builder.token("outer");
-        assert_eq!(builder.finish(), "outer\n  inner\nouter");
+        assert_eq!(builder.finish(), "outer\n  inner\nouter\n");
     }
 
     #[test]
@@ -187,7 +215,7 @@ mod tests {
         builder.token("first");
         builder.blank_line();
         builder.token("second");
-        assert_eq!(builder.finish(), "first\n\nsecond");
+        assert_eq!(builder.finish(), "first\n\nsecond\n");
     }
 
     #[test]
@@ -197,6 +225,6 @@ mod tests {
         builder.space();
         builder.newline(); // Should upgrade space to newline
         builder.token("world");
-        assert_eq!(builder.finish(), "hello\nworld");
+        assert_eq!(builder.finish(), "hello\nworld\n");
     }
 }

@@ -1,5 +1,4 @@
 module Outer {
-
   module Inner {
     constant x = 10
   }

@@ -4,6 +4,8 @@ module F {
   constant c = 3
   type MyType = U32
   enum Color {
-    RED, GREEN, BLUE
+    RED @< Color Red
+    GREEN
+    BLUE
   }
 }

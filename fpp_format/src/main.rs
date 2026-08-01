@@ -1,4 +1,4 @@
-use fpp_format::{format_text, FormatOptions};
+use fpp_format::{FormatOptions, format_text};
 use std::env;
 use std::fs;
 use std::io::{self, Read};
