@@ -79,15 +79,17 @@ module StateMachines {
         }
 
         choice C2 {
-        if g2 do {
-        a1, a2, a3
-        } enter S2 else enter S3
+            if g2 do {
+                a1
+                a2
+                a3
+            } enter S2 else enter S3
         }
 
         choice C3 {
-        if g2 do {
-        a1a2a3
-        } enter S2 else enter S3
+            if g2 do {
+            a1a2a3
+            } enter S2 else enter S3
         }
 
         state S1 {
@@ -102,5 +104,5 @@ module StateMachines {
         state S3 {
             initial enter S2
         }
-        }
-        }
+    }
+}

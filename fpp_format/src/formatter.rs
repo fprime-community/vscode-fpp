@@ -28,6 +28,9 @@ pub struct Formatter {
     /// this depth, since a comment can appear between a `{` and the member-list
     /// node (so the builder's own indent level is not yet raised).
     brace_depth: usize,
+    /// Whether the current do-block should stay inline (single member, fits on one line).
+    /// Set when entering DO_EXPR, cleared when leaving.
+    inline_do: bool,
 }
 
 impl Formatter {
@@ -41,6 +44,7 @@ impl Formatter {
             member_list_depth: 0,
             pending_blank_line: false,
             brace_depth: 0,
+            inline_do: false,
         }
     }
 
@@ -96,6 +100,18 @@ impl Formatter {
         }
 
         match node.kind() {
+            // Set inline_do flag when entering a do-block that should stay inline
+            DO_EXPR => {
+                // Check if single member by counting NAME_REF nodes in the member list
+                let single_member = node
+                    .children()
+                    .any(|c| {
+                        c.kind() == DO_EXPR_MEMBER_LIST
+                            && c.children().filter(|n| n.kind() == NAME_REF).count() == 1
+                    });
+                self.inline_do = single_member;
+            }
+
             // Member lists need indentation, unless it's a DO_EXPR_MEMBER_LIST
             // with a single member that should stay inline (parent DO_EXPR is not exploding).
             list if list.is_member_list() => {
@@ -295,6 +311,11 @@ impl Formatter {
         }
 
         match node.kind() {
+            // Clear inline_do flag when leaving DO_EXPR
+            DO_EXPR => {
+                self.inline_do = false;
+            }
+
             // Member lists need dedentation, unless they stayed inline.
             list if list.is_member_list() => {
                 let was_inline_do = node.kind() == DO_EXPR_MEMBER_LIST
@@ -449,7 +470,15 @@ impl Formatter {
 
             // EOL in member lists (or at the root level) acts as a separator
             EOL => {
-                if self.member_list_depth > 0 || self.is_at_root_level(token) {
+                // Check if we're inside an inline do-block - skip EOL tokens in DO_EXPR or its member list
+                let in_inline_do = self.inline_do
+                    && token.parent().is_some_and(|p| {
+                        p.kind() == DO_EXPR_MEMBER_LIST || p.kind() == DO_EXPR
+                    });
+
+                if in_inline_do {
+                    // Skip EOL tokens in inline do-blocks
+                } else if self.member_list_depth > 0 || self.is_at_root_level(token) {
                     // Skip this EOL if it's a single newline immediately followed by
                     // trailing trivia (comment or post-annotation) - those stay inline.
                     // But preserve blank lines (multiple newlines) even before trailing trivia.
@@ -538,25 +567,16 @@ impl Formatter {
             LEFT_CURLY => {
                 self.brace_depth += 1;
                 let opens_choice = token.parent().is_some_and(|p| p.kind() == DEF_CHOICE);
-                let opens_inline_do = token.parent().is_some_and(|p| {
-                    if p.kind() != DO_EXPR {
-                        return false;
-                    }
-                    if self.top_exploding() {
-                        return false;
-                    }
-                    // Only inline if single member
-                    p.children()
-                        .find(|c| c.kind() == DO_EXPR_MEMBER_LIST)
-                        .is_some_and(|list| {
-                            list.children().filter(|c| c.kind() == NAME_REF).count() == 1
-                        })
-                });
 
                 self.builder.space();
                 self.builder.token(token.text());
 
-                if opens_inline_do {
+                // Check if this opens a do-block (parent or grandparent is DO_EXPR)
+                let in_do_expr = token.parent().is_some_and(|p| {
+                    p.kind() == DO_EXPR || p.parent().is_some_and(|gp| gp.kind() == DO_EXPR)
+                });
+
+                if self.inline_do && in_do_expr {
                     // Inline do-block: space instead of newline
                     self.builder.space();
                 } else {
@@ -572,20 +592,6 @@ impl Formatter {
             // The newline decision is driven by the NEXT element (like DEFAULT keyword)
             RIGHT_CURLY => {
                 let is_choice_closing = token.parent().is_some_and(|p| p.kind() == DEF_CHOICE);
-                let is_inline_do_closing = token.parent().is_some_and(|p| {
-                    if p.kind() != DO_EXPR {
-                        return false;
-                    }
-                    if self.top_exploding() {
-                        return false;
-                    }
-                    // Only inline if single member
-                    p.children()
-                        .find(|c| c.kind() == DO_EXPR_MEMBER_LIST)
-                        .is_some_and(|list| {
-                            list.children().filter(|c| c.kind() == NAME_REF).count() == 1
-                        })
-                });
 
                 if self.brace_depth > 0 {
                     self.brace_depth -= 1;
@@ -597,7 +603,7 @@ impl Formatter {
                     if !self.builder.is_at_line_start() {
                         self.builder.newline();
                     }
-                } else if is_inline_do_closing {
+                } else if self.inline_do {
                     // Inline do-block: space before closing brace
                     self.builder.space();
                 } else if !self.builder.is_at_line_start() {

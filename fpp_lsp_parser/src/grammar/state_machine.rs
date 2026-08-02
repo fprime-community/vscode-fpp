@@ -168,11 +168,6 @@ fn def_choice(p: &mut Parser) {
         m.complete(p, THEN_CLAUSE);
     }
 
-    // Skip EOL before else keyword
-    while p.at(EOL) {
-        p.bump_any();
-    }
-
     p.expect(ELSE_KW);
     {
         let m = p.start();

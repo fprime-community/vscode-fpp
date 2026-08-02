@@ -50,9 +50,7 @@ module StateMachines {
 
             @ Transition to choice
             on tick enter CheckCondition
-            on dataReady do {
-            processData
-            }
+            on dataReady do { processData }
         }
     }
 
@@ -87,15 +85,11 @@ module StateMachines {
         }
 
         choice C3 {
-            if g2 do {
-            a1a2a3
-            } enter S2 else enter S3
+            if g2 do { a1a2a3 } enter S2 else enter S3
         }
 
         state S1 {
-            on s1 if g1 do {
-            a1
-            } enter C1
+            on s1 if g1 do { a1 } enter C1
             on s2 enter S2
         }
 
