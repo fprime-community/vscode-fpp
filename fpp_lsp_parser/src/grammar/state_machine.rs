@@ -153,6 +153,12 @@ fn def_choice(p: &mut Parser) {
     }
 
     p.expect(LEFT_CURLY);
+
+    // Skip any EOL tokens after the opening brace (formatter adds newline after {)
+    while p.at(EOL) {
+        p.bump_any();
+    }
+
     p.expect(IF_KW);
     name_ref(p);
 
@@ -162,11 +168,21 @@ fn def_choice(p: &mut Parser) {
         m.complete(p, THEN_CLAUSE);
     }
 
+    // Skip EOL before else keyword
+    while p.at(EOL) {
+        p.bump_any();
+    }
+
     p.expect(ELSE_KW);
     {
         let m = p.start();
         transition_expr(p);
         m.complete(p, ELSE_CLAUSE);
+    }
+
+    // Skip EOL before closing brace
+    while p.at(EOL) {
+        p.bump_any();
     }
 
     p.expect(RIGHT_CURLY);

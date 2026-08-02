@@ -64,7 +64,11 @@ fn format_stdin(check_only: bool) -> Result<(), Box<dyn std::error::Error>> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
 
-    let formatted = format_text(&input, FormatOptions::default())?;
+    let formatted = format_text(
+        &input,
+        fpp_lsp_parser::TopEntryPoint::Module,
+        FormatOptions::default(),
+    )?;
 
     if check_only {
         if input != formatted {
@@ -82,7 +86,11 @@ fn format_stdin(check_only: bool) -> Result<(), Box<dyn std::error::Error>> {
 
 fn format_file_cmd(path: &PathBuf, check_only: bool) -> Result<bool, Box<dyn std::error::Error>> {
     let original = fs::read_to_string(path)?;
-    let formatted = format_text(&original, FormatOptions::default())?;
+    let formatted = format_text(
+        &original,
+        fpp_lsp_parser::TopEntryPoint::Module,
+        FormatOptions::default(),
+    )?;
 
     if check_only {
         if original != formatted {

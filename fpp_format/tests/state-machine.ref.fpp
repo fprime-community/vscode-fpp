@@ -23,9 +23,7 @@ module StateMachines {
         state Idle
 
         state Active {
-            entry do {
-                processData
-            }
+            entry do { processData }
             exit do {
                 reset
                 logError
@@ -35,15 +33,11 @@ module StateMachines {
             state Processing
 
             @ Initial transition for nested state
-            initial do {
-                processData
-            } enter Processing
+            initial do { processData } enter Processing
 
             @ Transitions
             on tick enter Idle
-            on dataReady if isReady do {
-                processData
-            } enter Processing
+            on dataReady if isReady do { processData } enter Processing
             on timeout if hasData enter Idle
         }
 
@@ -51,14 +45,13 @@ module StateMachines {
         state Waiting {
             @ Choice definition
             choice CheckCondition {
-                if isReady enter Active \
-                else enter Idle \
+                if isReady enter Active else enter Idle
             }
 
             @ Transition to choice
             on tick enter CheckCondition
             on dataReady do {
-                processData
+            processData
             }
         }
     }
@@ -82,8 +75,7 @@ module StateMachines {
         } enter S1
 
         choice C1 {
-            if g1 do { a1 } enter S2 \
-            else do { a2 } enter S3 \
+            if g1 do { a1 } enter S2 else do { a2 } enter S3
         }
 
         choice C2 {
@@ -91,13 +83,18 @@ module StateMachines {
                 a1
                 a2
                 a3
-            } enter S2 \
-            else enter S3 \
+            } enter S2 else enter S3
+        }
+
+        choice C3 {
+            if g2 do {
+            a1a2a3
+            } enter S2 else enter S3
         }
 
         state S1 {
             on s1 if g1 do {
-                a1
+            a1
             } enter C1
             on s2 enter S2
         }

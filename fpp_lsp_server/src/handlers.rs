@@ -758,18 +758,17 @@ pub fn handle_formatting(
     state: &GlobalState,
     request: DocumentFormattingParams,
 ) -> Result<Option<Vec<TextEdit>>> {
-    let uri = request.text_document.uri;
-    let text: String = state.vfs.read_sync(uri.as_str())?;
-    let lines = state.vfs.get_lines(uri.as_str())?;
+    let lines = state.vfs.get_lines(request.text_document.uri.as_str())?;
+    let (text, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
+
+    if !parse.errors().is_empty() {
+        tracing::warn!("Cannot format with parse errors: {:?}", parse.errors());
+        return Ok(None);
+    }
 
     // Format the entire document
-    let formatted = match fpp_format::format_text(&text, fpp_format::FormatOptions::default()) {
-        Ok(formatted) => formatted,
-        Err(e) => {
-            tracing::warn!("Formatting failed: {}", e);
-            return Ok(None);
-        }
-    };
+    let formatted = fpp_format::Formatter::new(fpp_format::FormatOptions::default())
+        .format(&parse.syntax_node());
 
     // If the text hasn't changed, return no edits
     if text == formatted {
@@ -793,18 +792,17 @@ pub fn handle_range_formatting(
 ) -> Result<Option<Vec<TextEdit>>> {
     // For initial implementation, format the entire document
     // Future optimization: extract and format only the specified range
-    let uri = request.text_document.uri;
-    let text: String = state.vfs.read_sync(uri.as_str())?;
-    let lines = state.vfs.get_lines(uri.as_str())?;
+    let lines = state.vfs.get_lines(request.text_document.uri.as_str())?;
+    let (text, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
+
+    if !parse.errors().is_empty() {
+        tracing::warn!("Cannot format with parse errors: {:?}", parse.errors());
+        return Ok(None);
+    }
 
     // Format the entire document
-    let formatted = match fpp_format::format_text(&text, fpp_format::FormatOptions::default()) {
-        Ok(formatted) => formatted,
-        Err(e) => {
-            tracing::warn!("Range formatting failed: {}", e);
-            return Ok(None);
-        }
-    };
+    let formatted = fpp_format::Formatter::new(fpp_format::FormatOptions::default())
+        .format(&parse.syntax_node());
 
     // If the text hasn't changed, return no edits
     if text == formatted {

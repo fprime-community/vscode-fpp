@@ -13,6 +13,16 @@ queued component ExtraComp {
     ) \
         opcode 0x0
 
+    @ Wait for the interpreter to finish and return it's result as a CmdResponse
+    async command WAIT opcode 0x1
+
+    # async command RUN_ARGS(
+    #                       fileName: string size FileNameStringSize @< The name of the sequence file
+    #                       $block: Svc.BlockState @< Return command status when complete or not
+    #                       buffer: Svc.SeqArgs @< Arguments to pass to the sequencer
+    #                     ) \
+    #     opcode 1 priority 7 assert
+
     @ Guarded input port
     guarded input port guardedIn: DataPort
 

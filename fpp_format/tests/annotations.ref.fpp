@@ -36,19 +36,16 @@ module AnnotatedModule {
     @ Struct with member annotations
     struct Record {
         @ Field x annotation
-        x: U32
-        @< Post-annotation for x
+        x: U32 @< Post-annotation for x
         # Comment between fields
         y: F32 # inline comment on field
         @ Field z annotation
-        z: string
-        @< Post-annotation for z
+        z: string @< Post-annotation for z
     }
     @< Post-annotation for struct
 
     @ Constant with inline and post
-    constant MIN_VALUE = 0 # inline comment
-    @< Post-annotation for constant
+    constant MIN_VALUE = 0 # inline comment @< Post-annotation for constant
 
     # Final standalone comment
 } @< Post-annotation for module

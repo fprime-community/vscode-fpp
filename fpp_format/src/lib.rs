@@ -7,7 +7,7 @@ use std::{fs, io};
 pub use fpp_lsp_parser::SyntaxError;
 use fpp_lsp_parser::{TopEntryPoint, parse};
 
-use crate::formatter::Formatter;
+pub use crate::formatter::Formatter;
 
 /// Configuration options for the formatter
 #[derive(Debug, Clone)]
@@ -64,15 +64,18 @@ impl std::error::Error for FormatError {}
 /// Returns the formatted text, or an error if the input has parse errors.
 /// Note: The formatter will still attempt to format code with parse errors,
 /// but may return a `ParseError` if the errors are severe.
-pub fn format_text(text: &str, options: FormatOptions) -> Result<String, FormatError> {
+pub fn format_text(
+    text: &str,
+    entry: TopEntryPoint,
+    options: FormatOptions,
+) -> Result<String, FormatError> {
     // Parse the input text
-    let parse = parse(text, TopEntryPoint::Module);
+    let parse = parse(text, entry);
 
-    // Check for parse errors - we can format even with errors, but warn about them
+    // Check for parse errors - fail if the input cannot be parsed
     let errors = parse.errors();
     if !errors.is_empty() {
-        // For now, we'll format anyway but could optionally fail here
-        // return Err(FormatError::ParseError(errors));
+        return Err(FormatError::ParseError(errors));
     }
 
     // Get the syntax tree root
@@ -89,9 +92,9 @@ pub fn format_text(text: &str, options: FormatOptions) -> Result<String, FormatE
 ///
 /// This reads the file, formats it, and returns the result without
 /// modifying the original file.
-pub fn format_file(path: &Path) -> Result<String, FormatError> {
+pub fn format_file(path: &Path, entry: TopEntryPoint) -> Result<String, FormatError> {
     let text = fs::read_to_string(path)?;
-    format_text(&text, FormatOptions::default())
+    format_text(&text, entry, FormatOptions::default())
 }
 
 #[cfg(test)]
@@ -105,7 +108,7 @@ mod tests {
     constant b = 2 + 3
 }
 "#;
-        let result = format_text(input, FormatOptions::default());
+        let result = format_text(input, TopEntryPoint::Module, FormatOptions::default());
         assert!(result.is_ok());
 
         let formatted = result.unwrap();
@@ -117,8 +120,9 @@ mod tests {
     #[test]
     fn test_format_idempotent() {
         let input = "module F { constant a = 1 }";
-        let result1 = format_text(input, FormatOptions::default()).unwrap();
-        let result2 = format_text(&result1, FormatOptions::default()).unwrap();
+        let result1 = format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
+        let result2 =
+            format_text(&result1, TopEntryPoint::Module, FormatOptions::default()).unwrap();
         assert_eq!(result1, result2, "Formatter should be idempotent");
     }
 
@@ -126,7 +130,8 @@ mod tests {
     fn test_enum_reparses_cleanly() {
         // Phase 1: enum with comma separators must reparse after formatting
         let input = "module F { enum Color { RED, GREEN, BLUE } }";
-        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
 
         // Must reparse with zero errors
         let parse = parse(&formatted, TopEntryPoint::Module);
@@ -138,7 +143,8 @@ mod tests {
         );
 
         // Must be idempotent
-        let formatted2 = format_text(&formatted, FormatOptions::default()).unwrap();
+        let formatted2 =
+            format_text(&formatted, TopEntryPoint::Module, FormatOptions::default()).unwrap();
         assert_eq!(formatted, formatted2, "Enum formatting not idempotent");
     }
 
@@ -146,7 +152,8 @@ mod tests {
     fn test_struct_members_separate_lines() {
         // Phase 1: struct members should be on separate lines
         let input = "module F { struct S { x: U32, y: F32 } }";
-        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
 
         // Must reparse
         let parse = parse(&formatted, TopEntryPoint::Module);
@@ -158,7 +165,8 @@ mod tests {
         );
 
         // Must be idempotent
-        let formatted2 = format_text(&formatted, FormatOptions::default()).unwrap();
+        let formatted2 =
+            format_text(&formatted, TopEntryPoint::Module, FormatOptions::default()).unwrap();
         assert_eq!(formatted, formatted2, "Struct formatting not idempotent");
     }
 
@@ -174,7 +182,8 @@ module Outer {
   struct Point { x: F32, y: F32 }
 }
 "#;
-        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
 
         // Must reparse
         let parse = parse(&formatted, TopEntryPoint::Module);
@@ -186,7 +195,8 @@ module Outer {
         );
 
         // Must be idempotent
-        let formatted2 = format_text(&formatted, FormatOptions::default()).unwrap();
+        let formatted2 =
+            format_text(&formatted, TopEntryPoint::Module, FormatOptions::default()).unwrap();
         assert_eq!(
             formatted, formatted2,
             "Nested module formatting not idempotent"
@@ -197,7 +207,8 @@ module Outer {
     fn test_binary_expressions_reparse() {
         // Phase 1: expressions should format and reparse correctly
         let input = "module F { constant a = 1 + 2 * 3 - 4 / 5 }";
-        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
 
         // Must reparse
         let parse = parse(&formatted, TopEntryPoint::Module);
@@ -209,7 +220,8 @@ module Outer {
         );
 
         // Must be idempotent
-        let formatted2 = format_text(&formatted, FormatOptions::default()).unwrap();
+        let formatted2 =
+            format_text(&formatted, TopEntryPoint::Module, FormatOptions::default()).unwrap();
         assert_eq!(
             formatted, formatted2,
             "Expression formatting not idempotent"
@@ -225,7 +237,8 @@ module Outer {
             parse.errors(),
             formatted
         );
-        let again = format_text(formatted, FormatOptions::default()).unwrap();
+        let again =
+            format_text(formatted, TopEntryPoint::Module, FormatOptions::default()).unwrap();
         assert_eq!(formatted, again, "Formatting not idempotent");
     }
 
@@ -236,7 +249,8 @@ module Outer {
         let input = "module M { active component C { \
             async command StartTest(testId: U32, timeout: F32) \
             opcode 0x10 priority 5 assert } }";
-        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
 
         assert!(
             formatted.contains("\\\n"),
@@ -262,7 +276,8 @@ module Outer {
         // A spec under the width limit keeps its clauses on one line.
         let input = "module M { active component C { \
             sync command Stop opcode 0x1 } }";
-        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
         assert!(
             !formatted.contains('\\'),
             "Short spec should not be exploded:\n{}",
@@ -275,7 +290,8 @@ module Outer {
     fn test_connection_arrows_align() {
         let input = "module M { topology T { \
             connections C { a.longOutputName -> b.i, c.x -> d.y } } }";
-        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
 
         // Both arrows land in the same column.
         let cols: Vec<usize> = formatted
@@ -293,7 +309,8 @@ module Outer {
         // Limit-sequence members indent one level past their brace.
         let input = "module M { active component C { \
             telemetry t: F32 low { yellow 1.0, red 2.0 } } }";
-        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
         assert!(
             formatted.contains("        yellow 1.0"),
             "limit members should be indented:\n{}",
@@ -306,7 +323,8 @@ module Outer {
     fn test_trailing_newline() {
         // Phase 1: exactly one trailing newline
         let input = "module F { constant a = 1 }";
-        let formatted = format_text(input, FormatOptions::default()).unwrap();
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
 
         assert!(formatted.ends_with('\n'), "Missing trailing newline");
         assert!(
@@ -330,8 +348,10 @@ module Outer {
         ];
 
         for input in test_cases {
-            let formatted1 = format_text(input, FormatOptions::default()).unwrap();
-            let formatted2 = format_text(&formatted1, FormatOptions::default()).unwrap();
+            let formatted1 =
+                format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
+            let formatted2 =
+                format_text(&formatted1, TopEntryPoint::Module, FormatOptions::default()).unwrap();
             assert_eq!(
                 formatted1, formatted2,
                 "Not idempotent for input: {}\nFirst:\n{}\nSecond:\n{}",
@@ -387,7 +407,7 @@ module Outer {
             };
 
             // First pass formatting
-            let formatted1 = format_text(&input, FormatOptions::default())
+            let formatted1 = format_text(&input, TopEntryPoint::Module, FormatOptions::default())
                 .unwrap_or_else(|e| panic!("{}: Format failed: {:?}", fixture_name, e));
 
             // CRITICAL: Must parse cleanly with fpp_lsp_parser (not fpp binary!)
@@ -411,8 +431,9 @@ module Outer {
             );
 
             // Second pass - test idempotency
-            let formatted2 = format_text(&formatted1, FormatOptions::default())
-                .unwrap_or_else(|e| panic!("{}: Second format failed: {:?}", fixture_name, e));
+            let formatted2 =
+                format_text(&formatted1, TopEntryPoint::Module, FormatOptions::default())
+                    .unwrap_or_else(|e| panic!("{}: Second format failed: {:?}", fixture_name, e));
 
             assert_eq!(
                 formatted1, formatted2,

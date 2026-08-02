@@ -28,18 +28,6 @@ pub struct Formatter {
     /// this depth, since a comment can appear between a `{` and the member-list
     /// node (so the builder's own indent level is not yet raised).
     brace_depth: usize,
-    /// Number of enclosing `choice { … }` blocks. FPP forbids bare newlines
-    /// inside a choice (except within a `do { }` action list), so while this is
-    /// non-zero we regenerate every line break as a `\` continuation and
-    /// suppress stray source EOLs.
-    choice_depth: usize,
-    /// True while emitting a single-member `do { x }` action list inline (only
-    /// inside a choice). Suppresses the member-list expansion for that block.
-    inline_do: bool,
-    /// Number of enclosing `do { … }` action lists. Bare newlines are valid
-    /// inside a do-block even within a choice, so this tells the EOL handler
-    /// when a source newline may pass through unescaped.
-    do_block_depth: usize,
 }
 
 impl Formatter {
@@ -53,9 +41,6 @@ impl Formatter {
             member_list_depth: 0,
             pending_blank_line: false,
             brace_depth: 0,
-            choice_depth: 0,
-            inline_do: false,
-            do_block_depth: 0,
         }
     }
 
@@ -111,29 +96,17 @@ impl Formatter {
         }
 
         match node.kind() {
-            // Track choice nesting: inside a choice, FPP forbids bare newlines
-            // (except within a do-block), so line breaks become `\` continuations.
-            DEF_CHOICE => {
-                self.choice_depth += 1;
-            }
-
-            // Inside a choice, a do-block with a single action stays inline
-            // (`do { a }`); a multi-action list expands one action per line.
-            DO_EXPR => {
-                self.do_block_depth += 1;
-                if self.choice_depth > 0 {
-                    self.inline_do = Self::do_expr_is_single_member(node);
-                }
-            }
-
-            // Member lists need indentation -- except a single-member do-block
-            // inside a choice, which we keep inline (`do { a }`).
+            // Member lists need indentation, unless it's a DO_EXPR_MEMBER_LIST
+            // with a single member that should stay inline (parent DO_EXPR is not exploding).
             list if list.is_member_list() => {
-                if (self.inline_do && node.kind() == DO_EXPR_MEMBER_LIST)
-                    || Self::is_empty_member_list(node)
-                {
+                let is_inline_do = node.kind() == DO_EXPR_MEMBER_LIST
+                    && !self.top_exploding()
+                    && node.children().filter(|c| c.kind() == NAME_REF).count() == 1;
+
+                if Self::is_empty_member_list(node) || is_inline_do {
                     // Stay inline: no break, no indent. An empty list renders as
                     // `()`/`{}` -- breaking it would emit an invalid bare `(\n)`.
+                    // A do-block that fits on one line also stays inline.
                     self.member_list_depth += 1;
                 } else {
                     self.builder.newline();
@@ -145,9 +118,7 @@ impl Formatter {
             // Direct children of member lists should start on their own line
             // This includes defs/specs but also struct members, enum constants, formal params, etc.
             _ if self.member_list_depth > 0 && self.is_list_member(node) => {
-                if self.inline_do {
-                    // Inline do-block member stays on the same line.
-                } else if self.pending_blank_line {
+                if self.pending_blank_line {
                     // Preserve a blank line from source.
                     self.builder.blank_line();
                     self.pending_blank_line = false;
@@ -169,13 +140,15 @@ impl Formatter {
     }
 
     /// Whether a specifier kind can have its trailing clauses exploded onto
-    /// separate lines. Equals `is_spec()` plus the three specs it omits.
+    /// separate lines. Equals `is_spec()` plus the three specs it omits,
+    /// DEF_CHOICE (which explodes its `else` clause), and DO_EXPR (which
+    /// explodes its action list when too wide).
     fn is_explodable_spec(kind: SyntaxKind) -> bool {
         use SyntaxKind::*;
         kind.is_spec()
             || matches!(
                 kind,
-                SPEC_CONTAINER | SPEC_RECORD | SPEC_STATE_MACHINE_INSTANCE
+                SPEC_CONTAINER | SPEC_RECORD | SPEC_STATE_MACHINE_INSTANCE | DEF_CHOICE | DO_EXPR
             )
     }
 
@@ -186,6 +159,7 @@ impl Formatter {
 
     /// Emit a clause break: open the continuation indent once, then a `\`
     /// continuation newline. No-op if the enclosing spec is not exploding.
+    /// For DEF_CHOICE, always use continuation newlines since FPP requires them.
     fn break_clause(&mut self) {
         if let Some(frame) = self.explode_stack.last_mut() {
             if !frame.exploding {
@@ -195,6 +169,7 @@ impl Formatter {
                 self.builder.indent();
                 frame.indented = true;
             }
+            // Choice blocks require backslash continuations for line breaks
             self.builder.continuation_newline();
         }
     }
@@ -227,6 +202,7 @@ impl Formatter {
     /// Whether `token` is a bare keyword that introduces a clause of the
     /// currently-exploding spec (its direct parent is that spec). Distinguishes
     /// `high`/`low` limits (telemetry) from severity levels (event) by parent.
+    /// ELSE_KW in a choice is a clause boundary for explosion.
     fn is_token_clause_boundary(&self, token: &SyntaxToken) -> bool {
         use SyntaxKind::*;
 
@@ -246,6 +222,7 @@ impl Formatter {
                 | (SPEC_PARAM, SET_KW | SAVE_KW)
                 | (SPEC_CONTAINER, DEFAULT_KW)
                 | (SPEC_RECORD, ARRAY_KW)
+                | (DEF_CHOICE, ELSE_KW)
         )
     }
 
@@ -318,27 +295,13 @@ impl Formatter {
         }
 
         match node.kind() {
-            DEF_CHOICE => {
-                if self.choice_depth > 0 {
-                    self.choice_depth -= 1;
-                }
-            }
-
-            DO_EXPR => {
-                if self.do_block_depth > 0 {
-                    self.do_block_depth -= 1;
-                }
-                if self.choice_depth > 0 {
-                    self.inline_do = false;
-                }
-            }
-
-            // Member lists need dedentation -- but an inline do-block never
-            // indented, so it must not dedent either.
+            // Member lists need dedentation, unless they stayed inline.
             list if list.is_member_list() => {
-                if !(self.inline_do && node.kind() == DO_EXPR_MEMBER_LIST)
-                    && !Self::is_empty_member_list(node)
-                {
+                let was_inline_do = node.kind() == DO_EXPR_MEMBER_LIST
+                    && !self.top_exploding()
+                    && node.children().filter(|c| c.kind() == NAME_REF).count() == 1;
+
+                if !Self::is_empty_member_list(node) && !was_inline_do {
                     self.builder.dedent();
                 }
                 if self.member_list_depth > 0 {
@@ -383,11 +346,11 @@ impl Formatter {
         }
     }
 
-    /// Whether we are directly inside a choice block (not within a nested
-    /// do-block). FPP forbids bare newlines here, so line breaks must be `\`
-    /// continuations and source newlines are suppressed.
-    fn in_choice_body(&self) -> bool {
-        self.choice_depth > 0 && self.do_block_depth == 0
+    /// Whether a token is at the root level (parent is ROOT node, which happens
+    /// when using non-module entry points like Component, Topology, etc.).
+    fn is_at_root_level(&self, token: &SyntaxToken) -> bool {
+        use SyntaxKind::*;
+        token.parent().is_some_and(|p| p.kind() == ROOT)
     }
 
     /// Whether a member-list node has no member children -- only its delimiter
@@ -395,18 +358,6 @@ impl Formatter {
     /// rather than breaking onto separate lines.
     fn is_empty_member_list(node: &SyntaxNode) -> bool {
         node.children().next().is_none()
-    }
-
-    /// Whether a `DO_EXPR` node's action list contains exactly one member. Such
-    /// a do-block is kept inline (`do { a }`) inside a choice.
-    fn do_expr_is_single_member(do_expr: &SyntaxNode) -> bool {
-        use SyntaxKind::*;
-
-        do_expr
-            .children()
-            .find(|c| c.kind() == DO_EXPR_MEMBER_LIST)
-            .map(|list| list.children().filter(|c| c.kind() == NAME_REF).count() == 1)
-            .unwrap_or(false)
     }
 
     /// Whether the element sequence starting at `start` reaches a trailing
@@ -490,34 +441,40 @@ impl Formatter {
             WHITESPACE => {
                 // Count newlines in whitespace to detect blank lines
                 let newline_count = token.text().matches('\n').count();
-                if newline_count >= 2 && self.member_list_depth > 0 {
+                if newline_count >= 2 && (self.member_list_depth > 0 || self.is_at_root_level(token)) {
                     // Source had a blank line - preserve at most one
                     self.pending_blank_line = true;
                 }
             }
 
-            // EOL in member lists acts as a separator (emit newline, suppress literal)
-            // Outside member lists, skip it (we regenerate whitespace)
+            // EOL in member lists (or at the root level) acts as a separator
             EOL => {
-                // Inside a choice body, all line breaks are regenerated as `\`
-                // continuations by the structural handlers -- swallow source EOLs.
-                if self.in_choice_body() {
-                    // no-op
-                } else if self.member_list_depth > 0 {
-                    // This is a member separator - emit a newline. A blank line
-                    // between members is lexed as one EOL token holding multiple
-                    // '\n's; preserve it as a single blank line to keep the
-                    // author's statement grouping. The WHITESPACE handler also
-                    // sets pending_blank_line for the rarer split-token case.
-                    let blank = self.pending_blank_line || token.text().matches('\n').count() >= 2;
-                    if blank {
-                        self.builder.blank_line();
-                        self.pending_blank_line = false;
+                if self.member_list_depth > 0 || self.is_at_root_level(token) {
+                    // Skip this EOL if it's a single newline immediately followed by
+                    // trailing trivia (comment or post-annotation) - those stay inline.
+                    // But preserve blank lines (multiple newlines) even before trailing trivia.
+                    let is_single_newline = token.text().matches('\n').count() == 1;
+                    let followed_by_trivia = is_single_newline && Self::followed_by_trailing_trivia(token.next_sibling_or_token());
+
+                    if followed_by_trivia {
+                        // Suppress this single EOL; the trivia stays on the same line
                     } else {
-                        self.builder.newline();
+                        // This is a member/item separator - emit a newline. A blank line
+                        // between members is lexed as one EOL token holding multiple
+                        // '\n's; preserve it as a single blank line to keep the
+                        // author's statement grouping. The WHITESPACE handler also
+                        // sets pending_blank_line for the rarer split-token case.
+                        let blank = self.pending_blank_line || token.text().matches('\n').count() >= 2;
+                        if blank {
+                            self.builder.blank_line();
+                            self.pending_blank_line = false;
+                        } else {
+                            self.builder.newline();
+                        }
                     }
+                } else {
+                    // Outside member lists and root level, skip (whitespace is regenerated)
                 }
-                // Outside member lists, skip (whitespace is regenerated)
             }
 
             // Preserve comments with proper indentation
@@ -567,13 +524,6 @@ impl Formatter {
                 // Don't emit newline - let the next member separator handle it
             }
 
-            // `else` inside a choice body starts a new (continued) line.
-            ELSE_KW if self.in_choice_body() => {
-                self.builder.continuation_newline();
-                self.builder.token(token.text());
-                self.builder.space();
-            }
-
             // Keywords - add space after
             keyword if keyword.is_keyword() => {
                 if !self.builder.is_at_line_start() {
@@ -584,18 +534,33 @@ impl Formatter {
                 self.builder.space();
             }
 
-            // Opening braces - space before, newline after
+            // Opening braces - space before, newline/space after
             LEFT_CURLY => {
                 self.brace_depth += 1;
                 let opens_choice = token.parent().is_some_and(|p| p.kind() == DEF_CHOICE);
+                let opens_inline_do = token.parent().is_some_and(|p| {
+                    if p.kind() != DO_EXPR {
+                        return false;
+                    }
+                    if self.top_exploding() {
+                        return false;
+                    }
+                    // Only inline if single member
+                    p.children()
+                        .find(|c| c.kind() == DO_EXPR_MEMBER_LIST)
+                        .is_some_and(|list| {
+                            list.children().filter(|c| c.kind() == NAME_REF).count() == 1
+                        })
+                });
+
                 self.builder.space();
                 self.builder.token(token.text());
-                if self.inline_do {
-                    // Single-member `do { a }` stays on one line.
+
+                if opens_inline_do {
+                    // Inline do-block: space instead of newline
                     self.builder.space();
                 } else {
-                    // A choice body is not a member list, so indent it
-                    // explicitly. A bare newline after the choice `{` is valid.
+                    // Choice bodies need explicit indentation (not a member list)
                     if opens_choice {
                         self.builder.indent();
                     }
@@ -607,19 +572,33 @@ impl Formatter {
             // The newline decision is driven by the NEXT element (like DEFAULT keyword)
             RIGHT_CURLY => {
                 let is_choice_closing = token.parent().is_some_and(|p| p.kind() == DEF_CHOICE);
+                let is_inline_do_closing = token.parent().is_some_and(|p| {
+                    if p.kind() != DO_EXPR {
+                        return false;
+                    }
+                    if self.top_exploding() {
+                        return false;
+                    }
+                    // Only inline if single member
+                    p.children()
+                        .find(|c| c.kind() == DO_EXPR_MEMBER_LIST)
+                        .is_some_and(|list| {
+                            list.children().filter(|c| c.kind() == NAME_REF).count() == 1
+                        })
+                });
 
                 if self.brace_depth > 0 {
                     self.brace_depth -= 1;
                 }
 
                 if is_choice_closing {
-                    // The choice body was indented; dedent and put `}` on its own
-                    // line. FPP requires the preceding line break to be a `\`
-                    // continuation.
+                    // Choice body was indented; dedent before the closing brace
                     self.builder.dedent();
-                    self.builder.continuation_newline();
-                } else if self.inline_do {
-                    // Single-member `do { a }` stays inline: space before `}`.
+                    if !self.builder.is_at_line_start() {
+                        self.builder.newline();
+                    }
+                } else if is_inline_do_closing {
+                    // Inline do-block: space before closing brace
                     self.builder.space();
                 } else if !self.builder.is_at_line_start() {
                     self.builder.newline();
