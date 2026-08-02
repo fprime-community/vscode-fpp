@@ -90,7 +90,7 @@ module StateMachines {
 
         choice RESUME {
             if pendingHostFunction do { dispatchPendingHostFunction } enter AWAITING_RESPONSE \
-                else enter SPINNING
+            else enter SPINNING
         }
 
         state S1 {

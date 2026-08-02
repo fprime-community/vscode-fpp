@@ -4,10 +4,16 @@ module Deployment {
     instance simpleInst: Comp base id 0x100
 
     @ Instance with every optional clause
-    instance fullInst: NS.Comp base id 0x200 type "SpecialType" at "path/to/file.fpp" queue size 10 stack size 4096 priority 5 cpu 1 {
-        phase Fpp.ToCpp.Phases.configObjects "code goes here"
-        phase Fpp.ToCpp.Phases.instances "more code"
-    }
+    instance fullInst: NS.Comp base id 0x200 \
+        type "SpecialType" \
+        at "path/to/file.fpp" \
+        queue size 10 \
+        stack size 4096 \
+        priority 5 \
+        cpu 1 {
+            phase Fpp.ToCpp.Phases.configObjects "code goes here"
+            phase Fpp.ToCpp.Phases.instances "more code"
+        }
 
     @ Instance with just queue and stack
     instance workerInst: Worker base id 0x300 queue size 20 stack size 8192

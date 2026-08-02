@@ -9,6 +9,8 @@ struct ExplodeFrame {
     exploding: bool,
     /// Whether `indent()` has been called for this spec's clauses.
     indented: bool,
+    /// The syntax kind of the spec being exploded.
+    kind: SyntaxKind,
 }
 
 /// Main formatter that walks the syntax tree and produces formatted output
@@ -89,6 +91,7 @@ impl Formatter {
             self.explode_stack.push(ExplodeFrame {
                 exploding,
                 indented: false,
+                kind: node.kind(),
             });
         }
 
@@ -164,7 +167,12 @@ impl Formatter {
         kind.is_spec()
             || matches!(
                 kind,
-                SPEC_CONTAINER | SPEC_RECORD | SPEC_STATE_MACHINE_INSTANCE | DEF_CHOICE | DO_EXPR
+                SPEC_CONTAINER
+                    | SPEC_RECORD
+                    | SPEC_STATE_MACHINE_INSTANCE
+                    | DEF_CHOICE
+                    | DO_EXPR
+                    | DEF_COMPONENT_INSTANCE
             )
     }
 
@@ -175,13 +183,18 @@ impl Formatter {
 
     /// Emit a clause break: open the continuation indent once, then a `\`
     /// continuation newline. No-op if the enclosing spec is not exploding.
-    /// For DEF_CHOICE, always use continuation newlines since FPP requires them.
+    /// For DEF_CHOICE, always use continuation newlines since FPP requires them,
+    /// but without continuation indent (choice body is already indented).
     fn break_clause(&mut self) {
+        use SyntaxKind::*;
+
         if let Some(frame) = self.explode_stack.last_mut() {
             if !frame.exploding {
                 return;
             }
-            if !frame.indented {
+            // For choices, the body is already indented after {, so skip continuation indent
+            let is_choice = frame.kind == DEF_CHOICE;
+            if !is_choice && !frame.indented {
                 self.builder.indent();
                 frame.indented = true;
             }
@@ -211,6 +224,11 @@ impl Formatter {
             OPCODE | PRIORITY | QUEUE_FULL | ID | FORMAT | EVENT_THROTTLE => true,
             // `default <expr>` clause only appears as a clause in a param spec.
             DEFAULT => parent.kind() == SPEC_PARAM,
+            // Component instance clauses
+            COMPONENT_INSTANCE_TYPE | COMPONENT_INSTANCE_FILE | QUEUE_SIZE | STACK_SIZE | CPU => {
+                parent.kind() == DEF_COMPONENT_INSTANCE
+            }
+            // PRIORITY appears in both component specs and component instances
             _ => false,
         }
     }
@@ -598,15 +616,8 @@ impl Formatter {
                 }
 
                 if is_choice_closing {
-                    // If the choice is exploding and has continuation indent, dedent that first
-                    if let Some(frame) = self.explode_stack.last_mut() {
-                        if frame.exploding && frame.indented {
-                            self.builder.dedent();
-                            // Mark as already dedented so leave_node() doesn't do it again
-                            frame.indented = false;
-                        }
-                    }
-                    // Then dedent the choice body indent
+                    // Choice body was indented after {; dedent before the closing brace
+                    // Note: choices don't use continuation indent, so no extra dedent needed
                     self.builder.dedent();
                     if !self.builder.is_at_line_start() {
                         self.builder.newline();
