@@ -37,8 +37,7 @@ active component TestComponent {
         format "Test {} started" \
         throttle 10
 
-    event TestFailed(
-    ) severity fatal format "Test failed"
+    event TestFailed() severity fatal format "Test failed"
 
     @ Parameters
     param maxIterations: U32 \

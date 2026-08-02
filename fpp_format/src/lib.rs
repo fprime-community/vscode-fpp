@@ -367,6 +367,13 @@ module Outer {
             "port.fpp",
             "topology.fpp",
             "state-machine.fpp",
+            // Coverage-driven fixtures for previously-untested constructs
+            "instances-locate.fpp",
+            "interface-include.fpp",
+            "expressions.fpp",
+            "type-defs.fpp",
+            "topology-extra.fpp",
+            "component-extra.fpp",
         ];
 
         for fixture_name in fixtures {

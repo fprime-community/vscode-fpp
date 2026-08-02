@@ -1,4 +1,5 @@
 use fpp_format::{FormatOptions, format_text};
+use fpp_lsp_parser::{TopEntryPoint, parse};
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 use std::{env, fs};
@@ -26,7 +27,7 @@ fn run_test(file_path: &str) {
     match env::var("FPP_UPDATE_REF") {
         Ok(_) => {
             // Update the ref file
-            fs::write(ref_file, formatted).expect("failed to write ref.fpp")
+            fs::write(ref_file, &formatted).expect("failed to write ref.fpp")
         }
         Err(_) => {
             // Read and compare against the ref file
@@ -34,6 +35,26 @@ fn run_test(file_path: &str) {
             assert_eq!(ref_txt, formatted)
         }
     }
+
+    // Second pass: the formatted output must parse cleanly with the LSP parser
+    // and be idempotent (formatting it again yields the same text). This guards
+    // against the formatter emitting syntactically-invalid or unstable output.
+    let reparse = parse(&formatted, TopEntryPoint::Module);
+    assert!(
+        reparse.errors().is_empty(),
+        "{}: formatted output has parse errors: {:?}\n---\n{}",
+        file_path,
+        reparse.errors(),
+        formatted
+    );
+
+    let reformatted =
+        format_text(&formatted, FormatOptions::default()).expect("second-pass formatting failed");
+    assert_eq!(
+        formatted, reformatted,
+        "{}: formatting is not idempotent",
+        file_path
+    );
 }
 
 #[test]
@@ -89,4 +110,34 @@ fn topology() {
 #[test]
 fn state_machine() {
     run_test("state-machine")
+}
+
+#[test]
+fn instances_locate() {
+    run_test("instances-locate")
+}
+
+#[test]
+fn interface_include() {
+    run_test("interface-include")
+}
+
+#[test]
+fn expressions() {
+    run_test("expressions")
+}
+
+#[test]
+fn type_defs() {
+    run_test("type-defs")
+}
+
+#[test]
+fn topology_extra() {
+    run_test("topology-extra")
+}
+
+#[test]
+fn component_extra() {
+    run_test("component-extra")
 }

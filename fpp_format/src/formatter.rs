@@ -129,8 +129,11 @@ impl Formatter {
             // Member lists need indentation -- except a single-member do-block
             // inside a choice, which we keep inline (`do { a }`).
             list if list.is_member_list() => {
-                if self.inline_do && node.kind() == DO_EXPR_MEMBER_LIST {
-                    // Stay inline: no break, no indent.
+                if (self.inline_do && node.kind() == DO_EXPR_MEMBER_LIST)
+                    || Self::is_empty_member_list(node)
+                {
+                    // Stay inline: no break, no indent. An empty list renders as
+                    // `()`/`{}` -- breaking it would emit an invalid bare `(\n)`.
                     self.member_list_depth += 1;
                 } else {
                     self.builder.newline();
@@ -333,7 +336,9 @@ impl Formatter {
             // Member lists need dedentation -- but an inline do-block never
             // indented, so it must not dedent either.
             list if list.is_member_list() => {
-                if !(self.inline_do && node.kind() == DO_EXPR_MEMBER_LIST) {
+                if !(self.inline_do && node.kind() == DO_EXPR_MEMBER_LIST)
+                    && !Self::is_empty_member_list(node)
+                {
                     self.builder.dedent();
                 }
                 if self.member_list_depth > 0 {
@@ -383,6 +388,13 @@ impl Formatter {
     /// continuations and source newlines are suppressed.
     fn in_choice_body(&self) -> bool {
         self.choice_depth > 0 && self.do_block_depth == 0
+    }
+
+    /// Whether a member-list node has no member children -- only its delimiter
+    /// tokens (and possibly trivia). Such a list stays inline (`()` / `{}`)
+    /// rather than breaking onto separate lines.
+    fn is_empty_member_list(node: &SyntaxNode) -> bool {
+        node.children().next().is_none()
     }
 
     /// Whether a `DO_EXPR` node's action list contains exactly one member. Such
@@ -637,9 +649,15 @@ impl Formatter {
             }
 
             // Comma in member lists: suppress (we use newlines as separators)
-            // Comma elsewhere: emit with space after
+            // Comma elsewhere: emit with space after. A comma is a member
+            // separator only when its DIRECT parent is a member-list node --
+            // a comma inside a clause that merely sits within an enclosing
+            // member list (e.g. a topology `implements A, B`) is not.
             COMMA => {
-                if self.member_list_depth > 0 {
+                let is_separator = token
+                    .parent()
+                    .is_some_and(|p| p.kind().is_member_list());
+                if is_separator {
                     // Suppress literal comma in member lists. Normally a newline
                     // separates members -- but if a trailing comment or
                     // post-annotation follows the comma, it belongs to the item
@@ -665,6 +683,15 @@ impl Formatter {
 
             // Dots - no space around
             DOT => {
+                self.builder.token(token.text());
+            }
+
+            // String literals normally follow a keyword (which leaves a pending
+            // space), but a few forms place one directly after an expression --
+            // e.g. `phase <expr> "code"`. Request a space so the two tokens do
+            // not run together; this is a no-op when a space is already pending.
+            LITERAL_STRING => {
+                self.builder.space();
                 self.builder.token(token.text());
             }
 
