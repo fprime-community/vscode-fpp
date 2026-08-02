@@ -85,6 +85,17 @@ impl GlobalState {
         })
     }
 
+    /// Ask the client to re-pull all document diagnostics.
+    ///
+    /// Diagnostics are pull-based, so after analysis updates the diagnostic store
+    /// asynchronously the client has no way of knowing the results are stale unless
+    /// we explicitly request a refresh.
+    fn refresh_diagnostics(&mut self) {
+        if self.capabilities.diagnostics_refresh() {
+            self.send_request::<lsp_types::request::WorkspaceDiagnosticRefresh>((), |_, _| {});
+        }
+    }
+
     pub fn parent_file(&self, file: SourceFile) -> SourceFile {
         let mut parent = file;
         loop {
@@ -425,6 +436,10 @@ impl GlobalState {
                 self.analysis_diagnostics = self.diagnostics.finish_garbage_collection();
                 self.files = files;
                 self.analysis = Arc::new(analysis);
+
+                // The diagnostic store has been updated asynchronously; tell the client to
+                // re-pull diagnostics so it doesn't keep showing stale results.
+                self.refresh_diagnostics();
             }
         }
     }

@@ -109,7 +109,7 @@ pub fn handle_dump_syntax_tree(state: &mut GlobalState, param: UriRequest) -> Re
         fpp_parser::IncludeParentKind::Topology => fpp_lsp_parser::TopEntryPoint::Topology,
     };
 
-    eprintln!("CST {}: entry {entry_kind:?}", param.uri.as_str());
+    eprintln!("CST {}: entry {entry_kind:?}, source_file: {source_file:?}", param.uri.as_str());
     eprintln!("{}", parse.debug_dump());
 
     Ok(())
