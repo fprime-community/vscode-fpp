@@ -88,6 +88,11 @@ module StateMachines {
             if g2 do { a1a2a3 } enter S2 else enter S3
         }
 
+        choice RESUME {
+            if pendingHostFunction do { dispatchPendingHostFunction } enter AWAITING_RESPONSE \
+                else enter SPINNING
+        }
+
         state S1 {
             on s1 if g1 do { a1 } enter C1
             on s2 enter S2

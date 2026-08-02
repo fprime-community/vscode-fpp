@@ -598,7 +598,15 @@ impl Formatter {
                 }
 
                 if is_choice_closing {
-                    // Choice body was indented; dedent before the closing brace
+                    // If the choice is exploding and has continuation indent, dedent that first
+                    if let Some(frame) = self.explode_stack.last_mut() {
+                        if frame.exploding && frame.indented {
+                            self.builder.dedent();
+                            // Mark as already dedented so leave_node() doesn't do it again
+                            frame.indented = false;
+                        }
+                    }
+                    // Then dedent the choice body indent
                     self.builder.dedent();
                     if !self.builder.is_at_line_start() {
                         self.builder.newline();
