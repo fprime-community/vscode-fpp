@@ -8,7 +8,7 @@ use crate::annotated::{annotated_enum, annotated_struct};
 use crate::enum_map::enum_map;
 use crate::node::{ast_node_enum, ast_node_struct};
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, Item};
+use syn::{Item, parse_macro_input};
 use synstructure::decl_derive;
 
 ///
@@ -109,7 +109,7 @@ pub fn ast_annotated(input: TokenStream) -> TokenStream {
                 .to_compile_error();
             err.into()
         }
-    } 
+    }
 }
 
 decl_derive!(

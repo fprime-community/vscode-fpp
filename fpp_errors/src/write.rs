@@ -1,6 +1,6 @@
 use crate::snippet::diagnostic_to_snippet_group;
-use annotate_snippets::renderer::DecorStyle;
 use annotate_snippets::Renderer;
+use annotate_snippets::renderer::DecorStyle;
 use fpp_core::{DiagnosticData, DiagnosticEmitter};
 use std::io::Write;
 

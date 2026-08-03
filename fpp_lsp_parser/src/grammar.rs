@@ -130,11 +130,9 @@ fn member_list(
         member(p);
 
         // Check for end delim
-        if !p.eat(delim)
-            && !p.eat(EOL)
-                && !p.at(ket) {
-                    p.err_recover(&format!("expected `{:?}`", delim), MEMBER_RECOVERY_SET);
-                }
+        if !p.eat(delim) && !p.eat(EOL) && !p.at(ket) {
+            p.err_recover(&format!("expected `{:?}`", delim), MEMBER_RECOVERY_SET);
+        }
     }
 
     p.expect(ket);

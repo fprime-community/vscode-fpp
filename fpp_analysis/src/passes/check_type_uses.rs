@@ -1,3 +1,4 @@
+use crate::Analysis;
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::basic_use_analyzer::UseAnalysisPass;
 use crate::analyzers::use_analyzer::UseAnalyzer;
@@ -6,7 +7,6 @@ use crate::semantics::{
     AbsType, AliasType, AnonArrayType, AnonStructType, ArrayType, EnumType, QualifiedName,
     StructType, Symbol, SymbolInterface, Type,
 };
-use crate::Analysis;
 use fpp_ast::*;
 use fpp_core::Spanned;
 use rustc_hash::FxHashMap as HashMap;

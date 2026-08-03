@@ -1,10 +1,10 @@
 use std::ops::ControlFlow;
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 use crate::global_state::GlobalState;
-use fpp_analysis::semantics::Symbol;
 use fpp_analysis::Analysis;
+use fpp_analysis::semantics::Symbol;
 use fpp_ast::{
     Expr, ExprKind, Ident, MoveWalkable, Node, PortInstanceIdentifier, TlmChannelIdentifier,
     Visitor, Walkable,
@@ -156,9 +156,10 @@ impl SemanticTokensState {
 
         for (range, kind) in self.raw {
             if let Some(filter_range) = filter_range
-                && filter_range.intersect(range).is_none() {
-                    continue;
-                }
+                && filter_range.intersect(range).is_none()
+            {
+                continue;
+            }
 
             let start = self.lines.line_col(range.start());
             let end = self.lines.line_col(range.end());

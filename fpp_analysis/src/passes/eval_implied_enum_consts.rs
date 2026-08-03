@@ -1,8 +1,8 @@
+use crate::Analysis;
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::nested_analyzer::{NestedAnalyzer, NestedAnalyzerMode};
 use crate::errors::SemanticError;
 use crate::semantics::{EnumConstantValue, Value};
-use crate::Analysis;
 use fpp_ast::{DefEnum, Node, Visitor};
 use fpp_core::Spanned;
 use std::ops::ControlFlow;

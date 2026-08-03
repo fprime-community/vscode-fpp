@@ -9,8 +9,8 @@ mod request;
 mod util;
 
 mod lsp;
-mod vfs;
 mod progress;
+mod vfs;
 
 use tracing::level_filters::LevelFilter;
 pub use vfs::*;
@@ -20,7 +20,7 @@ use lsp_server::Connection;
 use std::error::Error;
 
 use clap::Parser;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer};
+use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
 fn setup_stderr_logging(level: tracing_subscriber::filter::LevelFilter) -> anyhow::Result<()> {
     let stderr_layer = tracing_subscriber::fmt::layer().with_writer(std::io::stderr);
@@ -55,7 +55,7 @@ struct Args {
     socket: Option<u16>,
     /// Server logging level
     #[arg(long)]
-    log_level: Option<tracing_subscriber::filter::LevelFilter>
+    log_level: Option<tracing_subscriber::filter::LevelFilter>,
 }
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {

@@ -22,9 +22,14 @@ pub enum Doc {
     Text(Rc<str>),
     /// Flexible break: `flat` text when its group is flat, otherwise a newline
     /// (prefixed with ` \` when `cont`) plus indentation.
-    Line { flat: &'static str, cont: bool },
+    Line {
+        flat: &'static str,
+        cont: bool,
+    },
     /// Unconditional break (prefixed with ` \` when `cont`).
-    Hard { cont: bool },
+    Hard {
+        cont: bool,
+    },
     /// Indent the child by `n` levels.
     Nest(i32, Rc<Doc>),
     Concat(Rc<[Doc]>),
@@ -52,15 +57,24 @@ impl Doc {
     }
     /// Flat = single space, break = newline.
     pub fn softline() -> Doc {
-        Doc::Line { flat: " ", cont: false }
+        Doc::Line {
+            flat: " ",
+            cont: false,
+        }
     }
     /// Flat = nothing, break = newline.
     pub fn softline_tight() -> Doc {
-        Doc::Line { flat: "", cont: false }
+        Doc::Line {
+            flat: "",
+            cont: false,
+        }
     }
     /// Flat = single space, break = ` \` continuation newline.
     pub fn contline() -> Doc {
-        Doc::Line { flat: " ", cont: true }
+        Doc::Line {
+            flat: " ",
+            cont: true,
+        }
     }
     pub fn hardline() -> Doc {
         Doc::Hard { cont: false }
@@ -97,7 +111,12 @@ pub fn render(doc: &Doc, width: usize, indent_width: usize) -> String {
                 col += s.chars().count();
             }
             Doc::Anchor(kind, x) => {
-                anchors.push(Anchor { line, col, level: ind, kind: *kind });
+                anchors.push(Anchor {
+                    line,
+                    col,
+                    level: ind,
+                    kind: *kind,
+                });
                 stack.push((ind, mode, x));
             }
             Doc::Concat(v) => {

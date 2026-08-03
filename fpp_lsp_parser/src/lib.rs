@@ -71,8 +71,8 @@ impl TopEntryPoint {
 }
 
 pub use rowan::{
-    api::Preorder, Direction, GreenNode, NodeOrToken, SyntaxText, TextRange, TextSize, TokenAtOffset,
-    WalkEvent,
+    Direction, GreenNode, NodeOrToken, SyntaxText, TextRange, TextSize, TokenAtOffset, WalkEvent,
+    api::Preorder,
 };
 
 pub(crate) fn parse_text(text: &str, entry: TopEntryPoint) -> (GreenNode, Vec<SyntaxError>) {
@@ -150,7 +150,6 @@ impl Parse {
     }
 
     pub fn errors(&self) -> Vec<SyntaxError> {
-        
         if let Some(e) = self.errors.as_deref() {
             e.to_vec()
         } else {

@@ -1,8 +1,8 @@
+use crate::Analysis;
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::basic_use_analyzer::{BasicUseAnalyzer, UseAnalysisPass};
 use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::{NameGroup, QualifiedName, Symbol, SymbolInterface};
-use crate::Analysis;
 use fpp_ast::{AstNode, Expr, ExprKind, Ident, Node, QualIdent, Visitable, Visitor};
 use fpp_core::Spanned;
 use std::ops::{ControlFlow, Deref};

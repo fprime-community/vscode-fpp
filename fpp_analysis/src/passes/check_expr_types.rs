@@ -1,3 +1,4 @@
+use crate::Analysis;
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::basic_use_analyzer::UseAnalysisPass;
 use crate::analyzers::use_analyzer::UseAnalyzer;
@@ -6,7 +7,6 @@ use crate::semantics::{
     AnonArrayType, AnonStructType, ArrayType, QualifiedName, StructType, Symbol, SymbolInterface,
     Type, TypeConversionResult,
 };
-use crate::Analysis;
 use fpp_ast::{
     DefAliasType, DefArray, DefConstant, DefEnum, DefEnumConstant, DefStruct, Expr, ExprKind,
     FloatKind, IntegerKind, Node, SpecCommand, SpecContainer, SpecEvent, SpecGeneralPortInstance,
@@ -72,15 +72,17 @@ impl<'ast> CheckExprTypes<'ast> {
     }
 
     fn check_expr_matches_node(&self, a: &Analysis, expr: &'ast Expr, node: &fpp_core::Node) {
-        if let Some(ty) = a.type_map.get(node) { match self.convert_type(a, expr, ty) {
-            Ok(_) => {}
-            Err(err) => SemanticError::TypeConversion {
-                loc: expr.span(),
-                msg: format!("default value cannot be converted to {}", ty),
-                err: Box::new(err),
+        if let Some(ty) = a.type_map.get(node) {
+            match self.convert_type(a, expr, ty) {
+                Ok(_) => {}
+                Err(err) => SemanticError::TypeConversion {
+                    loc: expr.span(),
+                    msg: format!("default value cannot be converted to {}", ty),
+                    err: Box::new(err),
+                }
+                .emit(),
             }
-            .emit(),
-        } }
+        }
     }
 
     fn check_expr_opt_matches_node(
@@ -89,7 +91,9 @@ impl<'ast> CheckExprTypes<'ast> {
         expr: &'ast Option<Expr>,
         node: &fpp_core::Node,
     ) {
-        if let Some(expr) = &expr { self.check_expr_matches_node(a, expr, node) }
+        if let Some(expr) = &expr {
+            self.check_expr_matches_node(a, expr, node)
+        }
     }
 }
 
@@ -346,11 +350,14 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                     .insert(node.node_id, Arc::new(Type::Float(FloatKind::F64)));
             }
             ExprKind::LiteralString(_) => {
-                a.type_map.insert(node.node_id, Arc::new(Type::String(None)));
+                a.type_map
+                    .insert(node.node_id, Arc::new(Type::String(None)));
             }
-            ExprKind::Paren(e) => if let Some(ty) = a.type_map.get(&e.node_id) {
-                a.type_map.insert(node.node_id, ty.clone());
-            },
+            ExprKind::Paren(e) => {
+                if let Some(ty) = a.type_map.get(&e.node_id) {
+                    a.type_map.insert(node.node_id, ty.clone());
+                }
+            }
             ExprKind::Struct(struct_expr) => {
                 let mut members_out = HashMap::default();
                 let mut member_locs = HashMap::default();
@@ -445,13 +452,16 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                                 ),
                             ]),
                         })),
-                    ) { SemanticError::TypeConversion {
+                    )
+                {
+                    SemanticError::TypeConversion {
                         loc: every.span(),
                         msg: "event throttle every must be convertable to a time interval"
                             .to_string(),
                         err: Box::new(err),
                     }
-                    .emit() }
+                    .emit()
+                }
             }
         }
 

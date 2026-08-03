@@ -1,7 +1,7 @@
 use fpp_ast::MutVisitor;
 use fpp_core::{FileReader, SourceFile};
 use fpp_fs::FsReader;
-use fpp_parser::{parse, ResolveIncludes};
+use fpp_parser::{ResolveIncludes, parse};
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 use std::{env, fs};

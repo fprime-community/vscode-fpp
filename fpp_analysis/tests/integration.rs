@@ -1,4 +1,4 @@
-use fpp_analysis::{check_semantics, resolve_includes, Analysis};
+use fpp_analysis::{Analysis, check_semantics, resolve_includes};
 use fpp_core::{FileReader, SourceFile};
 use fpp_fs::FsReader;
 use pretty_assertions::assert_eq;

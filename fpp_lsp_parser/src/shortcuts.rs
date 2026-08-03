@@ -64,7 +64,7 @@ impl LexedStr<'_> {
         for ii in i..self.len() {
             match self.kind(ii) {
                 EOL | COMMENT | WHITESPACE => (),
-                _ => return ii,  // Stop at annotations or any other token
+                _ => return ii, // Stop at annotations or any other token
             }
         }
 

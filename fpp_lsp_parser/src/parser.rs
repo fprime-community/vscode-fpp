@@ -1,7 +1,7 @@
+use crate::SyntaxKind::{self, *};
 use crate::event::Event;
 use crate::input::Input;
 use crate::token_set::TokenSet;
-use crate::SyntaxKind::{self, *};
 use drop_bomb::DropBomb;
 use std::cell::Cell;
 

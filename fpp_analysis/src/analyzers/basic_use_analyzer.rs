@@ -1,6 +1,6 @@
+use crate::analyzers::NestedScopeState;
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::nested_analyzer::{NestedAnalyzer, NestedAnalyzerMode};
-use crate::analyzers::NestedScopeState;
 use crate::semantics::{ImpliedUse, QualifiedName};
 use fpp_ast::*;
 use std::collections::VecDeque;
@@ -107,7 +107,9 @@ pub struct BasicUseAnalyzer<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, 
     phantom_data: PhantomData<S>,
 }
 
-impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Default for BasicUseAnalyzer<'ast, S, V> {
+impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Default
+    for BasicUseAnalyzer<'ast, S, V>
+{
     fn default() -> Self {
         Self::new()
     }

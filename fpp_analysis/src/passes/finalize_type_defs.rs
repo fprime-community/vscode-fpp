@@ -1,3 +1,4 @@
+use crate::Analysis;
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::nested_analyzer::{NestedAnalyzer, NestedAnalyzerMode};
 use crate::errors::SemanticError;
@@ -5,7 +6,6 @@ use crate::semantics::{
     AliasType, AnonArrayType, AnonStructType, ArrayType, Format, IntegerValue, StructType, Symbol,
     Type, Value,
 };
-use crate::Analysis;
 use fpp_ast::{
     AstNode, DefAliasType, DefArray, DefEnum, DefStruct, Expr, Node, TransUnit, TypeName,
     TypeNameKind, Visitor, Walkable,
@@ -211,10 +211,10 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         };
 
         // Compute the format
-        let format = node.format.as_ref().map(|format| Format::new(
-                format,
-                vec![(elt_type.clone(), node.elt_type.span())],
-            ));
+        let format = node
+            .format
+            .as_ref()
+            .map(|format| Format::new(format, vec![(elt_type.clone(), node.elt_type.span())]));
 
         let ty = Type::Array(ArrayType {
             node: node.clone(),

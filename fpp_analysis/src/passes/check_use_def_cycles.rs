@@ -1,9 +1,9 @@
+use crate::Analysis;
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::basic_use_analyzer::UseAnalysisPass;
 use crate::analyzers::use_analyzer::UseAnalyzer;
 use crate::errors::SemanticError;
 use crate::semantics::{QualifiedName, Symbol, SymbolInterface, UseDefMatching};
-use crate::Analysis;
 use fpp_ast::*;
 use fpp_core::Spanned;
 use std::ops::ControlFlow;

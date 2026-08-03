@@ -143,22 +143,25 @@ fn identifiers_and_keywords() {
 fn invalid_tokens() {
     let tokens = lex(r#"1ee 	 $ ™™ 1e1e "
     ""#);
-    assert_eq!(tokens, vec![
-        TokenStr("1ee", LiteralFloat),
-        TokenStr(" ", Whitespace),
-        TokenStr("	", Unknown),
-        TokenStr(" ", Whitespace),
-        TokenStr("$", Unknown),
-        TokenStr(" ", Whitespace),
-        TokenStr("™™", Unknown),
-        TokenStr(" ", Whitespace),
-        TokenStr("1e1e", LiteralFloat),
-        TokenStr(" ", Whitespace),
-        TokenStr("\"", LiteralString),
-        TokenStr("\n", Eol),
-        TokenStr("    ", Whitespace),
-        TokenStr("\"", LiteralString),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            TokenStr("1ee", LiteralFloat),
+            TokenStr(" ", Whitespace),
+            TokenStr("	", Unknown),
+            TokenStr(" ", Whitespace),
+            TokenStr("$", Unknown),
+            TokenStr(" ", Whitespace),
+            TokenStr("™™", Unknown),
+            TokenStr(" ", Whitespace),
+            TokenStr("1e1e", LiteralFloat),
+            TokenStr(" ", Whitespace),
+            TokenStr("\"", LiteralString),
+            TokenStr("\n", Eol),
+            TokenStr("    ", Whitespace),
+            TokenStr("\"", LiteralString),
+        ]
+    );
 }
 
 // #[test]

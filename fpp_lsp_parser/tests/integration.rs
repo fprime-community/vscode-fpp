@@ -1,4 +1,4 @@
-use fpp_lsp_parser::{parse, TopEntryPoint};
+use fpp_lsp_parser::{TopEntryPoint, parse};
 use pretty_assertions::assert_eq;
 use std::path::{Path, PathBuf};
 use std::{env, fs};

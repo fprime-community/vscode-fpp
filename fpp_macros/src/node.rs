@@ -9,15 +9,14 @@ pub(crate) fn ast_node_struct(input: &ItemStruct) -> TokenStream {
         Fields::Named(fields_named) => {
             for field in &fields_named.named {
                 match &field.ident {
-                    Some(ident)
-                        if ident == "node_id" => {
-                            let err = syn::Error::new_spanned(
-                                field,
-                                "ast_node reserves the 'node_id' field name",
-                            )
-                            .to_compile_error();
-                            return err.into();
-                        }
+                    Some(ident) if ident == "node_id" => {
+                        let err = syn::Error::new_spanned(
+                            field,
+                            "ast_node reserves the 'node_id' field name",
+                        )
+                        .to_compile_error();
+                        return err.into();
+                    }
                     _ => {}
                 }
 

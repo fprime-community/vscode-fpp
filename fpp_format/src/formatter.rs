@@ -178,8 +178,17 @@ impl Formatter {
             (Doc::hardline(), join_items(&items))
         } else {
             (
-                Doc::Line { flat: pad, cont: false },
-                join_items_sep(&items, Doc::Line { flat: ", ", cont: false }),
+                Doc::Line {
+                    flat: pad,
+                    cont: false,
+                },
+                join_items_sep(
+                    &items,
+                    Doc::Line {
+                        flat: ", ",
+                        cont: false,
+                    },
+                ),
             )
         };
 
@@ -192,7 +201,10 @@ impl Formatter {
                 inner.push(if force_block {
                     Doc::hardline()
                 } else {
-                    Doc::Line { flat: pad, cont: false }
+                    Doc::Line {
+                        flat: pad,
+                        cont: false,
+                    }
                 });
                 inner.push(Doc::text(cfg.close));
             }

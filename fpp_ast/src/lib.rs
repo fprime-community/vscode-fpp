@@ -7,7 +7,7 @@ pub mod visit;
 use std::fmt::Debug;
 
 use fpp_core::Annotated;
-use fpp_macros::{ast, AstAnnotated, DirectWalkable, VisitorWalkable};
+use fpp_macros::{AstAnnotated, DirectWalkable, VisitorWalkable, ast};
 
 pub use component::*;
 pub use node::*;

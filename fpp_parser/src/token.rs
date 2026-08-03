@@ -1,6 +1,6 @@
 use fpp_core::{BytePos, SourceFile, Span, Spanned};
-use std::fmt::Debug;
 use fpp_lexer::TokenKind;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub struct Token {

@@ -1,5 +1,5 @@
 use crate::error::{ParseError, ParseResult};
-use crate::{parse, Parser};
+use crate::{Parser, parse};
 use fpp_ast::*;
 use fpp_core::{FileReader, Position, SourceFile, Span, Spanned};
 use rustc_hash::FxHashMap;

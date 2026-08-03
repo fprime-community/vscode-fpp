@@ -397,7 +397,11 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
 
     // Check if this node is a use/reference to definition
     if let Some((node, symbol)) = nodes.iter().find_map(|node| {
-        state.analysis.use_def_map.get(&node.id()).map(|def| (*node, def))
+        state
+            .analysis
+            .use_def_map
+            .get(&node.id())
+            .map(|def| (*node, def))
     }) {
         return Ok(Some(hover_for_symbol(state, node, symbol)));
     }
@@ -432,9 +436,10 @@ pub fn handle_references(
     ) {
         let symbol = {
             // Check if this is a use to a symbol
-            if let Some(symbol) = nodes.iter().find_map(|node| {
-                state.analysis.use_def_map.get(&node.id())
-            }) {
+            if let Some(symbol) = nodes
+                .iter()
+                .find_map(|node| state.analysis.use_def_map.get(&node.id()))
+            {
                 Some(symbol)
             // Check if this is a symbol definition
             } else if let Some(symbol) = nodes

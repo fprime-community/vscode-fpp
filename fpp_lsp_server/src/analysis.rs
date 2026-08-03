@@ -252,24 +252,22 @@ impl GlobalState {
 
                                 // Check if the entry is a file and matches the extension filter
                                 if path.is_file()
-                                    && path
-                                        .extension()
-                                        .is_some_and(|ext| OsStr::new("fpp") == ext)
-                                    {
-                                        match Url::from_file_path(path) {
-                                            Ok(url) => match Uri::from_str(url.as_str()) {
-                                                Ok(uri) => {
-                                                    files.push(uri);
-                                                }
-                                                Err(err) => {
-                                                    tracing::warn!(context = "load full workspace", err = ?err, "failed to convert Url to Uri");
-                                                }
-                                            },
-                                            Err(err) => {
-                                                tracing::warn!(context = "load full workspace", err = ?err, "convert file path into url");
+                                    && path.extension().is_some_and(|ext| OsStr::new("fpp") == ext)
+                                {
+                                    match Url::from_file_path(path) {
+                                        Ok(url) => match Uri::from_str(url.as_str()) {
+                                            Ok(uri) => {
+                                                files.push(uri);
                                             }
+                                            Err(err) => {
+                                                tracing::warn!(context = "load full workspace", err = ?err, "failed to convert Url to Uri");
+                                            }
+                                        },
+                                        Err(err) => {
+                                            tracing::warn!(context = "load full workspace", err = ?err, "convert file path into url");
                                         }
                                     }
+                                }
                             }
                             Err(err) => {
                                 tracing::warn!(context = "load full workspace", err = ?err, "failed to walk directory");

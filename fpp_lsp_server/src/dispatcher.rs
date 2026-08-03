@@ -1,5 +1,5 @@
 //! See [RequestDispatcher].
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use std::{fmt::Debug, panic};
 
 use crate::global_state::{GlobalState, Task};

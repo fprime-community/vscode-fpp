@@ -237,13 +237,12 @@ impl Type {
             ) => {
                 // Check the sizes match
                 match (&from_arr.size, &to_arr.size) {
-                    (Some(from_size), Some(to_size))
-                        if from_size != to_size => {
-                            return Err(TypeConversionError::ArraySizeMismatch {
-                                from: *from_size,
-                                to: *to_size,
-                            });
-                        }
+                    (Some(from_size), Some(to_size)) if from_size != to_size => {
+                        return Err(TypeConversionError::ArraySizeMismatch {
+                            from: *from_size,
+                            to: *to_size,
+                        });
+                    }
                     _ => {}
                 }
 
@@ -392,15 +391,20 @@ impl Type {
                 get_ancestors(b, &mut ancestors_of_b);
 
                 // Traverse the ancestry of 'b' until we find a common ancestor with 'a'
-                ancestors_of_b.iter().find(|b| {
-                    ancestors_of_a
-                        .iter()
-                        .find(|a| Type::identical(a, b))
-                        .is_some()
-                }).cloned()
+                ancestors_of_b
+                    .iter()
+                    .find(|b| {
+                        ancestors_of_a
+                            .iter()
+                            .find(|a| Type::identical(a, b))
+                            .is_some()
+                    })
+                    .cloned()
             }
 
-            if let Some(ty) = lca(t1_a, t2_a) { return Some(ty) }
+            if let Some(ty) = lca(t1_a, t2_a) {
+                return Some(ty);
+            }
         }
 
         // Do the rest of the operations on the underlying types since none of aliases

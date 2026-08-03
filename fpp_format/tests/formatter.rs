@@ -58,7 +58,11 @@ fn run_test(file_name: &str, entry: TopEntryPoint) {
         Err(_) => {
             let expected = fs::read_to_string(&ref_file)
                 .unwrap_or_else(|e| panic!("failed to read {}: {}", ref_file.display(), e));
-            assert_eq!(expected, formatted, "{}: output differs from golden", file_name);
+            assert_eq!(
+                expected, formatted,
+                "{}: output differs from golden",
+                file_name
+            );
         }
     }
 

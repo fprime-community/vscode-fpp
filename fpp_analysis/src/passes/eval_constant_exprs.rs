@@ -1,3 +1,4 @@
+use crate::Analysis;
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::basic_use_analyzer::UseAnalysisPass;
 use crate::analyzers::use_analyzer::UseAnalyzer;
@@ -7,7 +8,6 @@ use crate::semantics::{
     IntegerValue, MathError, PrimitiveIntegerValue, QualifiedName, StringValue, StructValue,
     Symbol, SymbolInterface, Type, Value,
 };
-use crate::Analysis;
 use fpp_ast::{
     Binop, DefConstant, DefEnum, DefEnumConstant, Expr, ExprKind, Node, Unop, Visitable, Visitor,
 };
@@ -68,15 +68,17 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
         // Check for duplicate values
         let mut values: HashMap<i128, fpp_core::Span> = HashMap::default();
         for constant in &node.constants {
-            if let Some(Value::EnumConstant(EnumConstantValue { value, .. })) = a.value_map.get(&constant.node_id)
-                && let Some(old) = values.insert(value.1, constant.span()) {
-                    SemanticError::DuplicateEnumConstant {
-                        value: value.1,
-                        loc: constant.span(),
-                        prev_loc: old,
-                    }
-                    .emit()
+            if let Some(Value::EnumConstant(EnumConstantValue { value, .. })) =
+                a.value_map.get(&constant.node_id)
+                && let Some(old) = values.insert(value.1, constant.span())
+            {
+                SemanticError::DuplicateEnumConstant {
+                    value: value.1,
+                    loc: constant.span(),
+                    prev_loc: old,
                 }
+                .emit()
+            }
         }
 
         ControlFlow::Continue(())
@@ -169,9 +171,7 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
 
                 let index = match a.value_map.get(&e2.node_id) {
                     None => return ControlFlow::Continue(()),
-                    Some(Value::PrimitiveInteger(PrimitiveIntegerValue { value, .. })) => {
-                        *value
-                    }
+                    Some(Value::PrimitiveInteger(PrimitiveIntegerValue { value, .. })) => *value,
                     Some(Value::Integer(IntegerValue(value))) => *value,
                     _ => return ControlFlow::Continue(()),
                 };
@@ -343,15 +343,19 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
                     }),
                 );
             }
-            ExprKind::Unop { op, e } => if let (Unop::Minus, Some(v)) = (op, a.value_map.get(&e.node_id)) { match v.mul(&Value::Integer(IntegerValue(-1))) {
-                Ok(v) => {
-                    a.value_map.insert(node.node_id, v);
+            ExprKind::Unop { op, e } => {
+                if let (Unop::Minus, Some(v)) = (op, a.value_map.get(&e.node_id)) {
+                    match v.mul(&Value::Integer(IntegerValue(-1))) {
+                        Ok(v) => {
+                            a.value_map.insert(node.node_id, v);
+                        }
+                        Err(MathError::InvalidInputs) => {}
+                        Err(MathError::DivByZero) => {
+                            panic!("unexpected div by zero")
+                        }
+                    }
                 }
-                Err(MathError::InvalidInputs) => {}
-                Err(MathError::DivByZero) => {
-                    panic!("unexpected div by zero")
-                }
-            } },
+            }
         }
 
         ControlFlow::Continue(())

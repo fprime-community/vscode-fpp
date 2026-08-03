@@ -119,7 +119,11 @@ pub(crate) fn symbol_at_position<'a>(
     let nodes = nodes_at_offset(state, document, position)?;
 
     nodes.iter().find_map(|node| {
-        state.analysis.use_def_map.get(&node.id()).map(|def| (*node, def.clone()))
+        state
+            .analysis
+            .use_def_map
+            .get(&node.id())
+            .map(|def| (*node, def.clone()))
     })
 }
 
@@ -485,19 +489,17 @@ pub fn scope_at_offset<'a>(
 ) -> Option<Vec<Node<'a>>> {
     let files = state.files.get(document.as_str())?;
 
-    files
-        .first()
-        .and_then(|file| {
-            let cache = state.cache.get(&state.parent_file(*file)).unwrap();
+    files.first().and_then(|file| {
+        let cache = state.cache.get(&state.parent_file(*file)).unwrap();
 
-            let visitor = GetScopeVisitor {
-                source_file: *file,
-                looking_for: offset,
-                context: &state.context,
-            };
+        let visitor = GetScopeVisitor {
+            source_file: *file,
+            looking_for: offset,
+            context: &state.context,
+        };
 
-            visitor.visit_trans_unit(&mut (), &cache.ast).break_value()
-        })
+        visitor.visit_trans_unit(&mut (), &cache.ast).break_value()
+    })
 }
 
 pub fn completion_items_in_name_group(

@@ -1,6 +1,6 @@
 use crate::errors::SemanticResult;
-use crate::semantics::generic_name_symbol_map::GenericNameSymbolMap;
 use crate::semantics::SymbolInterface;
+use crate::semantics::generic_name_symbol_map::GenericNameSymbolMap;
 use fpp_util::EnumMap;
 use std::marker::PhantomData;
 
@@ -14,7 +14,11 @@ pub struct GenericScope<NG, S: SymbolInterface, M: EnumMap<NG, GenericNameSymbol
 impl<NG, S: SymbolInterface, M: EnumMap<NG, GenericNameSymbolMap<S>>> GenericScope<NG, S, M> {
     /// Construct a new scope
     pub fn new() -> Self {
-        Self(M::new(|_| GenericNameSymbolMap::new()), Default::default(), Default::default())
+        Self(
+            M::new(|_| GenericNameSymbolMap::new()),
+            Default::default(),
+            Default::default(),
+        )
     }
 
     /// Look up a symbol in this scope

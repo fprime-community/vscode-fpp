@@ -1,5 +1,5 @@
-use crate::parser::Parser;
 use crate::SyntaxKind::*;
+use crate::parser::Parser;
 
 use super::*;
 
