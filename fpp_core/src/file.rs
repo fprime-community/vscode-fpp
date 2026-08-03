@@ -118,4 +118,8 @@ impl SourceFile {
     pub fn len(&self) -> usize {
         with(|w| w.file_len(self))
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }

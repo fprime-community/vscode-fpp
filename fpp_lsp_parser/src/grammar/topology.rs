@@ -226,7 +226,7 @@ fn spec_connection_graph_pattern(p: &mut Parser) {
             p,
             LEFT_CURLY,
             RIGHT_CURLY,
-            |p| qual_ident(p),
+            qual_ident,
             COMMA,
             PATTERN_TARGET_MEMBER_LIST,
             "expected instance identifier",

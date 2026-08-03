@@ -75,14 +75,11 @@ pub fn nodes_at_offset<'a>(
     document: &Uri,
     offset: BytePos,
 ) -> Option<Vec<Node<'a>>> {
-    let files = match state.files.get(document.as_str()) {
-        None => return None,
-        Some(files) => files,
-    };
+    let files = state.files.get(document.as_str())?;
 
     Some(
         files
-            .into_iter()
+            .iter()
             .flat_map(|file| {
                 let cache = state.cache.get(&state.parent_file(*file)).unwrap();
 
@@ -119,17 +116,10 @@ pub(crate) fn symbol_at_position<'a>(
     document: &Uri,
     position: BytePos,
 ) -> Option<(Node<'a>, Symbol)> {
-    let nodes = match nodes_at_offset(state, document, position) {
-        None => return None,
-        Some(nodes) => nodes,
-    };
+    let nodes = nodes_at_offset(state, document, position)?;
 
     nodes.iter().find_map(|node| {
-        if let Some(def) = state.analysis.use_def_map.get(&node.id()) {
-            return Some((*node, def.clone()));
-        } else {
-            None
-        }
+        state.analysis.use_def_map.get(&node.id()).map(|def| (*node, def.clone()))
     })
 }
 
@@ -227,7 +217,7 @@ pub fn hover_for_symbol(state: &GlobalState, hover_node: Node, symbol: &Symbol) 
         .clone()
         .into_iter()
         .chain(vec!["".to_string(), symbol_kind_line, "".to_string()])
-        .chain(node_data.post_annotation.clone().into_iter())
+        .chain(node_data.post_annotation.clone())
         .collect();
 
     Hover {
@@ -313,7 +303,7 @@ pub fn hover_for_node(state: &GlobalState, hover_node: &Name, def_node: Node) ->
         .clone()
         .into_iter()
         .chain(vec!["".to_string(), symbol_kind_line, "".to_string()])
-        .chain(node_data.post_annotation.clone().into_iter())
+        .chain(node_data.post_annotation.clone())
         .collect();
 
     Some(Hover {
@@ -493,14 +483,11 @@ pub fn scope_at_offset<'a>(
     document: &Uri,
     offset: BytePos,
 ) -> Option<Vec<Node<'a>>> {
-    let files = match state.files.get(document.as_str()) {
-        None => return None,
-        Some(files) => files,
-    };
+    let files = state.files.get(document.as_str())?;
 
     files
         .first()
-        .map(|file| {
+        .and_then(|file| {
             let cache = state.cache.get(&state.parent_file(*file)).unwrap();
 
             let visitor = GetScopeVisitor {
@@ -511,7 +498,6 @@ pub fn scope_at_offset<'a>(
 
             visitor.visit_trans_unit(&mut (), &cache.ast).break_value()
         })
-        .flatten()
 }
 
 pub fn completion_items_in_name_group(
@@ -559,8 +545,7 @@ pub fn completion_items_in_name_group(
                 if let Some(scope) = scope {
                     let new_scope = scope
                         .get(ng, scope_name)
-                        .map(|symbol| state.analysis.symbol_scope_map.get(&symbol))
-                        .flatten();
+                        .and_then(|symbol| state.analysis.symbol_scope_map.get(&symbol));
 
                     match new_scope {
                         None => {}
@@ -598,7 +583,7 @@ pub fn completion_items_for_qual_ident(
         .as_node()
         .map(|node| {
             node.descendants_with_tokens()
-                .filter_map(|s| s.as_token().map(|ss| ss.clone()))
+                .filter_map(|s| s.as_token().cloned())
                 .filter(|t| t.kind() == SyntaxKind::IDENT && t.text_range().end() <= cursor_pos)
                 .collect()
         })
@@ -611,9 +596,8 @@ pub fn completion_items_for_qual_ident(
         let last_token_pos = tokens.last().unwrap().text_range().start().into();
 
         // Look up the symbol before the cursor
-        symbol_at_position(state, &uri, last_token_pos)
-            .map(|(_, symbol)| state.analysis.symbol_scope_map.get(&symbol))
-            .flatten()
+        symbol_at_position(state, uri, last_token_pos)
+            .and_then(|(_, symbol)| state.analysis.symbol_scope_map.get(&symbol))
             .map(|scope| {
                 // Get all symbols under this symbol's scope in the proper
                 // name group

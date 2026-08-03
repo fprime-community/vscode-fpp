@@ -56,6 +56,10 @@ impl Span {
         with(|w| w.span_len(self))
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// The path to the source file in which this span occurs, for display purposes.
     pub fn file(&self) -> SourceFile {
         with(|w| w.span_file(self))
@@ -74,7 +78,7 @@ impl Span {
 
 impl Spanned for Span {
     fn span(&self) -> Span {
-        self.clone()
+        *self
     }
 }
 

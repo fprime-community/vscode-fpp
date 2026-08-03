@@ -1,13 +1,13 @@
 use fpp_lsp_parser::{parse, TopEntryPoint};
 use pretty_assertions::assert_eq;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{env, fs};
 
-fn run_test_inner(fpp_file: &PathBuf, ref_file: &PathBuf) {
+fn run_test_inner(fpp_file: &Path, ref_file: &Path) {
     let source_file_path = fpp_file.to_str().unwrap();
     let src = match fs::read_to_string(source_file_path) {
         Ok(src) => src,
-        Err(err) => panic!("failed to open {}: {}", source_file_path, err.to_string()),
+        Err(err) => panic!("failed to open {}: {}", source_file_path, err),
     };
 
     let out = parse(&src, TopEntryPoint::Module);

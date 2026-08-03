@@ -44,7 +44,7 @@ pub enum SemanticError {
     TypeConversion {
         loc: Span,
         msg: String,
-        err: TypeConversionError,
+        err: Box<TypeConversionError>,
     },
     EmptyArray {
         loc: Span,
@@ -103,9 +103,9 @@ impl SemanticError {
     }
 }
 
-impl Into<Diagnostic> for SemanticError {
-    fn into(self) -> Diagnostic {
-        match self {
+impl From<SemanticError> for Diagnostic {
+    fn from(val: SemanticError) -> Self {
+        match val {
             SemanticError::RedefinedSymbol {
                 name,
                 loc,
@@ -205,7 +205,7 @@ impl Into<Diagnostic> for SemanticError {
                     type_locs[format_locs.len() + 1..]
                         .iter()
                         .fold(diag, |diag, loc| {
-                            diag.span_note(loc.clone(), "missing format replacement field")
+                            diag.span_note(*loc, "missing format replacement field")
                         })
                 } else {
                     let diag = Diagnostic::new(
@@ -216,7 +216,7 @@ impl Into<Diagnostic> for SemanticError {
                     format_locs[type_locs.len() + 1..]
                         .iter()
                         .fold(diag, |diag, loc| {
-                            diag.span_annotation(loc.clone(), "extraneous format replacement field")
+                            diag.span_annotation(*loc, "extraneous format replacement field")
                         })
                 }
             }

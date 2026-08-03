@@ -62,12 +62,12 @@ impl FileContent {
                     "opening lsp file over fs-watched file, dropping watch"
                 );
 
-                let file = FileContent::Lsp(LspFile {
+                
+
+                FileContent::Lsp(LspFile {
                     version: open.text_document.version,
                     text: open.text_document.text,
-                });
-
-                file
+                })
             }
             FileContent::Lsp(_) => {
                 tracing::warn!(

@@ -39,11 +39,11 @@ impl Type {
         match self {
             Type::PrimitiveInt(kind) => Some(Value::PrimitiveInteger(PrimitiveIntegerValue {
                 value: 0,
-                kind: kind.clone(),
+                kind: *kind,
             })),
             Type::Float(kind) => Some(Value::Float(FloatValue {
                 value: 0.0,
-                kind: kind.clone(),
+                kind: *kind,
             })),
             Type::String(_) => Some(Value::String(StringValue("".to_string()))),
             Type::Boolean => Some(Value::Boolean(BooleanValue(false))),
@@ -63,7 +63,7 @@ impl Type {
                 }
 
                 Some(Value::AnonStruct(AnonStructValue {
-                    members: HashMap::from_iter(members.into_iter()),
+                    members: HashMap::from_iter(members),
                 }))
             }
         }
@@ -184,10 +184,7 @@ impl Type {
 
     /** Is this type a canonical (non-aliased) type? */
     pub fn is_canonical(&self) -> bool {
-        match self {
-            Type::AliasType(_) => false,
-            _ => true,
-        }
+        !matches!(self, Type::AliasType(_))
     }
 
     /** Is this type promotable to a struct type? */
@@ -240,14 +237,13 @@ impl Type {
             ) => {
                 // Check the sizes match
                 match (&from_arr.size, &to_arr.size) {
-                    (Some(from_size), Some(to_size)) => {
-                        if from_size != to_size {
+                    (Some(from_size), Some(to_size))
+                        if from_size != to_size => {
                             return Err(TypeConversionError::ArraySizeMismatch {
-                                from: from_size.clone(),
-                                to: to_size.clone(),
+                                from: *from_size,
+                                to: *to_size,
                             });
                         }
-                    }
                     _ => {}
                 }
 
@@ -266,7 +262,9 @@ impl Type {
                 | Type::AnonArray(to_arr),
             ) => {
                 if !from.is_promotable_to_array() {
-                    return Err(TypeConversionError::NotPromotableToArray(from.clone()));
+                    return Err(TypeConversionError::NotPromotableToArray(Box::new(
+                        from.clone(),
+                    )));
                 }
 
                 match Type::convert_impl(from, Type::underlying_type(&to_arr.elt_type).deref()) {
@@ -319,7 +317,9 @@ impl Type {
                 | Type::AnonStruct(to_struct),
             ) => {
                 if !from.is_promotable_to_struct() {
-                    return Err(TypeConversionError::NotPromotableToStruct(from.clone()));
+                    return Err(TypeConversionError::NotPromotableToStruct(Box::new(
+                        from.clone(),
+                    )));
                 }
 
                 // Make sure that 'from' can fit all members in to_struct
@@ -340,8 +340,8 @@ impl Type {
             }
 
             _ => Err(TypeConversionError::Mismatch {
-                from: from.clone(),
-                to: to.clone(),
+                from: Box::new(from.clone()),
+                to: Box::new(to.clone()),
             }),
         }
     }
@@ -364,7 +364,7 @@ impl Type {
 
     pub fn common_type(t1_a: &Arc<Type>, t2_a: &Arc<Type>) -> Option<Arc<Type>> {
         // Trivial case, types are the same
-        if Type::identical(&t1_a, &t2_a) {
+        if Type::identical(t1_a, t2_a) {
             return Some(t1_a.clone());
         }
 
@@ -392,21 +392,15 @@ impl Type {
                 get_ancestors(b, &mut ancestors_of_b);
 
                 // Traverse the ancestry of 'b' until we find a common ancestor with 'a'
-                match ancestors_of_b.iter().find(|b| {
+                ancestors_of_b.iter().find(|b| {
                     ancestors_of_a
                         .iter()
-                        .find(|a| Type::identical(&a, &b))
+                        .find(|a| Type::identical(a, b))
                         .is_some()
-                }) {
-                    Some(ty) => Some(ty.clone()),
-                    None => None,
-                }
+                }).cloned()
             }
 
-            match lca(t1_a, t2_a) {
-                Some(ty) => return Some(ty),
-                None => {}
-            }
+            if let Some(ty) = lca(t1_a, t2_a) { return Some(ty) }
         }
 
         // Do the rest of the operations on the underlying types since none of aliases
@@ -431,10 +425,10 @@ impl Type {
 
             // Strip off any enum wrappers over the representable type
             (Type::Enum(EnumType { rep_type, .. }), _) => {
-                Self::common_type(&Arc::new(Type::PrimitiveInt(rep_type.clone())), &t1)
+                Self::common_type(&Arc::new(Type::PrimitiveInt(*rep_type)), &t1)
             }
             (_, Type::Enum(EnumType { rep_type, .. })) => {
-                Self::common_type(&t1, &Arc::new(Type::PrimitiveInt(rep_type.clone())))
+                Self::common_type(&t1, &Arc::new(Type::PrimitiveInt(*rep_type)))
             }
 
             // t1 + t2 are both array/anon array
@@ -527,11 +521,8 @@ impl Type {
 
                 // Add the remaining members left over in t2
                 for (name, t2_ty) in &t2_struct.members {
-                    match t1_struct.members.get(name) {
-                        None => {
-                            out_members.insert(name.clone(), t2_ty.clone());
-                        }
-                        Some(_) => {}
+                    if !t1_struct.members.contains_key(name) {
+                        out_members.insert(name.clone(), t2_ty.clone());
                     }
                 }
 
@@ -624,16 +615,16 @@ pub enum TypeConversionError {
     },
     ArrayElementDuringPromotion(Box<TypeConversionError>),
     ArrayElement(Box<TypeConversionError>),
-    NotPromotableToArray(Type),
-    NotPromotableToStruct(Type),
+    NotPromotableToArray(Box<Type>),
+    NotPromotableToStruct(Box<Type>),
     MissingStructMember(String),
     StructMember {
         name: String,
         err: Box<TypeConversionError>,
     },
     Mismatch {
-        from: Type,
-        to: Type,
+        from: Box<Type>,
+        to: Box<Type>,
     },
 }
 

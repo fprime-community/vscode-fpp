@@ -4,7 +4,7 @@ use syn::{Fields, ItemEnum};
 
 pub(super) fn enum_map(input: ItemEnum) -> proc_macro2::TokenStream {
     let enum_ident = &input.ident;
-    let map_ident = ident_with_suffix(&enum_ident, "Map");
+    let map_ident = ident_with_suffix(enum_ident, "Map");
     let vis = input.vis;
 
     let mut members = vec![];
@@ -31,7 +31,7 @@ pub(super) fn enum_map(input: ItemEnum) -> proc_macro2::TokenStream {
                     "EnumMap only supports enum with unit variants",
                 )
                 .to_compile_error();
-                return err.into();
+                return err;
             }
         }
     }

@@ -30,7 +30,7 @@ pub(crate) fn run_test(file_path: &str) {
         let source_file_path = fpp_file.to_str().unwrap();
         let src = match file_reader.read(source_file_path) {
             Ok(src) => SourceFile::new(source_file_path, src),
-            Err(err) => panic!("failed to open {}: {}", source_file_path, err.to_string()),
+            Err(err) => panic!("failed to open {}: {}", source_file_path, err),
         };
 
         let mut ast = fpp_parser::parse(src, |p| p.trans_unit(), None);

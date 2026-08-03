@@ -155,14 +155,10 @@ impl SemanticTokensState {
         };
 
         for (range, kind) in self.raw {
-            match filter_range {
-                Some(filter_range) => {
-                    if filter_range.intersect(range).is_none() {
-                        continue;
-                    }
+            if let Some(filter_range) = filter_range
+                && filter_range.intersect(range).is_none() {
+                    continue;
                 }
-                None => {}
-            }
 
             let start = self.lines.line_col(range.start());
             let end = self.lines.line_col(range.end());

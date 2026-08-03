@@ -14,11 +14,7 @@ impl<NG: Copy, S: SymbolInterface, M: EnumMap<NG, GenericNameSymbolMap<S>>>
     GenericNestedScope<NG, S, M>
 {
     pub fn new() -> Self {
-        Self {
-            0: vec![None],
-            1: Default::default(),
-            2: Default::default(),
-        }
+        Self(vec![None], Default::default(), Default::default())
     }
 
     /// Push a new scope onto the stack

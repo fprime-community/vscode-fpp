@@ -8,17 +8,12 @@ pub struct GenericNameSymbolMap<S: SymbolInterface>(HashMap<String, S>);
 
 impl<S: SymbolInterface> GenericNameSymbolMap<S> {
     pub fn new() -> Self {
-        Self {
-            0: HashMap::default(),
-        }
+        Self(HashMap::default())
     }
 
     /** Get a symbol from the map. Return none if the name is not there. */
     pub fn get(&self, name: &str) -> Option<S> {
-        match self.0.get(name) {
-            None => None,
-            Some(s) => Some(s.clone()),
-        }
+        self.0.get(name).cloned()
     }
 
     pub fn put(&mut self, symbol: S) -> SemanticResult {

@@ -30,10 +30,7 @@ pub(super) fn expr(p: &mut Parser) {
 }
 
 fn expr_add_sub_operand(p: &mut Parser) -> Option<CompletedMarker> {
-    let mut lhs = match expr_mul_div_operand(p) {
-        None => return None,
-        Some(lhs) => lhs,
-    };
+    let mut lhs = expr_mul_div_operand(p)?;
 
     loop {
         match p.current() {

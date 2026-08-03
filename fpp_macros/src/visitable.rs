@@ -32,7 +32,7 @@ pub(super) fn walkable_visit_derive(
 
     // Ignore all fields that are manually specified to ignore or that
     // are internal to the AST Node
-    s.filter_variants(|v| !has_attr(&v.ast().attrs, "ignore"));
+    s.filter_variants(|v| !has_attr(v.ast().attrs, "ignore"));
     s.filter(|f| {
         let field_name = match &f.ast().ident {
             None => "".to_string(),
@@ -103,7 +103,7 @@ pub(super) fn walkable_direct_derive(
 
     // Ignore all fields that are manually specified to ignore or that
     // are internal to the AST Node
-    s.filter_variants(|v| !has_attr(&v.ast().attrs, "ignore"));
+    s.filter_variants(|v| !has_attr(v.ast().attrs, "ignore"));
     s.filter(|f| {
         let field_name = match &f.ast().ident {
             None => "".to_string(),
@@ -173,7 +173,7 @@ pub(super) fn walkable_direct_ref_derive(
 
     // Ignore all fields that are manually specified to ignore or that
     // are internal to the AST Node
-    s.filter_variants(|v| !has_attr(&v.ast().attrs, "ignore"));
+    s.filter_variants(|v| !has_attr(v.ast().attrs, "ignore"));
     s.filter(|f| {
         let field_name = match &f.ast().ident {
             None => "".to_string(),

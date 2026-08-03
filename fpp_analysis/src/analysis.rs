@@ -39,6 +39,12 @@ pub struct Analysis {
     pub value_map: HashMap<fpp_core::Node, Value>,
 }
 
+impl Default for Analysis {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Analysis {
     pub fn new() -> Analysis {
         // Validate that Analysis is thread safe
@@ -72,7 +78,7 @@ impl Analysis {
             Some(s) => self
                 .symbol_scope_map
                 .get(s)
-                .expect(&format!("symbol {} does not have a scope", s.name().data)),
+                .unwrap_or_else(|| panic!("symbol {} does not have a scope", s.name().data)),
         }
     }
 
@@ -87,7 +93,7 @@ impl Analysis {
             Some(s) => self
                 .symbol_scope_map
                 .get_mut(s)
-                .expect(&format!("symbol {} does not have a scope", s.name().data)),
+                .unwrap_or_else(|| panic!("symbol {} does not have a scope", s.name().data)),
         }
     }
 

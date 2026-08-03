@@ -28,7 +28,7 @@ pub enum Workspace {
     #[default]
     None,
     LocsFile(Uri),
-    FullWorkspace,
+    Full,
 }
 
 pub struct TaskWithReply {
@@ -214,7 +214,7 @@ impl GlobalState {
                             // The previous task might have put some more tasks on the queue
                             // We don't want to synchronously respond here since it'll finish early
                             // Instead we just place another 'response' task on the queue
-                            self.task(Task::Response(lsp_server::Response::new_ok(reply_id, &())))
+                            self.task(Task::Response(lsp_server::Response::new_ok(reply_id, ())))
                         }
                     }
                 }

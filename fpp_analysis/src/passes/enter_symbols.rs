@@ -8,7 +8,13 @@ use std::sync::Arc;
 
 pub struct EnterSymbols {}
 
-impl<'ast> EnterSymbols {
+impl Default for EnterSymbols {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl EnterSymbols {
     pub fn new() -> EnterSymbols {
         Self {}
     }
@@ -25,13 +31,10 @@ impl<'ast> EnterSymbols {
     /// Enter a symbol into its own name group
     fn enter_symbol(&self, a: &mut Analysis, sym: Symbol, ng: NameGroup) -> SemanticResult {
         let res = a.symbol_put(ng, sym.clone());
-        match res {
-            Ok(_) => {
-                // We successfully added the symbol to the scope
-                // Update the parent symbol map
-                self.update_parent_symbol_map(a, sym.clone());
-            }
-            _ => {}
+        if res.is_ok() {
+            // We successfully added the symbol to the scope
+            // Update the parent symbol map
+            self.update_parent_symbol_map(a, sym.clone());
         }
 
         res

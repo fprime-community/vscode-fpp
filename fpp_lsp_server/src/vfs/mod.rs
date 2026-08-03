@@ -17,6 +17,12 @@ pub struct Vfs {
     files: Arc<RwLock<FxHashMap<String, File>>>,
 }
 
+impl Default for Vfs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Vfs {
     pub fn new() -> Vfs {
         Vfs {
@@ -52,7 +58,7 @@ impl Vfs {
             Some(file) => return Ok(file.content.text().to_string()),
         }
 
-        let path_uri = Uri::from_str(&path)?;
+        let path_uri = Uri::from_str(path)?;
         let fs_path = path_uri.path().to_string();
         match std::fs::read_to_string(&fs_path) {
             Ok(text) => {
@@ -79,7 +85,7 @@ impl Vfs {
             }
         }
 
-        let path_uri = Uri::from_str(&path)?;
+        let path_uri = Uri::from_str(path)?;
         let fs_path = path_uri.path().to_string();
         match std::fs::read_to_string(&fs_path) {
             Ok(text) => {
@@ -214,7 +220,7 @@ impl Vfs {
                     )
                     .into()),
                     Some(file_path) => {
-                        let uri = Url::from_file_path(&file_path).map_err(|_| {
+                        let uri = Url::from_file_path(file_path).map_err(|_| {
                             Error::from(format!("Failed to convert path to URI: {}", file_path))
                         })?;
 
@@ -232,8 +238,8 @@ impl fpp_core::FileReader for &Vfs {
     }
 
     fn read(&self, path: &str) -> Result<String, Error> {
-        let mut this = (*self).clone();
-        match Vfs::read(&mut this, path) {
+        let this = (*self).clone();
+        match Vfs::read(&this, path) {
             Ok(text) => Ok(text),
             Err(e) => Err(e.to_string().into()),
         }

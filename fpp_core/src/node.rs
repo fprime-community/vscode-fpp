@@ -40,10 +40,10 @@ impl Debug for Node {
 
 impl Annotated for Node {
     fn pre_annotation(&self) -> Vec<String> {
-        with(|w| w.node_pre_annotation(&self))
+        with(|w| w.node_pre_annotation(self))
     }
 
     fn post_annotation(&self) -> Vec<String> {
-        with(|w| w.node_post_annotation(&self))
+        with(|w| w.node_post_annotation(self))
     }
 }

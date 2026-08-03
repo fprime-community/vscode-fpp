@@ -156,7 +156,7 @@ impl<'a> Cursor<'a> {
                 }
                 TokenKind::Identifier => {
                     // Check if this identifier is an escaped keyword
-                    let start = if self.content.as_bytes()[prev] == ('$' as u8) {
+                    let start = if self.content.as_bytes()[prev] == b'$' {
                         prev + 1
                     } else {
                         prev
@@ -314,10 +314,7 @@ impl<'a> Cursor<'a> {
     }
 
     pub fn peek_span(&mut self, n: usize) -> Option<Span> {
-        match self.peek_internal(n) {
-            Some(tok) => Some(tok.span()),
-            _ => None,
-        }
+        self.peek_internal(n).map(|tok| tok.span())
     }
 
     /// Look ahead 'n' tokens and get the token kind
@@ -364,7 +361,7 @@ impl<'a> Cursor<'a> {
         }
     }
 
-    /// Insert a single token into the front of the queue to be pulled next
+    // Insert a single token into the front of the queue to be pulled next
     // pub fn insert(&mut self, token: Token) {
     //     self.token_queue.push_front(token)
     // }

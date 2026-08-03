@@ -95,16 +95,16 @@ fn format_file_cmd(path: &PathBuf, check_only: bool) -> Result<bool, Box<dyn std
     if check_only {
         if original != formatted {
             eprintln!("{}: not formatted", path.display());
-            return Ok(false);
+            Ok(false)
         } else {
             eprintln!("{}: already formatted", path.display());
-            return Ok(true);
+            Ok(true)
         }
     } else {
         // Write formatted content back to file
         fs::write(path, formatted)?;
         eprintln!("{}: formatted", path.display());
-        return Ok(true);
+        Ok(true)
     }
 }
 

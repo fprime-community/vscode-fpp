@@ -97,8 +97,7 @@ pub fn handle_dump_syntax_tree(state: &mut GlobalState, param: UriRequest) -> Re
     let (_, source_file, parse) = parse_text_document(state, &param.uri)?;
 
     let parse_kind = source_file
-        .map(|f| state.analysis.include_context_map.get(&f).cloned())
-        .flatten()
+        .and_then(|f| state.analysis.include_context_map.get(&f).cloned())
         .unwrap_or(fpp_parser::IncludeParentKind::Module);
 
     let entry_kind = match parse_kind {
@@ -127,12 +126,10 @@ fn parse_text_document(
     let source_file = state
         .files
         .get(uri.as_str())
-        .map(|files| files.first().cloned())
-        .flatten();
+        .and_then(|files| files.first().cloned());
 
     let parse_kind = source_file
-        .map(|f| state.analysis.include_context_map.get(&f).cloned())
-        .flatten()
+        .and_then(|f| state.analysis.include_context_map.get(&f).cloned())
         .unwrap_or(fpp_parser::IncludeParentKind::Module);
 
     let entry_kind = match parse_kind {
@@ -151,7 +148,7 @@ pub fn handle_semantic_tokens_full(
     state: &mut GlobalState,
     request: lsp_types::SemanticTokensParams,
 ) -> Result<Option<SemanticTokensResult>> {
-    let (text, src, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (text, src, parse) = parse_text_document(state, &request.text_document.uri)?;
     let semantic_tokens = lsp::semantic_tokens::compute(state, src, &text, &parse).finish(None);
 
     // Unconditionally cache the tokens
@@ -166,7 +163,7 @@ pub fn handle_semantic_tokens_range(
     state: &GlobalState,
     request: lsp_types::SemanticTokensRangeParams,
 ) -> Result<Option<SemanticTokensRangeResult>> {
-    let (text, src, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (text, src, parse) = parse_text_document(state, &request.text_document.uri)?;
 
     Ok(Some(SemanticTokensRangeResult::Tokens(
         lsp::semantic_tokens::compute(state, src, &text, &parse).finish(Some(request.range)),
@@ -177,7 +174,7 @@ pub fn handle_semantic_tokens_full_delta(
     state: &mut GlobalState,
     request: lsp_types::SemanticTokensDeltaParams,
 ) -> Result<Option<SemanticTokensFullDeltaResult>> {
-    let (text, src, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (text, src, parse) = parse_text_document(state, &request.text_document.uri)?;
 
     let semantic_tokens = lsp::semantic_tokens::compute(state, src, &text, &parse).finish(None);
 
@@ -214,7 +211,7 @@ pub fn handle_document_diagnostics(
     Ok(DocumentDiagnosticReportResult::Report(
         lsp_types::DocumentDiagnosticReport::Full(lsp_types::RelatedFullDocumentDiagnosticReport {
             full_document_diagnostic_report: lsp_types::FullDocumentDiagnosticReport {
-                items: state.diagnostics.get(&request.text_document.uri.as_str()),
+                items: state.diagnostics.get(request.text_document.uri.as_str()),
                 ..Default::default()
             },
             ..Default::default()
@@ -279,14 +276,10 @@ impl<'a> fpp_lsp_parser::Visitor for DocumentLinksVisitor<'a> {
                         // We need to strip off the quotes
                         let file_include = {
                             let file_include_text = &self.text[file.text_range()];
-                            if file_include_text.starts_with("\"\"\"") {
-                                if file_include_text.ends_with("\"\"\"") {
-                                    &file_include_text[3..file_include_text.len() - 3]
-                                } else {
-                                    // This is some off-nominal case
-                                    // Do something reasonable
-                                    &file_include_text[3..]
-                                }
+                            if let Some(inner) = file_include_text.strip_prefix("\"\"\"") {
+                                // Triple-quoted string; strip the matching suffix if present,
+                                // otherwise fall back to the off-nominal remainder.
+                                inner.strip_suffix("\"\"\"").unwrap_or(inner)
                             } else {
                                 &file_include_text[1..file_include_text.len() - 1]
                             }
@@ -323,7 +316,7 @@ pub fn handle_document_link_request(
     state: &GlobalState,
     request: lsp_types::DocumentLinkParams,
 ) -> Result<Option<Vec<DocumentLink>>> {
-    let (text, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (text, _, parse) = parse_text_document(state, &request.text_document.uri)?;
     let lines = state.vfs.get_lines(request.text_document.uri.as_str())?;
 
     let mut links = vec![];
@@ -404,11 +397,7 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
 
     // Check if this node is a use/reference to definition
     if let Some((node, symbol)) = nodes.iter().find_map(|node| {
-        if let Some(def) = state.analysis.use_def_map.get(&node.id()) {
-            Some((*node, def))
-        } else {
-            None
-        }
+        state.analysis.use_def_map.get(&node.id()).map(|def| (*node, def))
     }) {
         return Ok(Some(hover_for_symbol(state, node, symbol)));
     }
@@ -444,11 +433,7 @@ pub fn handle_references(
         let symbol = {
             // Check if this is a use to a symbol
             if let Some(symbol) = nodes.iter().find_map(|node| {
-                if let Some(def) = state.analysis.use_def_map.get(&node.id()) {
-                    return Some(def);
-                } else {
-                    None
-                }
+                state.analysis.use_def_map.get(&node.id())
             }) {
                 Some(symbol)
             // Check if this is a symbol definition
@@ -512,7 +497,7 @@ pub fn handle_completion(
             source_files
                 .iter()
                 .map(|f| match state.analysis.include_context_map.get(f) {
-                    Some(kind) => kind.clone(),
+                    Some(kind) => *kind,
                     None => fpp_parser::IncludeParentKind::Module,
                 })
                 .max()
@@ -612,7 +597,7 @@ pub fn handle_completion(
 
         let tokens: Vec<SyntaxToken> = qual_ident
             .descendants_with_tokens()
-            .filter_map(|s| s.as_token().map(|ss| ss.clone()))
+            .filter_map(|s| s.as_token().cloned())
             .filter(|t| t.kind() == SyntaxKind::IDENT && t.text_range().end() <= cursor_pos)
             .collect();
 
@@ -621,8 +606,7 @@ pub fn handle_completion(
 
         // Look up the symbol before the cursor
         Ok(symbol_at_position(state, &uri, last_token_pos)
-            .map(|(_, symbol)| state.analysis.symbol_scope_map.get(&symbol))
-            .flatten()
+            .and_then(|(_, symbol)| state.analysis.symbol_scope_map.get(&symbol))
             .map(|scope| {
                 // Get all symbols under this symbol's scope in the proper
                 // name group
@@ -762,7 +746,7 @@ pub fn handle_formatting(
     request: DocumentFormattingParams,
 ) -> Result<Option<Vec<TextEdit>>> {
     let lines = state.vfs.get_lines(request.text_document.uri.as_str())?;
-    let (original, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (original, _, parse) = parse_text_document(state, &request.text_document.uri)?;
 
     if !parse.errors().is_empty() {
         tracing::warn!("Cannot format with parse errors: {:?}", parse.errors());
@@ -793,7 +777,7 @@ pub fn handle_range_formatting(
     // For initial implementation, format the entire document
     // Future optimization: extract and format only the specified range
     let lines = state.vfs.get_lines(request.text_document.uri.as_str())?;
-    let (original, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (original, _, parse) = parse_text_document(state, &request.text_document.uri)?;
 
     if !parse.errors().is_empty() {
         tracing::warn!("Cannot format with parse errors: {:?}", parse.errors());

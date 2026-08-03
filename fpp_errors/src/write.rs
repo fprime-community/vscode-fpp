@@ -25,7 +25,7 @@ impl<W: Write> DiagnosticEmitter for WriteEmitter<W> {
         out.push('\n');
         out.push('\n');
         self.write
-            .write(out.as_bytes())
+            .write_all(out.as_bytes())
             .expect("failed to write diagnostic");
     }
 }

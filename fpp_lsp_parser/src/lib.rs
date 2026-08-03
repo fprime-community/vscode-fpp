@@ -150,12 +150,12 @@ impl Parse {
     }
 
     pub fn errors(&self) -> Vec<SyntaxError> {
-        let errors = if let Some(e) = self.errors.as_deref() {
+        
+        if let Some(e) = self.errors.as_deref() {
             e.to_vec()
         } else {
             vec![]
-        };
-        errors
+        }
     }
 }
 

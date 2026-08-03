@@ -52,8 +52,8 @@ impl Format {
         // Validate the fields in the format string against the types expected to be formated
         if format.len() != ts.len() {
             SemanticError::FormatStringMismatchLength {
-                format_locs: format.iter().map(|f| f.span.clone()).collect(),
-                type_locs: ts.iter().map(|t| t.1.clone()).collect(),
+                format_locs: format.iter().map(|f| f.span).collect(),
+                type_locs: ts.iter().map(|t| t.1).collect(),
             }
             .emit();
         } else {
@@ -68,7 +68,7 @@ impl Format {
                             Type::Integer => {}
                             _ => SemanticError::FormatStringInvalidReplacement {
                                 format_loc: format_spec.span,
-                                type_loc: ty_span.clone(),
+                                type_loc: *ty_span,
                                 msg: format!(
                                     "{:?} format replacement cannot be used for type `{}`",
                                     kind, ty
@@ -78,7 +78,7 @@ impl Format {
                         }
                     }
                     FormatReplacementKind::Rational { kind, precision } => {
-                        match precision.clone() {
+                        match *precision {
                             None => {}
                             Some(precision) if precision > 100 => {
                                 SemanticError::FormatStringInvalidPrecision {
@@ -95,7 +95,7 @@ impl Format {
                             Type::Float(_) => {}
                             _ => SemanticError::FormatStringInvalidReplacement {
                                 format_loc: format_spec.span,
-                                type_loc: ty_span.clone(),
+                                type_loc: *ty_span,
                                 msg: format!(
                                     "{:?} format replacement cannot be used for type `{}`",
                                     kind, ty
@@ -115,11 +115,13 @@ impl Format {
     pub fn len(&self) -> usize {
         self.0
             .iter()
-            .filter(|f| match f {
-                FormatPart::FormatReplacement(_) => true,
-                _ => false,
-            })
+            .filter(|f| matches!(f, FormatPart::FormatReplacement(_)))
             .count()
+    }
+
+    /// Whether the format string has no replacement fields
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn get(&self, n: usize) -> Option<&FormatReplacementField> {
@@ -154,7 +156,7 @@ struct FormatParser<'a> {
 const EOF_CHAR: char = '\0';
 
 enum LexerResult {
-    EOF,
+    Eof,
     KeepGoing,
     Literal(String),
     FormatReplacement(FormatReplacementKind),
@@ -170,7 +172,7 @@ impl<'a> Iterator for FormatParser<'a> {
         let start = self.pos;
         loop {
             match self.next_kind() {
-                LexerResult::EOF => return None,
+                LexerResult::Eof => return None,
                 LexerResult::KeepGoing => {}
                 LexerResult::Literal(s) => return Some(FormatPart::Literal(s)),
                 LexerResult::FormatReplacement(kind) => {
@@ -206,7 +208,7 @@ impl<'a> FormatParser<'a> {
         match self.first() {
             EOF_CHAR => {
                 if self.literal.is_empty() {
-                    LexerResult::EOF
+                    LexerResult::Eof
                 } else {
                     LexerResult::Literal(String::from_utf8(self.literal.clone()).unwrap())
                 }
@@ -216,7 +218,7 @@ impl<'a> FormatParser<'a> {
                 if self.second() == '{' {
                     self.bump();
                     self.bump();
-                    self.literal.push('{' as u8);
+                    self.literal.push(b'{');
                     LexerResult::KeepGoing
                 } else if self.literal.is_empty() && self.second() == '}' {
                     self.bump();
@@ -242,7 +244,7 @@ impl<'a> FormatParser<'a> {
                                 }
                             }
 
-                            return LexerResult::FormatReplacement(f);
+                            LexerResult::FormatReplacement(f)
                         }
                     }
                 } else {
@@ -254,7 +256,7 @@ impl<'a> FormatParser<'a> {
                 if self.second() == '}' {
                     self.bump();
                     self.bump();
-                    self.literal.push('}' as u8);
+                    self.literal.push(b'}');
                 } else {
                     self.bump();
                     self.error("unmatched `}` in format string")
@@ -287,14 +289,9 @@ impl<'a> FormatParser<'a> {
             '.' => {
                 // Precision prefix
                 let mut precision = vec![];
-                loop {
-                    match self.first() {
-                        d @ '0'..='9' => {
-                            self.bump();
-                            precision.push(d as u8)
-                        }
-                        _ => break,
-                    };
+                while let d @ '0'..='9' = self.first() {
+                    self.bump();
+                    precision.push(d as u8)
                 }
 
                 if precision.is_empty() {

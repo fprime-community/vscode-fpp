@@ -105,7 +105,7 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
     fn span_file(&self, s: &Span) -> SourceFile {
         let ctx = self.ctx.borrow();
         SourceFile {
-            handle: ctx.span_get(s).file.upgrade().unwrap().handle.clone(),
+            handle: ctx.span_get(s).file.upgrade().unwrap().handle,
         }
     }
 
@@ -199,7 +199,7 @@ where
     }
 
     let ptr: *const () = (&raw const interface) as _;
-    TLV.set(&Cell::new(ptr), || f())
+    TLV.set(&Cell::new(ptr), f)
 }
 
 /// Execute the given function with access the [`CompilerInterface`].

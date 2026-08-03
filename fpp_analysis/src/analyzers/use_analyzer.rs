@@ -9,6 +9,12 @@ pub struct UseAnalyzer<'ast, V: UseAnalysisPass<'ast, Analysis>> {
     super_: BasicUseAnalyzer<'ast, Analysis, V>,
 }
 
+impl<'ast, V: UseAnalysisPass<'ast, Analysis>> Default for UseAnalyzer<'ast, V> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'ast, V: UseAnalysisPass<'ast, Analysis>> UseAnalyzer<'ast, V> {
     pub fn new() -> UseAnalyzer<'ast, V> {
         UseAnalyzer {

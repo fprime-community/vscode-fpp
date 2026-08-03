@@ -20,6 +20,12 @@ pub struct EvalConstantExprs<'ast> {
     super_: UseAnalyzer<'ast, Self>,
 }
 
+impl<'ast> Default for EvalConstantExprs<'ast> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'ast> EvalConstantExprs<'ast> {
     pub fn new() -> EvalConstantExprs<'ast> {
         Self {
@@ -62,19 +68,15 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
         // Check for duplicate values
         let mut values: HashMap<i128, fpp_core::Span> = HashMap::default();
         for constant in &node.constants {
-            match a.value_map.get(&constant.node_id) {
-                Some(Value::EnumConstant(EnumConstantValue { value, .. })) => {
-                    if let Some(old) = values.insert(value.1, constant.span()) {
-                        SemanticError::DuplicateEnumConstant {
-                            value: value.1,
-                            loc: constant.span(),
-                            prev_loc: old,
-                        }
-                        .emit()
+            if let Some(Value::EnumConstant(EnumConstantValue { value, .. })) = a.value_map.get(&constant.node_id)
+                && let Some(old) = values.insert(value.1, constant.span()) {
+                    SemanticError::DuplicateEnumConstant {
+                        value: value.1,
+                        loc: constant.span(),
+                        prev_loc: old,
                     }
+                    .emit()
                 }
-                _ => {}
-            }
         }
 
         ControlFlow::Continue(())
@@ -168,9 +170,9 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
                 let index = match a.value_map.get(&e2.node_id) {
                     None => return ControlFlow::Continue(()),
                     Some(Value::PrimitiveInteger(PrimitiveIntegerValue { value, .. })) => {
-                        value.clone()
+                        *value
                     }
-                    Some(Value::Integer(IntegerValue(value))) => value.clone(),
+                    Some(Value::Integer(IntegerValue(value))) => *value,
                     _ => return ControlFlow::Continue(()),
                 };
 
@@ -260,7 +262,7 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
             ExprKind::Ident(_) => {}
             ExprKind::LiteralBool(v) => {
                 a.value_map
-                    .insert(node.node_id, Value::Boolean(BooleanValue(v.clone())));
+                    .insert(node.node_id, Value::Boolean(BooleanValue(*v)));
             }
             ExprKind::LiteralInt(v) => {
                 let vi: i128 = if v.starts_with("0x") || v.starts_with("0X") {
@@ -341,18 +343,15 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
                     }),
                 );
             }
-            ExprKind::Unop { op, e } => match (op, a.value_map.get(&e.node_id)) {
-                (Unop::Minus, Some(v)) => match v.mul(&Value::Integer(IntegerValue(-1))) {
-                    Ok(v) => {
-                        a.value_map.insert(node.node_id, v);
-                    }
-                    Err(MathError::InvalidInputs) => {}
-                    Err(MathError::DivByZero) => {
-                        panic!("unexpected div by zero")
-                    }
-                },
-                _ => {}
-            },
+            ExprKind::Unop { op, e } => if let (Unop::Minus, Some(v)) = (op, a.value_map.get(&e.node_id)) { match v.mul(&Value::Integer(IntegerValue(-1))) {
+                Ok(v) => {
+                    a.value_map.insert(node.node_id, v);
+                }
+                Err(MathError::InvalidInputs) => {}
+                Err(MathError::DivByZero) => {
+                    panic!("unexpected div by zero")
+                }
+            } },
         }
 
         ControlFlow::Continue(())
@@ -380,11 +379,8 @@ impl<'ast> UseAnalysisPass<'ast, Analysis> for EvalConstantExprs<'ast> {
             _ => return ControlFlow::Continue(()),
         };
 
-        match a.value_map.get(&symbol.node()) {
-            Some(value) => {
-                a.value_map.insert(node.node_id, value.clone());
-            }
-            None => {}
+        if let Some(value) = a.value_map.get(&symbol.node()) {
+            a.value_map.insert(node.node_id, value.clone());
         }
 
         ControlFlow::Continue(())

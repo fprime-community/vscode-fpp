@@ -50,9 +50,9 @@ impl std::fmt::Display for TokenList {
     }
 }
 
-impl Into<Diagnostic> for ParseError {
-    fn into(self) -> Diagnostic {
-        match self {
+impl From<ParseError> for Diagnostic {
+    fn from(value: ParseError) -> Diagnostic {
+        match value {
             ParseError::ExpectedOneOf {
                 got_kind,
                 got_span,

@@ -12,6 +12,12 @@ pub struct CheckUseDefCycles<'ast> {
     super_: UseAnalyzer<'ast, Self>,
 }
 
+impl<'ast> Default for CheckUseDefCycles<'ast> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'ast> CheckUseDefCycles<'ast> {
     pub fn new() -> CheckUseDefCycles<'ast> {
         Self {

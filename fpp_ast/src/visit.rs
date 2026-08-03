@@ -354,7 +354,6 @@ pub trait MutVisitable<V: MutVisitor> {
 }
 
 /// Visitable for Option<T>
-
 impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Visitable<'a, V> for Option<T> {
     fn visit(&'a self, a: &mut V::State, visitor: &V) -> ControlFlow<V::Break> {
         match self {
@@ -374,7 +373,6 @@ impl<V: MutVisitor, T: MutVisitable<V>> MutVisitable<V> for Option<T> {
 }
 
 /// Walkable for Box<T> by visiting the inner object
-
 impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Walkable<'a, V> for Box<T> {
     fn walk(&'a self, a: &mut V::State, visitor: &V) -> ControlFlow<V::Break> {
         self.visit(a, visitor)
@@ -388,7 +386,6 @@ impl<V: MutVisitor, T: MutVisitable<V>> MutWalkable<V> for Box<T> {
 }
 
 /// Visitable for Box<T>
-
 impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Visitable<'a, V> for Box<T> {
     fn visit(&'a self, a: &mut V::State, visitor: &V) -> ControlFlow<V::Break> {
         self.deref().visit(a, visitor)
@@ -402,7 +399,6 @@ impl<V: MutVisitor, T: MutVisitable<V>> MutVisitable<V> for Box<T> {
 }
 
 /// Walkable for Vec<T> by visiting all the children
-
 impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Walkable<'a, V> for Vec<T> {
     fn walk(&'a self, a: &mut V::State, visitor: &V) -> ControlFlow<V::Break> {
         for child in self {
@@ -424,7 +420,6 @@ impl<V: MutVisitor, T: MutVisitable<V>> MutWalkable<V> for Vec<T> {
 }
 
 /// Visitable for Vec<T> by walking all the elements in the vec
-
 impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Visitable<'a, V> for Vec<T> {
     fn visit(&'a self, a: &mut V::State, visitor: &V) -> ControlFlow<V::Break> {
         self.walk(a, visitor)

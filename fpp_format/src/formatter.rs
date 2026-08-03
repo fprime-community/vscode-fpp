@@ -3,6 +3,10 @@
 //! stateful bookkeeping: indentation, member breaks and clause explosion all
 //! fall out of the `Doc` combinators.
 
+// The classification predicates below are intentionally written as explicit
+// `match ... => true, _ => false` expressions for readability over `matches!`.
+#![allow(clippy::match_like_matches_macro)]
+
 use crate::FormatOptions;
 use crate::doc::{AnchorKind, Doc};
 use fpp_lsp_parser::{SyntaxKind, SyntaxKind::*, SyntaxNode, SyntaxToken};
@@ -152,7 +156,11 @@ impl Formatter {
     fn lower_member_list(&self, node: &SyntaxNode) -> Doc {
         let cfg = list_cfg(node.kind());
         let items = self.collect_items(node);
-        let force_block = matches!(cfg.mode, ListMode::Always) || items.iter().any(|i| i.comment);
+        let always = match cfg.mode {
+            ListMode::Always => true,
+            ListMode::Auto => false,
+        };
+        let force_block = always || items.iter().any(|i| i.comment);
 
         if items.is_empty() {
             return match cfg.mode {
@@ -387,33 +395,33 @@ fn is_explodable(kind: SyntaxKind) -> bool {
 }
 
 fn is_clause_node(kind: SyntaxKind) -> bool {
-    matches!(
-        kind,
+    match kind {
         OPCODE
-            | PRIORITY
-            | QUEUE_FULL
-            | ID
-            | FORMAT
-            | EVENT_THROTTLE
-            | EVENT_SEVERITY
-            | DEFAULT
-            | QUEUE_SIZE
-            | STACK_SIZE
-            | CPU
-            | COMPONENT_INSTANCE_TYPE
-            | COMPONENT_INSTANCE_FILE
-    )
+        | PRIORITY
+        | QUEUE_FULL
+        | ID
+        | FORMAT
+        | EVENT_THROTTLE
+        | EVENT_SEVERITY
+        | DEFAULT
+        | QUEUE_SIZE
+        | STACK_SIZE
+        | CPU
+        | COMPONENT_INSTANCE_TYPE
+        | COMPONENT_INSTANCE_FILE => true,
+        _ => false,
+    }
 }
 
 /// Loose keyword clause-starters, by enclosing spec kind.
 fn is_clause_keyword(parent: SyntaxKind, kind: SyntaxKind) -> bool {
-    matches!(
-        (parent, kind),
+    match (parent, kind) {
         (SPEC_TELEMETRY, UPDATE_KW | LOW_KW | HIGH_KW)
-            | (SPEC_PARAM, SET_KW | SAVE_KW)
-            | (SPEC_CONTAINER, DEFAULT_KW)
-            | (SPEC_RECORD, ARRAY_KW)
-    )
+        | (SPEC_PARAM, SET_KW | SAVE_KW)
+        | (SPEC_CONTAINER, DEFAULT_KW)
+        | (SPEC_RECORD, ARRAY_KW) => true,
+        _ => false,
+    }
 }
 
 // ---- member-list configuration --------------------------------------------
@@ -469,7 +477,10 @@ fn list_cfg(kind: SyntaxKind) -> ListCfg {
 // ============================================================================
 
 fn is_trivia(kind: SyntaxKind) -> bool {
-    matches!(kind, WHITESPACE | EOL)
+    match kind {
+        WHITESPACE | EOL => true,
+        _ => false,
+    }
 }
 
 fn first_token(node: &SyntaxNode) -> Option<SyntaxToken> {
@@ -489,7 +500,11 @@ fn last_token(node: &SyntaxNode) -> Option<SyntaxToken> {
 /// rest of its source line, so anything after one must start on a new line;
 /// otherwise fall back to the flat spacing rules.
 fn sep_doc(prev: &SyntaxToken, cur: &SyntaxToken) -> Doc {
-    if matches!(prev.kind(), COMMENT | PRE_ANNOTATION | POST_ANNOTATION) {
+    let after_comment = match prev.kind() {
+        COMMENT | PRE_ANNOTATION | POST_ANNOTATION => true,
+        _ => false,
+    };
+    if after_comment {
         Doc::hardline()
     } else {
         Doc::text(flat_sep(prev, cur))
@@ -498,22 +513,38 @@ fn sep_doc(prev: &SyntaxToken, cur: &SyntaxToken) -> Doc {
 
 /// Flat inter-token separator (" " or "").
 fn flat_sep(prev: &SyntaxToken, cur: &SyntaxToken) -> &'static str {
-    if matches!(prev.kind(), DOT) || matches!(cur.kind(), DOT) {
+    if prev.kind() == DOT || cur.kind() == DOT {
         return "";
     }
-    if matches!(cur.kind(), COLON | COMMA | SEMI | RIGHT_PAREN | RIGHT_SQUARE) {
+    let cur_tight = match cur.kind() {
+        COLON | COMMA | SEMI | RIGHT_PAREN | RIGHT_SQUARE => true,
+        _ => false,
+    };
+    if cur_tight {
         return "";
     }
     if cur.kind() == LEFT_SQUARE && is_subscript_bracket(cur) {
         return "";
     }
-    if matches!(prev.kind(), LEFT_PAREN | LEFT_SQUARE) {
+    let prev_open = match prev.kind() {
+        LEFT_PAREN | LEFT_SQUARE => true,
+        _ => false,
+    };
+    if prev_open {
         return "";
     }
-    if matches!(prev.kind(), MINUS | PLUS) && is_unary(prev) {
+    let prev_sign = match prev.kind() {
+        MINUS | PLUS => true,
+        _ => false,
+    };
+    if prev_sign && is_unary(prev) {
         return "";
     }
-    if cur.kind() == LEFT_PAREN && matches!(prev.kind(), IDENT | RIGHT_PAREN | RIGHT_SQUARE) {
+    let prev_callable = match prev.kind() {
+        IDENT | RIGHT_PAREN | RIGHT_SQUARE => true,
+        _ => false,
+    };
+    if cur.kind() == LEFT_PAREN && prev_callable {
         return "";
     }
     " "
@@ -530,10 +561,8 @@ fn is_subscript_bracket(tok: &SyntaxToken) -> bool {
     if ios.kind() != INDEX_OR_SIZE {
         return false;
     }
-    ios.parent().is_some_and(|gp| {
-        matches!(
-            gp.kind(),
-            EXPR_SUBSCRIPT | EXPR_POSTFIX | CONNECTION_FROM | CONNECTION_TO
-        )
+    ios.parent().is_some_and(|gp| match gp.kind() {
+        EXPR_SUBSCRIPT | EXPR_POSTFIX | CONNECTION_FROM | CONNECTION_TO => true,
+        _ => false,
     })
 }

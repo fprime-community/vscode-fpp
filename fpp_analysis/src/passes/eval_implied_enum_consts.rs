@@ -11,6 +11,12 @@ pub struct EvalImpliedEnumConsts<'ast> {
     super_: NestedAnalyzer<'ast, Analysis, Self>,
 }
 
+impl<'ast> Default for EvalImpliedEnumConsts<'ast> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'ast> EvalImpliedEnumConsts<'ast> {
     pub fn new() -> EvalImpliedEnumConsts<'ast> {
         EvalImpliedEnumConsts {
@@ -33,6 +39,7 @@ impl<'ast> Visitor<'ast> for EvalImpliedEnumConsts<'ast> {
             None => return ControlFlow::Continue(()),
         };
 
+        #[allow(clippy::manual_try_fold)]
         node.constants.iter().fold(Some(0), |next, member| {
             match (next, &member.value) {
                 (Some(next), Some(_)) => {

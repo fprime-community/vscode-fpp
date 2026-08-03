@@ -17,6 +17,12 @@ pub struct CheckTypeUses<'ast> {
     super_: UseAnalyzer<'ast, Self>,
 }
 
+impl<'ast> Default for CheckTypeUses<'ast> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'ast> CheckTypeUses<'ast> {
     pub fn new() -> CheckTypeUses<'ast> {
         Self {
@@ -117,7 +123,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
         }
 
         node.walk(a, self)?;
-        if node.constants.len() == 0 {
+        if node.constants.is_empty() {
             SemanticError::InvalidType {
                 loc: node.span(),
                 msg: "enum must define at least one constant".to_string(),
@@ -131,7 +137,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
                 Some(type_name) => match a.type_map.get(&type_name.node_id) {
                     None => return ControlFlow::Continue(()),
                     Some(ty) => match Type::underlying_type(ty).deref() {
-                        Type::PrimitiveInt(kind) => kind.clone(),
+                        Type::PrimitiveInt(kind) => *kind,
                         _ => {
                             SemanticError::InvalidType {
                                 loc: type_name.span(),
@@ -224,8 +230,8 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
     ) -> ControlFlow<Self::Break> {
         let ty = match &node.kind {
             TypeNameKind::Bool => Type::Boolean,
-            TypeNameKind::Floating(kind) => Type::Float(kind.clone()),
-            TypeNameKind::Integer(kind) => Type::PrimitiveInt(kind.clone()),
+            TypeNameKind::Floating(kind) => Type::Float(*kind),
+            TypeNameKind::Integer(kind) => Type::PrimitiveInt(*kind),
             TypeNameKind::QualIdent(qi) => {
                 self.super_visit(a, Node::TypeName(node))?;
                 match a.type_map.get(&qi.id()) {

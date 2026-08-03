@@ -51,8 +51,8 @@ pub fn ast(_attrs: TokenStream, input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input);
 
     match &item {
-        Item::Struct(item_struct) => ast_node_struct(&item_struct),
-        Item::Enum(item_enum) => ast_node_enum(&item_enum),
+        Item::Struct(item_struct) => ast_node_struct(item_struct),
+        Item::Enum(item_enum) => ast_node_enum(item_enum),
         other => {
             let err = syn::Error::new_spanned(
                 other,
@@ -101,16 +101,15 @@ pub fn ast_annotated(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let item = parse_macro_input!(input);
 
-    (match item {
+    match item {
         Item::Struct(item_struct) => annotated_struct(&item_struct),
         Item::Enum(item_enum) => annotated_enum(&item_enum),
         other => {
             let err = syn::Error::new_spanned(other, "#[ast_node] only supports structs or enums")
                 .to_compile_error();
-            return err.into();
+            err.into()
         }
-    })
-    .into()
+    } 
 }
 
 decl_derive!(

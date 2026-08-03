@@ -13,7 +13,7 @@ pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
             let node_id_type: Type = syn::parse_quote!(fpp_core::Node);
             match fields_named.named.iter().find(|f| match &f.ident {
                 None => false,
-                Some(ident) => ident.to_string() == "node_id",
+                Some(ident) => ident == "node_id",
             }) {
                 Some(node_id_field) => {
                     if node_id_field.ty.type_id() != node_id_type.type_id() {

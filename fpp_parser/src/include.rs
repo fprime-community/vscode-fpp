@@ -85,7 +85,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
         match Self::check_for_cycle(spec_include.span(), &file_path) {
             Ok(_) => {}
             Err(err) => {
-                fpp_core::Diagnostic::from(err.into()).emit();
+                fpp_core::Diagnostic::from(err).emit();
                 return;
             }
         };
@@ -241,7 +241,7 @@ impl<Reader: FileReader> MutVisitor for ResolveIncludes<Reader> {
         a: &mut Self::State,
         node: &mut DefComponent,
     ) -> ControlFlow<Self::Break> {
-        let old_members = std::mem::replace(&mut node.members, vec![]);
+        let old_members = std::mem::take(&mut node.members);
         for member in old_members.into_iter() {
             self.component_member(a, member, &mut node.members)
         }
@@ -254,7 +254,7 @@ impl<Reader: FileReader> MutVisitor for ResolveIncludes<Reader> {
         a: &mut Self::State,
         node: &mut DefModule,
     ) -> ControlFlow<Self::Break> {
-        let old_members = std::mem::replace(&mut node.members, vec![]);
+        let old_members = std::mem::take(&mut node.members);
         for member in old_members.into_iter() {
             self.module_member(a, member, &mut node.members)
         }
@@ -267,7 +267,7 @@ impl<Reader: FileReader> MutVisitor for ResolveIncludes<Reader> {
         a: &mut Self::State,
         node: &mut DefTopology,
     ) -> ControlFlow<Self::Break> {
-        let old_members = std::mem::replace(&mut node.members, vec![]);
+        let old_members = std::mem::take(&mut node.members);
         for member in old_members.into_iter() {
             self.topology_member(a, member, &mut node.members)
         }
@@ -280,7 +280,7 @@ impl<Reader: FileReader> MutVisitor for ResolveIncludes<Reader> {
         a: &mut Self::State,
         node: &mut SpecTlmPacket,
     ) -> ControlFlow<Self::Break> {
-        let old_members = std::mem::replace(&mut node.members, vec![]);
+        let old_members = std::mem::take(&mut node.members);
         for member in old_members.into_iter() {
             self.tlm_packet_member(a, member, &mut node.members)
         }
@@ -293,7 +293,7 @@ impl<Reader: FileReader> MutVisitor for ResolveIncludes<Reader> {
         a: &mut Self::State,
         node: &mut SpecTlmPacketSet,
     ) -> ControlFlow<Self::Break> {
-        let old_members = std::mem::replace(&mut node.members, vec![]);
+        let old_members = std::mem::take(&mut node.members);
         for member in old_members.into_iter() {
             self.tlm_packet_set_member(a, member, &mut node.members)
         }
@@ -306,7 +306,7 @@ impl<Reader: FileReader> MutVisitor for ResolveIncludes<Reader> {
         a: &mut Self::State,
         node: &mut TransUnit,
     ) -> ControlFlow<Self::Break> {
-        let old_members = std::mem::replace(&mut node.0, vec![]);
+        let old_members = std::mem::take(&mut node.0);
         for member in old_members.into_iter() {
             self.module_member(a, member, &mut node.0)
         }

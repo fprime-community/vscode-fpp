@@ -18,6 +18,12 @@ pub struct FinalizeTypeDefs<'ast> {
     super_: NestedAnalyzer<'ast, Analysis, Self>,
 }
 
+impl<'ast> Default for FinalizeTypeDefs<'ast> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'ast> FinalizeTypeDefs<'ast> {
     pub fn new() -> FinalizeTypeDefs<'ast> {
         Self {
@@ -88,10 +94,7 @@ impl<'ast> FinalizeTypeDefs<'ast> {
             _ => {}
         }
 
-        match a.type_map.get(&node.node_id) {
-            None => None,
-            Some(v) => Some(v.clone()),
-        }
+        a.type_map.get(&node.node_id).cloned()
     }
 }
 
@@ -208,13 +211,10 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         };
 
         // Compute the format
-        let format = match &node.format {
-            None => None,
-            Some(format) => Some(Format::new(
+        let format = node.format.as_ref().map(|format| Format::new(
                 format,
-                vec![(elt_type.clone(), node.elt_type.span().clone())],
-            )),
-        };
+                vec![(elt_type.clone(), node.elt_type.span())],
+            ));
 
         let ty = Type::Array(ArrayType {
             node: node.clone(),
@@ -247,16 +247,10 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
                 // Choose the first value
                 match node.constants.first() {
                     None => None,
-                    Some(first_constant) => match a.value_map.get(&first_constant.node_id) {
-                        None => None,
-                        Some(v) => Some(v.clone()),
-                    },
+                    Some(first_constant) => a.value_map.get(&first_constant.node_id).cloned(),
                 }
             }
-            Some(def) => match a.value_map.get(&def.node_id) {
-                None => None,
-                Some(def) => Some(def.clone()),
-            },
+            Some(def) => a.value_map.get(&def.node_id).cloned(),
         };
 
         a.type_map
@@ -323,14 +317,11 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
                 }
             }
 
-            match (&member.format, &member_ty) {
-                (Some(format), Some(member_ty)) => {
-                    ty.formats.insert(
-                        member.name.data.clone(),
-                        Format::new(format, vec![(member_ty.clone(), member.type_name.span())]),
-                    );
-                }
-                _ => {}
+            if let (Some(format), Some(member_ty)) = (&member.format, &member_ty) {
+                ty.formats.insert(
+                    member.name.data.clone(),
+                    Format::new(format, vec![(member_ty.clone(), member.type_name.span())]),
+                );
             }
         }
 

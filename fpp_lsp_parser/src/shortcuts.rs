@@ -289,14 +289,11 @@ impl Builder<'_, '_> {
             return;
         }
 
-        match self.lexed.as_trivia(self.pos) {
-            TriviaRegion::Remove(n) => {
-                for _ in 0..n {
-                    let kind = self.lexed.kind(self.pos);
-                    self.do_token(kind, 1);
-                }
+        if let TriviaRegion::Remove(n) = self.lexed.as_trivia(self.pos) {
+            for _ in 0..n {
+                let kind = self.lexed.kind(self.pos);
+                self.do_token(kind, 1);
             }
-            _ => {}
         }
     }
 
@@ -305,19 +302,16 @@ impl Builder<'_, '_> {
             return;
         }
 
-        match self.lexed.as_trivia(self.pos) {
-            TriviaRegion::Remove(n) => {
-                for _ in 0..n {
-                    let kind = self.lexed.kind(self.pos);
-                    match kind {
-                        WHITESPACE | COMMENT => {
-                            self.do_token(kind, 1);
-                        }
-                        _ => break,
+        if let TriviaRegion::Remove(n) = self.lexed.as_trivia(self.pos) {
+            for _ in 0..n {
+                let kind = self.lexed.kind(self.pos);
+                match kind {
+                    WHITESPACE | COMMENT => {
+                        self.do_token(kind, 1);
                     }
+                    _ => break,
                 }
             }
-            _ => (),
         }
     }
 
@@ -326,27 +320,24 @@ impl Builder<'_, '_> {
             return;
         }
 
-        match self.lexed.as_trivia(self.pos) {
-            TriviaRegion::Remove(n) => {
-                for _ in 0..n {
-                    let kind = self.lexed.kind(self.pos);
-                    match kind {
-                        WHITESPACE => {
-                            self.do_token(kind, 1);
-                        }
-                        PRE_ANNOTATION | POST_ANNOTATION => {
-                            if emit_annotations {
-                                self.do_token(kind, 1);
-                            } else {
-                                // Don't emit, will be attached to next definition
-                                break;
-                            }
-                        }
-                        _ => break,
+        if let TriviaRegion::Remove(n) = self.lexed.as_trivia(self.pos) {
+            for _ in 0..n {
+                let kind = self.lexed.kind(self.pos);
+                match kind {
+                    WHITESPACE => {
+                        self.do_token(kind, 1);
                     }
+                    PRE_ANNOTATION | POST_ANNOTATION => {
+                        if emit_annotations {
+                            self.do_token(kind, 1);
+                        } else {
+                            // Don't emit, will be attached to next definition
+                            break;
+                        }
+                    }
+                    _ => break,
                 }
             }
-            _ => (),
         }
     }
 

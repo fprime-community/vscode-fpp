@@ -119,7 +119,7 @@ impl GlobalState {
                 match self.workspace.clone() {
                     Workspace::None => {}
                     Workspace::LocsFile(uri) => self.task(Task::LoadLocsFile(uri)),
-                    Workspace::FullWorkspace => self.task(Task::LoadFullWorkspace),
+                    Workspace::Full => self.task(Task::LoadFullWorkspace),
                 }
             }
             Task::LoadLocsFile(locs_uri) => {
@@ -153,7 +153,7 @@ impl GlobalState {
 
                     GarbageCollectionSet::start();
                     let locs_tu = fpp_parser::parse(
-                        SourceFile::new(&locs_uri.as_str(), locs_content),
+                        SourceFile::new(locs_uri.as_str(), locs_content),
                         |p| p.module_members(),
                         None,
                     );
@@ -192,7 +192,7 @@ impl GlobalState {
                         .filter_map(|file_uri| {
                             let filename = &file_uri
                                 [(file_uri.rfind("/").unwrap_or(0) + 1).min(file_uri.len())..];
-                            progress.report(&filename);
+                            progress.report(filename);
 
                             tracing::debug!(uri = %file_uri, "processing file from locs");
                             match self.new_translation_unit_cache(&file_uri) {
@@ -251,10 +251,10 @@ impl GlobalState {
                                 let path = entry.path();
 
                                 // Check if the entry is a file and matches the extension filter
-                                if path.is_file() {
-                                    if path
+                                if path.is_file()
+                                    && path
                                         .extension()
-                                        .map_or(false, |ext| OsStr::new("fpp") == ext)
+                                        .is_some_and(|ext| OsStr::new("fpp") == ext)
                                     {
                                         match Url::from_file_path(path) {
                                             Ok(url) => match Uri::from_str(url.as_str()) {
@@ -270,7 +270,6 @@ impl GlobalState {
                                             }
                                         }
                                     }
-                                }
                             }
                             Err(err) => {
                                 tracing::warn!(context = "load full workspace", err = ?err, "failed to walk directory");
@@ -287,7 +286,7 @@ impl GlobalState {
                 self.cache = Default::default();
                 self.files = Default::default();
                 self.analysis = Arc::new(Analysis::new());
-                self.workspace = Workspace::FullWorkspace;
+                self.workspace = Workspace::Full;
 
                 let mut ctx = CompilerContext::new(self.diagnostics.clone());
                 let cache = fpp_core::run(&mut ctx, || {
@@ -297,7 +296,7 @@ impl GlobalState {
                         let filename = &path[(path.rfind("/").unwrap_or(0) + 1).min(path.len())..];
                         progress.report(filename);
 
-                        match self.new_translation_unit_cache(&file.as_str()) {
+                        match self.new_translation_unit_cache(file.as_str()) {
                             Ok(tu_cache) => {
                                 cache.insert(tu_cache.file, Arc::new(tu_cache));
                             }

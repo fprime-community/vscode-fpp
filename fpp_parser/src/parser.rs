@@ -2144,7 +2144,7 @@ impl<'a> Parser<'a> {
                     break;
                 }
                 ElementParsingResult::Err(err) => {
-                    fpp_core::Diagnostic::from(err.into()).emit();
+                    fpp_core::Diagnostic::from(err).emit();
 
                     // Recover to an anchor
                     loop {
@@ -2223,7 +2223,7 @@ impl<'a> Parser<'a> {
                     break;
                 }
                 ElementParsingResult::Err(err) => {
-                    fpp_core::Diagnostic::from(err.into()).emit();
+                    fpp_core::Diagnostic::from(err).emit();
 
                     // Recover to an anchor
                     loop {
@@ -2259,15 +2259,12 @@ impl<'a> Parser<'a> {
             if self.peek(0) == Identifier {
                 out.push(self.ident()?)
             } else {
-                fpp_core::Diagnostic::from(
-                    ParseError::ExpectedToken {
-                        expected: Identifier,
-                        got: self.peek(0),
-                        last: dot_token.span,
-                        msg: "expected identifier",
-                    }
-                    .into(),
-                )
+                fpp_core::Diagnostic::from(ParseError::ExpectedToken {
+                    expected: Identifier,
+                    got: self.peek(0),
+                    last: dot_token.span,
+                    msg: "expected identifier",
+                })
                 .emit();
             }
         }

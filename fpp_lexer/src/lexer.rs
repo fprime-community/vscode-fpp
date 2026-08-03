@@ -38,18 +38,12 @@ fn is_digit_in_base(ch: char, base: i32) -> bool {
 
 #[inline]
 fn is_base_10_digit(ch: char) -> bool {
-    match ch {
-        '0'..='9' => true,
-        _ => false,
-    }
+    ch.is_ascii_digit()
 }
 
 #[inline]
 fn is_identifier_first(c: char) -> bool {
-    match c {
-        'A'..='Z' | '_' | 'a'..='z' => true,
-        _ => false,
-    }
+    matches!(c, 'A'..='Z' | '_' | 'a'..='z')
 }
 
 #[inline]
@@ -336,7 +330,7 @@ impl<'a> Lexer<'a> {
 
             // Comment
             '#' => {
-                self.eat_until('\n' as u8);
+                self.eat_until(b'\n');
                 Comment
             }
 
@@ -350,10 +344,10 @@ impl<'a> Lexer<'a> {
             '@' => {
                 if self.first() == '<' {
                     self.bump();
-                    self.eat_until('\n' as u8);
+                    self.eat_until(b'\n');
                     PostAnnotation
                 } else {
-                    self.eat_until('\n' as u8);
+                    self.eat_until(b'\n');
                     PreAnnotation
                 }
             }

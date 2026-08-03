@@ -93,7 +93,7 @@ impl RequestDispatcher<'_> {
         let _guard =
             tracing::debug_span!("request", method = ?req.method, "request_id" = ?req.id).entered();
         tracing::debug!(?params);
-        let result = f(&self.global_state, params);
+        let result = f(self.global_state, params);
 
         if let Some(response) = result_to_response::<R>(req.id, result) {
             self.global_state.respond(response);

@@ -33,7 +33,7 @@ impl LspDiagnosticsEmitterInner {
     pub fn get(&self, uri: &str) -> Vec<Diagnostic> {
         self.diagnostics
             .get(uri)
-            .map_or_else(|| vec![], |v| v.clone())
+            .map_or_else(std::vec::Vec::new, |v| v.clone())
             .into_iter()
             .map(|d| d.diagnostic)
             .collect()
@@ -59,7 +59,7 @@ impl LspDiagnosticsEmitter {
 
     pub fn finish_garbage_collection(&self) -> FxHashSet<usize> {
         let mut state = self.0.lock().unwrap();
-        let gc = std::mem::replace(&mut state.garbage_collection_set, None);
+        let gc = state.garbage_collection_set.take();
         gc.expect("diagnostic garbage collection was not set")
     }
 
@@ -106,7 +106,7 @@ impl DiagnosticEmitter for LspDiagnosticsEmitter {
                 .into_iter()
                 .map(|sub| {
                     let location = match sub.span {
-                        None => Location::new(uri_c.clone(), range.clone()),
+                        None => Location::new(uri_c.clone(), range),
                         Some(span) => Location::new(
                             Uri::from_str(&span.file.upgrade().unwrap().uri).unwrap(),
                             span_data_to_range(&span),

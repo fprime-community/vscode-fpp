@@ -107,6 +107,12 @@ pub struct BasicUseAnalyzer<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, 
     phantom_data: PhantomData<S>,
 }
 
+impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Default for BasicUseAnalyzer<'ast, S, V> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> BasicUseAnalyzer<'ast, S, V> {
     pub fn new() -> BasicUseAnalyzer<'ast, S, V> {
         BasicUseAnalyzer {
@@ -152,12 +158,12 @@ impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Analyzer<'ast, V>
             }
             Node::Expr(e) => match &e.kind {
                 ExprKind::Dot { e: e1, .. } => {
-                    match self.expr_to_qualified_name(&e) {
+                    match self.expr_to_qualified_name(e) {
                         // Assume the entire qualified identifier is a use
                         Some(use_) => visitor.constant_use(a, e, use_),
                         // This is some other type of dot expression (not a qual ident)
                         // Analyze the left side, which may contain constant uses
-                        None => self.visit(visitor, a, Node::Expr(&e1)),
+                        None => self.visit(visitor, a, Node::Expr(e1)),
                     }
                 }
                 ExprKind::Ident(id) => visitor.constant_use(a, e, id.clone().into()),
@@ -172,7 +178,7 @@ impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Analyzer<'ast, V>
             }
             Node::SpecPatternConnectionGraph(cg) => {
                 for target in &cg.targets {
-                    visitor.interface_instance_use(a, &target, target.into())?;
+                    visitor.interface_instance_use(a, target, target.into())?;
                 }
 
                 visitor.interface_instance_use(a, &cg.source, (&cg.source).into())?;

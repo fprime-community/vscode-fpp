@@ -23,6 +23,12 @@ pub struct CheckExprTypes<'ast> {
     super_: UseAnalyzer<'ast, Self>,
 }
 
+impl<'ast> Default for CheckExprTypes<'ast> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'ast> CheckExprTypes<'ast> {
     pub fn new() -> CheckExprTypes<'ast> {
         Self {
@@ -51,7 +57,7 @@ impl<'ast> CheckExprTypes<'ast> {
                 SemanticError::TypeConversion {
                     loc: expr.span(),
                     msg: "cannot convert expression to integer".to_string(),
-                    err,
+                    err: Box::new(err),
                 }
                 .emit();
             }
@@ -66,18 +72,15 @@ impl<'ast> CheckExprTypes<'ast> {
     }
 
     fn check_expr_matches_node(&self, a: &Analysis, expr: &'ast Expr, node: &fpp_core::Node) {
-        match a.type_map.get(node) {
-            Some(ty) => match self.convert_type(a, expr, ty) {
-                Ok(_) => {}
-                Err(err) => SemanticError::TypeConversion {
-                    loc: expr.span(),
-                    msg: format!("default value cannot be converted to {}", ty),
-                    err,
-                }
-                .emit(),
-            },
-            None => {}
-        }
+        if let Some(ty) = a.type_map.get(node) { match self.convert_type(a, expr, ty) {
+            Ok(_) => {}
+            Err(err) => SemanticError::TypeConversion {
+                loc: expr.span(),
+                msg: format!("default value cannot be converted to {}", ty),
+                err: Box::new(err),
+            }
+            .emit(),
+        } }
     }
 
     fn check_expr_opt_matches_node(
@@ -86,10 +89,7 @@ impl<'ast> CheckExprTypes<'ast> {
         expr: &'ast Option<Expr>,
         node: &fpp_core::Node,
     ) {
-        match &expr {
-            Some(expr) => self.check_expr_matches_node(a, expr, node),
-            _ => {}
-        }
+        if let Some(expr) = &expr { self.check_expr_matches_node(a, expr, node) }
     }
 }
 
@@ -207,6 +207,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                     None => return ControlFlow::Continue(()),
                 };
 
+                #[allow(clippy::manual_try_fold)]
                 let common = array.iter().skip(1).fold(Ok(first_ty), |common, next| {
                     match (common, a.type_map.get(&next.node_id)) {
                         (Ok(common), Some(next_type)) => {
@@ -299,7 +300,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                 a.type_map.insert(node.node_id, ty);
             }
             ExprKind::Dot { e, id } => {
-                if a.type_map.get(&node.node_id).is_some() {
+                if a.type_map.contains_key(&node.node_id) {
                     // Type for this entire dot expression is already resolved
                     // This means it's actually a _use_ of some sort of symbol (constant/enum constant)
                     // We can just use the type that was already resolved
@@ -347,11 +348,8 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
             ExprKind::LiteralString(_) => {
                 a.type_map.insert(node.node_id, Arc::new(Type::String(None)));
             }
-            ExprKind::Paren(e) => match a.type_map.get(&e.node_id) {
-                Some(ty) => {
-                    a.type_map.insert(node.node_id, ty.clone());
-                }
-                _ => {}
+            ExprKind::Paren(e) => if let Some(ty) = a.type_map.get(&e.node_id) {
+                a.type_map.insert(node.node_id, ty.clone());
             },
             ExprKind::Struct(struct_expr) => {
                 let mut members_out = HashMap::default();
@@ -385,11 +383,8 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
             }
             ExprKind::Unop { e, .. } => {
                 self.check_type_is_numerical(a, e);
-                match a.type_map.get(&e.node_id) {
-                    Some(ty) => {
-                        a.type_map.insert(node.node_id, ty.clone());
-                    }
-                    _ => {}
+                if let Some(ty) = a.type_map.get(&e.node_id) {
+                    a.type_map.insert(node.node_id, ty.clone());
                 }
             }
         }
@@ -434,36 +429,29 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
             None => {}
             Some(throttle) => {
                 self.check_type_is_numerical(a, &throttle.count);
-                match &throttle.every {
-                    Some(every) => {
-                        match self.convert_type(
-                            a,
-                            every,
-                            &Arc::new(Type::AnonStruct(AnonStructType {
-                                members: HashMap::from_iter([
-                                    (
-                                        "seconds".to_string(),
-                                        Arc::new(Type::PrimitiveInt(IntegerKind::U32)),
-                                    ),
-                                    (
-                                        "useconds".to_string(),
-                                        Arc::new(Type::PrimitiveInt(IntegerKind::U32)),
-                                    ),
-                                ]),
-                            })),
-                        ) {
-                            Err(err) => SemanticError::TypeConversion {
-                                loc: every.span(),
-                                msg: "event throttle every must be convertable to a time interval"
-                                    .to_string(),
-                                err,
-                            }
-                            .emit(),
-                            Ok(()) => {}
-                        }
+                if let Some(every) = &throttle.every
+                    && let Err(err) = self.convert_type(
+                        a,
+                        every,
+                        &Arc::new(Type::AnonStruct(AnonStructType {
+                            members: HashMap::from_iter([
+                                (
+                                    "seconds".to_string(),
+                                    Arc::new(Type::PrimitiveInt(IntegerKind::U32)),
+                                ),
+                                (
+                                    "useconds".to_string(),
+                                    Arc::new(Type::PrimitiveInt(IntegerKind::U32)),
+                                ),
+                            ]),
+                        })),
+                    ) { SemanticError::TypeConversion {
+                        loc: every.span(),
+                        msg: "event throttle every must be convertable to a time interval"
+                            .to_string(),
+                        err: Box::new(err),
                     }
-                    None => {}
-                }
+                    .emit() }
             }
         }
 
@@ -595,11 +583,8 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
         node: &'ast TypeName,
     ) -> ControlFlow<Self::Break> {
         self.super_visit(a, Node::TypeName(node))?;
-        match &node.kind {
-            TypeNameKind::String(size) => {
-                self.check_type_is_numerical_opt(a, size);
-            }
-            _ => {}
+        if let TypeNameKind::String(size) = &node.kind {
+            self.check_type_is_numerical_opt(a, size);
         }
 
         ControlFlow::Continue(())

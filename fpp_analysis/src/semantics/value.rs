@@ -23,15 +23,15 @@ pub enum Value {
 
 impl Value {
     fn is_promotable_to_aggregate(&self) -> bool {
-        match self {
-            Value::PrimitiveInteger(_) => true,
-            Value::Integer(_) => true,
-            Value::Float(_) => true,
-            Value::Boolean(_) => true,
-            Value::String(_) => true,
-            Value::EnumConstant(_) => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Value::PrimitiveInteger(_)
+                | Value::Integer(_)
+                | Value::Float(_)
+                | Value::Boolean(_)
+                | Value::String(_)
+                | Value::EnumConstant(_)
+        )
     }
 
     pub fn convert(&self, ty_a: &Arc<Type>) -> Option<Value> {
@@ -96,15 +96,15 @@ impl Value {
             | Value::Integer(IntegerValue(from)) => match ty.deref() {
                 Type::PrimitiveInt(to_kind) => {
                     Some(Value::PrimitiveInteger(PrimitiveIntegerValue {
-                        value: from.clone(),
-                        kind: to_kind.clone(),
+                        value: *from,
+                        kind: *to_kind,
                     }))
                 }
                 Type::Float(to_kind) => Some(Value::Float(FloatValue {
-                    value: from.clone() as f64,
-                    kind: to_kind.clone(),
+                    value: *from as f64,
+                    kind: *to_kind,
                 })),
-                Type::Integer => Some(Value::Integer(IntegerValue(from.clone()))),
+                Type::Integer => Some(Value::Integer(IntegerValue(*from))),
                 _ => None,
             },
 
@@ -112,12 +112,12 @@ impl Value {
                 Type::PrimitiveInt(to_kind) => {
                     Some(Value::PrimitiveInteger(PrimitiveIntegerValue {
                         value: from.value as i128,
-                        kind: to_kind.clone(),
+                        kind: *to_kind,
                     }))
                 }
                 Type::Float(to_kind) => Some(Value::Float(FloatValue {
                     value: from.value,
-                    kind: to_kind.clone(),
+                    kind: *to_kind,
                 })),
                 Type::Integer => Some(Value::Integer(IntegerValue(from.value as i128))),
                 _ => None,
@@ -149,7 +149,7 @@ impl Value {
                 let from_ty = value.ty();
                 Value::PrimitiveInteger(PrimitiveIntegerValue {
                     value: value.value.1,
-                    kind: from_ty.rep_type.clone(),
+                    kind: from_ty.rep_type,
                 })
                 .convert(ty_a)
             }
@@ -206,7 +206,7 @@ impl Value {
                     let member_value = match anon_struct.members.get(name) {
                         // Use the default value
                         None => ty.default_value()?,
-                        Some(member_value) => member_value.convert(&ty)?,
+                        Some(member_value) => member_value.convert(ty)?,
                     };
 
                     members.insert(name.clone(), member_value);
@@ -244,7 +244,7 @@ impl Value {
                     if kind_left == kind_right {
                         Ok(Value::PrimitiveInteger(PrimitiveIntegerValue {
                             value: i128_op(left, right)?,
-                            kind: kind_left.clone(),
+                            kind: *kind_left,
                         }))
                     } else {
                         Ok(Value::Integer(IntegerValue(i128_op(left, right)?)))
@@ -254,7 +254,7 @@ impl Value {
                     Ok(Value::Integer(IntegerValue(i128_op(left, right)?)))
                 }
                 Value::Float(FloatValue { value: right, .. }) => Ok(Value::Float(FloatValue {
-                    value: f64_op(&(left.clone() as f64), right)?,
+                    value: f64_op(&(*left as f64), right)?,
                     kind: FloatKind::F64,
                 })),
                 Value::EnumConstant(
@@ -265,7 +265,7 @@ impl Value {
                     if enum_value.ty().rep_type == *kind_left {
                         Ok(Value::PrimitiveInteger(PrimitiveIntegerValue {
                             value: i128_op(left, right)?,
-                            kind: kind_left.clone(),
+                            kind: *kind_left,
                         }))
                     } else {
                         Ok(Value::Integer(IntegerValue(i128_op(left, right)?)))
@@ -281,7 +281,7 @@ impl Value {
                     value: (_, right), ..
                 }) => Ok(Value::Integer(IntegerValue(i128_op(left, right)?))),
                 Value::Float(FloatValue { value: right, .. }) => Ok(Value::Float(FloatValue {
-                    value: f64_op(&(left.clone() as f64), right)?,
+                    value: f64_op(&(*left as f64), right)?,
                     kind: FloatKind::F64,
                 })),
                 _ => Err(MathError::InvalidInputs),
@@ -296,7 +296,7 @@ impl Value {
                 | Value::EnumConstant(EnumConstantValue {
                     value: (_, right), ..
                 }) => Ok(Value::Float(FloatValue {
-                    value: f64_op(left, &(right.clone() as f64))?,
+                    value: f64_op(left, &(*right as f64))?,
                     kind: FloatKind::F64,
                 })),
                 // Attempt to keep the same precision if we can
@@ -306,7 +306,7 @@ impl Value {
                 }) => Ok(Value::Float(FloatValue {
                     value: f64_op(left, right)?,
                     kind: if left_kind == right_kind {
-                        left_kind.clone()
+                        *left_kind
                     } else {
                         FloatKind::F64
                     },

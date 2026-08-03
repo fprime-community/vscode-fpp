@@ -11,6 +11,12 @@ pub struct CheckUses<'ast> {
     super_: BasicUseAnalyzer<'ast, Analysis, Self>,
 }
 
+impl<'ast> Default for CheckUses<'ast> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'ast> CheckUses<'ast> {
     pub fn new() -> CheckUses<'ast> {
         Self {
