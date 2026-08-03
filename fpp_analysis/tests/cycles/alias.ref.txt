@@ -1,0 +1,15 @@
+ --> [ local path prefix ]/cycles/alias.fpp:1:1
+  |
+1 | type TStructCycle = SSCycle
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^ encountered symbol use-definition cycle
+  |
+ ::: [ local path prefix ]/cycles/alias.fpp:3:8
+  |
+3 | struct SSCycle {
+  |        ------- defined here
+  |
+ ::: [ local path prefix ]/cycles/alias.fpp:7:9
+  |
+7 |     F4: TStructCycle
+  |         ------------ used here
+

@@ -1,0 +1,15 @@
+ --> [ local path prefix ]/redef/component_instance_module.fpp:2:8
+  |
+2 | module M { }
+  |        ^ redefinition of symbol M
+  |
+ ::: [ local path prefix ]/redef/component_instance_module.fpp:1:1
+  |
+1 | instance M: m base id 0
+  | ----------------------- previous definition is here
+
+ --> [ local path prefix ]/redef/component_instance_module.fpp:1:13
+  |
+1 | instance M: m base id 0
+  |             ^ cannot find component `m` in scope
+

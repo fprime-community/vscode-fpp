@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/expr/struct_duplicate.fpp:1:23
+  |
+1 | constant s = { x = 1, x = 2 }
+  |                       ^^^^^ duplicate struct member `x`
+  |
+ ::: [ local path prefix ]/expr/struct_duplicate.fpp:1:20
+  |
+1 | constant s = { x = 1, x = 2 }
+  |                    - previously defined here
+

@@ -1,0 +1,43 @@
+[workspace]
+members = [
+    "fpp",
+    "fpp_analysis",
+    "fpp_ast",
+    "fpp_core",
+    "fpp_errors",
+    "fpp_fs",
+    "fpp_lexer",
+    "fpp_lsp_server",
+    "fpp_lsp_parser",
+    "fpp_macros",
+    "fpp_parser",
+    "fpp_util", "fpp_format",
+]
+
+# Exclude fpp_macros from test suite
+default-members = [
+    "fpp",
+    "fpp_lsp_server",
+    "fpp_analysis",
+    "fpp_ast",
+    "fpp_core",
+    "fpp_errors",
+    "fpp_lexer",
+    "fpp_parser",
+    "fpp_lsp_parser",
+    "fpp_util"
+]
+
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0-a1"
+edition = "2024"
+authors = ["Andrei Tumbar"]
+
+[patch.crates-io]
+fpp = { path = "fpp" }
+
+[profile.release]
+strip = "debuginfo"
+lto = true

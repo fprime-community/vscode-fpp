@@ -1,0 +1,66 @@
+TransUnit(
+    [
+        DefTopology {
+            name: Name {
+                data: "T",
+                node_id: Span {
+                    start: [ local path prefix ]/topology-ports.fpp:1:10,
+                    end: [ local path prefix ]/topology-ports.fpp:1:11,
+                },
+            },
+            members: [
+                SpecInstance {
+                    instance: Ident {
+                        data: "i",
+                        node_id: Span {
+                            start: [ local path prefix ]/topology-ports.fpp:2:14,
+                            end: [ local path prefix ]/topology-ports.fpp:2:15,
+                        },
+                    },
+                    node_id: Span {
+                        start: [ local path prefix ]/topology-ports.fpp:2:5,
+                        end: [ local path prefix ]/topology-ports.fpp:2:15,
+                    },
+                },
+                SpecTopPort {
+                    name: Name {
+                        data: "p1",
+                        node_id: Span {
+                            start: [ local path prefix ]/topology-ports.fpp:4:10,
+                            end: [ local path prefix ]/topology-ports.fpp:4:12,
+                        },
+                    },
+                    underlying_port: PortInstanceIdentifier {
+                        interface_instance: Ident {
+                            data: "i",
+                            node_id: Span {
+                                start: [ local path prefix ]/topology-ports.fpp:4:15,
+                                end: [ local path prefix ]/topology-ports.fpp:4:16,
+                            },
+                        },
+                        port_name: Ident {
+                            data: "p",
+                            node_id: Span {
+                                start: [ local path prefix ]/topology-ports.fpp:4:17,
+                                end: [ local path prefix ]/topology-ports.fpp:4:18,
+                            },
+                        },
+                        node_id: Span {
+                            start: [ local path prefix ]/topology-ports.fpp:4:15,
+                            end: [ local path prefix ]/topology-ports.fpp:4:18,
+                        },
+                    },
+                    node_id: Span {
+                        start: [ local path prefix ]/topology-ports.fpp:4:5,
+                        end: [ local path prefix ]/topology-ports.fpp:4:18,
+                    },
+                },
+            ],
+            implements: [],
+            node_id: Span {
+                start: [ local path prefix ]/topology-ports.fpp:1:1,
+                end: [ local path prefix ]/topology-ports.fpp:5:2,
+            },
+        },
+    ],
+)

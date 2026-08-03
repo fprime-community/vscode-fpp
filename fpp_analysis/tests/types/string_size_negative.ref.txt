@@ -1,0 +1,7 @@
+ --> [ local path prefix ]/types/string_size_negative.fpp:1:27
+  |
+1 | array A = [3] string size -1
+  |                           ^^ negative string sizes are not allowed
+  |
+  = note: expression evaluated to `-1`
+

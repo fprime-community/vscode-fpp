@@ -1,0 +1,6 @@
+ROOT@0..22
+  SPEC_INCLUDE@0..21
+    INCLUDE_KW@0..7 "include"
+    WHITESPACE@7..8 " "
+    LITERAL_STRING@8..21 "\"cycle-1.fpp\""
+  EOL@21..22 "\n"

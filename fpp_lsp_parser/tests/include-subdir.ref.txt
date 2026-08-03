@@ -1,0 +1,6 @@
+ROOT@0..31
+  SPEC_INCLUDE@0..30
+    INCLUDE_KW@0..7 "include"
+    WHITESPACE@7..8 " "
+    LITERAL_STRING@8..30 "\"subdir/constant.fppi\""
+  EOL@30..31 "\n"

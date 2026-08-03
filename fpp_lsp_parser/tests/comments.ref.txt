@@ -1,0 +1,86 @@
+ROOT@0..196
+  COMMENT@0..9 "# comment"
+  EOL@9..10 "\n"
+  DEF_CONSTANT@10..24
+    CONSTANT_KW@10..18 "constant"
+    WHITESPACE@18..19 " "
+    NAME@19..20
+      IDENT@19..20 "a"
+    WHITESPACE@20..21 " "
+    EQUALS@21..22 "="
+    WHITESPACE@22..23 " "
+    EXPR@23..24
+      EXPR_LITERAL@23..24
+        LITERAL_INT@23..24 "1"
+  WHITESPACE@24..25 " "
+  COMMENT@25..34 "# comment"
+  EOL@34..35 "\n"
+  COMMENT@35..44 "# comment"
+  EOL@44..45 "\n"
+  COMMENT@45..54 "# comment"
+  EOL@54..55 "\n"
+  DEF_CONSTANT@55..69
+    CONSTANT_KW@55..63 "constant"
+    WHITESPACE@63..64 " "
+    NAME@64..65
+      IDENT@64..65 "b"
+    WHITESPACE@65..66 " "
+    EQUALS@66..67 "="
+    WHITESPACE@67..68 " "
+    EXPR@68..69
+      EXPR_LITERAL@68..69
+        LITERAL_INT@68..69 "2"
+  WHITESPACE@69..70 " "
+  COMMENT@70..79 "# comment"
+  EOL@79..80 "\n"
+  COMMENT@80..89 "# comment"
+  EOL@89..91 "\n\n"
+  DEF_CONSTANT@91..117
+    CONSTANT_KW@91..99 "constant"
+    WHITESPACE@99..100 " "
+    NAME@100..101
+      IDENT@100..101 "c"
+    WHITESPACE@101..102 " "
+    EQUALS@102..103 "="
+    WHITESPACE@103..104 " "
+    COMMENT@104..113 "# comment"
+    EOL@113..114 "\n"
+    WHITESPACE@114..116 "  "
+    EXPR@116..117
+      EXPR_LITERAL@116..117
+        LITERAL_INT@116..117 "0"
+  EOL@117..119 "\n\n"
+  DEF_CONSTANT@119..147
+    CONSTANT_KW@119..127 "constant"
+    WHITESPACE@127..128 " "
+    NAME@128..129
+      IDENT@128..129 "d"
+    WHITESPACE@129..130 " "
+    EQUALS@130..131 "="
+    EOL@131..132 "\n"
+    WHITESPACE@132..134 "  "
+    COMMENT@134..143 "# comment"
+    EOL@143..144 "\n"
+    WHITESPACE@144..146 "  "
+    EXPR@146..147
+      EXPR_LITERAL@146..147
+        LITERAL_INT@146..147 "0"
+  EOL@147..149 "\n\n"
+  PRE_ANNOTATION@149..159 "@ Constant"
+  EOL@159..160 "\n"
+  COMMENT@160..169 "# comment"
+  EOL@169..170 "\n"
+  DEF_CONSTANT@170..184
+    CONSTANT_KW@170..178 "constant"
+    WHITESPACE@178..179 " "
+    NAME@179..180
+      IDENT@179..180 "e"
+    WHITESPACE@180..181 " "
+    EQUALS@181..182 "="
+    WHITESPACE@182..183 " "
+    EXPR@183..184
+      EXPR_LITERAL@183..184
+        LITERAL_INT@183..184 "0"
+  EOL@184..186 "\n\n"
+  COMMENT@186..195 "# comment"
+  EOL@195..196 "\n"

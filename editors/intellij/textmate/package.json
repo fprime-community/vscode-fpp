@@ -1,0 +1,25 @@
+{
+  "name": "fpp",
+  "displayName": "FPP Language Support",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.0.0"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "fpp",
+        "aliases": ["FPP"],
+        "extensions": [".fpp", ".fppi"],
+        "configuration": "./syntax/language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "fpp",
+        "scopeName": "source.fpp",
+        "path": "./syntax/fpp.tmLanguage.json"
+      }
+    ]
+  }
+}

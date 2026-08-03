@@ -1,0 +1,5 @@
+ --> [ local path prefix ]/embedded-tab.fpp:1:1
+  |
+1 |     
+  | ^^^^ syntax error: invalid character '\t'
+

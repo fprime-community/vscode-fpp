@@ -1,0 +1,10 @@
+[package]
+name = "fpp_ast"
+
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+fpp_core = { path = "../fpp_core" }
+fpp_macros = { path = "../fpp_macros" }

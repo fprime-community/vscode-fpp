@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/redef/constant_in_module.fpp:3:12
+  |
+3 |   constant x = 1
+  |            ^ redefinition of symbol x
+  |
+ ::: [ local path prefix ]/redef/constant_in_module.fpp:2:3
+  |
+2 |   constant x = 0
+  |   -------------- previous definition is here
+

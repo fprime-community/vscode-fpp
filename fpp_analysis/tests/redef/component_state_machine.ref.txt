@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/redef/component_state_machine.fpp:3:15
+  |
+3 | state machine C
+  |               ^ redefinition of symbol C
+  |
+ ::: [ local path prefix ]/redef/component_state_machine.fpp:1:1
+  |
+1 | passive component C { }
+  | ----------------------- previous definition is here
+

@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/redef/component_instance.fpp:6:10
+  |
+6 | instance c: C base id 0x200
+  |          ^ redefinition of symbol c
+  |
+ ::: [ local path prefix ]/redef/component_instance.fpp:5:1
+  |
+5 | instance c: C base id 0x100
+  | --------------------------- previous definition is here
+

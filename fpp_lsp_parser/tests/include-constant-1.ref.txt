@@ -1,0 +1,18 @@
+ROOT@0..50
+  DEF_CONSTANT@0..14
+    CONSTANT_KW@0..8 "constant"
+    WHITESPACE@8..9 " "
+    NAME@9..10
+      IDENT@9..10 "x"
+    WHITESPACE@10..11 " "
+    EQUALS@11..12 "="
+    WHITESPACE@12..13 " "
+    EXPR@13..14
+      EXPR_LITERAL@13..14
+        LITERAL_INT@13..14 "1"
+  EOL@14..16 "\n\n"
+  SPEC_INCLUDE@16..49
+    INCLUDE_KW@16..23 "include"
+    WHITESPACE@23..24 " "
+    LITERAL_STRING@24..49 "\"include-constant-2.f ..."
+  EOL@49..50 "\n"

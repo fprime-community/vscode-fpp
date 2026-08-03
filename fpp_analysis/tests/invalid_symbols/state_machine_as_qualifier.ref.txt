@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/invalid_symbols/state_machine_as_qualifier.fpp:3:29
+  |
+3 |   state machine instance s: S.s
+  |                             ^ not a qualifier
+  |
+ ::: [ local path prefix ]/invalid_symbols/state_machine_as_qualifier.fpp:1:1
+  |
+1 | state machine S
+  | --------------- S defined here
+

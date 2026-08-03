@@ -1,0 +1,5 @@
+ --> [ local path prefix ]/invalid_symbols/type_as_constant.fpp:2:14
+  |
+2 | constant a = T
+  |              ^ cannot find constant `T` in scope
+

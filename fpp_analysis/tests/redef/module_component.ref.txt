@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/redef/module_component.fpp:2:18
+  |
+2 | active component M { }
+  |                  ^ redefinition of symbol M
+  |
+ ::: [ local path prefix ]/redef/module_component.fpp:1:1
+  |
+1 | module M { }
+  | ------------ previous definition is here
+

@@ -5,7 +5,7 @@
 	"tasks": [
 		{
 			"type": "shell",
-			"command": "yarn webpack --mode development --devtool inline-source-map -w --config webpack.config.js",
+			"command": "cd editors/code && yarn webpack --mode development --devtool inline-source-map -w --config webpack.config.js",
 			"label": "Watch",
 			"group": {
 				"isDefault": true,

@@ -1,0 +1,49 @@
+ROOT@0..80
+  DEF_CONSTANT@0..18
+    CONSTANT_KW@0..8 "constant"
+    WHITESPACE@8..9 " "
+    NAME@9..11
+      IDENT@9..11 "s1"
+    WHITESPACE@11..12 " "
+    EQUALS@12..13 "="
+    WHITESPACE@13..14 " "
+    EXPR@14..18
+      EXPR_LITERAL@14..18
+        LITERAL_STRING@14..18 "\"\\\"\""
+  EOL@18..19 "\n"
+  DEF_CONSTANT@19..37
+    CONSTANT_KW@19..27 "constant"
+    WHITESPACE@27..28 " "
+    NAME@28..30
+      IDENT@28..30 "s2"
+    WHITESPACE@30..31 " "
+    EQUALS@31..32 "="
+    WHITESPACE@32..33 " "
+    EXPR@33..37
+      EXPR_LITERAL@33..37
+        LITERAL_STRING@33..37 "\"\\\\\""
+  EOL@37..38 "\n"
+  DEF_CONSTANT@38..58
+    CONSTANT_KW@38..46 "constant"
+    WHITESPACE@46..47 " "
+    NAME@47..49
+      IDENT@47..49 "s2"
+    WHITESPACE@49..50 " "
+    EQUALS@50..51 "="
+    WHITESPACE@51..52 " "
+    EXPR@52..58
+      EXPR_LITERAL@52..58
+        LITERAL_STRING@52..58 "\"\\\\\\\"\""
+  EOL@58..59 "\n"
+  DEF_CONSTANT@59..79
+    CONSTANT_KW@59..67 "constant"
+    WHITESPACE@67..68 " "
+    NAME@68..70
+      IDENT@68..70 "s2"
+    WHITESPACE@70..71 " "
+    EQUALS@71..72 "="
+    WHITESPACE@72..73 " "
+    EXPR@73..79
+      EXPR_LITERAL@73..79
+        LITERAL_STRING@73..79 "\"\\\"\\\\\""
+  EOL@79..80 "\n"

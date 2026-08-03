@@ -1,0 +1,191 @@
+TransUnit(
+    [
+        DefArray {
+            name: Name {
+                data: "array",
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:1:7,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:1:13,
+                },
+            },
+            size: Expr {
+                kind: LiteralInt(
+                    "3",
+                ),
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:1:17,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:1:18,
+                },
+            },
+            elt_type: TypeName {
+                kind: Integer(
+                    U32,
+                ),
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:1:20,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:1:23,
+                },
+            },
+            default: None,
+            format: None,
+            is_dictionary_def: false,
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:1:1,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:1:23,
+            },
+        },
+        DefEnum {
+            name: Name {
+                data: "enum",
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:2:6,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:2:11,
+                },
+            },
+            type_name: None,
+            constants: [
+                DefEnumConstant {
+                    name: Name {
+                        data: "command",
+                        node_id: Span {
+                            start: [ local path prefix ]/syntax-kwd-names.fpp:2:14,
+                            end: [ local path prefix ]/syntax-kwd-names.fpp:2:22,
+                        },
+                    },
+                    value: None,
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:2:14,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:2:22,
+                    },
+                },
+                DefEnumConstant {
+                    name: Name {
+                        data: "event",
+                        node_id: Span {
+                            start: [ local path prefix ]/syntax-kwd-names.fpp:2:24,
+                            end: [ local path prefix ]/syntax-kwd-names.fpp:2:30,
+                        },
+                    },
+                    value: None,
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:2:24,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:2:30,
+                    },
+                },
+                DefEnumConstant {
+                    name: Name {
+                        data: "telemetry",
+                        node_id: Span {
+                            start: [ local path prefix ]/syntax-kwd-names.fpp:2:32,
+                            end: [ local path prefix ]/syntax-kwd-names.fpp:2:42,
+                        },
+                    },
+                    value: None,
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:2:32,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:2:42,
+                    },
+                },
+            ],
+            default: None,
+            is_dictionary_def: false,
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:2:1,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:2:44,
+            },
+        },
+        DefPort {
+            name: Name {
+                data: "port",
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:3:6,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:3:11,
+                },
+            },
+            params: [
+                FormalParam {
+                    kind: Value,
+                    name: Name {
+                        data: "time",
+                        node_id: Span {
+                            start: [ local path prefix ]/syntax-kwd-names.fpp:3:12,
+                            end: [ local path prefix ]/syntax-kwd-names.fpp:3:17,
+                        },
+                    },
+                    type_name: TypeName {
+                        kind: Integer(
+                            U32,
+                        ),
+                        node_id: Span {
+                            start: [ local path prefix ]/syntax-kwd-names.fpp:3:19,
+                            end: [ local path prefix ]/syntax-kwd-names.fpp:3:22,
+                        },
+                    },
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:3:12,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:3:22,
+                    },
+                },
+            ],
+            return_type: None,
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:3:1,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:3:23,
+            },
+        },
+        DefStruct {
+            name: Name {
+                data: "struct",
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:4:8,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:4:15,
+                },
+            },
+            members: [
+                StructTypeMember {
+                    name: Name {
+                        data: "x",
+                        node_id: Span {
+                            start: [ local path prefix ]/syntax-kwd-names.fpp:4:18,
+                            end: [ local path prefix ]/syntax-kwd-names.fpp:4:19,
+                        },
+                    },
+                    size: None,
+                    type_name: TypeName {
+                        kind: Integer(
+                            U32,
+                        ),
+                        node_id: Span {
+                            start: [ local path prefix ]/syntax-kwd-names.fpp:4:21,
+                            end: [ local path prefix ]/syntax-kwd-names.fpp:4:24,
+                        },
+                    },
+                    format: None,
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:4:18,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:4:24,
+                    },
+                },
+            ],
+            default: None,
+            is_dictionary_def: false,
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:4:1,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:4:26,
+            },
+        },
+        DefAbsType {
+            name: Name {
+                data: "type",
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:5:6,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:5:11,
+                },
+            },
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:5:1,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:5:11,
+            },
+        },
+    ],
+)

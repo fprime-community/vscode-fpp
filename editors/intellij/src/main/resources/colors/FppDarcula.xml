@@ -1,0 +1,71 @@
+<?xml version='1.0'?>
+<list>
+    <option name="fpp.ABSTRACT_TYPE">
+        <value>
+            <option name="FOREGROUND" value="A6BB77"/>
+        </value>
+    </option>
+    <option name="fpp.ALIAS_TYPE">
+        <value>
+            <option name="FOREGROUND" value="A6BB77"/>
+        </value>
+    </option>
+    <option name="fpp.ARRAY_TYPE">
+        <value>
+            <option name="FOREGROUND" value="A6BB77"/>
+        </value>
+    </option>
+    <option name="fpp.ENUM_TYPE">
+        <value>
+            <option name="FOREGROUND" value="A6BB77"/>
+            <option name="FONT_TYPE" value="2"/>
+        </value>
+    </option>
+    <option name="fpp.STRUCT_TYPE">
+        <value>
+            <option name="FOREGROUND" value="A6BB77"/>
+        </value>
+    </option>
+
+    <option name="fpp.COMPONENT">
+        <value>
+            <option name="FOREGROUND" value="A6BB77"/>
+        </value>
+    </option>
+    <option name="fpp.MODULE">
+        <value>
+            <option name="FOREGROUND" value="A6BB77"/>
+        </value>
+    </option>
+    <option name="fpp.STATE_MACHINE">
+        <value>
+            <option name="FOREGROUND" value="A6BB77"/>
+        </value>
+    </option>
+    <option name="fpp.INTERFACE">
+        <value>
+            <option name="FOREGROUND" value="A6BB77"/>
+        </value>
+    </option>
+    <option name="fpp.PORT">
+        <value>
+            <option name="FOREGROUND" value="A6BB77"/>
+        </value>
+    </option>
+    <option name="fpp.COMPONENT_INSTANCE">
+        <value>
+            <option name="FOREGROUND" value="8C90DA"/>
+            <option name="FONT_TYPE" value="2"/>
+        </value>
+    </option>
+    <option name="fpp.TOPOLOGY">
+        <value>
+            <option name="FOREGROUND" value="8C90DA"/>
+        </value>
+    </option>
+    <option name="fpp.STATE_MACHINE_INSTANCE">
+        <value>
+            <option name="FOREGROUND" value="B774AD" />
+        </value>
+    </option>
+</list>

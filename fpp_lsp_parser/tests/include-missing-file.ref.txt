@@ -1,0 +1,6 @@
+ROOT@0..42
+  SPEC_INCLUDE@0..41
+    INCLUDE_KW@0..7 "include"
+    WHITESPACE@7..8 " "
+    LITERAL_STRING@8..41 "\"this-file-should-not ..."
+  EOL@41..42 "\n"
