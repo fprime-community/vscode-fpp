@@ -18,6 +18,15 @@ telemetry statusCode :U32   id 0x02
 
     event TestFailed()   severity   fatal  format  "Test failed"
 
+    @ A COMMAND event emitted by the guest program
+event LogCommand(
+msg: string size 128) severity command format "{}"
+
+@ A COMMAND event emitted by the guest program
+    event LogCommand(
+    msg: string size 128
+    ) severity command format "{}"
+
   @ Parameters
    param  maxIterations :  U32   default   100   id  0x20   set opcode  0x21  save opcode 0x22
 

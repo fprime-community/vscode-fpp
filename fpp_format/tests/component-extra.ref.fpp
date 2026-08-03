@@ -34,16 +34,17 @@ queued component ExtraComp {
     telemetry changing: U32 id 0x10 update on change
 
     @ Telemetry with only high limits
-    telemetry hot: F32 id 0x11 high {
-        red 100.0
-    }
+    telemetry hot: F32 \
+        id 0x11 \
+        high {
+            red 100.0
+        }
 
     @ Event with warning-low severity
     event Warned() severity warning low id 0x20 format "warned"
 
     @ Event with diagnostic severity and throttle every
-    event Diag(
-        code: U32 ) \
+    event Diag(code: U32) \
         severity diagnostic \
         id 0x21 \
         format "diag {}" \

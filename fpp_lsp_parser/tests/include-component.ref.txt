@@ -7,14 +7,14 @@ ROOT@0..51
     NAME@17..18
       IDENT@17..18 "C"
     WHITESPACE@18..19 " "
-    LEFT_CURLY@19..20 "{"
-    EOL@20..22 "\n\n"
-    WHITESPACE@22..24 "  "
-    COMPONENT_MEMBER_LIST@24..49
+    COMPONENT_MEMBER_LIST@19..50
+      LEFT_CURLY@19..20 "{"
+      EOL@20..22 "\n\n"
+      WHITESPACE@22..24 "  "
       SPEC_INCLUDE@24..47
         INCLUDE_KW@24..31 "include"
         WHITESPACE@31..32 " "
         LITERAL_STRING@32..47 "\"constant.fppi\""
       EOL@47..49 "\n\n"
-    RIGHT_CURLY@49..50 "}"
+      RIGHT_CURLY@49..50 "}"
   EOL@50..51 "\n"

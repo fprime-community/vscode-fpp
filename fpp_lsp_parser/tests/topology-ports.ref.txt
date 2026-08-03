@@ -5,10 +5,10 @@ ROOT@0..49
     NAME@9..10
       IDENT@9..10 "T"
     WHITESPACE@10..11 " "
-    LEFT_CURLY@11..12 "{"
-    EOL@12..13 "\n"
-    WHITESPACE@13..17 "    "
-    TOPOLOGY_MEMBER_LIST@17..47
+    TOPOLOGY_MEMBER_LIST@11..48
+      LEFT_CURLY@11..12 "{"
+      EOL@12..13 "\n"
+      WHITESPACE@13..17 "    "
       SPEC_INSTANCE@17..27
         INSTANCE_KW@17..25 "instance"
         WHITESPACE@25..26 " "
@@ -29,5 +29,5 @@ ROOT@0..49
           DOT@44..45 "."
           IDENT@45..46 "p"
       EOL@46..47 "\n"
-    RIGHT_CURLY@47..48 "}"
+      RIGHT_CURLY@47..48 "}"
   EOL@48..49 "\n"

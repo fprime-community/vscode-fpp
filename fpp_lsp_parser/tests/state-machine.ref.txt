@@ -9,10 +9,10 @@ ROOT@0..1047
     NAME@32..33
       IDENT@32..33 "M"
     WHITESPACE@33..34 " "
-    LEFT_CURLY@34..35 "{"
-    EOL@35..37 "\n\n"
-    WHITESPACE@37..39 "  "
-    STATE_MACHINE_MEMBER_LIST@39..1045
+    STATE_MACHINE_MEMBER_LIST@34..1046
+      LEFT_CURLY@34..35 "{"
+      EOL@35..37 "\n\n"
+      WHITESPACE@37..39 "  "
       PRE_ANNOTATION@39..50 "@ Action a1"
       EOL@50..51 "\n"
       WHITESPACE@51..53 "  "
@@ -155,13 +155,13 @@ ROOT@0..1047
           DO_EXPR@405..414
             DO_KW@405..407 "do"
             WHITESPACE@407..408 " "
-            LEFT_CURLY@408..409 "{"
-            WHITESPACE@409..410 " "
-            DO_EXPR_MEMBER_LIST@410..412
+            DO_EXPR_MEMBER_LIST@408..414
+              LEFT_CURLY@408..409 "{"
+              WHITESPACE@409..410 " "
               NAME_REF@410..412
                 IDENT@410..412 "a1"
-            WHITESPACE@412..413 " "
-            RIGHT_CURLY@413..414 "}"
+              WHITESPACE@412..413 " "
+              RIGHT_CURLY@413..414 "}"
           WHITESPACE@414..415 " "
           ENTER_KW@415..420 "enter"
           WHITESPACE@420..421 " "
@@ -223,27 +223,27 @@ ROOT@0..1047
         NAME@528..530
           IDENT@528..530 "S2"
         WHITESPACE@530..531 " "
-        LEFT_CURLY@531..532 "{"
-        EOL@532..534 "\n\n"
-        WHITESPACE@534..538 "    "
-        STATE_MEMBER_LIST@538..1042
+        STATE_MEMBER_LIST@531..1043
+          LEFT_CURLY@531..532 "{"
+          EOL@532..534 "\n\n"
+          WHITESPACE@534..538 "    "
           SPEC_STATE_ENTRY@538..557
             ENTRY_KW@538..543 "entry"
             WHITESPACE@543..544 " "
             DO_EXPR@544..557
               DO_KW@544..546 "do"
               WHITESPACE@546..547 " "
-              LEFT_CURLY@547..548 "{"
-              WHITESPACE@548..549 " "
-              DO_EXPR_MEMBER_LIST@549..555
+              DO_EXPR_MEMBER_LIST@547..557
+                LEFT_CURLY@547..548 "{"
+                WHITESPACE@548..549 " "
                 NAME_REF@549..551
                   IDENT@549..551 "a1"
                 COMMA@551..552 ","
                 WHITESPACE@552..553 " "
                 NAME_REF@553..555
                   IDENT@553..555 "a2"
-              WHITESPACE@555..556 " "
-              RIGHT_CURLY@556..557 "}"
+                WHITESPACE@555..556 " "
+                RIGHT_CURLY@556..557 "}"
           EOL@557..558 "\n"
           WHITESPACE@558..562 "    "
           SPEC_STATE_EXIT@562..580
@@ -252,17 +252,17 @@ ROOT@0..1047
             DO_EXPR@567..580
               DO_KW@567..569 "do"
               WHITESPACE@569..570 " "
-              LEFT_CURLY@570..571 "{"
-              WHITESPACE@571..572 " "
-              DO_EXPR_MEMBER_LIST@572..578
+              DO_EXPR_MEMBER_LIST@570..580
+                LEFT_CURLY@570..571 "{"
+                WHITESPACE@571..572 " "
                 NAME_REF@572..574
                   IDENT@572..574 "a1"
                 COMMA@574..575 ","
                 WHITESPACE@575..576 " "
                 NAME_REF@576..578
                   IDENT@576..578 "a2"
-              WHITESPACE@578..579 " "
-              RIGHT_CURLY@579..580 "}"
+                WHITESPACE@578..579 " "
+                RIGHT_CURLY@579..580 "}"
           EOL@580..582 "\n\n"
           WHITESPACE@582..586 "    "
           PRE_ANNOTATION@586..606 "@ Initial transition"
@@ -275,17 +275,17 @@ ROOT@0..1047
               DO_EXPR@619..632
                 DO_KW@619..621 "do"
                 WHITESPACE@621..622 " "
-                LEFT_CURLY@622..623 "{"
-                WHITESPACE@623..624 " "
-                DO_EXPR_MEMBER_LIST@624..630
+                DO_EXPR_MEMBER_LIST@622..632
+                  LEFT_CURLY@622..623 "{"
+                  WHITESPACE@623..624 " "
                   NAME_REF@624..626
                     IDENT@624..626 "a1"
                   COMMA@626..627 ","
                   WHITESPACE@627..628 " "
                   NAME_REF@628..630
                     IDENT@628..630 "a2"
-                WHITESPACE@630..631 " "
-                RIGHT_CURLY@631..632 "}"
+                  WHITESPACE@630..631 " "
+                  RIGHT_CURLY@631..632 "}"
               WHITESPACE@632..633 " "
               ENTER_KW@633..638 "enter"
               WHITESPACE@638..639 " "
@@ -314,17 +314,17 @@ ROOT@0..1047
                 DO_EXPR@679..692
                   DO_KW@679..681 "do"
                   WHITESPACE@681..682 " "
-                  LEFT_CURLY@682..683 "{"
-                  WHITESPACE@683..684 " "
-                  DO_EXPR_MEMBER_LIST@684..690
+                  DO_EXPR_MEMBER_LIST@682..692
+                    LEFT_CURLY@682..683 "{"
+                    WHITESPACE@683..684 " "
                     NAME_REF@684..686
                       IDENT@684..686 "a1"
                     COMMA@686..687 ","
                     WHITESPACE@687..688 " "
                     NAME_REF@688..690
                       IDENT@688..690 "a2"
-                  WHITESPACE@690..691 " "
-                  RIGHT_CURLY@691..692 "}"
+                    WHITESPACE@690..691 " "
+                    RIGHT_CURLY@691..692 "}"
                 WHITESPACE@692..693 " "
                 ENTER_KW@693..698 "enter"
                 WHITESPACE@698..699 " "
@@ -338,17 +338,17 @@ ROOT@0..1047
                 DO_EXPR@707..720
                   DO_KW@707..709 "do"
                   WHITESPACE@709..710 " "
-                  LEFT_CURLY@710..711 "{"
-                  WHITESPACE@711..712 " "
-                  DO_EXPR_MEMBER_LIST@712..718
+                  DO_EXPR_MEMBER_LIST@710..720
+                    LEFT_CURLY@710..711 "{"
+                    WHITESPACE@711..712 " "
                     NAME_REF@712..714
                       IDENT@712..714 "a2"
                     COMMA@714..715 ","
                     WHITESPACE@715..716 " "
                     NAME_REF@716..718
                       IDENT@716..718 "a3"
-                  WHITESPACE@718..719 " "
-                  RIGHT_CURLY@719..720 "}"
+                    WHITESPACE@718..719 " "
+                    RIGHT_CURLY@719..720 "}"
                 WHITESPACE@720..721 " "
                 ENTER_KW@721..726 "enter"
                 WHITESPACE@726..727 " "
@@ -387,13 +387,13 @@ ROOT@0..1047
               DO_EXPR@804..813
                 DO_KW@804..806 "do"
                 WHITESPACE@806..807 " "
-                LEFT_CURLY@807..808 "{"
-                WHITESPACE@808..809 " "
-                DO_EXPR_MEMBER_LIST@809..811
+                DO_EXPR_MEMBER_LIST@807..813
+                  LEFT_CURLY@807..808 "{"
+                  WHITESPACE@808..809 " "
                   NAME_REF@809..811
                     IDENT@809..811 "a1"
-                WHITESPACE@811..812 " "
-                RIGHT_CURLY@812..813 "}"
+                  WHITESPACE@811..812 " "
+                  RIGHT_CURLY@812..813 "}"
               WHITESPACE@813..814 " "
               ENTER_KW@814..819 "enter"
               WHITESPACE@819..820 " "
@@ -469,13 +469,13 @@ ROOT@0..1047
             DO_EXPR@982..991
               DO_KW@982..984 "do"
               WHITESPACE@984..985 " "
-              LEFT_CURLY@985..986 "{"
-              WHITESPACE@986..987 " "
-              DO_EXPR_MEMBER_LIST@987..989
+              DO_EXPR_MEMBER_LIST@985..991
+                LEFT_CURLY@985..986 "{"
+                WHITESPACE@986..987 " "
                 NAME_REF@987..989
                   IDENT@987..989 "a1"
-              WHITESPACE@989..990 " "
-              RIGHT_CURLY@990..991 "}"
+                WHITESPACE@989..990 " "
+                RIGHT_CURLY@990..991 "}"
           EOL@991..993 "\n\n"
           WHITESPACE@993..997 "    "
           PRE_ANNOTATION@997..1018 "@ Internal transition"
@@ -489,16 +489,16 @@ ROOT@0..1047
             DO_EXPR@1029..1038
               DO_KW@1029..1031 "do"
               WHITESPACE@1031..1032 " "
-              LEFT_CURLY@1032..1033 "{"
-              WHITESPACE@1033..1034 " "
-              DO_EXPR_MEMBER_LIST@1034..1036
+              DO_EXPR_MEMBER_LIST@1032..1038
+                LEFT_CURLY@1032..1033 "{"
+                WHITESPACE@1033..1034 " "
                 NAME_REF@1034..1036
                   IDENT@1034..1036 "a1"
-              WHITESPACE@1036..1037 " "
-              RIGHT_CURLY@1037..1038 "}"
+                WHITESPACE@1036..1037 " "
+                RIGHT_CURLY@1037..1038 "}"
           EOL@1038..1040 "\n\n"
           WHITESPACE@1040..1042 "  "
-        RIGHT_CURLY@1042..1043 "}"
+          RIGHT_CURLY@1042..1043 "}"
       EOL@1043..1045 "\n\n"
-    RIGHT_CURLY@1045..1046 "}"
+      RIGHT_CURLY@1045..1046 "}"
   EOL@1046..1047 "\n"

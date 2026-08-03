@@ -1,4 +1,5 @@
-mod builder;
+#[doc(hidden)]
+pub mod doc;
 mod formatter;
 
 use std::path::Path;
@@ -12,9 +13,10 @@ pub use crate::formatter::Formatter;
 /// Configuration options for the formatter
 #[derive(Debug, Clone)]
 pub struct FormatOptions {
-    /// Number of spaces per indentation level (default: 2)
+    /// Number of spaces per indentation level (default: 4)
     pub indent_width: usize,
-    /// Maximum line width (currently unused, for future line-breaking)
+    /// Maximum line width; specs wider than this explode their clauses and
+    /// group-style member lists break onto multiple lines (default: 80)
     pub max_line_width: usize,
 }
 
@@ -306,14 +308,45 @@ module Outer {
 
     #[test]
     fn test_telemetry_limits_indent() {
-        // Limit-sequence members indent one level past their brace.
+        // Limit-sequence members indent one level past their `low {` brace.
         let input = "module M { active component C { \
             telemetry t: F32 low { yellow 1.0, red 2.0 } } }";
         let formatted =
             format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
+        let indent = |needle: &str| -> usize {
+            let line = formatted
+                .lines()
+                .find(|l| l.contains(needle))
+                .unwrap_or_else(|| panic!("missing {:?} in:\n{}", needle, formatted));
+            line.len() - line.trim_start().len()
+        };
         assert!(
-            formatted.contains("        yellow 1.0"),
-            "limit members should be indented:\n{}",
+            indent("yellow 1.0") > indent("low {"),
+            "limit members should be indented past `low`:\n{}",
+            formatted
+        );
+        assert_stable(&formatted);
+    }
+
+    #[test]
+    fn test_comment_before_choice_if_not_swallowed() {
+        // A standalone comment inside a choice body must stay on its own line;
+        // otherwise the following `if` is swallowed by the `#` comment and the
+        // output fails to reparse.
+        let input = r#"module M {
+  state machine S {
+    choice C {
+      # leading comment
+      if g enter A else enter B
+    }
+  }
+}
+"#;
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
+        assert!(
+            formatted.contains("# leading comment\n"),
+            "comment must be followed by a newline:\n{}",
             formatted
         );
         assert_stable(&formatted);

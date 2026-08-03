@@ -1,9 +1,7 @@
 @ Component for testing
 active component TestComponent {
     @ Command 1
-    async command StartTest(
-        testId: U32
-        timeout: F32 ) \
+    async command StartTest(testId: U32, timeout: F32) \
         opcode 0x10 \
         priority 5 \
         assert
@@ -30,14 +28,19 @@ active component TestComponent {
     telemetry statusCode: U32 id 0x02
 
     @ Events
-    event TestStarted(
-        testId: U32 ) \
+    event TestStarted(testId: U32) \
         severity activity high \
         id 0x100 \
         format "Test {} started" \
         throttle 10
 
     event TestFailed() severity fatal format "Test failed"
+
+    @ A COMMAND event emitted by the guest program
+    event LogCommand(msg: string size 128) severity command format "{}"
+
+    @ A COMMAND event emitted by the guest program
+    event LogCommand(msg: string size 128) severity command format "{}"
 
     @ Parameters
     param maxIterations: U32 \
@@ -63,9 +66,7 @@ active component TestComponent {
     param set port prmSet
 
     @ Internal ports
-    internal port ProcessData(
-        data: U32
-        sz: U32 ) priority 10 block
+    internal port ProcessData(data: U32, sz: U32) priority 10 block
 
     @ Port matching
     match dataIn with dataOut

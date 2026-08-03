@@ -7,7 +7,7 @@ mod topology;
 mod types;
 
 use crate::token_set::TokenSet;
-use crate::{parser::Parser, SyntaxKind, SyntaxKind::*};
+use crate::{SyntaxKind, SyntaxKind::*, parser::Parser};
 
 pub(super) const MEMBER_RECOVERY_SET: TokenSet = TokenSet::new(&[
     EOL,
@@ -107,10 +107,10 @@ fn member_list(
     list_kind: SyntaxKind,
     expected_error_msg: &'static str,
 ) {
+    let m = p.start();
+
     assert!(p.at(bra));
     p.bump(bra);
-
-    let m = p.start();
 
     while !p.at(ket) && !p.at(EOF) {
         if p.at(bra) {
@@ -139,8 +139,8 @@ fn member_list(
         }
     }
 
-    m.complete(p, list_kind);
     p.expect(ket);
+    m.complete(p, list_kind);
 }
 
 fn expr_opt(p: &mut Parser, prefix: SyntaxKind, rule: SyntaxKind) {

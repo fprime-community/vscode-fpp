@@ -3,7 +3,7 @@
 @ 1. LOAD_NAME [fileName] ""
 @ 2. INVOKE "" "main"
 @ 3. CONTINUE
-@ 
+@
 @ If $block == Svc.BlockState.BLOCK this command will wait for complemention.
 async command RUN(
     fileName: string size FileNameStringSize @< The name of the sequence file
@@ -44,7 +44,7 @@ async command INVOKE(
 sync command CANCEL opcode 0x5
 
 @ Pauses the execution of the sequencer, just before it is about to dispatch the next directive,
-@ until unpaused by the CONTINUE command, or stepped by the STEP command. This command is only valid 
+@ until unpaused by the CONTINUE command, or stepped by the STEP command. This command is only valid
 @ substates of the RUNNING state that are not RUNNING.PAUSED.
 sync command PAUSE opcode 0x6
 

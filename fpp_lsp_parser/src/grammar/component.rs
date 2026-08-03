@@ -298,19 +298,23 @@ fn spec_event(p: &mut Parser) {
     }
     formal_param_list(p);
 
-    p.expect(SEVERITY_KW);
-    match p.current() {
-        ACTIVITY_KW | WARNING_KW => {
-            p.bump_any();
-            match p.current() {
-                HIGH_KW | LOW_KW => {
-                    p.bump_any();
+    {
+        let m: crate::parser::Marker = p.start();
+        p.expect(SEVERITY_KW);
+        match p.current() {
+            ACTIVITY_KW | WARNING_KW => {
+                p.bump_any();
+                match p.current() {
+                    HIGH_KW | LOW_KW => {
+                        p.bump_any();
+                    }
+                    _ => p.err_and_bump("expected `high` or `low`"),
                 }
-                _ => p.err_and_bump("expected `high` or `low`"),
             }
+            COMMAND_KW | DIAGNOSTIC_KW | FATAL_KW => p.bump_any(),
+            _ => p.err_and_bump("severity level expected"),
         }
-        COMMAND_KW | DIAGNOSTIC_KW | FATAL_KW => p.bump_any(),
-        _ => p.err_and_bump("severity level expected"),
+        m.complete(p, EVENT_SEVERITY);
     }
 
     expr_opt(p, ID_KW, ID);

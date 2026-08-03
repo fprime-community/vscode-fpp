@@ -124,10 +124,10 @@ pub trait Visitor<'ast>: Sized {
         node.walk(a, self)
     }
 
-    fn visit_trans_units<I: Iterator<Item = &'ast crate::TransUnit>>(
+    fn visit_trans_units(
         &self,
         a: &mut Self::State,
-        i: I,
+        i: impl Iterator<Item = &'ast crate::TransUnit>,
     ) -> ControlFlow<Self::Break> {
         for item in i {
             self.visit_trans_unit(a, item)?;
@@ -159,8 +159,14 @@ pub trait Visitor<'ast>: Sized {
         (DefTopology, visit_def_topology),
         /* Specifiers */
         (SpecCommand, visit_spec_command),
-        (SpecDirectConnectionGraph, visit_spec_direct_connection_graph),
-        (SpecPatternConnectionGraph, visit_spec_pattern_connection_graph),
+        (
+            SpecDirectConnectionGraph,
+            visit_spec_direct_connection_graph
+        ),
+        (
+            SpecPatternConnectionGraph,
+            visit_spec_pattern_connection_graph
+        ),
         (SpecContainer, visit_spec_container),
         (SpecEvent, visit_spec_event),
         (SpecGeneralPortInstance, visit_spec_general_port_instance),
@@ -257,8 +263,14 @@ pub trait MutVisitor: Sized {
         (DefTopology, visit_def_topology),
         /* Specifiers */
         (SpecCommand, visit_spec_command),
-        (SpecDirectConnectionGraph, visit_spec_direct_connection_graph),
-        (SpecPatternConnectionGraph, visit_spec_pattern_connection_graph),
+        (
+            SpecDirectConnectionGraph,
+            visit_spec_direct_connection_graph
+        ),
+        (
+            SpecPatternConnectionGraph,
+            visit_spec_pattern_connection_graph
+        ),
         (SpecContainer, visit_spec_container),
         (SpecEvent, visit_spec_event),
         (SpecGeneralPortInstance, visit_spec_general_port_instance),

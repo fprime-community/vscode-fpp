@@ -5,10 +5,10 @@ ROOT@0..87
     NAME@7..8
       IDENT@7..8 "F"
     WHITESPACE@8..9 " "
-    LEFT_CURLY@9..10 "{"
-    EOL@10..11 "\n"
-    WHITESPACE@11..15 "    "
-    MODULE_MEMBER_LIST@15..85
+    MODULE_MEMBER_LIST@9..86
+      LEFT_CURLY@9..10 "{"
+      EOL@10..11 "\n"
+      WHITESPACE@11..15 "    "
       DEF_CONSTANT@15..29
         CONSTANT_KW@15..23 "constant"
         WHITESPACE@23..24 " "
@@ -76,5 +76,5 @@ ROOT@0..87
                 LITERAL_INT@82..83 "4"
       SEMI@83..84 ";"
       EOL@84..85 "\n"
-    RIGHT_CURLY@85..86 "}"
+      RIGHT_CURLY@85..86 "}"
   EOL@86..87 "\n"

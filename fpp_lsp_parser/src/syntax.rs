@@ -253,6 +253,7 @@ pub enum SyntaxKind {
     PRIORITY,
     QUEUE_FULL,
     QUEUE_SIZE,
+    EVENT_SEVERITY,
     SAVE_OPCODE,
     SET_OPCODE,
     INDEX_OR_SIZE,

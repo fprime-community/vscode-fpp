@@ -13,24 +13,13 @@ module Expressions {
     constant nested = ((1))
 
     @ Array literal expression
-    constant arr = [
-        1
-        2
-        3]
+    constant arr = [1, 2, 3]
 
     @ Struct-value expression
-    constant pt = {
-        x = 1
-        y = 2
-    }
+    constant pt = { x = 1, y = 2 }
 
     @ Nested struct value
-    constant nestedStruct = {
-        inner = {
-            a = 1
-        }
-        flag = true
-    }
+    constant nestedStruct = { inner = { a = 1 }, flag = true }
 
     @ Member access on a qualified identifier
     constant member = A.B.value

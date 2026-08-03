@@ -5,14 +5,14 @@ ROOT@0..41
     NAME@7..8
       IDENT@7..8 "M"
     WHITESPACE@8..9 " "
-    LEFT_CURLY@9..10 "{"
-    EOL@10..12 "\n\n"
-    WHITESPACE@12..14 "  "
-    MODULE_MEMBER_LIST@14..39
+    MODULE_MEMBER_LIST@9..40
+      LEFT_CURLY@9..10 "{"
+      EOL@10..12 "\n\n"
+      WHITESPACE@12..14 "  "
       SPEC_INCLUDE@14..37
         INCLUDE_KW@14..21 "include"
         WHITESPACE@21..22 " "
         LITERAL_STRING@22..37 "\"constant.fppi\""
       EOL@37..39 "\n\n"
-    RIGHT_CURLY@39..40 "}"
+      RIGHT_CURLY@39..40 "}"
   EOL@40..41 "\n"

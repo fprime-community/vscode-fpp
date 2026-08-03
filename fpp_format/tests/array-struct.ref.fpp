@@ -40,25 +40,14 @@ module DataTypes {
         enabled: bool
         timeout: U32
         maxRetries: U8
-    } default {
-        enabled = true
-        timeout = 1000
-        maxRetries = 3
-    }
+    } default { enabled = true, timeout = 1000, maxRetries = 3 }
 
     @ Nested struct
     struct SystemState {
         position: Point
         measurement: Measurement
     } default {
-        position = {
-            x = 0
-            y = 0
-        }
-        measurement = {
-            value = 0.0
-            timestamp = 0
-            unitCode = 1
-        }
+        position = { x = 0, y = 0 }
+        measurement = { value = 0.0, timestamp = 0, unitCode = 1 }
     }
 }

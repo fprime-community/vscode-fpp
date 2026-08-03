@@ -109,7 +109,10 @@ pub fn handle_dump_syntax_tree(state: &mut GlobalState, param: UriRequest) -> Re
         fpp_parser::IncludeParentKind::Topology => fpp_lsp_parser::TopEntryPoint::Topology,
     };
 
-    eprintln!("CST {}: entry {entry_kind:?}, source_file: {source_file:?}", param.uri.as_str());
+    eprintln!(
+        "CST {}: entry {entry_kind:?}, source_file: {source_file:?}",
+        param.uri.as_str()
+    );
     eprintln!("{}", parse.debug_dump());
 
     Ok(())
@@ -759,7 +762,7 @@ pub fn handle_formatting(
     request: DocumentFormattingParams,
 ) -> Result<Option<Vec<TextEdit>>> {
     let lines = state.vfs.get_lines(request.text_document.uri.as_str())?;
-    let (text, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (original, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
 
     if !parse.errors().is_empty() {
         tracing::warn!("Cannot format with parse errors: {:?}", parse.errors());
@@ -767,22 +770,19 @@ pub fn handle_formatting(
     }
 
     // Format the entire document
-    let formatted = fpp_format::Formatter::new(fpp_format::FormatOptions::default())
-        .format(&parse.syntax_node());
+    let syntax = parse.syntax_node();
+    let text = fpp_format::Formatter::new(fpp_format::FormatOptions::default()).format(&syntax);
 
-    // If the text hasn't changed, return no edits
-    if text == formatted {
-        return Ok(None);
-    }
-
-    // Create a text edit that replaces the entire document
-    let text_len = fpp_lsp_parser::TextSize::from(text.len() as u32);
-    let text_range = fpp_lsp_parser::TextRange::new(0.into(), text_len);
+    // Replace the range spanning the entire *original* document. The range must
+    // be derived from the original length, not the formatted length, otherwise
+    // a shorter result leaves trailing original bytes (e.g. a stray `}`) behind.
+    let orig_len = fpp_lsp_parser::TextSize::from(original.len() as u32);
+    let text_range = fpp_lsp_parser::TextRange::new(0.into(), orig_len);
     let range = text_range_to_range(&lines, text_range);
 
     Ok(Some(vec![TextEdit {
         range,
-        new_text: formatted,
+        new_text: text,
     }]))
 }
 
@@ -793,7 +793,7 @@ pub fn handle_range_formatting(
     // For initial implementation, format the entire document
     // Future optimization: extract and format only the specified range
     let lines = state.vfs.get_lines(request.text_document.uri.as_str())?;
-    let (text, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (original, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
 
     if !parse.errors().is_empty() {
         tracing::warn!("Cannot format with parse errors: {:?}", parse.errors());
@@ -801,21 +801,18 @@ pub fn handle_range_formatting(
     }
 
     // Format the entire document
-    let formatted = fpp_format::Formatter::new(fpp_format::FormatOptions::default())
-        .format(&parse.syntax_node());
+    let syntax = parse.syntax_node();
+    let text = fpp_format::Formatter::new(fpp_format::FormatOptions::default()).format(&syntax);
 
-    // If the text hasn't changed, return no edits
-    if text == formatted {
-        return Ok(None);
-    }
-
-    // Create a text edit that replaces the entire document
-    let text_len = fpp_lsp_parser::TextSize::from(text.len() as u32);
-    let text_range = fpp_lsp_parser::TextRange::new(0.into(), text_len);
+    // Replace the range spanning the entire *original* document. The range must
+    // be derived from the original length, not the formatted length, otherwise
+    // a shorter result leaves trailing original bytes (e.g. a stray `}`) behind.
+    let orig_len = fpp_lsp_parser::TextSize::from(original.len() as u32);
+    let text_range = fpp_lsp_parser::TextRange::new(0.into(), orig_len);
     let range = text_range_to_range(&lines, text_range);
 
     Ok(Some(vec![TextEdit {
         range,
-        new_text: formatted,
+        new_text: text,
     }]))
 }

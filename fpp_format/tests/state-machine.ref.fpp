@@ -24,10 +24,7 @@ module StateMachines {
 
         state Active {
             entry do { processData }
-            exit do {
-                reset
-                logError
-            }
+            exit do { reset, logError }
 
             @ Nested states
             state Processing
@@ -67,21 +64,14 @@ module StateMachines {
         guard g1
         guard g2: bool
 
-        initial do {
-            a1
-            a2
-        } enter S1
+        initial do { a1, a2 } enter S1
 
         choice C1 {
             if g1 do { a1 } enter S2 else do { a2 } enter S3
         }
 
         choice C2 {
-            if g2 do {
-                a1
-                a2
-                a3
-            } enter S2 else enter S3
+            if g2 do { a1, a2, a3 } enter S2 else enter S3
         }
 
         choice C3 {
@@ -89,8 +79,9 @@ module StateMachines {
         }
 
         choice RESUME {
-            if pendingHostFunction do { dispatchPendingHostFunction } enter AWAITING_RESPONSE \
-            else enter SPINNING
+            if pendingHostFunction do {
+                dispatchPendingHostFunction
+            } enter AWAITING_RESPONSE else enter SPINNING
         }
 
         state S1 {

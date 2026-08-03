@@ -46,10 +46,10 @@ ROOT@0..206
     NAME@81..82
       IDENT@81..82 "C"
     WHITESPACE@82..83 " "
-    LEFT_CURLY@83..84 "{"
-    EOL@84..85 "\n"
-    WHITESPACE@85..89 "    "
-    COMPONENT_MEMBER_LIST@89..206
+    COMPONENT_MEMBER_LIST@83..206
+      LEFT_CURLY@83..84 "{"
+      EOL@84..85 "\n"
+      WHITESPACE@85..89 "    "
       SPEC_PORT_INSTANCE_SPECIAL@89..108
         TELEMETRY_KW@89..98 "telemetry"
         WHITESPACE@98..99 " "
@@ -84,17 +84,18 @@ ROOT@0..206
         NAME@147..148
           IDENT@147..148 "i"
         WHITESPACE@148..149 " "
-        LEFT_PAREN@149..150 "("
-        EOL@150..152 "\n\n"
-        WHITESPACE@152..156 "    "
-        FORMAL_PARAM_LIST@156..156
-        RIGHT_PAREN@156..157 ")"
+        FORMAL_PARAM_LIST@149..157
+          LEFT_PAREN@149..150 "("
+          EOL@150..152 "\n\n"
+          WHITESPACE@152..156 "    "
+          RIGHT_PAREN@156..157 ")"
         WHITESPACE@157..158 " "
-        SEVERITY_KW@158..166 "severity"
-        WHITESPACE@166..167 " "
-        WARNING_KW@167..174 "warning"
-        WHITESPACE@174..175 " "
-        LOW_KW@175..178 "low"
+        EVENT_SEVERITY@158..178
+          SEVERITY_KW@158..166 "severity"
+          WHITESPACE@166..167 " "
+          WARNING_KW@167..174 "warning"
+          WHITESPACE@174..175 " "
+          LOW_KW@175..178 "low"
         WHITESPACE@178..179 " "
         FORMAT@179..193
           FORMAT_KW@179..185 "format"

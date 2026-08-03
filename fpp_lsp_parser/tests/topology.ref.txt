@@ -5,29 +5,29 @@ ROOT@0..7126
     NAME@7..10
       IDENT@7..10 "Ref"
     WHITESPACE@10..11 " "
-    LEFT_CURLY@11..12 "{"
-    EOL@12..14 "\n\n"
-    WHITESPACE@14..16 "  "
-    COMMENT@16..88 "# ------------------- ..."
-    EOL@88..89 "\n"
-    WHITESPACE@89..91 "  "
-    COMMENT@91..128 "# Symbolic constants  ..."
-    EOL@128..129 "\n"
-    WHITESPACE@129..131 "  "
-    COMMENT@131..203 "# ------------------- ..."
-    EOL@203..205 "\n\n"
-    WHITESPACE@205..207 "  "
-    MODULE_MEMBER_LIST@207..7124
+    MODULE_MEMBER_LIST@11..7125
+      LEFT_CURLY@11..12 "{"
+      EOL@12..14 "\n\n"
+      WHITESPACE@14..16 "  "
+      COMMENT@16..88 "# ------------------- ..."
+      EOL@88..89 "\n"
+      WHITESPACE@89..91 "  "
+      COMMENT@91..128 "# Symbolic constants  ..."
+      EOL@128..129 "\n"
+      WHITESPACE@129..131 "  "
+      COMMENT@131..203 "# ------------------- ..."
+      EOL@203..205 "\n\n"
+      WHITESPACE@205..207 "  "
       DEF_ENUM@207..279
         ENUM_KW@207..211 "enum"
         WHITESPACE@211..212 " "
         NAME@212..228
           IDENT@212..228 "Ports_RateGroups"
         WHITESPACE@228..229 " "
-        LEFT_CURLY@229..230 "{"
-        EOL@230..231 "\n"
-        WHITESPACE@231..235 "    "
-        ENUM_MEMBER_LIST@235..278
+        ENUM_MEMBER_LIST@229..279
+          LEFT_CURLY@229..230 "{"
+          EOL@230..231 "\n"
+          WHITESPACE@231..235 "    "
           DEF_ENUM_CONSTANT@235..245
             NAME@235..245
               IDENT@235..245 "rateGroup1"
@@ -43,7 +43,7 @@ ROOT@0..7126
               IDENT@265..275 "rateGroup3"
           EOL@275..276 "\n"
           WHITESPACE@276..278 "  "
-        RIGHT_CURLY@278..279 "}"
+          RIGHT_CURLY@278..279 "}"
       EOL@279..283 "\n\n\n\n"
       WHITESPACE@283..285 "  "
       DEF_TOPOLOGY@285..7122
@@ -52,19 +52,19 @@ ROOT@0..7126
         NAME@294..297
           IDENT@294..297 "Ref"
         WHITESPACE@297..298 " "
-        LEFT_CURLY@298..299 "{"
-        EOL@299..300 "\n"
-        WHITESPACE@300..304 "    "
-        COMMENT@304..376 "# ------------------- ..."
-        EOL@376..377 "\n"
-        WHITESPACE@377..381 "    "
-        COMMENT@381..402 "# Subtopology imports"
-        EOL@402..403 "\n"
-        WHITESPACE@403..407 "    "
-        COMMENT@407..479 "# ------------------- ..."
-        EOL@479..480 "\n"
-        WHITESPACE@480..484 "    "
-        TOPOLOGY_MEMBER_LIST@484..7121
+        TOPOLOGY_MEMBER_LIST@298..7122
+          LEFT_CURLY@298..299 "{"
+          EOL@299..300 "\n"
+          WHITESPACE@300..304 "    "
+          COMMENT@304..376 "# ------------------- ..."
+          EOL@376..377 "\n"
+          WHITESPACE@377..381 "    "
+          COMMENT@381..402 "# Subtopology imports"
+          EOL@402..403 "\n"
+          WHITESPACE@403..407 "    "
+          COMMENT@407..479 "# ------------------- ..."
+          EOL@479..480 "\n"
+          WHITESPACE@480..484 "    "
           SPEC_INSTANCE@484..510
             IMPORT_KW@484..490 "import"
             WHITESPACE@490..491 " "
@@ -377,13 +377,13 @@ ROOT@0..7126
             NAME@2213..2223
               IDENT@2213..2223 "RateGroups"
             WHITESPACE@2223..2224 " "
-            LEFT_CURLY@2224..2225 "{"
-            EOL@2225..2227 "\n\n"
-            WHITESPACE@2227..2233 "      "
-            COMMENT@2233..2261 "# Linux timer to driv ..."
-            EOL@2261..2262 "\n"
-            WHITESPACE@2262..2268 "      "
-            CONNECTION_MEMBER_LIST@2268..4143
+            CONNECTION_MEMBER_LIST@2224..4144
+              LEFT_CURLY@2224..2225 "{"
+              EOL@2225..2227 "\n\n"
+              WHITESPACE@2227..2233 "      "
+              COMMENT@2233..2261 "# Linux timer to driv ..."
+              EOL@2261..2262 "\n"
+              WHITESPACE@2262..2268 "      "
               CONNECTION@2268..2318
                 CONNECTION_FROM@2268..2287
                   PORT_INSTANCE_IDENTIFIER@2268..2287
@@ -954,7 +954,7 @@ ROOT@0..7126
                     IDENT@4131..4138 "schedIn"
               EOL@4138..4139 "\n"
               WHITESPACE@4139..4143 "    "
-            RIGHT_CURLY@4143..4144 "}"
+              RIGHT_CURLY@4143..4144 "}"
           EOL@4144..4146 "\n\n"
           WHITESPACE@4146..4150 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@4150..4731
@@ -963,13 +963,13 @@ ROOT@0..7126
             NAME@4162..4176
               IDENT@4162..4176 "Communications"
             WHITESPACE@4176..4177 " "
-            LEFT_CURLY@4177..4178 "{"
-            EOL@4178..4179 "\n"
-            WHITESPACE@4179..4185 "      "
-            COMMENT@4185..4215 "# ComDriver buffer al ..."
-            EOL@4215..4216 "\n"
-            WHITESPACE@4216..4222 "      "
-            CONNECTION_MEMBER_LIST@4222..4730
+            CONNECTION_MEMBER_LIST@4177..4731
+              LEFT_CURLY@4177..4178 "{"
+              EOL@4178..4179 "\n"
+              WHITESPACE@4179..4185 "      "
+              COMMENT@4185..4215 "# ComDriver buffer al ..."
+              EOL@4215..4216 "\n"
+              WHITESPACE@4216..4222 "      "
               CONNECTION@4222..4292
                 CONNECTION_FROM@4222..4240
                   PORT_INSTANCE_IDENTIFIER@4222..4240
@@ -1088,7 +1088,7 @@ ROOT@0..7126
                     IDENT@4713..4725 "drvConnected"
               EOL@4725..4726 "\n"
               WHITESPACE@4726..4730 "    "
-            RIGHT_CURLY@4730..4731 "}"
+              RIGHT_CURLY@4730..4731 "}"
           EOL@4731..4733 "\n\n"
           WHITESPACE@4733..4737 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@4737..5709
@@ -1097,10 +1097,10 @@ ROOT@0..7126
             NAME@4749..4752
               IDENT@4749..4752 "Ref"
             WHITESPACE@4752..4753 " "
-            LEFT_CURLY@4753..4754 "{"
-            EOL@4754..4755 "\n"
-            WHITESPACE@4755..4761 "      "
-            CONNECTION_MEMBER_LIST@4761..5708
+            CONNECTION_MEMBER_LIST@4753..5709
+              LEFT_CURLY@4753..4754 "{"
+              EOL@4754..4755 "\n"
+              WHITESPACE@4755..4761 "      "
               CONNECTION@4761..4799
                 CONNECTION_FROM@4761..4778
                   PORT_INSTANCE_IDENTIFIER@4761..4778
@@ -1298,7 +1298,7 @@ ROOT@0..7126
                     IDENT@5690..5703 "productRecvIn"
               EOL@5703..5704 "\n"
               WHITESPACE@5704..5708 "    "
-            RIGHT_CURLY@5708..5709 "}"
+              RIGHT_CURLY@5708..5709 "}"
           EOL@5709..5711 "\n\n"
           WHITESPACE@5711..5715 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@5715..6364
@@ -1306,13 +1306,13 @@ ROOT@0..7126
             WHITESPACE@5726..5727 " "
             NAME@5727..5743
               IDENT@5727..5743 "ComCcsds_CdhCore"
-            LEFT_CURLY@5743..5744 "{"
-            EOL@5744..5745 "\n"
-            WHITESPACE@5745..5751 "      "
-            COMMENT@5751..5785 "# events and telemetr ..."
-            EOL@5785..5786 "\n"
-            WHITESPACE@5786..5792 "      "
-            CONNECTION_MEMBER_LIST@5792..6363
+            CONNECTION_MEMBER_LIST@5743..6364
+              LEFT_CURLY@5743..5744 "{"
+              EOL@5744..5745 "\n"
+              WHITESPACE@5745..5751 "      "
+              COMMENT@5751..5785 "# events and telemetr ..."
+              EOL@5785..5786 "\n"
+              WHITESPACE@5786..5792 "      "
               CONNECTION@5792..5897
                 CONNECTION_FROM@5792..5814
                   PORT_INSTANCE_IDENTIFIER@5792..5814
@@ -1476,7 +1476,7 @@ ROOT@0..7126
                     IDENT@6352..6358 "TlmGet"
               EOL@6358..6359 "\n"
               WHITESPACE@6359..6363 "    "
-            RIGHT_CURLY@6363..6364 "}"
+              RIGHT_CURLY@6363..6364 "}"
           EOL@6364..6366 "\n\n"
           WHITESPACE@6366..6370 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@6370..6886
@@ -1485,13 +1485,13 @@ ROOT@0..7126
             NAME@6382..6403
               IDENT@6382..6403 "ComCcsds_FileHandling"
             WHITESPACE@6403..6404 " "
-            LEFT_CURLY@6404..6405 "{"
-            EOL@6405..6406 "\n"
-            WHITESPACE@6406..6412 "      "
-            COMMENT@6412..6440 "# File Downlink <-> C ..."
-            EOL@6440..6441 "\n"
-            WHITESPACE@6441..6447 "      "
-            CONNECTION_MEMBER_LIST@6447..6885
+            CONNECTION_MEMBER_LIST@6404..6886
+              LEFT_CURLY@6404..6405 "{"
+              EOL@6405..6406 "\n"
+              WHITESPACE@6406..6412 "      "
+              COMMENT@6412..6440 "# File Downlink <-> C ..."
+              EOL@6440..6441 "\n"
+              WHITESPACE@6441..6447 "      "
               CONNECTION@6447..6557
                 CONNECTION_FROM@6447..6486
                   PORT_INSTANCE_IDENTIFIER@6447..6486
@@ -1603,7 +1603,7 @@ ROOT@0..7126
                     IDENT@6862..6880 "fileBufferReturnIn"
               EOL@6880..6881 "\n"
               WHITESPACE@6881..6885 "    "
-            RIGHT_CURLY@6885..6886 "}"
+              RIGHT_CURLY@6885..6886 "}"
           EOL@6886..6888 "\n\n"
           WHITESPACE@6888..6892 "    "
           SPEC_CONNECTION_GRAPH_DIRECT@6892..7117
@@ -1611,13 +1611,13 @@ ROOT@0..7126
             WHITESPACE@6903..6904 " "
             NAME@6904..6929
               IDENT@6904..6929 "FileHandling_DataProd ..."
-            LEFT_CURLY@6929..6930 "{"
-            EOL@6930..6931 "\n"
-            WHITESPACE@6931..6937 "      "
-            COMMENT@6937..6952 "# Data Products"
-            EOL@6952..6953 "\n"
-            WHITESPACE@6953..6959 "      "
-            CONNECTION_MEMBER_LIST@6959..7116
+            CONNECTION_MEMBER_LIST@6929..7117
+              LEFT_CURLY@6929..6930 "{"
+              EOL@6930..6931 "\n"
+              WHITESPACE@6931..6937 "      "
+              COMMENT@6937..6952 "# Data Products"
+              EOL@6952..6953 "\n"
+              WHITESPACE@6953..6959 "      "
               CONNECTION@6959..7035
                 CONNECTION_FROM@6959..6985
                   PORT_INSTANCE_IDENTIFIER@6959..6985
@@ -1658,10 +1658,10 @@ ROOT@0..7126
                     IDENT@7103..7111 "fileDone"
               EOL@7111..7112 "\n"
               WHITESPACE@7112..7116 "    "
-            RIGHT_CURLY@7116..7117 "}"
+              RIGHT_CURLY@7116..7117 "}"
           EOL@7117..7119 "\n\n"
           WHITESPACE@7119..7121 "  "
-        RIGHT_CURLY@7121..7122 "}"
+          RIGHT_CURLY@7121..7122 "}"
       EOL@7122..7124 "\n\n"
-    RIGHT_CURLY@7124..7125 "}"
+      RIGHT_CURLY@7124..7125 "}"
   EOL@7125..7126 "\n"

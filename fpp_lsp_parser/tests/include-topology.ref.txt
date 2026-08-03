@@ -5,14 +5,14 @@ ROOT@0..43
     NAME@9..10
       IDENT@9..10 "T"
     WHITESPACE@10..11 " "
-    LEFT_CURLY@11..12 "{"
-    EOL@12..14 "\n\n"
-    WHITESPACE@14..16 "  "
-    TOPOLOGY_MEMBER_LIST@16..41
+    TOPOLOGY_MEMBER_LIST@11..42
+      LEFT_CURLY@11..12 "{"
+      EOL@12..14 "\n\n"
+      WHITESPACE@14..16 "  "
       SPEC_INCLUDE@16..39
         INCLUDE_KW@16..23 "include"
         WHITESPACE@23..24 " "
         LITERAL_STRING@24..39 "\"instance.fppi\""
       EOL@39..41 "\n\n"
-    RIGHT_CURLY@41..42 "}"
+      RIGHT_CURLY@41..42 "}"
   EOL@42..43 "\n"
