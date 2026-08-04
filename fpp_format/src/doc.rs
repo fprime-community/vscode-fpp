@@ -108,7 +108,12 @@ pub fn render(doc: &Doc, width: usize, indent_width: usize) -> String {
             Doc::Nil => {}
             Doc::Text(s) => {
                 out.push_str(s);
-                col += s.chars().count();
+                if let Some(nl) = s.rfind('\n') {
+                    line += s.matches('\n').count();
+                    col = s[nl + 1..].chars().count();
+                } else {
+                    col += s.chars().count();
+                }
             }
             Doc::Anchor(kind, x) => {
                 anchors.push(Anchor {
@@ -185,7 +190,13 @@ fn fits(mut rem: isize, x: &Doc, rest: &[(i32, Mode, &Doc)]) -> bool {
         };
         match d {
             Doc::Nil => {}
-            Doc::Text(s) => rem -= s.chars().count() as isize,
+            Doc::Text(s) => {
+                if let Some(nl) = s.find('\n') {
+                    rem -= s[..nl].chars().count() as isize;
+                    return rem >= 0;
+                }
+                rem -= s.chars().count() as isize;
+            }
             Doc::Anchor(_, y) => work.push((m, y)),
             Doc::Concat(v) => {
                 for c in v.iter().rev() {
