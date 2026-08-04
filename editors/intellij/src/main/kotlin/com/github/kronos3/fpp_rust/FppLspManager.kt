@@ -39,11 +39,11 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
 private val LOG = logger<FppLspManager>()
-private const val LSP_REPO = "Kronos3/fpp-rust"
+private const val LSP_REPO = "fprime-community/vscode-fpp"
 private const val LSP_GITHUB_API_URL = "https://api.github.com/repos/$LSP_REPO/releases"
 private const val LSP_DOWNLOAD_BASE_URL = "https://github.com/$LSP_REPO/releases/download"
 private const val LSP_RELEASE_NOTES_BASE_URL = "https://github.com/$LSP_REPO/releases/tag"
-private const val USER_AGENT = "IntelliJ FPP Plugin (https://github.com/Kronos3/fpp-rust)"
+private const val USER_AGENT = "IntelliJ FPP Plugin (https://github.com/fprime-community/vscode-fpp)"
 private const val LATEST_INSTALLED_LSP_VERSION_KEY = "com.github.kronos3.fpp_rust.latestInstalledLspVersion"
 
 @Suppress("PropertyName")

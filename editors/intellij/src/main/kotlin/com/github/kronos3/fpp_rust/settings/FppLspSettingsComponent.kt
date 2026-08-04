@@ -305,7 +305,7 @@ class FppLspSettingsComponent(
                                 }).align(AlignX.RIGHT).enabled(PlatformCompatibility.isDirectoryOpenSupported())
                             }
                         }.enabledIf(lspAuto.selected)
-                    }.rowComment("Binaries are downloaded from <a href='https://github.com/Kronos3/fpp-rust/releases/latest'>GitHub</a> when you select a version in the download section of combobox.")
+                    }.rowComment("Binaries are downloaded from <a href='https://github.com/fprime-community/vscode-fpp/releases/latest'>GitHub</a> when you select a version in the download section of combobox.")
                     row {
                         lspManual = radioButton(
                             FppBundle.message("fpp.settings.lsp.manual"), LspConfigurationType.Manual

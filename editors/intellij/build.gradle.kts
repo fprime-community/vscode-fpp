@@ -37,7 +37,21 @@ dependencies {
 
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
-        local("/Users/tumbar/Applications/CLion.app")
+        // Prefer a locally-installed IDE when available (fast local dev). Fall
+        // back to downloading the platform (e.g. in CI where no IDE is
+        // installed). Controlled by `localIdePath` (gradle.properties) or the
+        // `LOCAL_IDE_PATH` environment variable.
+        val localIde = providers.environmentVariable("LOCAL_IDE_PATH")
+            .orElse(providers.gradleProperty("localIdePath"))
+            .orNull
+        if (localIde != null && file(localIde).exists()) {
+            local(localIde)
+        } else {
+            create(
+                providers.gradleProperty("platformType").get(),
+                providers.gradleProperty("platformVersion").get(),
+            )
+        }
 
         // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })

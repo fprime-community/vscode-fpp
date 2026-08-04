@@ -45,7 +45,7 @@ pub use crate::{
 /// [`TopEntryPoint::parse`] makes a guarantee that
 ///   * all input is consumed
 ///   * the result is a valid tree (there's one root node)
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TopEntryPoint {
     Module,
     Component,
@@ -55,6 +55,22 @@ pub enum TopEntryPoint {
 }
 
 impl TopEntryPoint {
+    /// Parse an entrypoint from its CLI name. Accepts kebab-case, snake_case,
+    /// and camelCase spellings (e.g. `tlm-packet-set`, `tlm_packet_set`,
+    /// `tlmPacketSet`).
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "module" => Some(TopEntryPoint::Module),
+            "component" => Some(TopEntryPoint::Component),
+            "topology" => Some(TopEntryPoint::Topology),
+            "tlm-packet" | "tlm_packet" | "tlmPacket" => Some(TopEntryPoint::TlmPacket),
+            "tlm-packet-set" | "tlm_packet_set" | "tlmPacketSet" => {
+                Some(TopEntryPoint::TlmPacketSet)
+            }
+            _ => None,
+        }
+    }
+
     pub fn parse(&self, input: &Input) -> Output {
         let entry_point: fn(&'_ mut parser::Parser<'_>) = match self {
             TopEntryPoint::Module => grammar::entry::module_entry,

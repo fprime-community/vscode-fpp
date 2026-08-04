@@ -476,7 +476,11 @@
         "vscode:prepublish": "rm -rf dist && yarn package",
         "package": "webpack --mode production",
         "build": "webpack --mode development",
-        "watch": "webpack --mode development --watch"
+        "watch": "webpack --mode development --watch",
+        "compile": "tsc -p ./src --noEmit",
+        "test:smoke": "node ./test/smoke.js",
+        "test": "yarn compile && yarn build && yarn test:smoke",
+        "vsix": "vsce package"
     },
     "dependencies": {
         "vscode-languageclient": "^9.0.1"
@@ -484,6 +488,7 @@
     "devDependencies": {
         "@types/node": "^22",
         "@types/vscode": "^1.81.0",
+        "@vscode/vsce": "^3.2.1",
         "ts-loader": "^9.5.1",
         "typescript": "^5.4.5",
         "umd-compat-loader": "^2.1.2",
