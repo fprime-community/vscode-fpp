@@ -1,0 +1,29 @@
+# Packages the `fpp-format` Rust binary as a pip-installable distribution.
+# maturin builds the binary target of this crate and installs the executable as
+# a console script inside the wheel.
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "fprime-fpp-format"
+description = "F Prime Prime (FPP) source formatter executable"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Andrei Tumbar", email = "andrei.tumbar@jpl.nasa.gov" }]
+keywords = ["fprime", "fpp", "formatter"]
+classifiers = [
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Compilers",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/fprime-community/vscode-fpp"
+Repository = "https://github.com/fprime-community/vscode-fpp"
+
+[tool.maturin]
+# This crate is both a library and a standalone executable; ship the binary.
+bindings = "bin"
+manifest-path = "Cargo.toml"

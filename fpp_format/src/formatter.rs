@@ -146,9 +146,7 @@ impl Formatter {
     fn lower_token(&self, parent: &SyntaxNode, t: &SyntaxToken) -> Doc {
         if t.kind() == RIGHT_ARROW && parent.kind() == CONNECTION {
             Doc::anchor(AnchorKind::Arrow, Doc::text(t.text()))
-        } else if t.kind() == EQUALS
-            && matches!(parent.kind(), DEF_CONSTANT | DEF_ENUM_CONSTANT)
-        {
+        } else if t.kind() == EQUALS && matches!(parent.kind(), DEF_CONSTANT | DEF_ENUM_CONSTANT) {
             Doc::anchor(AnchorKind::Equals, Doc::text(t.text()))
         } else {
             Doc::text(t.text())

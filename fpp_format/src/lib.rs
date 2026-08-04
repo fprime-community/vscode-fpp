@@ -1,14 +1,16 @@
 #[doc(hidden)]
 pub mod doc;
 mod formatter;
+mod include;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 pub use fpp_lsp_parser::SyntaxError;
 use fpp_lsp_parser::{TopEntryPoint, parse};
 
 pub use crate::formatter::Formatter;
+pub use crate::include::{FormattedUnit, format_file_recursive};
 
 /// Configuration options for the formatter
 #[derive(Debug, Clone)]
@@ -36,6 +38,9 @@ pub enum FormatError {
     ParseError(Vec<SyntaxError>),
     /// I/O error occurred while reading or writing files
     IoError(io::Error),
+    /// An `include` cycle was detected while formatting recursively. The vector
+    /// is the include chain, ending with the file that closes the cycle.
+    IncludeCycle(Vec<PathBuf>),
 }
 
 impl From<io::Error> for FormatError {
@@ -55,6 +60,16 @@ impl std::fmt::Display for FormatError {
                 Ok(())
             }
             FormatError::IoError(err) => write!(f, "I/O error: {}", err),
+            FormatError::IncludeCycle(chain) => {
+                write!(f, "include cycle detected: ")?;
+                for (i, p) in chain.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, " -> ")?;
+                    }
+                    write!(f, "{}", p.display())?;
+                }
+                Ok(())
+            }
         }
     }
 }
