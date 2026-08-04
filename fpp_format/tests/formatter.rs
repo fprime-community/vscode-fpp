@@ -118,6 +118,7 @@ fmt_test!(topology_extra, "topology-extra");
 fmt_test!(component_extra, "component-extra");
 fmt_test!(multiline_string_align, "multiline-string-align");
 fmt_test!(constant_align, "constant-align");
+fmt_test!(enum_annotation_align, "enum-annotation-align");
 
 #[test]
 fn component_inner() {

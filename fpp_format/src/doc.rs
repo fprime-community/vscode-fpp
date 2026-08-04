@@ -7,7 +7,7 @@
 use std::rc::Rc;
 
 /// The kind of a column-alignment anchor.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AnchorKind {
     /// A `@<` post-annotation.
     PostAnnotation,
@@ -221,6 +221,19 @@ fn fits(mut rem: isize, x: &Doc, rest: &[(i32, Mode, &Doc)]) -> bool {
 }
 
 /// Left-pad anchor tokens so contiguous same-level groups share a column.
+///
+/// A single line can carry more than one anchor kind — an enum constant is
+/// `NAME = value @< doc`, contributing both an `Equals` and a `PostAnnotation`
+/// anchor. Because the renderer records anchors in traversal order, the two
+/// kinds interleave in `anchors` (`Equals`, `PostAnnotation`, `Equals`, ...),
+/// so runs cannot be found by vector adjacency alone. Instead we bucket by
+/// `(kind, level)` — within a bucket the indices are already in ascending line
+/// order — then split each bucket into maximal consecutive-line runs.
+///
+/// Groups are then applied left-to-right (by column): padding inserted before a
+/// leftward anchor (e.g. `=`) shifts the recorded column of every rightward
+/// anchor on the same line (e.g. `@<`), so `shift` tracks the running per-line
+/// offset and later groups align against the post-shift columns.
 fn align(text: &str, anchors: &[Anchor], iw: usize) -> String {
     if anchors.is_empty() {
         return text.to_string();
@@ -228,30 +241,53 @@ fn align(text: &str, anchors: &[Anchor], iw: usize) -> String {
     let _ = iw;
     let mut lines: Vec<String> = text.split('\n').map(|s| s.to_string()).collect();
 
-    let mut i = 0;
-    while i < anchors.len() {
-        let mut j = i + 1;
-        while j < anchors.len()
-            && anchors[j].kind == anchors[i].kind
-            && anchors[j].level == anchors[i].level
-            && anchors[j].line == anchors[j - 1].line + 1
-        {
-            j += 1;
+    // Bucket anchor indices by (kind, level). Traversal visits anchors
+    // top-to-bottom, so each bucket is already sorted by line.
+    let mut buckets: std::collections::BTreeMap<(AnchorKind, i32), Vec<usize>> =
+        std::collections::BTreeMap::new();
+    for (idx, a) in anchors.iter().enumerate() {
+        buckets.entry((a.kind, a.level)).or_default().push(idx);
+    }
+
+    // Split each bucket into maximal runs of consecutive lines.
+    let mut groups: Vec<Vec<usize>> = Vec::new();
+    for idxs in buckets.into_values() {
+        let mut run: Vec<usize> = Vec::new();
+        for idx in idxs {
+            if let Some(&last) = run.last()
+                && anchors[idx].line != anchors[last].line + 1
+            {
+                groups.push(std::mem::take(&mut run));
+            }
+            run.push(idx);
         }
-        let target = anchors[i..j].iter().map(|a| a.col).max().unwrap_or(0);
-        for a in &anchors[i..j] {
-            if a.col < target
+        if !run.is_empty() {
+            groups.push(run);
+        }
+    }
+
+    // Apply leftmost anchors first so their padding is reflected in the shift
+    // seen by rightward anchors sharing the same lines.
+    groups.sort_by_key(|g| anchors[g[0]].col);
+
+    let mut shift: std::collections::HashMap<usize, usize> = std::collections::HashMap::new();
+    for g in &groups {
+        let target = g
+            .iter()
+            .map(|&idx| anchors[idx].col + shift.get(&anchors[idx].line).copied().unwrap_or(0))
+            .max()
+            .unwrap_or(0);
+        for &idx in g {
+            let a = &anchors[idx];
+            let at = a.col + shift.get(&a.line).copied().unwrap_or(0);
+            if at < target
                 && let Some(l) = lines.get_mut(a.line)
             {
-                let byte = l
-                    .char_indices()
-                    .nth(a.col)
-                    .map(|(b, _)| b)
-                    .unwrap_or(l.len());
-                l.insert_str(byte, &" ".repeat(target - a.col));
+                let byte = l.char_indices().nth(at).map(|(b, _)| b).unwrap_or(l.len());
+                l.insert_str(byte, &" ".repeat(target - at));
+                *shift.entry(a.line).or_insert(0) += target - at;
             }
         }
-        i = j;
     }
     lines.join("\n")
 }
