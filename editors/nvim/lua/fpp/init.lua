@@ -21,7 +21,7 @@ M.config = vim.deepcopy(defaults)
 
 --- Build the command used to launch the language server.
 ---@return string[]
-local function server_cmd()
+function M.server_cmd()
   return {
     M.config.server_path,
     "--stdio",
@@ -37,7 +37,7 @@ local function start_client()
 
   vim.lsp.start({
     name = "fpp",
-    cmd = server_cmd(),
+    cmd = M.server_cmd(),
     root_dir = root_dir,
     cmd_env = { RUST_BACKTRACE = "1" },
   }, { bufnr = bufnr })

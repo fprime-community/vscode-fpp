@@ -35,6 +35,18 @@ Built on Neovim's built-in LSP client — no external plugins required.
 }
 ```
 
+### From a release tarball
+
+Each GitHub release attaches an `fpp-nvim-<tag>.tar.gz`. Extract it onto your
+`runtimepath`:
+
+```sh
+mkdir -p ~/.local/share/nvim/site/pack/fpp/start
+tar -xzf fpp-nvim-<tag>.tar.gz -C ~/.local/share/nvim/site/pack/fpp/start
+```
+
+Then call `require("fpp").setup({ ... })` from your `init.lua` (see below).
+
 ### Manual
 
 Copy or symlink `editors/nvim` onto your `runtimepath`, then in your `init.lua`:

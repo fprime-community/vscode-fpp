@@ -31,6 +31,23 @@ client — no external packages required.
   (fpp-mode . eglot-ensure))
 ```
 
+### From a release tarball
+
+Each GitHub release attaches an `fpp-emacs-<tag>.tar.gz`. Extract it somewhere on
+your `load-path`, e.g.:
+
+```sh
+mkdir -p ~/.emacs.d/site-lisp
+tar -xzf fpp-emacs-<tag>.tar.gz -C ~/.emacs.d/site-lisp
+```
+
+```elisp
+(add-to-list 'load-path "~/.emacs.d/site-lisp/emacs")
+(require 'fpp-mode)
+(setq fpp-lsp-server-path "/path/to/venv/bin/fpp_lsp_server")
+(add-hook 'fpp-mode-hook #'eglot-ensure)
+```
+
 ### Manual
 
 ```elisp

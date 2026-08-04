@@ -1,0 +1,10 @@
+-- busted configuration. `nlua` runs specs under Neovim so the `vim` API is
+-- available. Specs live in `spec/` and match the `_spec` filename pattern.
+return {
+  default = {
+    lua = "nlua",
+    ROOT = { "spec" },
+    pattern = "_spec",
+    verbose = true,
+  },
+}
