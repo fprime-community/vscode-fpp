@@ -1,4 +1,5 @@
 mod analysis;
+mod config;
 mod diagnostics;
 mod dispatcher;
 mod global_state;

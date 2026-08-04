@@ -7,9 +7,9 @@ import {
 } from "vscode-languageclient/node";
 
 import * as Settings from "./settings";
-import { FppProject } from "./project";
-import { locs, LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from "./locs";
-import { dumpSyntaxTree } from "./lsp_ext";
+import { LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from "./locs";
+import { dumpSyntaxTree, reloadWorkspace } from "./lsp_ext";
+import * as Config from "./fppLspConfig";
 
 let extension: FppExtension;
 
@@ -18,23 +18,42 @@ class FppExtension implements vscode.Disposable {
     private outputChannel: vscode.OutputChannel;
     private traceOutputChannel: vscode.OutputChannel;
 
+    private projectStatus: vscode.LanguageStatusItem;
+
     client?: LanguageClient;
-    project: FppProject;
 
     constructor(
         private readonly context: vscode.ExtensionContext
     ) {
         this.outputChannel = vscode.window.createOutputChannel("FPP");
         this.traceOutputChannel = vscode.window.createOutputChannel("FPP Trace", { log: true });
-        this.project = new FppProject({ language: "fpp" });
+
+        this.projectStatus = vscode.languages.createLanguageStatusItem(
+            'fpp.project', { language: "fpp" }
+        );
+        this.projectStatus.name = "FPP Project";
+        this.projectStatus.command = { title: "Select", command: "fpp.select" };
+
+        // The `.fpp-lsp` file is the source of truth for project config. Watch it so
+        // the status reflects external edits (the server also reloads on change via
+        // the client's synchronized file events).
+        const configWatcher = Config.watchConfig();
+        const refresh = () => { void this.refreshProjectStatus(); };
+        configWatcher.onDidCreate(refresh);
+        configWatcher.onDidChange(refresh);
+        configWatcher.onDidDelete(refresh);
 
         this.subscriptions = [
             Settings.onLspServerPathChanged(() => {
                 this.initializeClient();
             }),
+            this.projectStatus,
+            configWatcher,
             this.outputChannel,
             this.traceOutputChannel,
         ];
+
+        void this.refreshProjectStatus();
     }
 
     async initializeClient() {
@@ -81,6 +100,8 @@ class FppExtension implements vscode.Disposable {
                 fileEvents: [
                     vscode.workspace.createFileSystemWatcher("**/*.fpp"),
                     vscode.workspace.createFileSystemWatcher("**/*.fppi"),
+                    // The server re-runs project discovery when `.fpp-lsp` changes.
+                    vscode.workspace.createFileSystemWatcher("**/.fpp-lsp"),
                 ],
             },
             outputChannel: this.outputChannel,
@@ -93,27 +114,49 @@ class FppExtension implements vscode.Disposable {
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to start language server: ${e}`);
         }
-
-        await this.reload();
     }
 
-    async setProjectLocs(locsFile: vscode.Uri | undefined) {
-        await this.context.workspaceState.update('fpp.locsFile', locsFile?.path);
-        if (this.client) {
-            await this.project.locsFile(this.client, locsFile);
+    /** Update the language-status item to reflect the current `.fpp-lsp` config. */
+    private async refreshProjectStatus() {
+        const cfg = await Config.readConfig();
+        if (!cfg || (!cfg.locs && !cfg.buildCache && !cfg.scanWorkspace)) {
+            this.projectStatus.text = "No FPP project configured";
+            this.projectStatus.severity = vscode.LanguageStatusSeverity.Warning;
+        } else if (cfg.scanWorkspace) {
+            this.projectStatus.text = "FPP: entire workspace";
+            this.projectStatus.severity = vscode.LanguageStatusSeverity.Information;
+        } else {
+            this.projectStatus.text = `FPP: ${cfg.locs ?? cfg.buildCache}`;
+            this.projectStatus.severity = vscode.LanguageStatusSeverity.Information;
         }
     }
 
-    async setProjectScanWorkspace() {
-        await this.context.workspaceState.update('fpp.locsFile', '*');
-        if (this.client) {
-            await this.project.workspaceScan(this.client);
-        }
-    }
-
+    /** Ask the server to re-run project discovery and re-index. */
     async reload() {
-        if (this.client) {
-            await this.project.reload(this.client);
+        await this.client?.sendRequest(reloadWorkspace);
+    }
+
+    /** Write a locs selection into `.fpp-lsp` and trigger a reload. */
+    async setProjectLocs(locsFile: vscode.Uri) {
+        if (await Config.setLocs(locsFile)) {
+            await this.reload();
+            await this.refreshProjectStatus();
+        }
+    }
+
+    /** Write a full-workspace selection into `.fpp-lsp` and trigger a reload. */
+    async setProjectScanWorkspace() {
+        if (await Config.setScanWorkspace()) {
+            await this.reload();
+            await this.refreshProjectStatus();
+        }
+    }
+
+    /** Clear the project selection in `.fpp-lsp` and trigger a reload. */
+    async clearProject() {
+        if (await Config.clearProject()) {
+            await this.reload();
+            await this.refreshProjectStatus();
         }
     }
 
@@ -190,11 +233,11 @@ export async function activate(context: vscode.ExtensionContext) {
                 extension.client?.sendNotification(dumpSyntaxTree, { uri: vscode.window.activeTextEditor.document.uri.toString() })
             }
         }),
-        vscode.commands.registerCommand('fpp.select', () => {
-            vscode.window.showQuickPick(
-                (async () => {
-                    const currentLocs = locs(context);
+        vscode.commands.registerCommand('fpp.select', async () => {
+            const currentLocs = (await Config.readConfig())?.locs;
 
+            const picked = await vscode.window.showQuickPick(
+                (async () => {
                     const searchPaths = Settings.locsSearch();
                     const excludeGlob = Settings.excludeLocs();
 
@@ -231,7 +274,7 @@ export async function activate(context: vscode.ExtensionContext) {
                             label: relPath,
                             uri,
                             locsKind: LocsQuickPickType.locsFile,
-                            description: currentLocs === uri.path ? '(Active)' : undefined
+                            description: currentLocs === relPath ? '(Active)' : undefined
                         } as LocsQuickPickFile);
                     }
 
@@ -241,29 +284,27 @@ export async function activate(context: vscode.ExtensionContext) {
                     title: 'Select FPP Locs for project indexing',
                     canPickMany: false,
                 }
-            ).then((picked) => {
-                if (picked?.kind === vscode.QuickPickItemKind.Default) {
-                    switch (picked.locsKind) {
-                        case LocsQuickPickType.locsOpenDialog:
-                            vscode.commands.executeCommand('fpp.open');
-                            break;
-                        case LocsQuickPickType.locsFile:
-                            extension.setProjectLocs(picked.uri);
-                            break;
-                        case LocsQuickPickType.workspaceScan:
-                            extension.setProjectScanWorkspace();
-                            break;
-                    }
+            );
+
+            if (picked?.kind === vscode.QuickPickItemKind.Default) {
+                switch (picked.locsKind) {
+                    case LocsQuickPickType.locsOpenDialog:
+                        vscode.commands.executeCommand('fpp.open');
+                        break;
+                    case LocsQuickPickType.locsFile:
+                        extension.setProjectLocs(picked.uri);
+                        break;
+                    case LocsQuickPickType.workspaceScan:
+                        extension.setProjectScanWorkspace();
+                        break;
                 }
-            });
+            }
         }),
         vscode.commands.registerCommand('fpp.close', async () => {
-            await extension.setProjectLocs(undefined);
+            await extension.clearProject();
         }),
         vscode.commands.registerCommand('fpp.open', () => {
-            const currentLocs = locs(context);
             vscode.window.showOpenDialog({
-                defaultUri: currentLocs ? vscode.Uri.file(currentLocs) : undefined,
                 openLabel: "Open locs",
                 canSelectFiles: true,
                 canSelectFolders: false,
@@ -277,15 +318,9 @@ export async function activate(context: vscode.ExtensionContext) {
                 }
             });
         }),
-        Settings.onLocsSearchChanged(() => {
-            // Don't re-scan if a locs file is already loaded
-            if (!locs(context)) {
-                extension.searchForLocs().then((f) => extension.setProjectLocs(f));
-            }
-        }),
         Settings.onLspServerLogLevelChanged(() => {
             extension.initializeClient();
-        })
+        }),
     );
 
     await extension.initializeClient();

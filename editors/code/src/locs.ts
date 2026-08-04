@@ -32,7 +32,3 @@ export type LocsQuickPickItem = (
     | LocsQuickPickFile
     | LocsQuickPickSeparator
 );
-
-export function locs(context: vscode.ExtensionContext) {
-    return context.workspaceState.get<string>("fpp.locsFile");
-}

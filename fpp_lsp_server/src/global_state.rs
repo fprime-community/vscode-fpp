@@ -233,6 +233,8 @@ impl GlobalState {
         capabilities: lsp::capabilities::ClientCapabilities,
     ) {
         let mut state = GlobalState::new(workspace_folders, connection.sender, capabilities);
+        // Discover the `.fpp-lsp` project config and index the workspace on startup.
+        state.task(Task::ReloadWorkspace);
         state.main_loop(connection.receiver);
     }
 }

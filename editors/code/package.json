@@ -483,9 +483,11 @@
         "vsix": "vsce package"
     },
     "dependencies": {
+        "js-yaml": "^4.1.0",
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
+        "@types/js-yaml": "^4.0.9",
         "@types/node": "^22",
         "@types/vscode": "^1.81.0",
         "@vscode/vsce": "^3.2.1",

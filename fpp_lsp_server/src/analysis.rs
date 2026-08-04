@@ -116,8 +116,14 @@ impl GlobalState {
             Task::ReloadWorkspace => {
                 tracing::info!("reloading workspace");
 
+                // Re-read the `.fpp-lsp` project config so external edits to it are
+                // picked up. This is the single source of truth for project setup.
+                self.workspace = crate::config::discover(self.workspace_folders.as_deref());
+
                 match self.workspace.clone() {
-                    Workspace::None => {}
+                    Workspace::None => {
+                        tracing::info!("no .fpp-lsp project config found; workspace not indexed");
+                    }
                     Workspace::LocsFile(uri) => self.task(Task::LoadLocsFile(uri)),
                     Workspace::Full => self.task(Task::LoadFullWorkspace),
                 }

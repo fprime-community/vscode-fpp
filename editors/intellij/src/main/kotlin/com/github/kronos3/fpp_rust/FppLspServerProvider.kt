@@ -1,23 +1,17 @@
 package com.github.kronos3.fpp_rust
 
-import com.github.kronos3.fpp_rust.settings.FppProject
-import com.github.kronos3.fpp_rust.settings.FppSettings
 import com.github.kronos3.fpp_rust.settings.FppSettingsConfigurable
 import com.github.kronos3.fpp_rust.util.LspCli
-import com.intellij.notification.NotificationType
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServer
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
 import com.intellij.platform.lsp.api.customization.LspCustomization
@@ -33,11 +27,11 @@ private class ReloadWorkspaceAction(
     private val lspServer: LspServer,
 ) : AnAction(
     "Reload Workspace",
-    "Reload FPP workspace by scanning all .fpp files in IDE workspace",
+    "Reload the FPP workspace by re-running project discovery (.fpp-lsp)",
     AllIcons.Actions.Refresh
 ), DumbAware {
     override fun actionPerformed(e: AnActionEvent): Unit =
-        run { e.project?.let { project -> loadAllFiles(project, lspServer) } }
+        run { reloadWorkspace(lspServer) }
 }
 
 open class FppLspProjectWidgetItem(lspServer: LspServer, currentFile: VirtualFile?) : LspServerWidgetItem(
@@ -131,41 +125,18 @@ private class FppLspServerDescriptor(project: Project) : ProjectWideLspServerDes
         }
 }
 
-data class UriRequest(val uri: String)
-
 interface FppLsp4jServer : LanguageServer {
     @JsonRequest("fpp/reloadWorkspace")
-    fun reloadWorkspace(params: Void): CompletableFuture<Void>
-
-    @JsonRequest("fpp/setLocsWorkspace")
-    fun setLocsWorkspace(params: UriRequest): CompletableFuture<Void>
-
-    @JsonRequest("fpp/setFullWorkspace")
-    fun setFullWorkspace(): CompletableFuture<Void>
+    fun reloadWorkspace(params: Void?): CompletableFuture<Void>
 }
 
-fun loadAllFiles(project: Project, lspServer: LspServer) {
+/**
+ * Ask the server to re-run project discovery. Project configuration lives in the
+ * workspace's `.fpp-lsp` file, which the server reads and reloads; the client only
+ * needs to trigger a reload.
+ */
+fun reloadWorkspace(lspServer: LspServer) {
     currentThreadCoroutineScope().launch {
-        lspServer.sendRequest { (it as FppLsp4jServer).setFullWorkspace() }
+        lspServer.sendRequest { (it as FppLsp4jServer).reloadWorkspace(null) }
     }
-}
-
-fun reloadProject(project: Project) {
-    ApplicationManager.getApplication().invokeLater({
-        LspServerManager.getInstance(project).getServersForProvider(FppLspServerSupportProvider::class.java).forEach {
-            val fppProject = FppSettings.getInstance(project).state.project
-            if (fppProject != null) {
-                when (fppProject) {
-                    is FppProject.EntireWorkspace -> {
-                        (it as FppLsp4jServer).setFullWorkspace()
-                    }
-
-                    is FppProject.LocsFile -> {
-                        (it as FppLsp4jServer).setLocsWorkspace(UriRequest(fppProject.uri))
-                    }
-                }
-
-            }
-        }
-    }, project.disposed)
 }

@@ -71,6 +71,19 @@ pub fn handle_did_change_watched_file(
     params: DidChangeWatchedFilesParams,
 ) -> Result<()> {
     for file in params.changes {
+        // A change to the `.fpp-lsp` project config (created, edited, or removed)
+        // re-runs discovery and re-indexes the workspace.
+        if file
+            .uri
+            .path()
+            .as_str()
+            .ends_with(crate::config::CONFIG_FILE_NAME)
+        {
+            tracing::info!(uri = %file.uri.as_str(), ".fpp-lsp changed; reloading workspace");
+            state.task(Task::ReloadWorkspace);
+            continue;
+        }
+
         match file.typ {
             FileChangeType::CHANGED => {
                 // This just requires a VFS update

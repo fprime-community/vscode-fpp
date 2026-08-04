@@ -16,22 +16,6 @@ impl Request for ReloadWorkspace {
     const METHOD: &'static str = "fpp/reloadWorkspace";
 }
 
-pub enum SetLocsWorkspace {}
-
-impl Request for SetLocsWorkspace {
-    type Params = UriRequest;
-    type Result = ();
-    const METHOD: &'static str = "fpp/setLocsWorkspace";
-}
-
-pub enum SetFullWorkspace {}
-
-impl Request for SetFullWorkspace {
-    type Params = ();
-    type Result = ();
-    const METHOD: &'static str = "fpp/setFullWorkspace";
-}
-
 pub enum DumpSyntaxTree {}
 
 impl Notification for DumpSyntaxTree {
