@@ -13,6 +13,8 @@ pub enum AnchorKind {
     PostAnnotation,
     /// A `->` in a topology direct connection.
     Arrow,
+    /// An `=` in a constant definition.
+    Equals,
 }
 
 /// Document IR node.

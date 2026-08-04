@@ -31,9 +31,9 @@ module Expressions {
     constant chained = a.b[0].c
 
     @ Float and boolean literals
-    constant pi = 3.14
+    constant pi   = 3.14
     constant flag = true
-    constant off = false
+    constant off  = false
 
     @ String literal constant
     constant greeting = "hello"
