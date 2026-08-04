@@ -64,6 +64,20 @@ impl<'ast> CheckExprTypes<'ast> {
         }
     }
 
+    /// For shift operations, require the operand to be an integer or enum type.
+    fn check_int_or_enum(&self, a: &Analysis, expr: &'ast Expr) {
+        if let Some(ty) = a.type_map.get(&expr.node_id) {
+            let ok = ty.is_int() || matches!(Type::underlying_type(ty).deref(), Type::Enum(_));
+            if !ok {
+                SemanticError::InvalidType {
+                    loc: expr.span(),
+                    msg: format!("{} is not an integer or enum type", ty),
+                }
+                .emit();
+            }
+        }
+    }
+
     fn check_type_is_numerical_opt(&self, a: &Analysis, expr: &'ast Option<Expr>) {
         match expr {
             None => {}
@@ -274,34 +288,55 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
 
                 a.type_map.insert(node.node_id, elt_ty);
             }
-            ExprKind::Binop { left, right, .. } => {
-                let ty = match (
-                    a.type_map.get(&left.node_id),
-                    a.type_map.get(&right.node_id),
-                ) {
-                    (Some(lty), Some(rty)) => match Type::common_type(lty, rty) {
-                        None => {
-                            SemanticError::InvalidType {
-                                loc: node.span(),
-                                msg: format!(
-                                    "invalid binary operation between {} and {}",
-                                    lty, rty
-                                ),
+            ExprKind::Binop { left, right, op } => match op {
+                fpp_ast::Binop::LShift | fpp_ast::Binop::RShift => {
+                    // Shift operations independently require both operands to be
+                    // an integer or enum type; the result is an integer.
+                    self.check_int_or_enum(a, left);
+                    self.check_int_or_enum(a, right);
+                    a.type_map.insert(node.node_id, Arc::new(Type::Integer));
+                }
+                _ => {
+                    let ty = match (
+                        a.type_map.get(&left.node_id),
+                        a.type_map.get(&right.node_id),
+                    ) {
+                        (Some(lty), Some(rty)) => match Type::common_type(lty, rty) {
+                            None => {
+                                SemanticError::InvalidType {
+                                    loc: node.span(),
+                                    msg: format!(
+                                        "invalid binary operation between {} and {}",
+                                        lty, rty
+                                    ),
+                                }
+                                .emit();
+                                return ControlFlow::Continue(());
                             }
-                            .emit();
+                            Some(ty) => ty,
+                        },
+                        _ => {
+                            // One of the sides of the binary operation does not have a type
                             return ControlFlow::Continue(());
                         }
-                        Some(ty) => ty,
-                    },
-                    _ => {
-                        // One of the sides of the binary operation does not have a type
-                        return ControlFlow::Continue(());
-                    }
-                };
+                    };
 
-                self.check_type_is_numerical(a, left);
-                self.check_type_is_numerical(a, right);
-                a.type_map.insert(node.node_id, ty);
+                    self.check_type_is_numerical(a, left);
+                    self.check_type_is_numerical(a, right);
+                    a.type_map.insert(node.node_id, ty);
+                }
+            },
+            ExprKind::SizeOf(type_name) => {
+                if let Some(ty) = a.type_map.get(&type_name.node_id)
+                    && !ty.is_displayable()
+                {
+                    SemanticError::InvalidType {
+                        loc: node.span(),
+                        msg: format!("size of type {} is not known in the model", ty),
+                    }
+                    .emit();
+                }
+                a.type_map.insert(node.node_id, Arc::new(Type::Integer));
             }
             ExprKind::Dot { e, id } => {
                 if a.type_map.contains_key(&node.node_id) {

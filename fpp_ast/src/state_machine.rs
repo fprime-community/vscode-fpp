@@ -10,11 +10,18 @@ pub struct DefStateMachine {
 #[ast]
 #[derive(AstAnnotated, Clone, DirectWalkable)]
 pub enum StateMachineMember {
+    DefAbsType(DefAbsType),
+    DefAliasType(DefAliasType),
+    DefArray(DefArray),
     DefAction(DefAction),
     DefChoice(DefChoice),
+    DefConstant(DefConstant),
+    DefEnum(DefEnum),
     DefGuard(DefGuard),
     DefSignal(DefSignal),
     DefState(DefState),
+    DefStruct(DefStruct),
+    SpecInclude(SpecInclude),
     SpecInitialTransition(SpecInitialTransition),
 }
 
@@ -72,6 +79,7 @@ pub struct DefState {
 pub enum StateMember {
     DefChoice(DefChoice),
     DefState(DefState),
+    SpecInclude(SpecInclude),
     SpecInitialTransition(SpecInitialTransition),
     SpecStateEntry(SpecStateEntry),
     SpecStateExit(SpecStateExit),

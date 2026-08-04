@@ -365,6 +365,17 @@ impl Value {
             |left, right| Ok(left - right),
         )
     }
+
+    /// Extract an integer value for use as a shift operand or shift amount.
+    /// Returns `None` for non-integer values.
+    pub fn as_shift_int(&self) -> Option<i128> {
+        match self {
+            Value::Integer(IntegerValue(v)) => Some(*v),
+            Value::PrimitiveInteger(PrimitiveIntegerValue { value, .. }) => Some(*value),
+            Value::EnumConstant(EnumConstantValue { value: (_, v), .. }) => Some(*v),
+            _ => None,
+        }
+    }
 }
 
 impl fmt::Display for Value {

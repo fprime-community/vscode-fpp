@@ -3,13 +3,34 @@ use crate::parser::CompletedMarker;
 
 pub(super) fn expr(p: &mut Parser) {
     let m = p.start();
-    let mut lhs = match expr_add_sub_operand(p) {
+    let mut lhs = match expr_shift_operand(p) {
         None => {
             m.abandon(p);
             return;
         }
         Some(lhs) => lhs,
     };
+
+    loop {
+        match p.current() {
+            SHIFT_LEFT | SHIFT_RIGHT => {
+                let m = lhs.precede(p);
+                let op = p.start();
+                p.bump_any();
+                op.complete(p, BINARY_OP);
+                expr_shift_operand(p);
+                lhs = m.complete(p, EXPR_BINARY);
+            }
+            _ => {
+                m.complete(p, EXPR);
+                return;
+            }
+        }
+    }
+}
+
+fn expr_shift_operand(p: &mut Parser) -> Option<CompletedMarker> {
+    let mut lhs = expr_add_sub_operand(p)?;
 
     loop {
         match p.current() {
@@ -21,10 +42,7 @@ pub(super) fn expr(p: &mut Parser) {
                 expr_add_sub_operand(p);
                 lhs = m.complete(p, EXPR_BINARY);
             }
-            _ => {
-                m.complete(p, EXPR);
-                return;
-            }
+            _ => return Some(lhs),
         }
     }
 }
@@ -116,11 +134,22 @@ fn expr_primary(p: &mut Parser) -> Option<CompletedMarker> {
             p.bump(IDENT);
             Some(m.complete(p, EXPR_IDENT))
         }
+        SIZEOF_KW => Some(expr_sizeof(p)),
         _ => {
             p.expect(EXPR);
             None
         }
     }
+}
+
+fn expr_sizeof(p: &mut Parser) -> CompletedMarker {
+    assert!(p.at(SIZEOF_KW));
+    let m = p.start();
+    p.bump(SIZEOF_KW);
+    p.expect(LEFT_PAREN);
+    types::type_name(p);
+    p.expect(RIGHT_PAREN);
+    m.complete(p, EXPR_SIZEOF)
 }
 
 fn expr_paren(p: &mut Parser) -> CompletedMarker {

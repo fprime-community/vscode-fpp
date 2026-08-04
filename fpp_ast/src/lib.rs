@@ -143,6 +143,7 @@ pub enum ExprKind {
     #[visitable(ignore)]
     LiteralString(String),
     Paren(Box<Expr>),
+    SizeOf(Box<TypeName>),
     Struct(Vec<StructExprMember>),
     Unop {
         #[visitable(ignore)]
@@ -181,6 +182,8 @@ pub enum Binop {
     Div,
     Mul,
     Sub,
+    LShift,
+    RShift,
 }
 
 #[derive(Debug, Clone)]

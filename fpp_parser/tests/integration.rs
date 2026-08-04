@@ -139,6 +139,16 @@ fn parse_error() {
 }
 
 #[test]
+fn expr_shift_sizeof() {
+    run_test("expr-shift-sizeof")
+}
+
+#[test]
+fn state_machine_defs() {
+    run_test("state-machine-defs")
+}
+
+#[test]
 fn state_machine() {
     run_test("state-machine")
 }

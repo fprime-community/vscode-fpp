@@ -278,6 +278,8 @@ impl<'a> Cursor<'a> {
                 | TokenKind::Slash
                 | TokenKind::Minus
                 | TokenKind::Plus
+                | TokenKind::ShiftLeft
+                | TokenKind::ShiftRight
                 | TokenKind::Equals
                 | TokenKind::Semi
                 | TokenKind::Comma

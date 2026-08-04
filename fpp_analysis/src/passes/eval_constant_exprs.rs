@@ -210,21 +210,41 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
                     Some(v) => v,
                 };
 
-                let val = match op {
-                    Binop::Add => left_val.add(right_val),
-                    Binop::Div => left_val.div(right_val),
-                    Binop::Mul => left_val.mul(right_val),
-                    Binop::Sub => left_val.sub(right_val),
-                };
+                match op {
+                    Binop::LShift | Binop::RShift => {
+                        if let (Some(lhs), Some(shift)) =
+                            (left_val.as_shift_int(), right_val.as_shift_int())
+                        {
+                            if !(0..=255).contains(&shift) {
+                                SemanticError::InvalidShiftAmount { loc: right.span() }.emit();
+                            } else if let Some(v) = match op {
+                                Binop::LShift => lhs.checked_shl(shift as u32),
+                                _ => lhs.checked_shr(shift as u32),
+                            } {
+                                a.value_map
+                                    .insert(node.node_id, Value::Integer(IntegerValue(v)));
+                            }
+                        }
+                    }
+                    _ => {
+                        let val = match op {
+                            Binop::Add => left_val.add(right_val),
+                            Binop::Div => left_val.div(right_val),
+                            Binop::Mul => left_val.mul(right_val),
+                            Binop::Sub => left_val.sub(right_val),
+                            Binop::LShift | Binop::RShift => unreachable!(),
+                        };
 
-                match val {
-                    Ok(val) => {
-                        a.value_map.insert(node.node_id, val);
+                        match val {
+                            Ok(val) => {
+                                a.value_map.insert(node.node_id, val);
+                            }
+                            Err(MathError::DivByZero) => {
+                                SemanticError::DivisionByZero { loc: right.span() }.emit();
+                            }
+                            Err(MathError::InvalidInputs) => {}
+                        }
                     }
-                    Err(MathError::DivByZero) => {
-                        SemanticError::DivisionByZero { loc: right.span() }.emit();
-                    }
-                    Err(MathError::InvalidInputs) => {}
                 }
             }
             ExprKind::Dot { e, id } => {
@@ -330,6 +350,20 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
                     a.value_map.insert(node.node_id, v.clone());
                 }
             },
+            ExprKind::SizeOf(type_name) => {
+                // NOTE: only framework-independent types have a known serialized
+                // size within the current pass set. Sizes for strings, arrays and
+                // structs require CheckFrameworkDefs / type finalization and are
+                // left unevaluated here (see Type::primitive_serialized_size).
+                if let Some(size) = a
+                    .type_map
+                    .get(&type_name.node_id)
+                    .and_then(|ty| ty.primitive_serialized_size())
+                {
+                    a.value_map
+                        .insert(node.node_id, Value::Integer(IntegerValue(size)));
+                }
+            }
             ExprKind::Struct(struct_expr) => {
                 a.value_map.insert(
                     node.node_id,

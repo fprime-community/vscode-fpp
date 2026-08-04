@@ -143,6 +143,16 @@ fn parse_error() {
 }
 
 #[test]
+fn expr_shift_sizeof() {
+    run_test_from_fpp_parser("expr-shift-sizeof")
+}
+
+#[test]
+fn state_machine_defs() {
+    run_test_from_fpp_parser("state-machine-defs")
+}
+
+#[test]
 fn state_machine() {
     run_test_from_fpp_parser("state-machine")
 }

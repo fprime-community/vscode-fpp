@@ -1,10 +1,5 @@
- --> [ local path prefix ]/invalid_symbols/state_machine_as_qualifier.fpp:3:29
+ --> [ local path prefix ]/invalid_symbols/state_machine_as_qualifier.fpp:3:31
   |
 3 |   state machine instance s: S.s
-  |                             ^ not a qualifier
-  |
- ::: [ local path prefix ]/invalid_symbols/state_machine_as_qualifier.fpp:1:1
-  |
-1 | state machine S
-  | --------------- S defined here
+  |                               ^ cannot find state machine `s` in scope
 

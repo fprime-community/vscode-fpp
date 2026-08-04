@@ -68,6 +68,9 @@ pub enum SemanticError {
     DivisionByZero {
         loc: Span,
     },
+    InvalidShiftAmount {
+        loc: Span,
+    },
     InvalidTypeForMemberSelection {
         loc: Span,
         member: String,
@@ -182,6 +185,11 @@ impl From<SemanticError> for Diagnostic {
             }
             SemanticError::DivisionByZero { loc } => {
                 Diagnostic::new(loc, Level::Error, "division by zero")
+            }
+            SemanticError::InvalidShiftAmount { loc } => {
+                Diagnostic::new(loc, Level::Error, "invalid shift amount").note(
+                    "shift amount must be a non-negative value that must be in the range [0,255]",
+                )
             }
             SemanticError::InvalidTypeForMemberSelection {
                 loc,

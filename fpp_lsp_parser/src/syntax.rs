@@ -112,6 +112,7 @@ pub enum SyntaxKind {
     SEVERITY_KW,
     SIGNAL_KW,
     SIZE_KW,
+    SIZEOF_KW,
     STACK_KW,
     STATE_KW,
     STRING_KW,
@@ -155,6 +156,8 @@ pub enum SyntaxKind {
     SEMI,
     SLASH,
     STAR,
+    SHIFT_LEFT,
+    SHIFT_RIGHT,
 
     // Special
     WHITESPACE,
@@ -221,6 +224,7 @@ pub enum SyntaxKind {
     EXPR_STRUCT_MEMBER_LIST,
     EXPR_LITERAL,
     EXPR_IDENT,
+    EXPR_SIZEOF,
     EXPR_STRUCT_MEMBER,
     BASE_ID,
     BINARY_OP,
@@ -482,6 +486,7 @@ impl SyntaxKind {
                 | SEVERITY_KW
                 | SIGNAL_KW
                 | SIZE_KW
+                | SIZEOF_KW
                 | STACK_KW
                 | STATE_KW
                 | STRING_KW

@@ -161,6 +161,29 @@ impl Type {
         }
     }
 
+    /// Best-effort serialized size, in bytes, for framework-independent types.
+    ///
+    /// Returns `None` for types whose serialized size depends on framework
+    /// definitions (e.g. strings, which need `FwSizeStoreType` /
+    /// `FW_FIXED_LENGTH_STRING_SIZE`) or on type finalization
+    /// (arrays/structs) that is not available within the current pass set.
+    pub fn primitive_serialized_size(&self) -> Option<i128> {
+        match self {
+            Type::AliasType(alias) => alias.alias_type.primitive_serialized_size(),
+            Type::Boolean => Some(1),
+            Type::Float(FloatKind::F32) => Some(4),
+            Type::Float(FloatKind::F64) => Some(8),
+            Type::PrimitiveInt(kind) => Some(match kind {
+                IntegerKind::I8 | IntegerKind::U8 => 1,
+                IntegerKind::I16 | IntegerKind::U16 => 2,
+                IntegerKind::I32 | IntegerKind::U32 => 4,
+                IntegerKind::I64 | IntegerKind::U64 => 8,
+            }),
+            Type::Enum(ty) => Type::PrimitiveInt(ty.rep_type).primitive_serialized_size(),
+            _ => None,
+        }
+    }
+
     /** Is this type an int type? */
     pub fn is_int(&self) -> bool {
         match self {

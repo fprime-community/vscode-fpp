@@ -1,11 +1,12 @@
 use super::*;
 
 const STATE_MACHINE_MEMBER_RECOVERY_SET: TokenSet = TokenSet::new(&[
-    EOL, SEMI, STATE_KW, SIGNAL_KW, INITIAL_KW, ACTION_KW, GUARD_KW, CHOICE_KW,
+    EOL, SEMI, STATE_KW, SIGNAL_KW, INITIAL_KW, ACTION_KW, GUARD_KW, CHOICE_KW, TYPE_KW, ARRAY_KW,
+    CONSTANT_KW, ENUM_KW, STRUCT_KW, INCLUDE_KW,
 ]);
 
 const STATE_MEMBER_RECOVERY_SET: TokenSet = TokenSet::new(&[
-    EOL, SEMI, STATE_KW, CHOICE_KW, INITIAL_KW, ENTRY_KW, EXIT_KW, ON_KW,
+    EOL, SEMI, STATE_KW, CHOICE_KW, INITIAL_KW, ENTRY_KW, EXIT_KW, ON_KW, INCLUDE_KW,
 ]);
 
 pub(super) fn def_state_machine(p: &mut Parser) {
@@ -34,6 +35,12 @@ pub(super) fn def_state_machine(p: &mut Parser) {
 
 fn state_machine_member(p: &mut Parser) {
     match p.current() {
+        TYPE_KW => types::type_alias_or_abstract(p),
+        ARRAY_KW => types::def_array(p),
+        CONSTANT_KW => module::def_constant(p),
+        ENUM_KW => types::def_enum(p),
+        STRUCT_KW => types::def_struct(p),
+        INCLUDE_KW => spec_include(p),
         INITIAL_KW => spec_initial_transition(p),
         STATE_KW => def_state(p),
         SIGNAL_KW => def_signal(p),
@@ -88,6 +95,7 @@ fn state_member(p: &mut Parser) {
         INITIAL_KW => spec_initial_transition(p),
         ENTRY_KW => spec_state_entry(p),
         EXIT_KW => spec_state_exit(p),
+        INCLUDE_KW => spec_include(p),
         ON_KW => spec_state_transition(p),
         _ => {
             p.err_recover("expected state machine member", STATE_MEMBER_RECOVERY_SET);

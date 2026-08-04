@@ -169,6 +169,7 @@ impl<'a> Iterator for Lexer<'a> {
                             "severity" => Keyword(Severity),
                             "signal" => Keyword(Signal),
                             "size" => Keyword(Size),
+                            "sizeof" => Keyword(Sizeof),
                             "stack" => Keyword(Stack),
                             "state" => Keyword(State),
                             "string" => Keyword(String_),
@@ -360,6 +361,24 @@ impl<'a> Lexer<'a> {
                     RightArrow
                 } else {
                     Minus
+                }
+            }
+
+            '<' => {
+                if self.first() == '<' {
+                    self.bump();
+                    ShiftLeft
+                } else {
+                    Unknown
+                }
+            }
+
+            '>' => {
+                if self.first() == '>' {
+                    self.bump();
+                    ShiftRight
+                } else {
+                    Unknown
                 }
             }
 

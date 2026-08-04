@@ -219,8 +219,12 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
         ControlFlow::Continue(())
     }
 
-    fn visit_expr(&self, _: &mut Self::State, _: &'ast Expr) -> ControlFlow<Self::Break> {
-        ControlFlow::Continue(())
+    fn visit_expr(&self, a: &mut Self::State, node: &'ast Expr) -> ControlFlow<Self::Break> {
+        // Expressions are not type uses, so we do not delegate to the use
+        // analyzer chain. We still walk sub-expressions so that a `sizeof(T)`
+        // nested anywhere in an expression has its type name resolved by
+        // `visit_type_name`.
+        node.walk(a, self)
     }
 
     fn visit_type_name(

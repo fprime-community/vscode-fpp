@@ -92,6 +92,7 @@ pub enum KeywordKind {
     Severity,
     Signal,
     Size,
+    Sizeof,
     Stack,
     State,
     String_,
@@ -164,6 +165,8 @@ pub enum TokenKind {
     Semi,
     Slash,
     Star,
+    ShiftLeft,
+    ShiftRight,
 }
 
 impl std::fmt::Display for TokenKind {
@@ -198,6 +201,8 @@ impl std::fmt::Display for TokenKind {
             TokenKind::Semi => ";",
             TokenKind::Slash => "/",
             TokenKind::Star => "*",
+            TokenKind::ShiftLeft => "<<",
+            TokenKind::ShiftRight => ">>",
         };
 
         f.write_str(s)

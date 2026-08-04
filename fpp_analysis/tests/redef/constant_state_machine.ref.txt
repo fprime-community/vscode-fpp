@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/redef/constant_state_machine.fpp:3:15
+  |
+3 | state machine S
+  |               ^ redefinition of symbol S
+  |
+ ::: [ local path prefix ]/redef/constant_state_machine.fpp:1:1
+  |
+1 | constant S = 0
+  | -------------- previous definition is here
+

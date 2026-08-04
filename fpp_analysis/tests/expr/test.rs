@@ -54,3 +54,13 @@ fn struct_duplicate() {
 fn array_ok() {
     run_test("expr/array_ok")
 }
+
+#[test]
+fn sizeof_ok() {
+    run_test("expr/sizeof_ok")
+}
+
+#[test]
+fn sizeof_error() {
+    run_test("expr/sizeof_error")
+}

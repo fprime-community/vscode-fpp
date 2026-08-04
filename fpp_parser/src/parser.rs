@@ -1116,6 +1116,15 @@ impl<'a> Parser<'a> {
 
     fn state_machine_member(&mut self) -> ParseResult<StateMachineMember> {
         match self.peek(0) {
+            Keyword(Type) => match self.peek(2) {
+                Equals => Ok(StateMachineMember::DefAliasType(self.alias_type()?)),
+                _ => Ok(StateMachineMember::DefAbsType(self.abs_type()?)),
+            },
+            Keyword(Array) => Ok(StateMachineMember::DefArray(self.def_array()?)),
+            Keyword(Constant) => Ok(StateMachineMember::DefConstant(self.def_constant()?)),
+            Keyword(Enum) => Ok(StateMachineMember::DefEnum(self.def_enum()?)),
+            Keyword(Struct) => Ok(StateMachineMember::DefStruct(self.def_struct()?)),
+            Keyword(Include) => Ok(StateMachineMember::SpecInclude(self.spec_include()?)),
             Keyword(Initial) => Ok(StateMachineMember::SpecInitialTransition(
                 self.spec_initial_transition()?,
             )),
@@ -1127,6 +1136,12 @@ impl<'a> Parser<'a> {
             _ => Err(self.cursor.err_expected_one_of(
                 "state machine member expected",
                 vec![
+                    Keyword(Type),
+                    Keyword(Array),
+                    Keyword(Constant),
+                    Keyword(Enum),
+                    Keyword(Struct),
+                    Keyword(Include),
                     Keyword(Initial),
                     Keyword(State),
                     Keyword(Signal),
@@ -1147,6 +1162,7 @@ impl<'a> Parser<'a> {
             )),
             Keyword(Entry) => Ok(StateMember::SpecStateEntry(self.spec_state_entry()?)),
             Keyword(Exit) => Ok(StateMember::SpecStateExit(self.spec_state_exit()?)),
+            Keyword(Include) => Ok(StateMember::SpecInclude(self.spec_include()?)),
             Keyword(On) => Ok(StateMember::SpecStateTransition(
                 self.spec_state_transition()?,
             )),
@@ -1158,6 +1174,7 @@ impl<'a> Parser<'a> {
                     Keyword(Initial),
                     Keyword(Entry),
                     Keyword(Exit),
+                    Keyword(Include),
                     Keyword(On),
                 ],
             )),
@@ -2367,6 +2384,35 @@ impl<'a> Parser<'a> {
     }
 
     fn expr(&mut self) -> ParseResult<Expr> {
+        let mut left = self.expr_shift_operand()?;
+        let first_span = left.span();
+
+        loop {
+            let op = match self.peek(0) {
+                ShiftLeft => Some(Binop::LShift),
+                ShiftRight => Some(Binop::RShift),
+                _ => None,
+            };
+
+            match op {
+                Some(op) => {
+                    self.next();
+                    let right = self.expr_shift_operand()?;
+                    left = Expr {
+                        node_id: self.node(first_span),
+                        kind: ExprKind::Binop {
+                            left: Box::new(left),
+                            op,
+                            right: Box::new(right),
+                        },
+                    }
+                }
+                None => return Ok(left),
+            }
+        }
+    }
+
+    fn expr_shift_operand(&mut self) -> ParseResult<Expr> {
         let mut left = self.expr_add_sub_operand()?;
         let first_span = left.span();
 
@@ -2527,6 +2573,16 @@ impl<'a> Parser<'a> {
                 })
             }
             LeftCurly => self.struct_expr(),
+            Keyword(Sizeof) => {
+                let first = self.next().unwrap();
+                self.consume(LeftParen)?;
+                let type_name = self.type_name()?;
+                self.consume(RightParen)?;
+                Ok(Expr {
+                    node_id: self.node(first.span()),
+                    kind: ExprKind::SizeOf(Box::new(type_name)),
+                })
+            }
             _ => Err(self.cursor.err_expected_one_of(
                 "expression expected",
                 vec![
@@ -2536,6 +2592,7 @@ impl<'a> Parser<'a> {
                     Identifier,
                     Keyword(True),
                     Keyword(False),
+                    Keyword(Sizeof),
                     LiteralFloat,
                     LiteralInt,
                     LiteralString,

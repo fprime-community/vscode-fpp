@@ -157,6 +157,14 @@ mod redef {
     mod test;
 }
 
+mod state_machine_defs {
+    mod test;
+}
+
+mod numeric_shift {
+    mod test;
+}
+
 #[cfg(feature = "disabled-tests")]
 mod unconnected {
     mod test;

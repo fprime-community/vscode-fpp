@@ -252,9 +252,28 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
     ) -> ControlFlow<Self::Break> {
         let symbol = Symbol::StateMachine(Arc::new(def.clone()));
         a.symbol_map.insert(def.node_id, symbol.clone());
-        self.enter_symbol(a, symbol, NameGroup::StateMachine)
-            .unwrap_or_else(|err| err.emit());
-        ControlFlow::Continue(())
+
+        // A state machine is visible as a state machine, a type, and a value.
+        (|| -> SemanticResult {
+            self.enter_symbol(a, symbol.clone(), NameGroup::StateMachine)?;
+            self.enter_symbol(a, symbol.clone(), NameGroup::Type)?;
+            self.enter_symbol(a, symbol.clone(), NameGroup::Value)?;
+            Ok(())
+        })()
+        .unwrap_or_else(|err| err.emit());
+
+        // A state machine opens a scope for its nested definitions
+        // (types, constants, etc.).
+        a.symbol_scope_map.insert(symbol.clone(), Scope::new());
+        a.nested_scope.push(symbol.clone());
+
+        let save_parent = a.parent_symbol.clone();
+        a.parent_symbol = Some(symbol);
+        let res = def.walk(a, self);
+        a.parent_symbol = save_parent;
+        a.nested_scope.pop();
+
+        res
     }
 
     fn visit_def_struct(&self, a: &mut Analysis, def: &'ast DefStruct) -> ControlFlow<Self::Break> {

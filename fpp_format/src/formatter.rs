@@ -553,7 +553,7 @@ fn flat_sep(prev: &SyntaxToken, cur: &SyntaxToken) -> &'static str {
         return "";
     }
     let prev_callable = match prev.kind() {
-        IDENT | RIGHT_PAREN | RIGHT_SQUARE => true,
+        IDENT | RIGHT_PAREN | RIGHT_SQUARE | SIZEOF_KW => true,
         _ => false,
     };
     if cur.kind() == LEFT_PAREN && prev_callable {

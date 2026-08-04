@@ -71,6 +71,7 @@ impl<'ast, S: NestedScopeState, V: Visitor<'ast, State = S>> Analyzer<'ast, V>
             Node::DefComponent(def) => self.walk_symbol(visitor, a, a.get_symbol(def), node),
             Node::DefEnum(def) => self.walk_symbol(visitor, a, a.get_symbol(def), node),
             Node::DefModule(def) => self.walk_symbol(visitor, a, a.get_symbol(def), node),
+            Node::DefStateMachine(def) => self.walk_symbol(visitor, a, a.get_symbol(def), node),
             _ => match self.mode {
                 NestedAnalyzerMode::SHALLOW => ControlFlow::Continue(()),
                 NestedAnalyzerMode::DEEP => node.walk(a, visitor),

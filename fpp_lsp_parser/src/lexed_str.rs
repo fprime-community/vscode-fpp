@@ -243,6 +243,7 @@ impl From<TokenKind> for SyntaxKind {
                 KeywordKind::Severity => SEVERITY_KW,
                 KeywordKind::Signal => SIGNAL_KW,
                 KeywordKind::Size => SIZE_KW,
+                KeywordKind::Sizeof => SIZEOF_KW,
                 KeywordKind::Stack => STACK_KW,
                 KeywordKind::State => STATE_KW,
                 KeywordKind::String_ => STRING_KW,
@@ -282,6 +283,8 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Semi => SEMI,
             TokenKind::Slash => SLASH,
             TokenKind::Star => STAR,
+            TokenKind::ShiftLeft => SHIFT_LEFT,
+            TokenKind::ShiftRight => SHIFT_RIGHT,
         }
     }
 }
