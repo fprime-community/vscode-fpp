@@ -74,7 +74,7 @@ pub fn ast(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 /// 3. If enum, all variants also derive from AstAnnotated
 ///
 /// For structs
-/// ```
+/// ```ignore
 /// #[ast]
 /// #[derive(AstAnnotated)]
 /// pub struct SpecStateMachineInstance {
@@ -86,7 +86,7 @@ pub fn ast(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 /// ```
 ///
 /// For enums:
-/// ```
+/// ```ignore
 /// use fpp_macros::ast_node;
 ///
 /// #[ast]
