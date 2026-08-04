@@ -42,6 +42,27 @@ active component TestComponent {
     @ A COMMAND event emitted by the guest program
     event LogCommand(msg: string size 128) severity command format "{}"
 
+    event ManyArguments(
+        r0: U8
+        r1: U8
+        r2: U8
+        r3: U8
+        r4: U8
+        r5: U8
+        r6: U8
+        r7: U8
+        r8: U8
+        r9: U8
+        rA: U8
+        rB: U8
+        rC: U8
+        rD: U8
+        rE: U8
+        rF: U8
+    ) \
+        severity activity low \
+        format "{x} {x} {x} {x} {x} {x} {x} {x} {x} {x} {x} {x} {x} {x} {x} {x}"
+
     @ Parameters
     param maxIterations: U32 \
         default 100 \

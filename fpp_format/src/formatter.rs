@@ -211,9 +211,14 @@ impl Formatter {
                 inner.push(Doc::text(cfg.close));
             }
             Close::Trail => {
-                if force_block {
-                    inner.push(Doc::hardline());
-                }
+                inner.push(if force_block {
+                    Doc::hardline()
+                } else {
+                    Doc::Line {
+                        flat: "",
+                        cont: false,
+                    }
+                });
                 inner.push(Doc::text(cfg.close));
             }
         }
