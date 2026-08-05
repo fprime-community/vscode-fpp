@@ -57,10 +57,31 @@ struct Args {
     /// Server logging level
     #[arg(long)]
     log_level: Option<tracing_subscriber::filter::LevelFilter>,
+    /// Generate a default `.fpp-lsp` project config in the current directory
+    /// (reading `settings.ini` if present) and exit without starting the server.
+    #[arg(long)]
+    generate_config: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     let arg = Args::parse();
+
+    // `--generate-config` is a one-shot command: write a default `.fpp-lsp` into
+    // the current directory and exit without starting the language server.
+    if arg.generate_config {
+        let cwd = std::env::current_dir()?;
+        match config::generate_config(&cwd) {
+            Ok(path) => {
+                println!("Wrote {}", path.display());
+                return Ok(());
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                eprintln!("{e}");
+                std::process::exit(1);
+            }
+            Err(e) => return Err(e.into()),
+        }
+    }
 
     setup_stderr_logging(arg.log_level.unwrap_or(LevelFilter::OFF))?;
 
