@@ -27,7 +27,9 @@ sealed class Version : Comparable<Version> {
                     return try {
                         Semantic(
                             match.groupValues[1].toInt(), match.groupValues[2].toInt(), match.groupValues[3].toInt(),
-                            match.groupValues.getOrNull(4)?.toInt(),
+                            // The alpha group is optional; `groups[4]` is null when absent,
+                            // whereas `groupValues[4]` would be an empty string.
+                            match.groups[4]?.value?.toInt(),
                         )
                     } catch (_: Exception) {
                         throw MalformedSemanticVersionException(version)
