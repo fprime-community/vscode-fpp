@@ -7,6 +7,9 @@
 describe("fpp.nvim", function()
   local fpp
 
+  local plugin_root = debug.getinfo(1, "S").source:sub(2):gsub("spec/fpp_spec%.lua$", "")
+  package.path = plugin_root .. "lua/?.lua;" .. plugin_root .. "lua/?/init.lua;" .. package.path
+
   before_each(function()
     -- Reload the module fresh so each test sees default config.
     package.loaded["fpp"] = nil
@@ -16,7 +19,7 @@ describe("fpp.nvim", function()
   describe("filetype detection", function()
     it("maps .fpp and .fppi to the fpp filetype", function()
       -- ftdetect/fpp.lua registers the mapping via vim.filetype.add.
-      dofile("ftdetect/fpp.lua")
+      dofile(plugin_root .. "ftdetect/fpp.lua")
 
       assert.are.equal("fpp", vim.filetype.match({ filename = "component.fpp" }))
       assert.are.equal("fpp", vim.filetype.match({ filename = "types.fppi" }))

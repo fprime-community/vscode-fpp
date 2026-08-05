@@ -6,5 +6,6 @@ return {
     ROOT = { "spec" },
     pattern = "_spec",
     verbose = true,
+    lpath = "lua/?.lua;lua/?/init.lua",
   },
 }
