@@ -46,7 +46,7 @@ the project.
     - When searching for a type, only types will be shown. Same goes for ports, components etc.
 - Syntax Signature Display
   - This should pop up while you are typing but can be manually triggered, see [VSCode Docs](https://code.visualstudio.com/docs/typescript/typescript-editing#_signature-help)
-  ![Screenshot from 2023-06-20 15-28-08](https://github.com/Kronos3/vscode-fpp/assets/15131751/2826cbc3-80d0-404c-8505-9542ea28d2c2)
+  ![Screenshot from 2023-06-20 15-28-08](https://github.com/user-attachments/assets/250a4c93-ed79-41df-9fe1-14aec397f133)
   - Includes descriptions on what each field does
 - Hover information
   - Shows what references resolved to

@@ -1,6 +1,6 @@
 # FPP for Neovim
 
-Neovim integration for the [F Prime Prime (FPP)](https://github.com/fprime-community/vscode-fpp)
+Neovim integration for the [F Prime Prime (FPP)](https://github.com/fprime-community/fpp-tools)
 language server. Provides diagnostics, hover, go-to-definition, semantic
 highlighting, and completion by connecting to `fpp_lsp_server` over stdio.
 
@@ -25,7 +25,7 @@ Built on Neovim's built-in LSP client — no external plugins required.
 
 ```lua
 {
-  dir = "/path/to/vscode-fpp/editors/nvim",
+  dir = "/path/to/fpp-tools/editors/nvim",
   config = function()
     require("fpp").setup({
       -- Absolute path to the executable inside your venv.

@@ -8,7 +8,7 @@
     },
     "publisher": "jet-propulsion-laboratory",
     "repository": {
-        "url": "https://github.com/fprime-community/vscode-fpp",
+        "url": "https://github.com/fprime-community/fpp-tools",
         "type": "git"
     },
     "version": "1.0.32",

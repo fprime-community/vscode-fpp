@@ -137,7 +137,7 @@ pub fn read_fprime_project_root(dir: &Path) -> Option<String> {
 pub fn default_config_yaml(build_cache: &str) -> String {
     format!(
         "# FPP language server project configuration.\n\
-         # See https://github.com/fprime-community/vscode-fpp for the full schema.\n\
+         # See https://github.com/fprime-community/fpp-tools for the full schema.\n\
          #\n\
          # `buildCache` points at an F´ build cache directory; the server indexes\n\
          # `<buildCache>/{locs}` to resolve references across the project.\n\

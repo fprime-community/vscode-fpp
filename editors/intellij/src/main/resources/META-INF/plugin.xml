@@ -1,6 +1,6 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.kronos3.fpp_rust</id>
+    <id>com.github.fprime_community.fpp_tools</id>
     <name>FPP</name>
     <vendor>Andrei Tumbar</vendor>
 
@@ -13,13 +13,13 @@
     <extensions defaultExtensionNs="com.intellij">
         <fileType
                 name="FPP"
-                implementationClass="com.github.kronos3.fpp_rust.FppFileType"
+                implementationClass="com.github.fprime_community.fpp_tools.FppFileType"
                 fieldName="INSTANCE"
                 language="fpp"
                 extensions="fpp"/>
         <fileType
                 name="FPPI"
-                implementationClass="com.github.kronos3.fpp_rust.FppiFileType"
+                implementationClass="com.github.fprime_community.fpp_tools.FppiFileType"
                 fieldName="INSTANCE"
                 extensions="fppi"/>
 
@@ -29,13 +29,13 @@
 
         <!-- Color Settings -->
 
-<!--        <colorSettingsPage implementation="com.github.kronos3.fpp_rust.FppColorSettingsPage"/>-->
+<!--        <colorSettingsPage implementation="com.github.fprime_community.fpp_tools.FppColorSettingsPage"/>-->
 
         <additionalTextAttributes scheme="Default" file="colors/FppDefault.xml"/>
         <additionalTextAttributes scheme="Darcula" file="colors/FppDarcula.xml"/>
         <additionalTextAttributes scheme="Dark" file="colorSchemes/FppDarcula.xml"/>
 
-        <textmate.bundleProvider implementation="com.github.kronos3.fpp_rust.FppTextMateBundleProvider" />
+        <textmate.bundleProvider implementation="com.github.fprime_community.fpp_tools.FppTextMateBundleProvider" />
         <!-- The following two ("editorHighlighterProvider" and "lang.syntaxHighlighterFactory") are required
             because defining a custom file type breaks the association of a TextMate grammar with a file extension.
             https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008202719/comments/8966725380242 -->
@@ -50,21 +50,21 @@
                 implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider"/>
 
         <platform.lsp.serverSupportProvider
-                implementation="com.github.kronos3.fpp_rust.FppLspServerSupportProvider"/>
+                implementation="com.github.fprime_community.fpp_tools.FppLspServerSupportProvider"/>
         <applicationService
-                serviceImplementation="com.github.kronos3.fpp_rust.settings.FppSettings"/>
+                serviceImplementation="com.github.fprime_community.fpp_tools.settings.FppSettings"/>
         <projectConfigurable
                 parentId="language"
-                instance="com.github.kronos3.fpp_rust.settings.FppSettingsConfigurable"
+                instance="com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable"
                 id="settings.fpp"
                 displayName="FPP"/>
     </extensions>
     <projectListeners>
         <listener
-                class="com.github.kronos3.fpp_rust.FppLspManagerLspRestartListener"
-                topic="com.github.kronos3.fpp_rust.FppLspManager$LspManagerChangeListener"/>
+                class="com.github.fprime_community.fpp_tools.FppLspManagerLspRestartListener"
+                topic="com.github.fprime_community.fpp_tools.FppLspManager$LspManagerChangeListener"/>
         <listener
-                class="com.github.kronos3.fpp_rust.FppSettingsLspRestartListener"
-                topic="com.github.kronos3.fpp_rust.settings.FppSettingsConfigurable$SettingsChangeListener"/>
+                class="com.github.fprime_community.fpp_tools.FppSettingsLspRestartListener"
+                topic="com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable$SettingsChangeListener"/>
     </projectListeners>
 </idea-plugin>
