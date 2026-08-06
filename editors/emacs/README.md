@@ -1,6 +1,6 @@
 # FPP for Emacs
 
-Emacs integration for the [F Prime Prime (FPP)](https://github.com/fprime-community/vscode-fpp)
+Emacs integration for the [F Prime Prime (FPP)](https://github.com/fprime-community/fpp-tools)
 language server. Provides a `fpp-mode` major mode and connects it to
 `fpp_lsp_server` over stdio using the built-in [`eglot`](https://www.gnu.org/software/emacs/manual/html_mono/eglot.html)
 client — no external packages required.
@@ -24,7 +24,7 @@ client — no external packages required.
 
 ```elisp
 (use-package fpp-mode
-  :load-path "/path/to/vscode-fpp/editors/emacs"
+  :load-path "/path/to/fpp-tools/editors/emacs"
   :custom
   (fpp-lsp-server-path "/path/to/venv/bin/fpp_lsp_server")
   :hook
@@ -51,7 +51,7 @@ tar -xzf fpp-emacs-<tag>.tar.gz -C ~/.emacs.d/site-lisp
 ### Manual
 
 ```elisp
-(add-to-list 'load-path "/path/to/vscode-fpp/editors/emacs")
+(add-to-list 'load-path "/path/to/fpp-tools/editors/emacs")
 (require 'fpp-mode)
 (setq fpp-lsp-server-path "/path/to/venv/bin/fpp_lsp_server")
 

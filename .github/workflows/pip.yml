@@ -4,8 +4,10 @@ name: Pip Packages
 #   - fprime-fpp-lsp     (from fpp_lsp_server)
 #   - fprime-fpp-format  (from fpp_format)
 #
-# NOTE: This workflow only *builds* the distributions and uploads them as
-# artifacts. It intentionally does NOT publish to PyPI yet.
+# On push/PR/dispatch this only *builds* the distributions and uploads them as
+# artifacts. When a GitHub release is published it additionally publishes both
+# packages: a normal release goes to PyPI, a GitHub "pre-release" goes to
+# TestPyPI. The published version comes from the release tag.
 
 on:
   push:
@@ -19,6 +21,8 @@ on:
       - "fpp_lsp_server/**"
       - "fpp_format/**"
       - ".github/workflows/pip.yml"
+  release:
+    types: [ published ]
   workflow_dispatch:
 
 concurrency:
@@ -41,6 +45,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # On a release, stamp the workspace version from the tag so maturin builds
+      # wheels with the released version (strips a leading "v"). Uses perl for
+      # portability across the Linux/macOS/Windows runners (BSD sed differs).
+      - name: Set version from release tag
+        if: github.event_name == 'release'
+        shell: bash
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          echo "Setting workspace version to $VERSION"
+          VERSION="$VERSION" perl -pi -e 's/^version = ".*"/version = "$ENV{VERSION}"/' Cargo.toml
+          grep -n '^version = ' Cargo.toml
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -71,6 +88,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set version from release tag
+        if: github.event_name == 'release'
+        shell: bash
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          echo "Setting workspace version to $VERSION"
+          VERSION="$VERSION" perl -pi -e 's/^version = ".*"/version = "$ENV{VERSION}"/' Cargo.toml
+          grep -n '^version = ' Cargo.toml
+
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
@@ -83,3 +110,50 @@ jobs:
         with:
           name: sdist-${{ matrix.package.name }}
           path: ${{ matrix.package.dir }}/dist/*
+
+  # Publish both packages on a GitHub release. A pre-release goes to TestPyPI;
+  # a normal release goes to PyPI. The built distributions are also attached to
+  # the GitHub release as assets.
+  publish:
+    name: Publish ${{ matrix.package.name }}
+    if: github.event_name == 'release'
+    needs: [ wheels, sdist ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - name: fprime-fpp-lsp
+          - name: fprime-fpp-format
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*${{ matrix.package.name }}*"
+          path: dist
+          merge-multiple: true
+
+      - name: List distributions
+        run: ls -l dist
+
+      - name: Attach distributions to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
+
+      - name: Publish to TestPyPI (pre-release)
+        if: github.event.release.prerelease == true
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          packages-dir: dist
+
+      - name: Publish to PyPI (release)
+        if: github.event.release.prerelease == false
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages-dir: dist

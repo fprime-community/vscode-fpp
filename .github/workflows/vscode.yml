@@ -85,12 +85,31 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      # Derive the extension version from the release tag (strips a leading "v").
-      - name: Set version from release tag
+      # Derive the extension version from the release tag and mirror the
+      # GitHub "pre-release" flag onto the Marketplace publish. The VS Code
+      # Marketplace only accepts clean major.minor.patch versions, so reject
+      # tags carrying a pre-release suffix (use the GitHub pre-release flag
+      # instead).
+      - name: Resolve version and pre-release flag
+        id: rel
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          echo "Setting extension version to $VERSION"
-          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          VERSION="${{ github.event.release.tag_name }}"
+          SEMVER="${VERSION#v}"
+          if [[ "$SEMVER" == *-* ]]; then
+            echo "::error::VS Code versions must be clean semver (major.minor.patch) without a pre-release suffix. Mark the GitHub release as a pre-release instead. Got: $SEMVER"
+            exit 1
+          fi
+          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            echo "prerelease_flag=--pre-release" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease_flag=" >> "$GITHUB_OUTPUT"
+          fi
+          echo "semver=$SEMVER" >> "$GITHUB_OUTPUT"
+
+      - name: Set version
+        run: |
+          echo "Setting extension version to ${{ steps.rel.outputs.semver }}"
+          npm version "${{ steps.rel.outputs.semver }}" --no-git-tag-version --allow-same-version
 
       - name: Package VSIX
         run: yarn vsix --out fpp.vsix
@@ -98,7 +117,7 @@ jobs:
       - name: Publish to VS Code Marketplace
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx --no-install vsce publish --packagePath fpp.vsix --pat "$VSCE_PAT"
+        run: npx --no-install vsce publish --packagePath fpp.vsix --pat "$VSCE_PAT" ${{ steps.rel.outputs.prerelease_flag }}
 
       - name: Attach VSIX to GitHub release
         env:

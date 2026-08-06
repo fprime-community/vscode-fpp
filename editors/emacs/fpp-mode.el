@@ -3,7 +3,7 @@
 ;; Author: Andrei Tumbar <andrei.tumbar@jpl.nasa.gov>
 ;; Keywords: languages, fpp, fprime
 ;; Package-Requires: ((emacs "29.1"))
-;; URL: https://github.com/fprime-community/vscode-fpp
+;; URL: https://github.com/fprime-community/fpp-tools
 
 ;;; Commentary:
 

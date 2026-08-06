@@ -12,6 +12,8 @@ on:
       - "editors/intellij/**"
       - "editors/code/syntax/**"
       - ".github/workflows/intellij.yml"
+  release:
+    types: [ published ]
   workflow_dispatch:
 
 concurrency:
@@ -26,6 +28,8 @@ jobs:
   build-test:
     name: Build & Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       # Free GitHub Actions Environment Disk Space (downloading the IDE platform
       # requires a fair amount of space).
@@ -63,6 +67,15 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
+      # On a release, derive the plugin version from the tag (strips a leading
+      # "v"). Gradle picks this up as the `pluginVersion` project property via
+      # the ORG_GRADLE_PROJECT_ convention, overriding gradle.properties.
+      - name: Set plugin version from release tag
+        if: github.event_name == 'release'
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          echo "ORG_GRADLE_PROJECT_pluginVersion=${VERSION#v}" >> "$GITHUB_ENV"
+
       - name: Build plugin
         run: ./gradlew buildPlugin
 
@@ -76,8 +89,30 @@ jobs:
           name: intellij-tests-result
           path: editors/intellij/build/reports/tests
 
+      # GitHub Actions always re-zips uploaded artifacts, so uploading the
+      # distribution .zip directly produces a double-zipped download that the
+      # JetBrains Marketplace rejects ("archive contains an unexpected file
+      # '<plugin>.zip'"). Upload the *extracted* plugin directory instead so the
+      # downloaded artifact is a valid, directly-uploadable plugin archive whose
+      # root is the plugin directory (containing `lib/`).
+      - name: Stage plugin for a directly-uploadable artifact
+        run: |
+          rm -rf build/plugin-artifact
+          mkdir -p build/plugin-artifact
+          zip=$(ls build/distributions/*.zip)
+          unzip -q "$zip" -d build/plugin-artifact
+
       - name: Upload plugin artifact
         uses: actions/upload-artifact@v4
         with:
           name: intellij-plugin
-          path: editors/intellij/build/distributions/*.zip
+          path: editors/intellij/build/plugin-artifact
+
+      # Attach the (single-zipped) plugin archive to the GitHub release. Release
+      # assets are stored as-is, so this file can be uploaded straight to the
+      # JetBrains Marketplace without unzipping.
+      - name: Attach plugin to GitHub release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" build/distributions/*.zip --clobber

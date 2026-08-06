@@ -20,8 +20,8 @@ classifiers = [
 dynamic = ["version"]
 
 [project.urls]
-Homepage = "https://github.com/fprime-community/vscode-fpp"
-Repository = "https://github.com/fprime-community/vscode-fpp"
+Homepage = "https://github.com/fprime-community/fpp-tools"
+Repository = "https://github.com/fprime-community/fpp-tools"
 
 [tool.maturin]
 # This crate ships a standalone executable rather than a Python module.
