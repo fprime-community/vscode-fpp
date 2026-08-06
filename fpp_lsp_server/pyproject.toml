@@ -1,0 +1,29 @@
+# Packages the `fpp_lsp_server` Rust binary as a pip-installable distribution.
+# maturin builds the binary crate and installs the executable as a console
+# script inside the wheel.
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "fprime-fpp-lsp"
+description = "F Prime Prime (FPP) language server executable"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Andrei Tumbar", email = "andrei.tumbar@jpl.nasa.gov" }]
+keywords = ["fprime", "fpp", "lsp", "language-server"]
+classifiers = [
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Compilers",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/fprime-community/vscode-fpp"
+Repository = "https://github.com/fprime-community/vscode-fpp"
+
+[tool.maturin]
+# This crate ships a standalone executable rather than a Python module.
+bindings = "bin"
+manifest-path = "Cargo.toml"

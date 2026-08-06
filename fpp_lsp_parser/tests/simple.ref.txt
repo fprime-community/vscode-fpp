@@ -1,0 +1,80 @@
+ROOT@0..87
+  DEF_MODULE@0..86
+    MODULE_KW@0..6 "module"
+    WHITESPACE@6..7 " "
+    NAME@7..8
+      IDENT@7..8 "F"
+    WHITESPACE@8..9 " "
+    MODULE_MEMBER_LIST@9..86
+      LEFT_CURLY@9..10 "{"
+      EOL@10..11 "\n"
+      WHITESPACE@11..15 "    "
+      DEF_CONSTANT@15..29
+        CONSTANT_KW@15..23 "constant"
+        WHITESPACE@23..24 " "
+        NAME@24..25
+          IDENT@24..25 "a"
+        WHITESPACE@25..26 " "
+        EQUALS@26..27 "="
+        WHITESPACE@27..28 " "
+        EXPR@28..29
+          EXPR_LITERAL@28..29
+            LITERAL_INT@28..29 "1"
+      EOL@29..30 "\n"
+      WHITESPACE@30..34 "    "
+      DEF_CONSTANT@34..52
+        CONSTANT_KW@34..42 "constant"
+        WHITESPACE@42..43 " "
+        NAME@43..44
+          IDENT@43..44 "b"
+        WHITESPACE@44..45 " "
+        EQUALS@45..46 "="
+        WHITESPACE@46..47 " "
+        EXPR@47..52
+          EXPR_BINARY@47..52
+            EXPR_LITERAL@47..48
+              LITERAL_INT@47..48 "2"
+            WHITESPACE@48..49 " "
+            BINARY_OP@49..51
+              PLUS@49..50 "+"
+              WHITESPACE@50..51 " "
+            EXPR_LITERAL@51..52
+              LITERAL_INT@51..52 "3"
+      EOL@52..53 "\n"
+      WHITESPACE@53..57 "    "
+      DEF_CONSTANT@57..83
+        CONSTANT_KW@57..65 "constant"
+        WHITESPACE@65..66 " "
+        NAME@66..67
+          IDENT@66..67 "c"
+        WHITESPACE@67..68 " "
+        EQUALS@68..69 "="
+        WHITESPACE@69..70 " "
+        EXPR@70..83
+          EXPR_BINARY@70..83
+            EXPR_LITERAL@70..71
+              LITERAL_INT@70..71 "2"
+            WHITESPACE@71..72 " "
+            BINARY_OP@72..74
+              PLUS@72..73 "+"
+              WHITESPACE@73..74 " "
+            EXPR_BINARY@74..83
+              EXPR_BINARY@74..79
+                EXPR_LITERAL@74..75
+                  LITERAL_INT@74..75 "3"
+                WHITESPACE@75..76 " "
+                BINARY_OP@76..78
+                  STAR@76..77 "*"
+                  WHITESPACE@77..78 " "
+                EXPR_LITERAL@78..79
+                  LITERAL_INT@78..79 "4"
+              WHITESPACE@79..80 " "
+              BINARY_OP@80..82
+                SLASH@80..81 "/"
+                WHITESPACE@81..82 " "
+              EXPR_LITERAL@82..83
+                LITERAL_INT@82..83 "4"
+      SEMI@83..84 ";"
+      EOL@84..85 "\n"
+      RIGHT_CURLY@85..86 "}"
+  EOL@86..87 "\n"

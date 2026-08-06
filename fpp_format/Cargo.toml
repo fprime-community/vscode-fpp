@@ -1,0 +1,16 @@
+[package]
+name = "fpp_format"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "fpp-format"
+path = "src/main.rs"
+
+[dependencies]
+fpp_lsp_parser = { path = "../fpp_lsp_parser" }
+clap = { version = "4.5.60", features = ["derive"] }
+
+[dev-dependencies]
+pretty_assertions = "1.4"

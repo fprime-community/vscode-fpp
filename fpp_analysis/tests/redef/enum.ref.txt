@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/redef/enum.fpp:2:6
+  |
+2 | enum E { Y }
+  |      ^ redefinition of symbol E
+  |
+ ::: [ local path prefix ]/redef/enum.fpp:1:1
+  |
+1 | enum E { X }
+  | ------------ previous definition is here
+

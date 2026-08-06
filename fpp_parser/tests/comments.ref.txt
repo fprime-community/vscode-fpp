@@ -1,0 +1,122 @@
+TransUnit(
+    [
+        DefConstant {
+            name: Name {
+                data: "a",
+                node_id: Span {
+                    start: [ local path prefix ]/comments.fpp:2:10,
+                    end: [ local path prefix ]/comments.fpp:2:11,
+                },
+            },
+            value: Expr {
+                kind: LiteralInt(
+                    "1",
+                ),
+                node_id: Span {
+                    start: [ local path prefix ]/comments.fpp:2:14,
+                    end: [ local path prefix ]/comments.fpp:2:15,
+                },
+            },
+            is_dictionary_def: false,
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:2:1,
+                end: [ local path prefix ]/comments.fpp:2:15,
+            },
+        },
+        DefConstant {
+            name: Name {
+                data: "b",
+                node_id: Span {
+                    start: [ local path prefix ]/comments.fpp:5:10,
+                    end: [ local path prefix ]/comments.fpp:5:11,
+                },
+            },
+            value: Expr {
+                kind: LiteralInt(
+                    "2",
+                ),
+                node_id: Span {
+                    start: [ local path prefix ]/comments.fpp:5:14,
+                    end: [ local path prefix ]/comments.fpp:5:15,
+                },
+            },
+            is_dictionary_def: false,
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:5:1,
+                end: [ local path prefix ]/comments.fpp:5:15,
+            },
+        },
+        DefConstant {
+            name: Name {
+                data: "c",
+                node_id: Span {
+                    start: [ local path prefix ]/comments.fpp:8:10,
+                    end: [ local path prefix ]/comments.fpp:8:11,
+                },
+            },
+            value: Expr {
+                kind: LiteralInt(
+                    "0",
+                ),
+                node_id: Span {
+                    start: [ local path prefix ]/comments.fpp:9:3,
+                    end: [ local path prefix ]/comments.fpp:9:4,
+                },
+            },
+            is_dictionary_def: false,
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:8:1,
+                end: [ local path prefix ]/comments.fpp:9:4,
+            },
+        },
+        DefConstant {
+            name: Name {
+                data: "d",
+                node_id: Span {
+                    start: [ local path prefix ]/comments.fpp:11:10,
+                    end: [ local path prefix ]/comments.fpp:11:11,
+                },
+            },
+            value: Expr {
+                kind: LiteralInt(
+                    "0",
+                ),
+                node_id: Span {
+                    start: [ local path prefix ]/comments.fpp:13:3,
+                    end: [ local path prefix ]/comments.fpp:13:4,
+                },
+            },
+            is_dictionary_def: false,
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:11:1,
+                end: [ local path prefix ]/comments.fpp:13:4,
+            },
+        },
+        DefConstant {
+            name: Name {
+                data: "e",
+                node_id: Span {
+                    start: [ local path prefix ]/comments.fpp:17:10,
+                    end: [ local path prefix ]/comments.fpp:17:11,
+                },
+            },
+            value: Expr {
+                kind: LiteralInt(
+                    "0",
+                ),
+                node_id: Span {
+                    start: [ local path prefix ]/comments.fpp:17:14,
+                    end: [ local path prefix ]/comments.fpp:17:15,
+                },
+            },
+            is_dictionary_def: false,
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:17:1,
+                end: [ local path prefix ]/comments.fpp:17:15,
+            },
+            pre_annotation: [
+                "Constant",
+            ],
+        },
+    ],
+)

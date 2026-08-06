@@ -1,0 +1,6 @@
+ROOT@0..26
+  SPEC_INCLUDE@0..25
+    INCLUDE_KW@0..7 "include"
+    WHITESPACE@7..8 " "
+    LITERAL_STRING@8..25 "\"parse-error.fpp\""
+  EOL@25..26 "\n"

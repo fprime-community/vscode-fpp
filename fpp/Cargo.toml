@@ -1,0 +1,13 @@
+[package]
+name = "fpp"
+
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+fpp_analysis = { path = "../fpp_analysis" }
+fpp_core = { path = "../fpp_core" }
+fpp_errors = { path = "../fpp_errors" }
+fpp_fs = { path = "../fpp_fs" }
+fpp_parser = { path = "../fpp_parser" }

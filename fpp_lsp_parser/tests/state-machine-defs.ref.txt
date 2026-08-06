@@ -1,0 +1,228 @@
+ROOT@0..347
+  DEF_MODULE@0..346
+    MODULE_KW@0..6 "module"
+    WHITESPACE@6..7 " "
+    NAME@7..8
+      IDENT@7..8 "M"
+    WHITESPACE@8..9 " "
+    MODULE_MEMBER_LIST@9..346
+      LEFT_CURLY@9..10 "{"
+      EOL@10..11 "\n"
+      WHITESPACE@11..13 "  "
+      DEF_STATE_MACHINE@13..344
+        STATE_KW@13..18 "state"
+        WHITESPACE@18..19 " "
+        MACHINE_KW@19..26 "machine"
+        WHITESPACE@26..27 " "
+        NAME@27..28
+          IDENT@27..28 "S"
+        WHITESPACE@28..29 " "
+        STATE_MACHINE_MEMBER_LIST@29..344
+          LEFT_CURLY@29..30 "{"
+          EOL@30..31 "\n"
+          WHITESPACE@31..35 "    "
+          DEF_ABSTRACT_TYPE@35..41
+            TYPE_KW@35..39 "type"
+            WHITESPACE@39..40 " "
+            NAME@40..41
+              IDENT@40..41 "T"
+          EOL@41..42 "\n"
+          WHITESPACE@42..46 "    "
+          DEF_ALIAS_TYPE@46..62
+            TYPE_KW@46..50 "type"
+            WHITESPACE@50..51 " "
+            NAME@51..56
+              IDENT@51..56 "Alias"
+            WHITESPACE@56..57 " "
+            EQUALS@57..58 "="
+            WHITESPACE@58..59 " "
+            TYPE_NAME@59..62
+              U32_KW@59..62 "U32"
+          EOL@62..63 "\n"
+          WHITESPACE@63..67 "    "
+          DEF_ARRAY@67..86
+            ARRAY_KW@67..72 "array"
+            WHITESPACE@72..73 " "
+            NAME@73..76
+              IDENT@73..76 "Arr"
+            WHITESPACE@76..77 " "
+            EQUALS@77..78 "="
+            WHITESPACE@78..79 " "
+            INDEX_OR_SIZE@79..82
+              LEFT_SQUARE@79..80 "["
+              EXPR@80..81
+                EXPR_LITERAL@80..81
+                  LITERAL_INT@80..81 "3"
+              RIGHT_SQUARE@81..82 "]"
+            WHITESPACE@82..83 " "
+            TYPE_NAME@83..86
+              U32_KW@83..86 "U32"
+          EOL@86..87 "\n"
+          WHITESPACE@87..91 "    "
+          DEF_CONSTANT@91..105
+            CONSTANT_KW@91..99 "constant"
+            WHITESPACE@99..100 " "
+            NAME@100..101
+              IDENT@100..101 "c"
+            WHITESPACE@101..102 " "
+            EQUALS@102..103 "="
+            WHITESPACE@103..104 " "
+            EXPR@104..105
+              EXPR_LITERAL@104..105
+                LITERAL_INT@104..105 "1"
+          EOL@105..106 "\n"
+          WHITESPACE@106..110 "    "
+          DEF_ENUM@110..125
+            ENUM_KW@110..114 "enum"
+            WHITESPACE@114..115 " "
+            NAME@115..116
+              IDENT@115..116 "E"
+            WHITESPACE@116..117 " "
+            ENUM_MEMBER_LIST@117..125
+              LEFT_CURLY@117..118 "{"
+              WHITESPACE@118..119 " "
+              DEF_ENUM_CONSTANT@119..120
+                NAME@119..120
+                  IDENT@119..120 "A"
+              COMMA@120..121 ","
+              WHITESPACE@121..122 " "
+              DEF_ENUM_CONSTANT@122..123
+                NAME@122..123
+                  IDENT@122..123 "B"
+              WHITESPACE@123..124 " "
+              RIGHT_CURLY@124..125 "}"
+          EOL@125..126 "\n"
+          WHITESPACE@126..130 "    "
+          DEF_STRUCT@130..150
+            STRUCT_KW@130..136 "struct"
+            WHITESPACE@136..137 " "
+            NAME@137..139
+              IDENT@137..139 "St"
+            WHITESPACE@139..140 " "
+            STRUCT_MEMBER_LIST@140..150
+              LEFT_CURLY@140..141 "{"
+              WHITESPACE@141..142 " "
+              STRUCT_MEMBER@142..148
+                NAME@142..143
+                  IDENT@142..143 "x"
+                COLON@143..144 ":"
+                WHITESPACE@144..145 " "
+                TYPE_NAME@145..148
+                  U32_KW@145..148 "U32"
+              WHITESPACE@148..149 " "
+              RIGHT_CURLY@149..150 "}"
+          EOL@150..152 "\n\n"
+          WHITESPACE@152..156 "    "
+          DEF_SIGNAL@156..169
+            SIGNAL_KW@156..162 "signal"
+            WHITESPACE@162..163 " "
+            NAME@163..166
+              IDENT@163..166 "sig"
+            COLON@166..167 ":"
+            WHITESPACE@167..168 " "
+            TYPE_NAME@168..169
+              QUAL_IDENT@168..169
+                IDENT@168..169 "E"
+          EOL@169..170 "\n"
+          WHITESPACE@170..174 "    "
+          DEF_ACTION@174..189
+            ACTION_KW@174..180 "action"
+            WHITESPACE@180..181 " "
+            NAME@181..184
+              IDENT@181..184 "act"
+            COLON@184..185 ":"
+            WHITESPACE@185..186 " "
+            TYPE_NAME@186..189
+              QUAL_IDENT@186..189
+                IDENT@186..189 "Arr"
+          EOL@189..190 "\n"
+          WHITESPACE@190..194 "    "
+          DEF_GUARD@194..201
+            GUARD_KW@194..199 "guard"
+            WHITESPACE@199..200 " "
+            NAME@200..201
+              IDENT@200..201 "g"
+          EOL@201..203 "\n\n"
+          WHITESPACE@203..207 "    "
+          SPEC_INITIAL_TRANSITION@207..225
+            INITIAL_KW@207..214 "initial"
+            WHITESPACE@214..215 " "
+            TRANSITION_EXPR@215..225
+              ENTER_KW@215..220 "enter"
+              WHITESPACE@220..221 " "
+              QUAL_IDENT@221..225
+                IDENT@221..225 "Idle"
+          EOL@225..227 "\n\n"
+          WHITESPACE@227..231 "    "
+          DEF_STATE@231..272
+            STATE_KW@231..236 "state"
+            WHITESPACE@236..237 " "
+            NAME@237..241
+              IDENT@237..241 "Idle"
+            WHITESPACE@241..242 " "
+            STATE_MEMBER_LIST@242..272
+              LEFT_CURLY@242..243 "{"
+              EOL@243..244 "\n"
+              WHITESPACE@244..250 "      "
+              SPEC_STATE_TRANSITION@250..266
+                ON_KW@250..252 "on"
+                WHITESPACE@252..253 " "
+                IDENT@253..256 "sig"
+                WHITESPACE@256..257 " "
+                TRANSITION_EXPR@257..266
+                  ENTER_KW@257..262 "enter"
+                  WHITESPACE@262..263 " "
+                  QUAL_IDENT@263..266
+                    IDENT@263..266 "Run"
+              EOL@266..267 "\n"
+              WHITESPACE@267..271 "    "
+              RIGHT_CURLY@271..272 "}"
+          EOL@272..274 "\n\n"
+          WHITESPACE@274..278 "    "
+          DEF_STATE@278..340
+            STATE_KW@278..283 "state"
+            WHITESPACE@283..284 " "
+            NAME@284..287
+              IDENT@284..287 "Run"
+            WHITESPACE@287..288 " "
+            STATE_MEMBER_LIST@288..340
+              LEFT_CURLY@288..289 "{"
+              EOL@289..290 "\n"
+              WHITESPACE@290..296 "      "
+              SPEC_STATE_ENTRY@296..312
+                ENTRY_KW@296..301 "entry"
+                WHITESPACE@301..302 " "
+                DO_EXPR@302..312
+                  DO_KW@302..304 "do"
+                  WHITESPACE@304..305 " "
+                  DO_EXPR_MEMBER_LIST@305..312
+                    LEFT_CURLY@305..306 "{"
+                    WHITESPACE@306..307 " "
+                    NAME_REF@307..310
+                      IDENT@307..310 "act"
+                    WHITESPACE@310..311 " "
+                    RIGHT_CURLY@311..312 "}"
+              EOL@312..313 "\n"
+              WHITESPACE@313..319 "      "
+              SPEC_STATE_EXIT@319..334
+                EXIT_KW@319..323 "exit"
+                WHITESPACE@323..324 " "
+                DO_EXPR@324..334
+                  DO_KW@324..326 "do"
+                  WHITESPACE@326..327 " "
+                  DO_EXPR_MEMBER_LIST@327..334
+                    LEFT_CURLY@327..328 "{"
+                    WHITESPACE@328..329 " "
+                    NAME_REF@329..332
+                      IDENT@329..332 "act"
+                    WHITESPACE@332..333 " "
+                    RIGHT_CURLY@333..334 "}"
+              EOL@334..335 "\n"
+              WHITESPACE@335..339 "    "
+              RIGHT_CURLY@339..340 "}"
+          EOL@340..341 "\n"
+          WHITESPACE@341..343 "  "
+          RIGHT_CURLY@343..344 "}"
+      EOL@344..345 "\n"
+      RIGHT_CURLY@345..346 "}"
+  EOL@346..347 "\n"

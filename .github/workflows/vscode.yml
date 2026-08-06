@@ -1,0 +1,106 @@
+name: VSCode Extension
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "editors/code/**"
+      - ".github/workflows/vscode.yml"
+  pull_request:
+    paths:
+      - "editors/code/**"
+      - ".github/workflows/vscode.yml"
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+concurrency:
+  group: vscode-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: editors/code
+
+jobs:
+  # Build, typecheck, bundle and run smoke tests. Also produces the .vsix
+  # artifact used for manual verification and for the release job.
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: editors/code/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck
+        run: yarn compile
+
+      - name: Bundle (production)
+        run: yarn package
+
+      - name: Smoke test
+        run: yarn test:smoke
+
+      - name: Package VSIX
+        run: yarn vsix --out fpp.vsix
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension-vsix
+          path: editors/code/fpp.vsix
+
+  # Publish to the VS Code Marketplace. Only runs when a GitHub release is
+  # published; the version is derived automatically from the release tag.
+  publish:
+    name: Publish to Marketplace
+    if: github.event_name == 'release'
+    needs: [ build-test ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: editors/code/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # Derive the extension version from the release tag (strips a leading "v").
+      - name: Set version from release tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Setting extension version to $VERSION"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Package VSIX
+        run: yarn vsix --out fpp.vsix
+
+      - name: Publish to VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx --no-install vsce publish --packagePath fpp.vsix --pat "$VSCE_PAT"
+
+      - name: Attach VSIX to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" editors/code/fpp.vsix --clobber

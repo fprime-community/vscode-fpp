@@ -1,0 +1,5 @@
+ --> [ local path prefix ]/numeric_shift/shift_invalid_type_error.fpp:1:14
+  |
+1 | constant a = "x" << 2
+  |              ^^^ string is not an integer or enum type
+

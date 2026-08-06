@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/redef/module_port.fpp:2:6
+  |
+2 | port P
+  |      ^ redefinition of symbol P
+  |
+ ::: [ local path prefix ]/redef/module_port.fpp:1:1
+  |
+1 | module P { }
+  | ------------ previous definition is here
+

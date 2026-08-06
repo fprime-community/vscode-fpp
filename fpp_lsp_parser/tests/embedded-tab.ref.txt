@@ -1,0 +1,5 @@
+ROOT@0..2
+  ERROR@0..1
+    UNKNOWN@0..1 "\t"
+  EOL@1..2 "\n"
+error 0..0: module member expected

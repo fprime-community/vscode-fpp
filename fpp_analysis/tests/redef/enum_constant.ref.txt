@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/redef/enum_constant.fpp:3:3
+  |
+3 |   X
+  |   ^ redefinition of symbol X
+  |
+ ::: [ local path prefix ]/redef/enum_constant.fpp:2:3
+  |
+2 |   X
+  |   - previous definition is here
+

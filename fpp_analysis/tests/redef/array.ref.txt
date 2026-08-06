@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/redef/array.fpp:2:7
+  |
+2 | array A = [2] U32
+  |       ^ redefinition of symbol A
+  |
+ ::: [ local path prefix ]/redef/array.fpp:1:1
+  |
+1 | array A = [1] U32
+  | ----------------- previous definition is here
+

@@ -1,0 +1,11 @@
+[package]
+name = "fpp_errors"
+
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+annotate-snippets = "0.12.8"
+anstream = "0.6.21"
+fpp_core = { path = "../fpp_core" }

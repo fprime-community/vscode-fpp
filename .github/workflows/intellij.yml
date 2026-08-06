@@ -1,0 +1,83 @@
+name: IntelliJ Plugin
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "editors/intellij/**"
+      - "editors/code/syntax/**"
+      - ".github/workflows/intellij.yml"
+  pull_request:
+    paths:
+      - "editors/intellij/**"
+      - "editors/code/syntax/**"
+      - ".github/workflows/intellij.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: intellij-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: editors/intellij
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      # Free GitHub Actions Environment Disk Space (downloading the IDE platform
+      # requires a fair amount of space).
+      - name: Maximize Build Space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          large-packages: false
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 25
+
+      # Manage caching ourselves so the (large) downloaded IntelliJ Platform IDE
+      # persists across runs. The IDE is downloaded into ~/.gradle/caches. The
+      # restore-keys fall back to the newest previous cache, so bumping
+      # `platformVersion` reuses everything else and only re-downloads the IDE.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-disabled: true
+
+      - name: Cache Gradle & IntelliJ Platform
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('editors/intellij/**/*.gradle.kts', 'editors/intellij/gradle.properties', 'editors/intellij/gradle/libs.versions.toml', 'editors/intellij/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Build plugin
+        run: ./gradlew buildPlugin
+
+      - name: Run tests
+        run: ./gradlew check
+
+      - name: Collect test results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: intellij-tests-result
+          path: editors/intellij/build/reports/tests
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: intellij-plugin
+          path: editors/intellij/build/distributions/*.zip

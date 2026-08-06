@@ -1,0 +1,240 @@
+TransUnit(
+    [
+        DefModule {
+            name: Name {
+                data: "M",
+                node_id: Span {
+                    start: [ local path prefix ]/expr-shift-sizeof.fpp:1:8,
+                    end: [ local path prefix ]/expr-shift-sizeof.fpp:1:9,
+                },
+            },
+            members: [
+                DefConstant {
+                    name: Name {
+                        data: "a",
+                        node_id: Span {
+                            start: [ local path prefix ]/expr-shift-sizeof.fpp:2:12,
+                            end: [ local path prefix ]/expr-shift-sizeof.fpp:2:13,
+                        },
+                    },
+                    value: Expr {
+                        kind: Binop {
+                            left: Expr {
+                                kind: LiteralInt(
+                                    "1",
+                                ),
+                                node_id: Span {
+                                    start: [ local path prefix ]/expr-shift-sizeof.fpp:2:16,
+                                    end: [ local path prefix ]/expr-shift-sizeof.fpp:2:17,
+                                },
+                            },
+                            op: LShift,
+                            right: Expr {
+                                kind: LiteralInt(
+                                    "4",
+                                ),
+                                node_id: Span {
+                                    start: [ local path prefix ]/expr-shift-sizeof.fpp:2:21,
+                                    end: [ local path prefix ]/expr-shift-sizeof.fpp:2:22,
+                                },
+                            },
+                        },
+                        node_id: Span {
+                            start: [ local path prefix ]/expr-shift-sizeof.fpp:2:16,
+                            end: [ local path prefix ]/expr-shift-sizeof.fpp:2:22,
+                        },
+                    },
+                    is_dictionary_def: false,
+                    node_id: Span {
+                        start: [ local path prefix ]/expr-shift-sizeof.fpp:2:3,
+                        end: [ local path prefix ]/expr-shift-sizeof.fpp:2:22,
+                    },
+                },
+                DefConstant {
+                    name: Name {
+                        data: "b",
+                        node_id: Span {
+                            start: [ local path prefix ]/expr-shift-sizeof.fpp:3:12,
+                            end: [ local path prefix ]/expr-shift-sizeof.fpp:3:13,
+                        },
+                    },
+                    value: Expr {
+                        kind: Binop {
+                            left: Expr {
+                                kind: LiteralInt(
+                                    "256",
+                                ),
+                                node_id: Span {
+                                    start: [ local path prefix ]/expr-shift-sizeof.fpp:3:16,
+                                    end: [ local path prefix ]/expr-shift-sizeof.fpp:3:19,
+                                },
+                            },
+                            op: RShift,
+                            right: Expr {
+                                kind: LiteralInt(
+                                    "2",
+                                ),
+                                node_id: Span {
+                                    start: [ local path prefix ]/expr-shift-sizeof.fpp:3:23,
+                                    end: [ local path prefix ]/expr-shift-sizeof.fpp:3:24,
+                                },
+                            },
+                        },
+                        node_id: Span {
+                            start: [ local path prefix ]/expr-shift-sizeof.fpp:3:16,
+                            end: [ local path prefix ]/expr-shift-sizeof.fpp:3:24,
+                        },
+                    },
+                    is_dictionary_def: false,
+                    node_id: Span {
+                        start: [ local path prefix ]/expr-shift-sizeof.fpp:3:3,
+                        end: [ local path prefix ]/expr-shift-sizeof.fpp:3:24,
+                    },
+                },
+                DefConstant {
+                    name: Name {
+                        data: "c",
+                        node_id: Span {
+                            start: [ local path prefix ]/expr-shift-sizeof.fpp:4:12,
+                            end: [ local path prefix ]/expr-shift-sizeof.fpp:4:13,
+                        },
+                    },
+                    value: Expr {
+                        kind: Binop {
+                            left: Expr {
+                                kind: Binop {
+                                    left: Expr {
+                                        kind: LiteralInt(
+                                            "1",
+                                        ),
+                                        node_id: Span {
+                                            start: [ local path prefix ]/expr-shift-sizeof.fpp:4:16,
+                                            end: [ local path prefix ]/expr-shift-sizeof.fpp:4:17,
+                                        },
+                                    },
+                                    op: Add,
+                                    right: Expr {
+                                        kind: LiteralInt(
+                                            "2",
+                                        ),
+                                        node_id: Span {
+                                            start: [ local path prefix ]/expr-shift-sizeof.fpp:4:20,
+                                            end: [ local path prefix ]/expr-shift-sizeof.fpp:4:21,
+                                        },
+                                    },
+                                },
+                                node_id: Span {
+                                    start: [ local path prefix ]/expr-shift-sizeof.fpp:4:16,
+                                    end: [ local path prefix ]/expr-shift-sizeof.fpp:4:21,
+                                },
+                            },
+                            op: LShift,
+                            right: Expr {
+                                kind: Binop {
+                                    left: Expr {
+                                        kind: LiteralInt(
+                                            "3",
+                                        ),
+                                        node_id: Span {
+                                            start: [ local path prefix ]/expr-shift-sizeof.fpp:4:25,
+                                            end: [ local path prefix ]/expr-shift-sizeof.fpp:4:26,
+                                        },
+                                    },
+                                    op: Sub,
+                                    right: Expr {
+                                        kind: LiteralInt(
+                                            "1",
+                                        ),
+                                        node_id: Span {
+                                            start: [ local path prefix ]/expr-shift-sizeof.fpp:4:29,
+                                            end: [ local path prefix ]/expr-shift-sizeof.fpp:4:30,
+                                        },
+                                    },
+                                },
+                                node_id: Span {
+                                    start: [ local path prefix ]/expr-shift-sizeof.fpp:4:25,
+                                    end: [ local path prefix ]/expr-shift-sizeof.fpp:4:30,
+                                },
+                            },
+                        },
+                        node_id: Span {
+                            start: [ local path prefix ]/expr-shift-sizeof.fpp:4:16,
+                            end: [ local path prefix ]/expr-shift-sizeof.fpp:4:30,
+                        },
+                    },
+                    is_dictionary_def: false,
+                    node_id: Span {
+                        start: [ local path prefix ]/expr-shift-sizeof.fpp:4:3,
+                        end: [ local path prefix ]/expr-shift-sizeof.fpp:4:30,
+                    },
+                },
+                DefConstant {
+                    name: Name {
+                        data: "s",
+                        node_id: Span {
+                            start: [ local path prefix ]/expr-shift-sizeof.fpp:5:12,
+                            end: [ local path prefix ]/expr-shift-sizeof.fpp:5:13,
+                        },
+                    },
+                    value: Expr {
+                        kind: SizeOf(
+                            TypeName {
+                                kind: Integer(
+                                    U32,
+                                ),
+                                node_id: Span {
+                                    start: [ local path prefix ]/expr-shift-sizeof.fpp:5:23,
+                                    end: [ local path prefix ]/expr-shift-sizeof.fpp:5:26,
+                                },
+                            },
+                        ),
+                        node_id: Span {
+                            start: [ local path prefix ]/expr-shift-sizeof.fpp:5:16,
+                            end: [ local path prefix ]/expr-shift-sizeof.fpp:5:27,
+                        },
+                    },
+                    is_dictionary_def: false,
+                    node_id: Span {
+                        start: [ local path prefix ]/expr-shift-sizeof.fpp:5:3,
+                        end: [ local path prefix ]/expr-shift-sizeof.fpp:5:27,
+                    },
+                },
+                DefConstant {
+                    name: Name {
+                        data: "t",
+                        node_id: Span {
+                            start: [ local path prefix ]/expr-shift-sizeof.fpp:6:12,
+                            end: [ local path prefix ]/expr-shift-sizeof.fpp:6:13,
+                        },
+                    },
+                    value: Expr {
+                        kind: SizeOf(
+                            TypeName {
+                                kind: Floating(
+                                    F64,
+                                ),
+                                node_id: Span {
+                                    start: [ local path prefix ]/expr-shift-sizeof.fpp:6:23,
+                                    end: [ local path prefix ]/expr-shift-sizeof.fpp:6:26,
+                                },
+                            },
+                        ),
+                        node_id: Span {
+                            start: [ local path prefix ]/expr-shift-sizeof.fpp:6:16,
+                            end: [ local path prefix ]/expr-shift-sizeof.fpp:6:27,
+                        },
+                    },
+                    is_dictionary_def: false,
+                    node_id: Span {
+                        start: [ local path prefix ]/expr-shift-sizeof.fpp:6:3,
+                        end: [ local path prefix ]/expr-shift-sizeof.fpp:6:27,
+                    },
+                },
+            ],
+            node_id: Span {
+                start: [ local path prefix ]/expr-shift-sizeof.fpp:1:1,
+                end: [ local path prefix ]/expr-shift-sizeof.fpp:7:2,
+            },
+        },
+    ],
+)

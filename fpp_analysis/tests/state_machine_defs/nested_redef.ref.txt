@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/state_machine_defs/nested_redef.fpp:3:8
+  |
+3 |   type T
+  |        ^ redefinition of symbol T
+  |
+ ::: [ local path prefix ]/state_machine_defs/nested_redef.fpp:2:3
+  |
+2 |   type T
+  |   ------ previous definition is here
+

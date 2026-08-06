@@ -1,0 +1,5 @@
+ --> [ local path prefix ]/invalid_symbols/constant_as_type.fpp:2:15
+  |
+2 | array A = [3] a
+  |               ^ cannot find type `a` in scope
+

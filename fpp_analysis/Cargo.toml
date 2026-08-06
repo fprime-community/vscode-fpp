@@ -1,0 +1,23 @@
+[package]
+name = "fpp_analysis"
+
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[features]
+
+disabled-tests = []
+
+[dependencies]
+fpp_ast = { path = "../fpp_ast" }
+fpp_core = { path = "../fpp_core" }
+fpp_util = { path = "../fpp_util" }
+fpp_macros = { path = "../fpp_macros" }
+fpp_parser = { path = "../fpp_parser" }
+rustc-hash = "2.1.1"
+
+[dev-dependencies]
+fpp_errors = { path = "../fpp_errors" }
+fpp_fs = { path = "../fpp_fs" }
+pretty_assertions = "1.4.1"

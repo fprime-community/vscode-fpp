@@ -1,0 +1,120 @@
+ROOT@0..143
+  DEF_MODULE@0..142
+    MODULE_KW@0..6 "module"
+    WHITESPACE@6..7 " "
+    NAME@7..8
+      IDENT@7..8 "M"
+    WHITESPACE@8..9 " "
+    MODULE_MEMBER_LIST@9..142
+      LEFT_CURLY@9..10 "{"
+      EOL@10..11 "\n"
+      WHITESPACE@11..13 "  "
+      DEF_CONSTANT@13..32
+        CONSTANT_KW@13..21 "constant"
+        WHITESPACE@21..22 " "
+        NAME@22..23
+          IDENT@22..23 "a"
+        WHITESPACE@23..24 " "
+        EQUALS@24..25 "="
+        WHITESPACE@25..26 " "
+        EXPR@26..32
+          EXPR_BINARY@26..32
+            EXPR_LITERAL@26..27
+              LITERAL_INT@26..27 "1"
+            WHITESPACE@27..28 " "
+            BINARY_OP@28..30
+              SHIFT_LEFT@28..30 "<<"
+            WHITESPACE@30..31 " "
+            EXPR_LITERAL@31..32
+              LITERAL_INT@31..32 "4"
+      EOL@32..33 "\n"
+      WHITESPACE@33..35 "  "
+      DEF_CONSTANT@35..56
+        CONSTANT_KW@35..43 "constant"
+        WHITESPACE@43..44 " "
+        NAME@44..45
+          IDENT@44..45 "b"
+        WHITESPACE@45..46 " "
+        EQUALS@46..47 "="
+        WHITESPACE@47..48 " "
+        EXPR@48..56
+          EXPR_BINARY@48..56
+            EXPR_LITERAL@48..51
+              LITERAL_INT@48..51 "256"
+            WHITESPACE@51..52 " "
+            BINARY_OP@52..54
+              SHIFT_RIGHT@52..54 ">>"
+            WHITESPACE@54..55 " "
+            EXPR_LITERAL@55..56
+              LITERAL_INT@55..56 "2"
+      EOL@56..57 "\n"
+      WHITESPACE@57..59 "  "
+      DEF_CONSTANT@59..86
+        CONSTANT_KW@59..67 "constant"
+        WHITESPACE@67..68 " "
+        NAME@68..69
+          IDENT@68..69 "c"
+        WHITESPACE@69..70 " "
+        EQUALS@70..71 "="
+        WHITESPACE@71..72 " "
+        EXPR@72..86
+          EXPR_BINARY@72..86
+            EXPR_BINARY@72..77
+              EXPR_LITERAL@72..73
+                LITERAL_INT@72..73 "1"
+              WHITESPACE@73..74 " "
+              BINARY_OP@74..76
+                PLUS@74..75 "+"
+                WHITESPACE@75..76 " "
+              EXPR_LITERAL@76..77
+                LITERAL_INT@76..77 "2"
+            WHITESPACE@77..78 " "
+            BINARY_OP@78..80
+              SHIFT_LEFT@78..80 "<<"
+            WHITESPACE@80..81 " "
+            EXPR_BINARY@81..86
+              EXPR_LITERAL@81..82
+                LITERAL_INT@81..82 "3"
+              WHITESPACE@82..83 " "
+              BINARY_OP@83..85
+                MINUS@83..84 "-"
+                WHITESPACE@84..85 " "
+              EXPR_LITERAL@85..86
+                LITERAL_INT@85..86 "1"
+      EOL@86..87 "\n"
+      WHITESPACE@87..89 "  "
+      DEF_CONSTANT@89..113
+        CONSTANT_KW@89..97 "constant"
+        WHITESPACE@97..98 " "
+        NAME@98..99
+          IDENT@98..99 "s"
+        WHITESPACE@99..100 " "
+        EQUALS@100..101 "="
+        WHITESPACE@101..102 " "
+        EXPR@102..113
+          EXPR_SIZEOF@102..113
+            SIZEOF_KW@102..108 "sizeof"
+            LEFT_PAREN@108..109 "("
+            TYPE_NAME@109..112
+              U32_KW@109..112 "U32"
+            RIGHT_PAREN@112..113 ")"
+      EOL@113..114 "\n"
+      WHITESPACE@114..116 "  "
+      DEF_CONSTANT@116..140
+        CONSTANT_KW@116..124 "constant"
+        WHITESPACE@124..125 " "
+        NAME@125..126
+          IDENT@125..126 "t"
+        WHITESPACE@126..127 " "
+        EQUALS@127..128 "="
+        WHITESPACE@128..129 " "
+        EXPR@129..140
+          EXPR_SIZEOF@129..140
+            SIZEOF_KW@129..135 "sizeof"
+            LEFT_PAREN@135..136 "("
+            TYPE_NAME@136..139
+              F64_KW@136..139 "F64"
+            RIGHT_PAREN@139..140 ")"
+      EOL@140..141 "\n"
+      RIGHT_CURLY@141..142 "}"
+  EOL@142..143 "\n"

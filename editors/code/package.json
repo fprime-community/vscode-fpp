@@ -1,0 +1,500 @@
+{
+    "name": "fpp",
+    "displayName": "FPP",
+    "description": "FPrime-Prime Language Support",
+    "author": {
+        "name": "Andrei Tumbar",
+        "email": "andrei.tumbar@jpl.nasa.gov"
+    },
+    "publisher": "jet-propulsion-laboratory",
+    "repository": {
+        "url": "https://github.com/fprime-community/vscode-fpp",
+        "type": "git"
+    },
+    "version": "1.0.32",
+    "icon": "fprime-logo.png",
+    "engines": {
+        "vscode": "^1.81.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "fpp.reload",
+                "title": "FPP: Reload Project"
+            },
+            {
+                "command": "fpp.restartLsp",
+                "title": "FPP: Restart Language Server"
+            },
+            {
+                "command": "fpp.dumpActiveTextEditorSyntaxTree",
+                "title": "FPP (debug command): View CST"
+            },
+            {
+                "command": "fpp.select",
+                "title": "FPP: Select Locs file inside workspace"
+            },
+            {
+                "command": "fpp.close",
+                "title": "FPP: Close Project"
+            },
+            {
+                "command": "fpp.open",
+                "title": "FPP: Open Project"
+            },
+            {
+                "command": "fpp.load",
+                "title": "FPP: Load Locs File as Project"
+            },
+            {
+                "command": "fpp.diagram.open",
+                "title": "FPP: Open Diagram",
+                "icon": "$(telescope)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.fit",
+                "title": "FPP: Fit Diagram",
+                "icon": "$(arrow-both)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.center",
+                "title": "FPP: Center Diagram",
+                "icon": "$(layout-centered)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.export",
+                "title": "FPP: Export Diagram",
+                "icon": "$(desktop-download)",
+                "category": "FPP Diagram"
+            }
+        ],
+        "languages": [
+            {
+                "id": "fpp",
+                "aliases": [
+                    "fpp",
+                    "FPrimePrime"
+                ],
+                "extensions": [
+                    ".fpp",
+                    ".fppi"
+                ],
+                "configuration": "./syntax/language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "fpp",
+                "scopeName": "source.fpp",
+                "path": "./syntax/fpp.tmLanguage.json"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'",
+                    "group": "navigation"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.fit",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.center",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.export",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "resourceExtname == '.fpp'",
+                    "group": "navigation"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "FPP",
+            "type": "object",
+            "properties": {
+                "fpp.serverPath": {
+                    "type": "string",
+                    "markdownDescription": "Path to the FPP LSP server, use `<default>` for bundled binary"
+                },
+                "fpp.locsSearch": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "markdownDescription": "Glob patterns in order of priority to search for an `locs.fpp` on project startup if no other locs is selected",
+                    "default": [
+                        "**/build-fprime-automatic-native/locs.fpp",
+                        "**/build-fprime-*/locs.fpp"
+                    ]
+                },
+                "fpp.locsExclude": {
+                    "type": "string",
+                    "markdownDescription": "Glob pattern path to exclude from `locs.fpp` search"
+                },
+                "fpp.enableCodeLens": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "fpp.lspServerRunLogLevel": {
+                    "type": "string",
+                    "default": "error",
+                    "markdownDescription": "LSP executable logging level during normal execution",
+                    "enum": [
+                        "debug",
+                        "info",
+                        "warn",
+                        "error",
+                        "off"
+                    ]
+                },
+                "fpp.lspServerDevLogLevel": {
+                    "type": "string",
+                    "default": "info",
+                    "markdownDescription": "LSP executable logging level during development",
+                    "enum": [
+                        "debug",
+                        "info",
+                        "warn",
+                        "error",
+                        "off"
+                    ]
+                }
+            }
+        },
+        "semanticTokenTypes": [
+            {
+                "id": "module",
+                "superType": "namespace",
+                "description": "A module definition or use"
+            },
+            {
+                "id": "topology",
+                "superType": "variable",
+                "description": "A topology definition or use"
+            },
+            {
+                "id": "component",
+                "superType": "class",
+                "description": "A component definition or use"
+            },
+            {
+                "id": "interface",
+                "superType": "interface",
+                "description": "A port interface definition or use"
+            },
+            {
+                "id": "componentInstance",
+                "superType": "variable",
+                "description": "A component instance definition or use"
+            },
+            {
+                "id": "constant",
+                "superType": "variable",
+                "description": "A constant definition or use"
+            },
+            {
+                "id": "enumConstant",
+                "superType": "enumMember",
+                "description": "A enum constant definition or use"
+            },
+            {
+                "id": "structMember",
+                "superType": "variable",
+                "description": "A struct member definition or use"
+            },
+            {
+                "id": "graphGroup",
+                "superType": "namespace",
+                "description": "A connection graph definition"
+            },
+            {
+                "id": "portInstance",
+                "superType": "function",
+                "description": "A port instance definition or use"
+            },
+            {
+                "id": "port",
+                "superType": "class",
+                "description": "A port definition or use"
+            },
+            {
+                "id": "abstractType",
+                "superType": "type",
+                "description": "An abstract type definition or use"
+            },
+            {
+                "id": "aliasType",
+                "superType": "type",
+                "description": "An alias type definition or use"
+            },
+            {
+                "id": "arrayType",
+                "superType": "type",
+                "description": "An array type definition or use"
+            },
+            {
+                "id": "enumType",
+                "superType": "type",
+                "description": "An enum type definition or use"
+            },
+            {
+                "id": "structType",
+                "superType": "type",
+                "description": "A struct type definition or use"
+            },
+            {
+                "id": "primitiveType",
+                "superType": "keyword",
+                "description": "A primitive type use"
+            },
+            {
+                "id": "formalParameter",
+                "superType": "parameter",
+                "description": "A formal parameter definition"
+            },
+            {
+                "id": "command",
+                "superType": "function",
+                "description": "A command definition"
+            },
+            {
+                "id": "event",
+                "superType": "function",
+                "description": "An event definition"
+            },
+            {
+                "id": "telemetry",
+                "superType": "function",
+                "description": "A telemetry channel definition or use"
+            },
+            {
+                "id": "parameter",
+                "superType": "function",
+                "description": "A parameter definition"
+            },
+            {
+                "id": "dataProduct",
+                "superType": "function",
+                "description": "A data product record or container definition"
+            },
+            {
+                "id": "stateMachine",
+                "superType": "class",
+                "description": "A state machine definition or use"
+            },
+            {
+                "id": "stateMachineInstance",
+                "superType": "variable",
+                "description": "A state machine instance specifier"
+            },
+            {
+                "id": "telemetryPacketSet",
+                "superType": "class",
+                "description": "A telemetry packet set definition"
+            },
+            {
+                "id": "telemetryPacket",
+                "superType": "class",
+                "description": "A telemetry packet definition"
+            },
+            {
+                "id": "action",
+                "superType": "function",
+                "description": "An topology definition or use"
+            },
+            {
+                "id": "guard",
+                "superType": "variable",
+                "description": "A guard definition or use"
+            },
+            {
+                "id": "signal",
+                "superType": "event",
+                "description": "A signal definition or use"
+            },
+            {
+                "id": "state",
+                "superType": "variable",
+                "description": "A state definition or use"
+            },
+            {
+                "id": "annotation",
+                "superType": "comment",
+                "description": "A documentation annotation"
+            }
+        ],
+        "semanticTokenScopes": [
+            {
+                "language": "fpp",
+                "scopes": {
+                    "module": [
+                        "entity.name.namespace"
+                    ],
+                    "topology": [
+                        "entity.name.variable"
+                    ],
+                    "component": [
+                        "entity.name.type.class"
+                    ],
+                    "interface": [
+                        "entity.name.type.class"
+                    ],
+                    "componentInstance": [
+                        "entity.name.variable"
+                    ],
+                    "constant": [
+                        "entity.name.variable"
+                    ],
+                    "enumConstant": [
+                        "variable.other.enummember"
+                    ],
+                    "structMember": [
+                        "entity.name.variable"
+                    ],
+                    "graphGroup": [
+                        "entity.name.type.class"
+                    ],
+                    "portInstance": [
+                        "entity.name.function"
+                    ],
+                    "port": [
+                        "entity.name.type.class"
+                    ],
+                    "abstractType": [
+                        "entity.name.type.class"
+                    ],
+                    "aliasType": [
+                        "entity.name.type"
+                    ],
+                    "arrayType": [
+                        "entity.name.type.class"
+                    ],
+                    "enumType": [
+                        "entity.name.type.class"
+                    ],
+                    "structType": [
+                        "entity.name.type.class"
+                    ],
+                    "primitiveType": [
+                        "entity.name.type"
+                    ],
+                    "formalParameter": [
+                        "entity.name.variable"
+                    ],
+                    "command": [
+                        "entity.name.function"
+                    ],
+                    "event": [
+                        "entity.name.function"
+                    ],
+                    "telemetry": [
+                        "entity.name.function"
+                    ],
+                    "parameter": [
+                        "entity.name.function"
+                    ],
+                    "dataProduct": [
+                        "entity.name.function"
+                    ],
+                    "stateMachine": [
+                        "entity.name.type.class"
+                    ],
+                    "stateMachineInstance": [
+                        "entity.name.variable"
+                    ],
+                    "telemetryPacketSet": [
+                        "entity.name.type.class"
+                    ],
+                    "telemetryPacket": [
+                        "entity.name.type.class"
+                    ],
+                    "action": [
+                        "entity.name.function"
+                    ],
+                    "guard": [
+                        "entity.name.variable"
+                    ],
+                    "signal": [
+                        "variable.other.event"
+                    ],
+                    "state": [
+                        "entity.name.variable"
+                    ],
+                    "annotation": [
+                        "comment.block.documentation"
+                    ],
+                    "comment": [
+                        "comment.line"
+                    ],
+                    "number": [
+                        "constant.numeric"
+                    ],
+                    "string": [
+                        "string.quoted.double"
+                    ],
+                    "keyword": [
+                        "keyword.other"
+                    ]
+                }
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "rm -rf dist && yarn package",
+        "package": "webpack --mode production",
+        "build": "webpack --mode development",
+        "watch": "webpack --mode development --watch",
+        "compile": "tsc -p ./src --noEmit",
+        "test:smoke": "node ./test/smoke.js",
+        "test": "yarn compile && yarn build && yarn test:smoke",
+        "vsix": "vsce package"
+    },
+    "dependencies": {
+        "js-yaml": "^4.1.0",
+        "vscode-languageclient": "^9.0.1"
+    },
+    "devDependencies": {
+        "@types/js-yaml": "^4.0.9",
+        "@types/node": "^22",
+        "@types/vscode": "^1.81.0",
+        "@vscode/vsce": "^3.2.1",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.4.5",
+        "umd-compat-loader": "^2.1.2",
+        "webpack": "^5.100.2",
+        "webpack-cli": "^6.0.1"
+    }
+}

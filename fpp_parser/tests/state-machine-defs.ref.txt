@@ -1,0 +1,412 @@
+TransUnit(
+    [
+        DefModule {
+            name: Name {
+                data: "M",
+                node_id: Span {
+                    start: [ local path prefix ]/state-machine-defs.fpp:1:8,
+                    end: [ local path prefix ]/state-machine-defs.fpp:1:9,
+                },
+            },
+            members: [
+                DefStateMachine {
+                    name: Name {
+                        data: "S",
+                        node_id: Span {
+                            start: [ local path prefix ]/state-machine-defs.fpp:2:17,
+                            end: [ local path prefix ]/state-machine-defs.fpp:2:18,
+                        },
+                    },
+                    members: Some(
+                        [
+                            DefAbsType {
+                                name: Name {
+                                    data: "T",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:3:10,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:3:11,
+                                    },
+                                },
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:3:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:3:11,
+                                },
+                            },
+                            DefAliasType {
+                                name: Name {
+                                    data: "Alias",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:4:10,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:4:15,
+                                    },
+                                },
+                                type_name: TypeName {
+                                    kind: Integer(
+                                        U32,
+                                    ),
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:4:18,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:4:21,
+                                    },
+                                },
+                                is_dictionary_def: false,
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:4:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:4:21,
+                                },
+                            },
+                            DefArray {
+                                name: Name {
+                                    data: "Arr",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:5:11,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:5:14,
+                                    },
+                                },
+                                size: Expr {
+                                    kind: LiteralInt(
+                                        "3",
+                                    ),
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:5:18,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:5:19,
+                                    },
+                                },
+                                elt_type: TypeName {
+                                    kind: Integer(
+                                        U32,
+                                    ),
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:5:21,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:5:24,
+                                    },
+                                },
+                                default: None,
+                                format: None,
+                                is_dictionary_def: false,
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:5:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:5:24,
+                                },
+                            },
+                            DefConstant {
+                                name: Name {
+                                    data: "c",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:6:14,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:6:15,
+                                    },
+                                },
+                                value: Expr {
+                                    kind: LiteralInt(
+                                        "1",
+                                    ),
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:6:18,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:6:19,
+                                    },
+                                },
+                                is_dictionary_def: false,
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:6:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:6:19,
+                                },
+                            },
+                            DefEnum {
+                                name: Name {
+                                    data: "E",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:7:10,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:7:11,
+                                    },
+                                },
+                                type_name: None,
+                                constants: [
+                                    DefEnumConstant {
+                                        name: Name {
+                                            data: "A",
+                                            node_id: Span {
+                                                start: [ local path prefix ]/state-machine-defs.fpp:7:14,
+                                                end: [ local path prefix ]/state-machine-defs.fpp:7:15,
+                                            },
+                                        },
+                                        value: None,
+                                        node_id: Span {
+                                            start: [ local path prefix ]/state-machine-defs.fpp:7:14,
+                                            end: [ local path prefix ]/state-machine-defs.fpp:7:15,
+                                        },
+                                    },
+                                    DefEnumConstant {
+                                        name: Name {
+                                            data: "B",
+                                            node_id: Span {
+                                                start: [ local path prefix ]/state-machine-defs.fpp:7:17,
+                                                end: [ local path prefix ]/state-machine-defs.fpp:7:18,
+                                            },
+                                        },
+                                        value: None,
+                                        node_id: Span {
+                                            start: [ local path prefix ]/state-machine-defs.fpp:7:17,
+                                            end: [ local path prefix ]/state-machine-defs.fpp:7:18,
+                                        },
+                                    },
+                                ],
+                                default: None,
+                                is_dictionary_def: false,
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:7:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:7:20,
+                                },
+                            },
+                            DefStruct {
+                                name: Name {
+                                    data: "St",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:8:12,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:8:14,
+                                    },
+                                },
+                                members: [
+                                    StructTypeMember {
+                                        name: Name {
+                                            data: "x",
+                                            node_id: Span {
+                                                start: [ local path prefix ]/state-machine-defs.fpp:8:17,
+                                                end: [ local path prefix ]/state-machine-defs.fpp:8:18,
+                                            },
+                                        },
+                                        size: None,
+                                        type_name: TypeName {
+                                            kind: Integer(
+                                                U32,
+                                            ),
+                                            node_id: Span {
+                                                start: [ local path prefix ]/state-machine-defs.fpp:8:20,
+                                                end: [ local path prefix ]/state-machine-defs.fpp:8:23,
+                                            },
+                                        },
+                                        format: None,
+                                        node_id: Span {
+                                            start: [ local path prefix ]/state-machine-defs.fpp:8:17,
+                                            end: [ local path prefix ]/state-machine-defs.fpp:8:23,
+                                        },
+                                    },
+                                ],
+                                default: None,
+                                is_dictionary_def: false,
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:8:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:8:25,
+                                },
+                            },
+                            DefSignal {
+                                name: Name {
+                                    data: "sig",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:10:12,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:10:15,
+                                    },
+                                },
+                                type_name: Some(
+                                    TypeName {
+                                        kind: QualIdent(
+                                            Ident {
+                                                data: "E",
+                                                node_id: Span {
+                                                    start: [ local path prefix ]/state-machine-defs.fpp:10:17,
+                                                    end: [ local path prefix ]/state-machine-defs.fpp:10:18,
+                                                },
+                                            },
+                                        ),
+                                        node_id: Span {
+                                            start: [ local path prefix ]/state-machine-defs.fpp:10:17,
+                                            end: [ local path prefix ]/state-machine-defs.fpp:10:18,
+                                        },
+                                    },
+                                ),
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:10:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:10:18,
+                                },
+                            },
+                            DefAction {
+                                name: Name {
+                                    data: "act",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:11:12,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:11:15,
+                                    },
+                                },
+                                type_name: Some(
+                                    TypeName {
+                                        kind: QualIdent(
+                                            Ident {
+                                                data: "Arr",
+                                                node_id: Span {
+                                                    start: [ local path prefix ]/state-machine-defs.fpp:11:17,
+                                                    end: [ local path prefix ]/state-machine-defs.fpp:11:20,
+                                                },
+                                            },
+                                        ),
+                                        node_id: Span {
+                                            start: [ local path prefix ]/state-machine-defs.fpp:11:17,
+                                            end: [ local path prefix ]/state-machine-defs.fpp:11:20,
+                                        },
+                                    },
+                                ),
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:11:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:11:20,
+                                },
+                            },
+                            DefGuard {
+                                name: Name {
+                                    data: "g",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:12:11,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:12:12,
+                                    },
+                                },
+                                type_name: None,
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:12:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:12:12,
+                                },
+                            },
+                            SpecInitialTransition {
+                                transition: TransitionExpr {
+                                    actions: None,
+                                    target: Ident {
+                                        data: "Idle",
+                                        node_id: Span {
+                                            start: [ local path prefix ]/state-machine-defs.fpp:14:19,
+                                            end: [ local path prefix ]/state-machine-defs.fpp:14:23,
+                                        },
+                                    },
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:14:13,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:14:23,
+                                    },
+                                },
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:14:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:14:23,
+                                },
+                            },
+                            DefState {
+                                name: Name {
+                                    data: "Idle",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:16:11,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:16:15,
+                                    },
+                                },
+                                members: [
+                                    SpecStateTransition {
+                                        signal: Ident {
+                                            data: "sig",
+                                            node_id: Span {
+                                                start: [ local path prefix ]/state-machine-defs.fpp:17:10,
+                                                end: [ local path prefix ]/state-machine-defs.fpp:17:13,
+                                            },
+                                        },
+                                        guard: None,
+                                        transition_or_do: Transition(
+                                            TransitionExpr {
+                                                actions: None,
+                                                target: Ident {
+                                                    data: "Run",
+                                                    node_id: Span {
+                                                        start: [ local path prefix ]/state-machine-defs.fpp:17:20,
+                                                        end: [ local path prefix ]/state-machine-defs.fpp:17:23,
+                                                    },
+                                                },
+                                                node_id: Span {
+                                                    start: [ local path prefix ]/state-machine-defs.fpp:17:14,
+                                                    end: [ local path prefix ]/state-machine-defs.fpp:17:23,
+                                                },
+                                            },
+                                        ),
+                                        node_id: Span {
+                                            start: [ local path prefix ]/state-machine-defs.fpp:17:7,
+                                            end: [ local path prefix ]/state-machine-defs.fpp:17:23,
+                                        },
+                                    },
+                                ],
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:16:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:18:6,
+                                },
+                            },
+                            DefState {
+                                name: Name {
+                                    data: "Run",
+                                    node_id: Span {
+                                        start: [ local path prefix ]/state-machine-defs.fpp:20:11,
+                                        end: [ local path prefix ]/state-machine-defs.fpp:20:14,
+                                    },
+                                },
+                                members: [
+                                    SpecStateEntry {
+                                        actions: DoExpr {
+                                            actions: [
+                                                Ident {
+                                                    data: "act",
+                                                    node_id: Span {
+                                                        start: [ local path prefix ]/state-machine-defs.fpp:21:18,
+                                                        end: [ local path prefix ]/state-machine-defs.fpp:21:21,
+                                                    },
+                                                },
+                                            ],
+                                            node_id: Span {
+                                                start: [ local path prefix ]/state-machine-defs.fpp:21:13,
+                                                end: [ local path prefix ]/state-machine-defs.fpp:21:23,
+                                            },
+                                        },
+                                        node_id: Span {
+                                            start: [ local path prefix ]/state-machine-defs.fpp:21:7,
+                                            end: [ local path prefix ]/state-machine-defs.fpp:21:23,
+                                        },
+                                    },
+                                    SpecStateExit {
+                                        actions: DoExpr {
+                                            actions: [
+                                                Ident {
+                                                    data: "act",
+                                                    node_id: Span {
+                                                        start: [ local path prefix ]/state-machine-defs.fpp:22:17,
+                                                        end: [ local path prefix ]/state-machine-defs.fpp:22:20,
+                                                    },
+                                                },
+                                            ],
+                                            node_id: Span {
+                                                start: [ local path prefix ]/state-machine-defs.fpp:22:12,
+                                                end: [ local path prefix ]/state-machine-defs.fpp:22:22,
+                                            },
+                                        },
+                                        node_id: Span {
+                                            start: [ local path prefix ]/state-machine-defs.fpp:22:7,
+                                            end: [ local path prefix ]/state-machine-defs.fpp:22:22,
+                                        },
+                                    },
+                                ],
+                                node_id: Span {
+                                    start: [ local path prefix ]/state-machine-defs.fpp:20:5,
+                                    end: [ local path prefix ]/state-machine-defs.fpp:23:6,
+                                },
+                            },
+                        ],
+                    ),
+                    node_id: Span {
+                        start: [ local path prefix ]/state-machine-defs.fpp:2:3,
+                        end: [ local path prefix ]/state-machine-defs.fpp:24:4,
+                    },
+                },
+            ],
+            node_id: Span {
+                start: [ local path prefix ]/state-machine-defs.fpp:1:1,
+                end: [ local path prefix ]/state-machine-defs.fpp:25:2,
+            },
+        },
+    ],
+)

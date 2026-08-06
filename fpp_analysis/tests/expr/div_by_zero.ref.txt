@@ -1,0 +1,5 @@
+ --> [ local path prefix ]/expr/div_by_zero.fpp:3:16
+  |
+3 | constant c = a/b
+  |                ^ division by zero
+

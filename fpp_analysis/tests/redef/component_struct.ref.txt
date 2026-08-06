@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/redef/component_struct.fpp:3:8
+  |
+3 | struct C { }
+  |        ^ redefinition of symbol C
+  |
+ ::: [ local path prefix ]/redef/component_struct.fpp:1:1
+  |
+1 | passive component C { }
+  | ----------------------- previous definition is here
+

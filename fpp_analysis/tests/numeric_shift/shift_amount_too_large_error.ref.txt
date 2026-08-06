@@ -1,0 +1,7 @@
+ --> [ local path prefix ]/numeric_shift/shift_amount_too_large_error.fpp:1:19
+  |
+1 | constant a = 2 << 0x100000000
+  |                   ^^^^^^^^^^^ invalid shift amount
+  |
+  = note: shift amount must be a non-negative value that must be in the range [0,255]
+
