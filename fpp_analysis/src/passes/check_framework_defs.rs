@@ -46,7 +46,6 @@ impl CheckFrameworkDefs {
         }
     }
 
-    /// Verify all ancestor symbols are modules. Returns true if valid.
     fn check_module_qualifiers(&self, a: &Analysis, symbol: &Symbol, loc: fpp_core::Span) -> bool {
         let name = a.get_qualified_name(symbol);
         let mut current = symbol.clone();

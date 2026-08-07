@@ -2,10 +2,6 @@ use crate::semantics::Symbol;
 use rustc_hash::FxHashMap as HashMap;
 
 /// The set of F Prime framework definitions discovered during analysis.
-///
-/// Mirrors the Scala `FrameworkDefinitions` semantics object: it records the
-/// framework constant and type symbols (keyed by their qualified name) that were
-/// found and validated by `CheckFrameworkDefs`.
 #[derive(Debug, Default)]
 pub struct FrameworkDefinitions {
     /// Map from qualified constant name to its symbol.
