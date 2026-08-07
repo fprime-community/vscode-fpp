@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/container/duplicate_name.fpp:4.3
-  product container C
-  ^
-error: duplicate container name C
-previous occurrence is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/container/duplicate_name.fpp:3.3
-  product container C
-  ^
+ --> [ local path prefix ]/container/duplicate_name.fpp:4:3
+  |
+4 |   product container C
+  |   ^^^^^^^^^^^^^^^^^^^ duplicate container name C
+  |
+ ::: [ local path prefix ]/container/duplicate_name.fpp:3:3
+  |
+3 |   product container C
+  |   ------------------- previous occurrence is here
+

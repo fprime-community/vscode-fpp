@@ -3,13 +3,15 @@ use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::basic_use_analyzer::UseAnalysisPass;
 use crate::analyzers::use_analyzer::UseAnalyzer;
 use crate::errors::SemanticError;
+use crate::passes::FinalizeTypeDefs;
 use crate::semantics::{
     AnonArrayValue, AnonStructValue, ArrayValue, BooleanValue, EnumConstantValue, FloatValue,
     IntegerValue, MathError, PrimitiveIntegerValue, QualifiedName, StringValue, StructValue,
     Symbol, SymbolInterface, Type, Value,
 };
 use fpp_ast::{
-    Binop, DefConstant, DefEnum, DefEnumConstant, Expr, ExprKind, Node, Unop, Visitable, Visitor,
+    Binop, DefConstant, DefEnum, DefEnumConstant, Expr, ExprKind, Node, TransUnit, Unop, Visitable,
+    Visitor, Walkable,
 };
 use fpp_core::Spanned;
 use rustc_hash::FxHashMap as HashMap;
@@ -40,6 +42,17 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
 
     fn super_visit(&self, a: &mut Analysis, node: Node<'ast>) -> ControlFlow<Self::Break> {
         self.super_.visit(self, a, node)
+    }
+
+    fn visit_trans_unit(
+        &self,
+        a: &mut Self::State,
+        node: &'ast TransUnit,
+    ) -> ControlFlow<Self::Break> {
+        // Reset the visited-symbol set so on-demand type finalization (for
+        // `sizeof`) can run; it is repopulated by `FinalizeTypeDefs` afterward.
+        a.visited_symbol_set.clear();
+        node.walk(a, self)
     }
 
     fn visit_def_constant(
@@ -351,17 +364,20 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
                 }
             },
             ExprKind::SizeOf(type_name) => {
-                // NOTE: only framework-independent types have a known serialized
-                // size within the current pass set. Sizes for strings, arrays and
-                // structs require CheckFrameworkDefs / type finalization and are
-                // left unevaluated here (see Type::primitive_serialized_size).
-                if let Some(size) = a
-                    .type_map
-                    .get(&type_name.node_id)
-                    .and_then(|ty| ty.primitive_serialized_size())
-                {
-                    a.value_map
-                        .insert(node.node_id, Value::Integer(IntegerValue(size)));
+                // Finalize the referenced type on demand, then compute its
+                // serialized size (mirrors Scala's exprSizeOfNode:
+                // FinalizeType.finalizeIfNeeded + getFinalizedType +
+                // Type.SerializedSize).
+                FinalizeTypeDefs::new().ty(a, type_name);
+                if let Some(ty) = a.type_map.get(&type_name.node_id).cloned() {
+                    let finalized = match ty.def_node_id() {
+                        Some(def_node) => a.type_map.get(&def_node).cloned().unwrap_or(ty),
+                        None => ty,
+                    };
+                    if let Some(size) = finalized.serialized_size(a) {
+                        a.value_map
+                            .insert(node.node_id, Value::Integer(IntegerValue(size)));
+                    }
                 }
             }
             ExprKind::Struct(struct_expr) => {

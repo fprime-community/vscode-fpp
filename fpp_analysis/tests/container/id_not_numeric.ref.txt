@@ -1,5 +1,16 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/container/id_not_numeric.fpp:3.26
-  product container C id "abc"
-                         ^
-error: cannot convert string to a numeric type
+ --> [ local path prefix ]/container/id_not_numeric.fpp:3:26
+  |
+3 |   product container C id "abc"
+  |                          ^^^^^ cannot convert expression to integer
+  |
+  = note: string cannot be converted to Integer
+
+ --> [ local path prefix ]/container/id_not_numeric.fpp:1:1
+  |
+1 | / active component C {
+2 | |
+3 | |   product container C id "abc"
+4 | |
+5 | | }
+  | |_^ active component must have async input
+

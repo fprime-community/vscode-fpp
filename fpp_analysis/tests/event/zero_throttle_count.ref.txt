@@ -1,5 +1,6 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/event/zero_throttle_count.fpp:3.3
-  event E severity activity low \
-  ^
-error: event throttle count must be greater than zero
+ --> [ local path prefix ]/event/zero_throttle_count.fpp:3:3
+  |
+3 | /   event E severity activity low \
+4 | |     format "" throttle 0
+  | |________________________^ event throttle count must be greater than zero
+

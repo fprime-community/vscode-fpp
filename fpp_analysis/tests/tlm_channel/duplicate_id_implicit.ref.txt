@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_channel/duplicate_id_implicit.fpp:7.3
-  telemetry T3: U32
-  ^
-error: duplicate identifier value (17 dec, 11 hex)
-previous occurrence is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_channel/duplicate_id_implicit.fpp:3.3
-  telemetry T1: U32 id 0x11
-  ^
+ --> [ local path prefix ]/tlm_channel/duplicate_id_implicit.fpp:7:3
+  |
+7 |   telemetry T3: U32
+  |   ^^^^^^^^^^^^^^^^^ duplicate identifier value (17 dec, 11 hex)
+  |
+ ::: [ local path prefix ]/tlm_channel/duplicate_id_implicit.fpp:3:3
+  |
+3 |   telemetry T1: U32 id 0x11
+  |   ------------------------- previous occurrence is here
+

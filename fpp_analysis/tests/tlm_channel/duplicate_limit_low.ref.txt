@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_channel/duplicate_limit_low.fpp:3.33
-  telemetry T: U32 low { red 0, red 1 }
-                                ^
-error: duplicate limit
-previous occurrence is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_channel/duplicate_limit_low.fpp:3.26
-  telemetry T: U32 low { red 0, red 1 }
-                         ^
+ --> [ local path prefix ]/tlm_channel/duplicate_limit_low.fpp:3:37
+  |
+3 |   telemetry T: U32 low { red 0, red 1 }
+  |                                     ^ duplicate limit
+  |
+ ::: [ local path prefix ]/tlm_channel/duplicate_limit_low.fpp:3:30
+  |
+3 |   telemetry T: U32 low { red 0, red 1 }
+  |                              - previous occurrence is here
+

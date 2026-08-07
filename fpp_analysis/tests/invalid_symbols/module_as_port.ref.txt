@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/invalid_symbols/module_as_port.fpp:5:20
+  |
+5 |     output port p: M
+  |                    ^ not a port symbol
+  |
+ ::: [ local path prefix ]/invalid_symbols/module_as_port.fpp:1:8
+  |
+1 | module M {
+  |        - M defined here
+

@@ -1,5 +1,9 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/record/missing_ports.fpp:1.1
-passive component C {
-^
-error: component with data product specifiers must have product get port or product request port
+ --> [ local path prefix ]/record/missing_ports.fpp:1:1
+  |
+1 | / passive component C {
+2 | |
+3 | |   product record R: U32
+4 | |
+5 | | }
+  | |_^ component with data product specifiers must have product get port or product request port
+

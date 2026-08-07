@@ -1,5 +1,16 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_channel/bad_limit_type.fpp:3.31
-  telemetry T: bool low { red 0 }
-                              ^
-error: cannot convert Integer to bool
+ --> [ local path prefix ]/tlm_channel/bad_limit_type.fpp:3:31
+  |
+3 |   telemetry T: bool low { red 0 }
+  |                               ^ default value cannot be converted to boolean
+  |
+  = note: Integer cannot be converted to boolean
+
+ --> [ local path prefix ]/tlm_channel/bad_limit_type.fpp:1:1
+  |
+1 | / passive component C {
+2 | |
+3 | |   telemetry T: bool low { red 0 }
+4 | |
+5 | | }
+  | |_^ component with telemetry specifiers must have telemetry port
+

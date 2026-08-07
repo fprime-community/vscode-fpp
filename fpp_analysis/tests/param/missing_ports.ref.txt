@@ -1,5 +1,9 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/param/missing_ports.fpp:1.1
-passive component C {
-^
-error: component with parameter specifiers must have param get port
+ --> [ local path prefix ]/param/missing_ports.fpp:1:1
+  |
+1 | / passive component C {
+2 | |
+3 | |   param p: U32
+4 | |
+5 | | }
+  | |_^ component with parameter specifiers must have param get port
+

@@ -1,5 +1,9 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/container/missing_product_send_port.fpp:5.1
-passive component C {
-^
-error: component with data product specifiers must have product send port
+  --> [ local path prefix ]/container/missing_product_send_port.fpp:5:1
+   |
+ 5 | / passive component C {
+ 6 | |
+ 7 | |   product container C
+...  |
+11 | | }
+   | |_^ component with data product specifiers must have product send port
+

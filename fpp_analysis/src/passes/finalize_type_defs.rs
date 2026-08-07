@@ -51,7 +51,7 @@ impl<'ast> FinalizeTypeDefs<'ast> {
         }
     }
 
-    fn ty(&self, a: &mut Analysis, node: &'ast TypeName) -> Option<Arc<Type>> {
+    pub(crate) fn ty(&self, a: &mut Analysis, node: &'ast TypeName) -> Option<Arc<Type>> {
         match &node.kind {
             TypeNameKind::QualIdent(q) => match a.use_def_map.get(&q.id()) {
                 None => {}

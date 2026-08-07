@@ -1,6 +1,7 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_channel/negative_id.fpp:3.23
-  telemetry T: U32 id -1
-                      ^
-error: invalid integer value -1
-value may not be negative
+ --> [ local path prefix ]/tlm_channel/negative_id.fpp:3:23
+  |
+3 |   telemetry T: U32 id -1
+  |                       ^^ value may not be negative
+  |
+  = note: expression evaluated to `-1`
+

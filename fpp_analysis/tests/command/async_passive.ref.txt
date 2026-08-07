@@ -1,5 +1,5 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/command/async_passive.fpp:3.3
-  async command C
-  ^
-error: passive component may not have async input
+ --> [ local path prefix ]/command/async_passive.fpp:3:3
+  |
+3 |   async command C
+  |   ^^^^^^^^^^^^^^^ passive component may not have async input
+

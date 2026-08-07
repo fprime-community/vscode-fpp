@@ -1,5 +1,9 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/container/missing_product_recv_port.fpp:8.1
-passive component C {
-^
-error: component with product request specifier must have product recv port
+  --> [ local path prefix ]/container/missing_product_recv_port.fpp:8:1
+   |
+ 8 | / passive component C {
+ 9 | |
+10 | |   product container C
+...  |
+18 | | }
+   | |_^ component with product request specifier must have product recv port
+

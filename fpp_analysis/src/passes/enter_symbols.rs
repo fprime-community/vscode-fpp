@@ -90,12 +90,10 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
         a: &mut Analysis,
         def: &'ast DefComponentInstance,
     ) -> ControlFlow<Self::Break> {
-        self.enter_symbol(
-            a,
-            Symbol::ComponentInstance(Arc::new(def.clone())),
-            NameGroup::PortInterfaceInstance,
-        )
-        .unwrap_or_else(|err| err.emit());
+        let symbol = Symbol::ComponentInstance(Arc::new(def.clone()));
+        a.symbol_map.insert(def.node_id, symbol.clone());
+        self.enter_symbol(a, symbol, NameGroup::PortInterfaceInstance)
+            .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }
 

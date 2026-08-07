@@ -1,6 +1,7 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/record/id_negative.fpp:3.28
-  product record R: U32 id -1
-                           ^
-error: invalid integer value -1
-value may not be negative
+ --> [ local path prefix ]/record/id_negative.fpp:3:28
+  |
+3 |   product record R: U32 id -1
+  |                            ^^ value may not be negative
+  |
+  = note: expression evaluated to `-1`
+

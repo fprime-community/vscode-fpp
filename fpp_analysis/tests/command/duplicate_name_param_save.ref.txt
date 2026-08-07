@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/command/duplicate_name_param_save.fpp:5.3
-  async command P_PRM_SAVE
-  ^
-error: duplicate command name P_PRM_SAVE
-previous occurrence is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/command/duplicate_name_param_save.fpp:3.3
-  param P: U32
-  ^
+ --> [ local path prefix ]/command/duplicate_name_param_save.fpp:5:3
+  |
+5 |   async command P_PRM_SAVE
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^ duplicate command name P_PRM_SAVE
+  |
+ ::: [ local path prefix ]/command/duplicate_name_param_save.fpp:3:3
+  |
+3 |   param P: U32
+  |   ------------ previous occurrence is here
+

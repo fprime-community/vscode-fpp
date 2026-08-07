@@ -1,5 +1,16 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/container/priority_not_numeric.fpp:3.49
-  product container C id 0x100 default priority "abc"
-                                                ^
-error: cannot convert string to a numeric type
+ --> [ local path prefix ]/container/priority_not_numeric.fpp:3:49
+  |
+3 |   product container C id 0x100 default priority "abc"
+  |                                                 ^^^^^ cannot convert expression to integer
+  |
+  = note: string cannot be converted to Integer
+
+ --> [ local path prefix ]/container/priority_not_numeric.fpp:1:1
+  |
+1 | / active component C {
+2 | |
+3 | |   product container C id 0x100 default priority "abc"
+4 | |
+5 | | }
+  | |_^ active component must have async input
+

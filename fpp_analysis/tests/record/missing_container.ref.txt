@@ -1,5 +1,5 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/record/missing_container.fpp:16.3
-  product record Record: U32
-  ^
-error: component that specifies records must specify at least one container
+  --> [ local path prefix ]/record/missing_container.fpp:16:3
+   |
+16 |   product record Record: U32
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^ component that specifies records must specify at least one container
+

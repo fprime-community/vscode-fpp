@@ -1,18 +1,20 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/interface/conflict_name.fpp:9.5
-    import I
-    ^
-error: failed to import interface
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/interface/conflict_name.fpp:4.5
-    async input port P: P
-    ^
-error: duplicate port instance P
-port imported from here
-[ local path prefix ]/compiler/tools/fpp-check/test/interface/conflict_name.fpp:9.5
-    import I
-    ^
-previous instance is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/interface/conflict_name.fpp:8.5
-    output port P: P
-    ^
+ --> [ local path prefix ]/interface/conflict_name.fpp:4:5
+  |
+4 |     async input port P: P
+  |     ^^^^^^^^^^^^^^^^^^^^^ duplicate port instance P
+  |
+ ::: [ local path prefix ]/interface/conflict_name.fpp:9:5
+  |
+9 |     import I
+  |     -------- port imported from here
+  |
+ ::: [ local path prefix ]/interface/conflict_name.fpp:8:5
+  |
+8 |     output port P: P
+  |     ---------------- previous instance is here
+  |
+ ::: [ local path prefix ]/interface/conflict_name.fpp:9:5
+  |
+9 |     import I
+  |     -------- failed to import interface here
+

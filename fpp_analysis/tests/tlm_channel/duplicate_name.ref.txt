@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_channel/duplicate_name.fpp:4.3
-  telemetry T: F32
-  ^
-error: duplicate telemetry channel name T
-previous occurrence is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_channel/duplicate_name.fpp:3.3
-  telemetry T: U32
-  ^
+ --> [ local path prefix ]/tlm_channel/duplicate_name.fpp:4:3
+  |
+4 |   telemetry T: F32
+  |   ^^^^^^^^^^^^^^^^ duplicate telemetry channel name T
+  |
+ ::: [ local path prefix ]/tlm_channel/duplicate_name.fpp:3:3
+  |
+3 |   telemetry T: U32
+  |   ---------------- previous occurrence is here
+

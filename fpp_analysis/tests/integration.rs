@@ -65,7 +65,6 @@ mod defs {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod interface {
     mod test;
 }
@@ -79,7 +78,6 @@ mod port_matching {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod record {
     mod test;
 }
@@ -102,7 +100,6 @@ mod enums {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod tlm_channel {
     mod test;
 }
@@ -115,22 +112,18 @@ mod expr {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod component {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod param {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod container {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod component_instance_def {
     mod test;
 }
@@ -169,7 +162,6 @@ mod unconnected {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod command {
     mod test;
 }
@@ -188,12 +180,10 @@ mod connection_direct {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod spec_init {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod event {
     mod test;
 }

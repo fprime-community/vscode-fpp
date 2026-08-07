@@ -1,6 +1,7 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/component_instance_def/invalid_negative_int.fpp:5.23
-instance c: C base id -1
-                      ^
-error: invalid integer value -1
-value may not be negative
+ --> [ local path prefix ]/component_instance_def/invalid_negative_int.fpp:5:23
+  |
+5 | instance c: C base id -1
+  |                       ^^ value may not be negative
+  |
+  = note: expression evaluated to `-1`
+

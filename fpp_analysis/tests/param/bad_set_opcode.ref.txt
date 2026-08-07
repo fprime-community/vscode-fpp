@@ -1,5 +1,17 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/param/bad_set_opcode.fpp:3.27
-  param P: U32 set opcode "abc"
-                          ^
-error: cannot convert string to a numeric type
+ --> [ local path prefix ]/param/bad_set_opcode.fpp:3:27
+  |
+3 |   param P: U32 set opcode "abc"
+  |                           ^^^^^ cannot convert expression to integer
+  |
+  = note: string cannot be converted to Integer
+
+ --> [ local path prefix ]/param/bad_set_opcode.fpp:3:3
+  |
+3 |   param P: U32 set opcode "abc"
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ duplicate opcode value (0 dec, 0 hex)
+  |
+ ::: [ local path prefix ]/param/bad_set_opcode.fpp:3:3
+  |
+3 |   param P: U32 set opcode "abc"
+  |   ----------------------------- previous occurrence is here
+

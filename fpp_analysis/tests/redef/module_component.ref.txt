@@ -8,3 +8,8 @@
 1 | module M { }
   | ------------ previous definition is here
 
+ --> [ local path prefix ]/redef/module_component.fpp:2:1
+  |
+2 | active component M { }
+  | ^^^^^^^^^^^^^^^^^^^^^^ active component must have async input
+

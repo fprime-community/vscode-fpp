@@ -1,5 +1,16 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/param/bad_id.fpp:3.19
-  param P: U32 id "abc"
-                  ^
-error: cannot convert string to a numeric type
+ --> [ local path prefix ]/param/bad_id.fpp:3:19
+  |
+3 |   param P: U32 id "abc"
+  |                   ^^^^^ cannot convert expression to integer
+  |
+  = note: string cannot be converted to Integer
+
+ --> [ local path prefix ]/param/bad_id.fpp:1:1
+  |
+1 | / active component C {
+2 | |
+3 | |   param P: U32 id "abc"
+4 | |
+5 | | }
+  | |_^ active component must have async input
+
