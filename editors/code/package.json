@@ -212,7 +212,7 @@
             },
             {
                 "id": "interface",
-                "superType": "interface",
+                "superType": "class",
                 "description": "A port interface definition or use"
             },
             {
