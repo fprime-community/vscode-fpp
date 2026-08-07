@@ -1,0 +1,106 @@
+ROOT@0..150
+  DEF_MODULE@0..149
+    MODULE_KW@0..6 "module"
+    WHITESPACE@6..7 " "
+    NAME@7..8
+      IDENT@7..8 "M"
+    WHITESPACE@8..9 " "
+    MODULE_MEMBER_LIST@9..149
+      LEFT_CURLY@9..10 "{"
+      EOL@10..11 "\n"
+      WHITESPACE@11..13 "  "
+      DEF_COMPONENT@13..147
+        ACTIVE_KW@13..19 "active"
+        WHITESPACE@19..20 " "
+        COMPONENT_KW@20..29 "component"
+        WHITESPACE@29..30 " "
+        NAME@30..31
+          IDENT@30..31 "C"
+        WHITESPACE@31..32 " "
+        COMPONENT_MEMBER_LIST@32..147
+          LEFT_CURLY@32..33 "{"
+          EOL@33..34 "\n"
+          WHITESPACE@34..38 "    "
+          SPEC_COMMAND@38..103
+            GUARDED_KW@38..45 "guarded"
+            WHITESPACE@45..46 " "
+            COMMAND_KW@46..53 "command"
+            WHITESPACE@53..54 " "
+            NAME@54..62
+              IDENT@54..62 "SET_MODE"
+            FORMAL_PARAM_LIST@62..73
+              LEFT_PAREN@62..63 "("
+              FORMAL_PARAM@63..72
+                NAME@63..67
+                  IDENT@63..67 "mode"
+                COLON@67..68 ":"
+                WHITESPACE@68..69 " "
+                TYPE_NAME@69..72
+                  U32_KW@69..72 "U32"
+              RIGHT_PAREN@72..73 ")"
+            WHITESPACE@73..74 " "
+            OPCODE@74..85
+              OPCODE_KW@74..80 "opcode"
+              WHITESPACE@80..81 " "
+              EXPR@81..85
+                EXPR_LITERAL@81..85
+                  LITERAL_INT@81..85 "0x10"
+            WHITESPACE@85..86 " "
+            PRIORITY@86..96
+              PRIORITY_KW@86..94 "priority"
+              WHITESPACE@94..95 " "
+              EXPR@95..96
+                EXPR_LITERAL@95..96
+                  LITERAL_INT@95..96 "5"
+            WHITESPACE@96..97 " "
+            QUEUE_FULL@97..103
+              ASSERT_KW@97..103 "assert"
+          EOL@103..105 "\n\n"
+          WHITESPACE@105..109 "    "
+          DEF_CONSTANT@109..143
+            CONSTANT_KW@109..117 "constant"
+            WHITESPACE@117..118 " "
+            NAME@118..124
+              IDENT@118..124 "matrix"
+            WHITESPACE@124..125 " "
+            EQUALS@125..126 "="
+            WHITESPACE@126..127 " "
+            EXPR@127..143
+              EXPR_ARRAY@127..143
+                EXPR_ARRAY_MEMBER_LIST@127..143
+                  LEFT_SQUARE@127..128 "["
+                  EXPR@128..134
+                    EXPR_ARRAY@128..134
+                      EXPR_ARRAY_MEMBER_LIST@128..134
+                        LEFT_SQUARE@128..129 "["
+                        EXPR@129..130
+                          EXPR_LITERAL@129..130
+                            LITERAL_INT@129..130 "1"
+                        COMMA@130..131 ","
+                        WHITESPACE@131..132 " "
+                        EXPR@132..133
+                          EXPR_LITERAL@132..133
+                            LITERAL_INT@132..133 "2"
+                        RIGHT_SQUARE@133..134 "]"
+                  COMMA@134..135 ","
+                  WHITESPACE@135..136 " "
+                  EXPR@136..142
+                    EXPR_ARRAY@136..142
+                      EXPR_ARRAY_MEMBER_LIST@136..142
+                        LEFT_SQUARE@136..137 "["
+                        EXPR@137..138
+                          EXPR_LITERAL@137..138
+                            LITERAL_INT@137..138 "3"
+                        COMMA@138..139 ","
+                        WHITESPACE@139..140 " "
+                        EXPR@140..141
+                          EXPR_LITERAL@140..141
+                            LITERAL_INT@140..141 "4"
+                        RIGHT_SQUARE@141..142 "]"
+                  RIGHT_SQUARE@142..143 "]"
+          EOL@143..144 "\n"
+          WHITESPACE@144..146 "  "
+          RIGHT_CURLY@146..147 "}"
+      EOL@147..148 "\n"
+      RIGHT_CURLY@148..149 "}"
+  EOL@149..150 "\n"

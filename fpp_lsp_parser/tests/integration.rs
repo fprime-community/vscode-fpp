@@ -176,3 +176,8 @@ fn topology_ports() {
 fn topology() {
     run_test_from_fpp_parser("topology")
 }
+
+#[test]
+fn guarded_command_nested_array() {
+    run_test("guarded-command-nested-array")
+}

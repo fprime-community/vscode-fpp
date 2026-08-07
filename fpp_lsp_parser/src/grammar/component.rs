@@ -96,7 +96,7 @@ fn spec_state_machine_instance(p: &mut Parser) {
 fn spec_command(p: &mut Parser) {
     let m = p.start();
     match p.current() {
-        ASYNC_KW | GUARD_KW | SYNC_KW => p.bump_any(),
+        ASYNC_KW | GUARDED_KW | SYNC_KW => p.bump_any(),
         _ => unreachable!(),
     }
 
@@ -163,7 +163,7 @@ fn spec_port_instance_special(p: &mut Parser) {
     let m = p.start();
 
     match p.current() {
-        ASYNC_KW | SYNC_KW | GUARD_KW => {
+        ASYNC_KW | SYNC_KW | GUARDED_KW => {
             p.bump_any();
         }
         _ => {}

@@ -113,7 +113,7 @@ fn member_list(
     p.bump(bra);
 
     while !p.at(ket) && !p.at(EOF) {
-        if p.at(bra) {
+        if bra == LEFT_CURLY && p.at(bra) {
             error_block(p, expected_error_msg);
             continue;
         }
