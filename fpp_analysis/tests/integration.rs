@@ -107,7 +107,6 @@ mod tlm_channel {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod framework_defs {
     mod test;
 }
@@ -175,7 +174,6 @@ mod command {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod port {
     mod test;
 }

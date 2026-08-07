@@ -12,15 +12,7 @@ name: Pip Packages
 on:
   push:
     branches: [ main ]
-    paths:
-      - "fpp_lsp_server/**"
-      - "fpp_format/**"
-      - ".github/workflows/pip.yml"
   pull_request:
-    paths:
-      - "fpp_lsp_server/**"
-      - "fpp_format/**"
-      - ".github/workflows/pip.yml"
   release:
     types: [ published ]
   workflow_dispatch:

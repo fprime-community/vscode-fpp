@@ -1,6 +1,7 @@
 use crate::errors::SemanticResult;
 use crate::semantics::{
-    NameGroup, NestedScope, Scope, Symbol, SymbolInterface, Type, UseDefMatching, Value,
+    FrameworkDefinitions, NameGroup, NestedScope, Scope, Symbol, SymbolInterface, Type,
+    UseDefMatching, Value,
 };
 use fpp_core::SourceFile;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
@@ -37,6 +38,8 @@ pub struct Analysis {
     pub type_map: HashMap<fpp_core::Node, Arc<Type>>,
     /** The mapping from constant symbols and expressions to their values. */
     pub value_map: HashMap<fpp_core::Node, Value>,
+    /** The F Prime framework definitions found during analysis. */
+    pub framework_definitions: FrameworkDefinitions,
 }
 
 impl Default for Analysis {
@@ -65,7 +68,21 @@ impl Analysis {
             include_context_map: Default::default(),
             type_map: Default::default(),
             value_map: Default::default(),
+            framework_definitions: Default::default(),
         }
+    }
+
+    /// Compute the fully qualified name of a symbol by walking up the
+    /// parent-symbol map, joining component names with `.`.
+    pub fn get_qualified_name(&self, symbol: &Symbol) -> String {
+        let mut parts = vec![symbol.name().data.clone()];
+        let mut current = symbol.clone();
+        while let Some(parent) = self.parent_symbol_map.get(&current) {
+            parts.push(parent.name().data.clone());
+            current = parent.clone();
+        }
+        parts.reverse();
+        parts.join(".")
     }
 
     pub fn get_symbol<N: fpp_ast::AstNode>(&self, node: &N) -> Symbol {

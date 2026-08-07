@@ -234,6 +234,8 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
             }
         };
 
+        self.update_parent_symbol_map(a, sym.clone());
+
         a.nested_scope.push(sym.clone());
         let save_paren = a.parent_symbol.clone();
         a.parent_symbol = Some(sym);
