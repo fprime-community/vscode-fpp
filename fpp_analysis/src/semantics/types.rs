@@ -184,6 +184,67 @@ impl Type {
         }
     }
 
+    /// Compute the serialized size of a type, mirroring Scala's
+    /// `Type.SerializedSize`. Unlike [`Type::primitive_serialized_size`], this
+    /// resolves string, array, and struct sizes using the F Prime framework
+    /// definitions (`FwSizeStoreType`, `FW_FIXED_LENGTH_STRING_SIZE`) recorded by
+    /// `CheckFrameworkDefs`. Requires the type to be finalized (array/string
+    /// sizes known); returns `None` otherwise.
+    pub fn serialized_size(&self, a: &crate::Analysis) -> Option<i128> {
+        use crate::semantics::SymbolInterface;
+        match self {
+            Type::AliasType(alias) => alias.alias_type.serialized_size(a),
+            Type::Boolean => Some(1),
+            Type::Float(FloatKind::F32) => Some(4),
+            Type::Float(FloatKind::F64) => Some(8),
+            Type::PrimitiveInt(_) => self.primitive_serialized_size(),
+            Type::Enum(ty) => Type::PrimitiveInt(ty.rep_type).serialized_size(a),
+            Type::Array(arr) => {
+                let n = arr.anon_array.size? as i128;
+                Some(n * arr.anon_array.elt_type.serialized_size(a)?)
+            }
+            Type::AnonArray(arr) => {
+                let n = arr.size? as i128;
+                Some(n * arr.elt_type.serialized_size(a)?)
+            }
+            Type::String(size) => {
+                let store_symbol = a.framework_definitions.type_map.get("FwSizeStoreType")?;
+                let store_size = a
+                    .type_map
+                    .get(&store_symbol.node())?
+                    .serialized_size(a)?;
+                let data_size = match size {
+                    Some(n) => *n,
+                    None => {
+                        let c = a
+                            .framework_definitions
+                            .constant_map
+                            .get("FW_FIXED_LENGTH_STRING_SIZE")?;
+                        a.get_int_value(c.node())?
+                    }
+                };
+                Some(store_size + data_size)
+            }
+            Type::Struct(ty) => {
+                let mut total = 0i128;
+                for (name, member_ty) in &ty.anon_struct.members {
+                    let member_size = member_ty.serialized_size(a)?;
+                    let mult = ty.sizes.get(name).copied().unwrap_or(1) as i128;
+                    total += member_size * mult;
+                }
+                Some(total)
+            }
+            Type::AnonStruct(ty) => {
+                let mut total = 0i128;
+                for member_ty in ty.members.values() {
+                    total += member_ty.serialized_size(a)?;
+                }
+                Some(total)
+            }
+            Type::Integer | Type::AbsType(_) => None,
+        }
+    }
+
     /** Is this type an int type? */
     pub fn is_int(&self) -> bool {
         match self {

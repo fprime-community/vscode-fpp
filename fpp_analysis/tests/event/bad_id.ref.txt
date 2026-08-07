@@ -1,5 +1,16 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/event/bad_id.fpp:3.36
-  event E severity activity low id "abc" format ""
-                                   ^
-error: cannot convert string to a numeric type
+ --> [ local path prefix ]/event/bad_id.fpp:3:36
+  |
+3 |   event E severity activity low id "abc" format ""
+  |                                    ^^^^^ cannot convert expression to integer
+  |
+  = note: string cannot be converted to Integer
+
+ --> [ local path prefix ]/event/bad_id.fpp:1:1
+  |
+1 | / active component C {
+2 | |
+3 | |   event E severity activity low id "abc" format ""
+4 | |
+5 | | }
+  | |_^ active component must have async input
+

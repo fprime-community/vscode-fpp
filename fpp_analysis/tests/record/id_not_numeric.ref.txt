@@ -1,5 +1,16 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/record/id_not_numeric.fpp:3.28
-  product record R: U32 id "abc"
-                           ^
-error: cannot convert string to a numeric type
+ --> [ local path prefix ]/record/id_not_numeric.fpp:3:28
+  |
+3 |   product record R: U32 id "abc"
+  |                            ^^^^^ cannot convert expression to integer
+  |
+  = note: string cannot be converted to Integer
+
+ --> [ local path prefix ]/record/id_not_numeric.fpp:1:1
+  |
+1 | / active component C {
+2 | |
+3 | |   product record R: U32 id "abc"
+4 | |
+5 | | }
+  | |_^ active component must have async input
+

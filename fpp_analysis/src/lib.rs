@@ -2,9 +2,9 @@ mod analysis;
 mod errors;
 
 use crate::passes::{
-    CheckExprTypes, CheckFrameworkConstantValues, CheckFrameworkDefs, CheckPortDefs, CheckTypeUses,
-    CheckUseDefCycles, CheckUses, EnterSymbols, EvalConstantExprs, EvalImpliedEnumConsts,
-    FinalizeTypeDefs,
+    CheckComponentDefs, CheckComponentInstanceDefs, CheckExprTypes, CheckFrameworkConstantValues,
+    CheckFrameworkDefs, CheckInterfaceDefs, CheckPortDefs, CheckTypeUses, CheckUseDefCycles,
+    CheckUses, EnterSymbols, EvalConstantExprs, EvalImpliedEnumConsts, FinalizeTypeDefs,
 };
 pub use analysis::*;
 use fpp_ast::{MutVisitor, Visitor};
@@ -58,6 +58,15 @@ pub mod passes {
 
     mod check_framework_constant_values;
     pub use check_framework_constant_values::*;
+
+    mod check_interface_defs;
+    pub use check_interface_defs::*;
+
+    mod check_component_defs;
+    pub use check_component_defs::*;
+
+    mod check_component_instance_defs;
+    pub use check_component_instance_defs::*;
 }
 
 pub mod semantics {
@@ -72,6 +81,15 @@ pub mod semantics {
 
     mod framework_definitions;
     pub use framework_definitions::*;
+
+    mod interface;
+    pub use interface::*;
+
+    mod component;
+    pub use component::*;
+
+    mod component_instance;
+    pub use component_instance::*;
 
     mod scope;
     pub use scope::*;
@@ -116,6 +134,13 @@ pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> Contr
     FinalizeTypeDefs::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckFrameworkConstantValues::new().check(a);
     CheckPortDefs::new().visit_trans_units(a, ast.iter().cloned())?;
+    let check_interface_defs = CheckInterfaceDefs::new();
+    check_interface_defs.visit_trans_units(a, ast.iter().cloned())?;
+    check_interface_defs.resolve_all(a);
+    CheckComponentDefs::new().visit_trans_units(a, ast.iter().cloned())?;
+    let check_component_instance_defs = CheckComponentInstanceDefs::new();
+    check_component_instance_defs.visit_trans_units(a, ast.iter().cloned())?;
+    check_component_instance_defs.check_id_ranges(a);
 
     ControlFlow::Continue(())
 }

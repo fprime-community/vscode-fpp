@@ -1,9 +1,10 @@
-use crate::errors::SemanticResult;
+use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::{
-    FrameworkDefinitions, NameGroup, NestedScope, Scope, Symbol, SymbolInterface, Type,
-    UseDefMatching, Value,
+    FrameworkDefinitions, Interface, IntegerValue, NameGroup, NestedScope, Scope, Symbol,
+    SymbolInterface, Type, UseDefMatching, Value,
 };
-use fpp_core::SourceFile;
+use fpp_ast::{Expr, FormalParam, FormalParamKind, QueueFull};
+use fpp_core::{SourceFile, Span, Spanned};
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::sync::Arc;
 
@@ -40,6 +41,18 @@ pub struct Analysis {
     pub value_map: HashMap<fpp_core::Node, Value>,
     /** The F Prime framework definitions found during analysis. */
     pub framework_definitions: FrameworkDefinitions,
+    /** The interface currently being analyzed. */
+    pub interface: Option<Interface>,
+    /** The mapping from interface symbols to their resolved interfaces. */
+    pub interface_map: HashMap<Symbol, Interface>,
+    /** The component currently being analyzed. */
+    pub component: Option<crate::semantics::Component>,
+    /** The mapping from component symbols to their completed components. */
+    pub component_map: HashMap<Symbol, crate::semantics::Component>,
+    /** The component instance currently being analyzed. */
+    pub component_instance: Option<crate::semantics::ComponentInstance>,
+    /** The mapping from component instance symbols to their instances. */
+    pub component_instance_map: HashMap<Symbol, crate::semantics::ComponentInstance>,
 }
 
 impl Default for Analysis {
@@ -69,7 +82,151 @@ impl Analysis {
             type_map: Default::default(),
             value_map: Default::default(),
             framework_definitions: Default::default(),
+            interface: None,
+            interface_map: Default::default(),
+            component: None,
+            component_map: Default::default(),
+            component_instance: None,
+            component_instance_map: Default::default(),
         }
+    }
+
+    /// Get an integer value for an AST node from the value map, if present.
+    pub fn get_int_value(&self, node: fpp_core::Node) -> Option<i128> {
+        match self
+            .value_map
+            .get(&node)
+            .and_then(|v| v.convert(&Arc::new(Type::Integer)))
+        {
+            Some(Value::Integer(IntegerValue(v))) => Some(v),
+            _ => None,
+        }
+    }
+
+    /// Get an optional integer value for an optional expression.
+    pub fn get_big_int_value_opt(&self, expr: &Option<Expr>) -> Option<i128> {
+        expr.as_ref().and_then(|e| self.get_int_value(e.node_id))
+    }
+
+    /// Get an array size (>= 1) for an AST node.
+    pub fn get_array_size(&self, node: fpp_core::Node, loc: fpp_core::Span) -> SemanticResult<i128> {
+        let v = self.get_int_value(node).unwrap_or(1);
+        if v >= 1 {
+            Ok(v)
+        } else {
+            Err(SemanticError::InvalidArraySize { loc, size: v })
+        }
+    }
+
+    /// Get an optional array size, defaulting to 1 when the expression is absent.
+    pub fn get_array_size_opt(&self, expr: &Option<Expr>) -> SemanticResult<i128> {
+        match expr {
+            Some(e) => self.get_array_size(e.node_id, e.span()),
+            None => Ok(1),
+        }
+    }
+
+    /// Get a nonnegative integer value for an AST node.
+    pub fn get_nonnegative_big_int_value(
+        &self,
+        node: fpp_core::Node,
+        loc: Span,
+    ) -> SemanticResult<i128> {
+        let v = self.get_int_value(node).unwrap_or(0);
+        if v >= 0 {
+            Ok(v)
+        } else {
+            Err(SemanticError::InvalidIntValue {
+                loc,
+                v: Some(v),
+                msg: "value may not be negative".to_string(),
+            })
+        }
+    }
+
+    /// Get an optional nonnegative integer value for an optional expression.
+    pub fn get_nonnegative_big_int_value_opt(
+        &self,
+        expr: &Option<Expr>,
+    ) -> SemanticResult<Option<i128>> {
+        match expr {
+            Some(e) => Ok(Some(self.get_nonnegative_big_int_value(e.node_id, e.span())?)),
+            None => Ok(None),
+        }
+    }
+
+    /// Get a nonnegative int value (in i32 range) for an AST node.
+    pub fn get_nonnegative_int_value(&self, node: fpp_core::Node, loc: Span) -> SemanticResult<i128> {
+        let v = self.get_int_value(node).unwrap_or(0);
+        if v < i32::MIN as i128 || v > i32::MAX as i128 {
+            return Err(SemanticError::InvalidIntValue {
+                loc,
+                v: Some(v),
+                msg: "value out of range".to_string(),
+            });
+        }
+        if v >= 0 {
+            Ok(v)
+        } else {
+            Err(SemanticError::InvalidIntValue {
+                loc,
+                v: Some(v),
+                msg: "value may not be negative".to_string(),
+            })
+        }
+    }
+
+    /// Get a queue full behavior, defaulting to `Assert`.
+    pub fn get_queue_full(opt: &Option<QueueFull>) -> QueueFull {
+        opt.clone().unwrap_or(QueueFull::Assert)
+    }
+
+    /// Count the number of ref parameters in a formal parameter list.
+    pub fn get_num_ref_params(params: &[FormalParam]) -> usize {
+        params
+            .iter()
+            .filter(|p| matches!(p.kind, FormalParamKind::Ref))
+            .count()
+    }
+
+    /// Check that a formal parameter list has no duplicate parameter names.
+    pub fn check_for_duplicate_parameter(params: &[FormalParam]) -> SemanticResult {
+        let mut seen: HashMap<String, Span> = HashMap::default();
+        for param in params {
+            if let Some(prev_loc) = seen.insert(param.name.data.clone(), param.name.span()) {
+                return Err(SemanticError::DuplicateParameter {
+                    name: param.name.data.clone(),
+                    loc: param.name.span(),
+                    prev_loc,
+                });
+            }
+        }
+        Ok(())
+    }
+
+    /// Check that the type of an AST node is displayable.
+    pub fn check_displayable_type(
+        &self,
+        node: fpp_core::Node,
+        loc: Span,
+        msg: &str,
+    ) -> SemanticResult {
+        match self.type_map.get(&node) {
+            Some(ty) if ty.is_displayable() => Ok(()),
+            Some(_) => Err(SemanticError::InvalidType {
+                loc,
+                msg: msg.to_string(),
+            }),
+            None => Ok(()),
+        }
+    }
+
+    /// Check that the types of all formal parameters are displayable.
+    pub fn check_displayable_params(&self, params: &[FormalParam], msg: &str) -> SemanticResult {
+        for param in params {
+            self.check_displayable_type(param.type_name.node_id, param.type_name.span(), msg)?;
+        }
+        Ok(())
     }
 
     /// Compute the fully qualified name of a symbol by walking up the

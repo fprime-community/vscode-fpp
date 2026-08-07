@@ -1,5 +1,19 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/event/format_not_numeric.fpp:3.49
-  event E(a: bool) severity activity low format "{x}"
-                                                ^
-error: invalid format string: bool is not an integer type
+ --> [ local path prefix ]/event/format_not_numeric.fpp:3:50
+  |
+3 |   event E(a: bool) severity activity low format "{x}"
+  |                                                  ^^^ Hexadecimal format replacement cannot be used for type `boolean`
+  |
+ ::: [ local path prefix ]/event/format_not_numeric.fpp:3:14
+  |
+3 |   event E(a: bool) severity activity low format "{x}"
+  |              ---- type defined here
+
+ --> [ local path prefix ]/event/format_not_numeric.fpp:1:1
+  |
+1 | / passive component C {
+2 | |
+3 | |   event E(a: bool) severity activity low format "{x}"
+4 | |
+5 | | }
+  | |_^ component with event specifiers must have event port
+

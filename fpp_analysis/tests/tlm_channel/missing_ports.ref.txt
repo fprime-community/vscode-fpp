@@ -1,5 +1,9 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_channel/missing_ports.fpp:1.1
-passive component C {
-^
-error: component with telemetry specifiers must have telemetry port
+ --> [ local path prefix ]/tlm_channel/missing_ports.fpp:1:1
+  |
+1 | / passive component C {
+2 | |
+3 | |   telemetry T: U32
+4 | |
+5 | | }
+  | |_^ component with telemetry specifiers must have telemetry port
+

@@ -64,3 +64,18 @@ fn sizeof_ok() {
 fn sizeof_error() {
     run_test("expr/sizeof_error")
 }
+
+#[test]
+fn sizeof_types() {
+    run_test("expr/sizeof_types")
+}
+
+#[test]
+fn sizeof_string() {
+    run_test("expr/sizeof_string")
+}
+
+#[test]
+fn sizeof_propagation() {
+    run_test("expr/sizeof_propagation")
+}

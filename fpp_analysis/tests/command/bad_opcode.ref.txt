@@ -1,5 +1,16 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/command/bad_opcode.fpp:3.26
-  async command C opcode "abc"
-                         ^
-error: cannot convert string to a numeric type
+ --> [ local path prefix ]/command/bad_opcode.fpp:3:26
+  |
+3 |   async command C opcode "abc"
+  |                          ^^^^^ cannot convert expression to integer
+  |
+  = note: string cannot be converted to Integer
+
+ --> [ local path prefix ]/command/bad_opcode.fpp:1:1
+  |
+1 | / active component C {
+2 | |
+3 | |   async command C opcode "abc"
+4 | |
+5 | | }
+  | |_^ component with command specifiers must have command recv port
+

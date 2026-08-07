@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/param/duplicate_save_opcode_implicit.fpp:7.3
-  param P3: bool
-  ^
-error: duplicate opcode value (17 dec, 11 hex)
-previous occurrence is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/param/duplicate_save_opcode_implicit.fpp:3.3
-  param P1: U32 save opcode 0x11
-  ^
+ --> [ local path prefix ]/param/duplicate_save_opcode_implicit.fpp:7:3
+  |
+7 |   param P3: bool
+  |   ^^^^^^^^^^^^^^ duplicate opcode value (17 dec, 11 hex)
+  |
+ ::: [ local path prefix ]/param/duplicate_save_opcode_implicit.fpp:3:3
+  |
+3 |   param P1: U32 save opcode 0x11
+  |   ------------------------------ previous occurrence is here
+

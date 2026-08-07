@@ -1,5 +1,7 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/component/enum_default_error.fpp:2.27
-  enum E { X, Y } default "abc"
-                          ^
-error: cannot convert string to enum E
+ --> [ local path prefix ]/component/enum_default_error.fpp:2:27
+  |
+2 |   enum E { X, Y } default "abc"
+  |                           ^^^^^ default value cannot be converted to E
+  |
+  = note: string cannot be converted to E
+

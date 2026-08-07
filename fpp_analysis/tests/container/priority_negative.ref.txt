@@ -1,6 +1,7 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/container/priority_negative.fpp:3.49
-  product container C id 0x100 default priority -1
-                                                ^
-error: invalid integer value -1
-value may not be negative
+ --> [ local path prefix ]/container/priority_negative.fpp:3:49
+  |
+3 |   product container C id 0x100 default priority -1
+  |                                                 ^^ value may not be negative
+  |
+  = note: expression evaluated to `-1`
+

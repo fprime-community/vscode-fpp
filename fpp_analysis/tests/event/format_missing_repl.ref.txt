@@ -1,5 +1,14 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/event/format_missing_repl.fpp:3.48
-  event E(a: U32) severity activity low format "abc"
-                                               ^
-error: invalid format string: missing replacement field
+ --> [ local path prefix ]/event/format_missing_repl.fpp:3:14
+  |
+3 |   event E(a: U32) severity activity low format "abc"
+  |              ^^^ missing format replacement field
+
+ --> [ local path prefix ]/event/format_missing_repl.fpp:1:1
+  |
+1 | / passive component C {
+2 | |
+3 | |   event E(a: U32) severity activity low format "abc"
+4 | |
+5 | | }
+  | |_^ component with event specifiers must have event port
+

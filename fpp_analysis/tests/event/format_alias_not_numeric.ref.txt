@@ -1,5 +1,19 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/event/format_alias_not_numeric.fpp:5.46
-  event E(a: T) severity activity low format "{x}"
-                                             ^
-error: invalid format string: T is not an integer type
+ --> [ local path prefix ]/event/format_alias_not_numeric.fpp:5:47
+  |
+5 |   event E(a: T) severity activity low format "{x}"
+  |                                               ^^^ Hexadecimal format replacement cannot be used for type `T`
+  |
+ ::: [ local path prefix ]/event/format_alias_not_numeric.fpp:5:14
+  |
+5 |   event E(a: T) severity activity low format "{x}"
+  |              - type defined here
+
+ --> [ local path prefix ]/event/format_alias_not_numeric.fpp:1:1
+  |
+1 | / passive component C {
+2 | |
+3 | |   type T = bool
+... |
+7 | | }
+  | |_^ component with event specifiers must have event port
+

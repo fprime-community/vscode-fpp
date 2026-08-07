@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/interface/duplicate_import.fpp:6.5
-    import I
-    ^
-error: duplicate interface I
-previous occurrence is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/interface/duplicate_import.fpp:5.5
-    import I
-    ^
+ --> [ local path prefix ]/interface/duplicate_import.fpp:6:5
+  |
+6 |     import I
+  |     ^^^^^^^^ duplicate interface I
+  |
+ ::: [ local path prefix ]/interface/duplicate_import.fpp:5:5
+  |
+5 |     import I
+  |     -------- previous occurrence is here
+

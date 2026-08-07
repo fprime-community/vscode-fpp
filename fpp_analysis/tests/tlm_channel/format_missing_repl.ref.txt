@@ -1,5 +1,14 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_channel/format_missing_repl.fpp:3.27
-  telemetry T: U32 format "abc"
-                          ^
-error: invalid format string: missing replacement field
+ --> [ local path prefix ]/tlm_channel/format_missing_repl.fpp:3:16
+  |
+3 |   telemetry T: U32 format "abc"
+  |                ^^^ missing format replacement field
+
+ --> [ local path prefix ]/tlm_channel/format_missing_repl.fpp:1:1
+  |
+1 | / passive component C {
+2 | |
+3 | |   telemetry T: U32 format "abc"
+4 | |
+5 | | }
+  | |_^ component with telemetry specifiers must have telemetry port
+
