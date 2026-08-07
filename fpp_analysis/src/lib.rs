@@ -2,8 +2,9 @@ mod analysis;
 mod errors;
 
 use crate::passes::{
-    CheckExprTypes, CheckTypeUses, CheckUseDefCycles, CheckUses, EnterSymbols, EvalConstantExprs,
-    EvalImpliedEnumConsts, FinalizeTypeDefs,
+    CheckExprTypes, CheckFrameworkConstantValues, CheckFrameworkDefs, CheckPortDefs, CheckTypeUses,
+    CheckUseDefCycles, CheckUses, EnterSymbols, EvalConstantExprs, EvalImpliedEnumConsts,
+    FinalizeTypeDefs,
 };
 pub use analysis::*;
 use fpp_ast::{MutVisitor, Visitor};
@@ -48,6 +49,15 @@ pub mod passes {
 
     mod finalize_type_defs;
     pub use finalize_type_defs::*;
+
+    mod check_port_defs;
+    pub use check_port_defs::*;
+
+    mod check_framework_defs;
+    pub use check_framework_defs::*;
+
+    mod check_framework_constant_values;
+    pub use check_framework_constant_values::*;
 }
 
 pub mod semantics {
@@ -59,6 +69,9 @@ pub mod semantics {
 
     mod implied_use;
     pub use implied_use::*;
+
+    mod framework_definitions;
+    pub use framework_definitions::*;
 
     mod scope;
     pub use scope::*;
@@ -97,9 +110,12 @@ pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> Contr
     CheckUseDefCycles::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckTypeUses::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckExprTypes::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckFrameworkDefs::new().visit_trans_units(a, ast.iter().cloned())?;
     EvalImpliedEnumConsts::new().visit_trans_units(a, ast.iter().cloned())?;
     EvalConstantExprs::new().visit_trans_units(a, ast.iter().cloned())?;
     FinalizeTypeDefs::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckFrameworkConstantValues::new().check(a);
+    CheckPortDefs::new().visit_trans_units(a, ast.iter().cloned())?;
 
     ControlFlow::Continue(())
 }

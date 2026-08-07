@@ -1,5 +1,7 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/framework_defs/fw_opcode_type_not_alias_type.fpp:1.1
-enum FwOpcodeType {
-^
-error: the F Prime framework type FwOpcodeType must be an alias type
+ --> [ local path prefix ]/framework_defs/fw_opcode_type_not_alias_type.fpp:1:1
+  |
+1 | / enum FwOpcodeType {
+2 | |     X
+3 | | }
+  | |_^ the F Prime framework type FwOpcodeType must be an alias of an integer type
+

@@ -1,5 +1,7 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/framework_defs/dp_state_not_enum.fpp:2.5
-    struct DpState {
-    ^
-error: the F Prime framework type Fw.DpState must be an enum
+ --> [ local path prefix ]/framework_defs/dp_state_not_enum.fpp:2:5
+  |
+2 | /     struct DpState {
+3 | |      
+4 | |     }
+  | |_____^ the F Prime framework type Fw.DpState must be an enum
+

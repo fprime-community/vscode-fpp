@@ -36,7 +36,18 @@ pub enum SemanticError {
         loc: Span,
         msg: String,
     },
+    InvalidQualifier {
+        loc: Span,
+        msg: String,
+        def_loc: Span,
+        def_msg: String,
+    },
     DuplicateStructMember {
+        name: String,
+        loc: Span,
+        prev_loc: Span,
+    },
+    DuplicateParameter {
         name: String,
         loc: Span,
         prev_loc: Span,
@@ -142,6 +153,12 @@ impl From<SemanticError> for Diagnostic {
                 },
             ),
             SemanticError::InvalidType { loc, msg } => Diagnostic::new(loc, Level::Error, msg),
+            SemanticError::InvalidQualifier {
+                loc,
+                msg,
+                def_loc,
+                def_msg,
+            } => Diagnostic::new(loc, Level::Error, msg).span_note(def_loc, def_msg),
             SemanticError::DuplicateStructMember {
                 name,
                 loc,
@@ -152,6 +169,12 @@ impl From<SemanticError> for Diagnostic {
                 format!("duplicate struct member `{}`", name),
             )
             .span_note(prev_loc, "previously defined here"),
+            SemanticError::DuplicateParameter {
+                name,
+                loc,
+                prev_loc,
+            } => Diagnostic::new(loc, Level::Error, format!("duplicate parameter `{}`", name))
+                .span_note(prev_loc, "previously defined here"),
             SemanticError::TypeConversion { loc, msg, err } => {
                 err.annotate(Diagnostic::new(loc, Level::Error, msg))
             }
