@@ -2494,7 +2494,7 @@ impl<'a> Parser<'a> {
             match self.peek(0) {
                 Dot if self.peek(1) == Identifier => {
                     self.next();
-                    let id = self.ident()?;
+                    let id = self.ident().unwrap();
                     left = Expr {
                         node_id: self.node(first_span),
                         kind: ExprKind::Dot {
@@ -2512,6 +2512,18 @@ impl<'a> Parser<'a> {
                             e2: Box::new(e2),
                         },
                     }
+                }
+                // Partial dot expression (mid-edits)
+                // Accept the left-hand side and emit the parsing error
+                Dot => {
+                    self.next();
+
+                    let Err(err) = self.ident() else {
+                        unreachable!()
+                    };
+
+                    fpp_core::Diagnostic::from(err).emit();
+                    return Ok(left);
                 }
                 _ => return Ok(left),
             }

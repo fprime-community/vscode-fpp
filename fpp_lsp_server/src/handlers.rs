@@ -3,9 +3,9 @@ use crate::lsp;
 use crate::lsp::utils::semantic_token_delta;
 use crate::lsp_ext::UriRequest;
 use crate::util::{
-    completion_items_for_qual_ident, completion_items_in_name_group, hover_for_node,
-    hover_for_symbol, node_to_location, nodes_at_offset, position_to_offset, symbol_at_position,
-    symbol_to_completion_item,
+    completion_items_for_postfix_expr, completion_items_for_qual_ident,
+    completion_items_in_name_group, hover_for_node, hover_for_symbol, node_to_location,
+    nodes_at_offset, position_to_offset, symbol_at_position, symbol_to_completion_item,
 };
 use anyhow::Result;
 use fpp_analysis::semantics::{NameGroup, SymbolInterface};
@@ -161,8 +161,18 @@ pub fn handle_semantic_tokens_full(
     state: &mut GlobalState,
     request: lsp_types::SemanticTokensParams,
 ) -> Result<Option<SemanticTokensResult>> {
+    let start = std::time::Instant::now();
     let (text, src, parse) = parse_text_document(state, &request.text_document.uri)?;
+    let parsed = start.elapsed();
     let semantic_tokens = lsp::semantic_tokens::compute(state, src, &text, &parse).finish(None);
+    tracing::info!(
+        uri = %request.text_document.uri.as_str(),
+        text_len = text.len(),
+        token_count = semantic_tokens.data.len(),
+        parse = format_args!("{:0.2?}", parsed),
+        total = format_args!("{:0.2?}", start.elapsed()),
+        "semantic tokens full"
+    );
 
     // Unconditionally cache the tokens
     state
@@ -187,6 +197,7 @@ pub fn handle_semantic_tokens_full_delta(
     state: &mut GlobalState,
     request: lsp_types::SemanticTokensDeltaParams,
 ) -> Result<Option<SemanticTokensFullDeltaResult>> {
+    let start = std::time::Instant::now();
     let (text, src, parse) = parse_text_document(state, &request.text_document.uri)?;
 
     let semantic_tokens = lsp::semantic_tokens::compute(state, src, &text, &parse).finish(None);
@@ -202,6 +213,14 @@ pub fn handle_semantic_tokens_full_delta(
         && *prev_id == request.previous_result_id
     {
         let delta = semantic_token_delta(cached_tokens, &semantic_tokens);
+        tracing::info!(
+            uri = %request.text_document.uri.as_str(),
+            text_len = text.len(),
+            token_count = semantic_tokens.data.len(),
+            edits = delta.edits.len(),
+            total = format_args!("{:0.2?}", start.elapsed()),
+            "semantic tokens delta"
+        );
         state
             .semantic_tokens
             .insert(request.text_document.uri, semantic_tokens);
@@ -639,10 +658,11 @@ pub fn handle_completion(
             .parent_ancestors()
             .find(|s| s.kind() == SyntaxKind::EXPR_POSTFIX)
     {
-        // Member selection on expressions
-        eprintln!("postfix_expr member selection");
-        eprintln!("{:#?}", postfix_expr);
-        Ok(None)
+        // Member selection on value expressions (e.g. `a.b.c.`)
+        Ok(
+            completion_items_for_postfix_expr(state, &postfix_expr, cursor_pos, &uri)
+                .map(CompletionResponse::Array),
+        )
     } else {
         // Check for parsing errors to extract the next expected token
         Ok(Some(CompletionResponse::Array(

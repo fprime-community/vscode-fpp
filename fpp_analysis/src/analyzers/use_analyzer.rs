@@ -42,9 +42,8 @@ impl<'ast, V: UseAnalysisPass<'ast, Analysis>> Analyzer<'ast, V> for UseAnalyzer
                                 // Analyze the left-hand expression representing the struct value
                                 e.visit(a, visitor)
                             }
-                            Some(use_) => {
-                                // This is some other type of symbol, which it shouldn't be
-                                panic!("expected a constant use {use_:?}")
+                            Some(_) => {
+                                ControlFlow::Continue(())
                             }
                         }
                     }

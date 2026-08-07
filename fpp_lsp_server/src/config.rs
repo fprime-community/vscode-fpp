@@ -240,10 +240,9 @@ mod tests {
 
     #[test]
     fn parse_camel_case_keys() {
-        let cfg = FppLspConfig::parse(
-            "buildCache: build-fprime-automatic-native\nscanWorkspace: true\n",
-        )
-        .unwrap();
+        let cfg =
+            FppLspConfig::parse("buildCache: build-fprime-automatic-native\nscanWorkspace: true\n")
+                .unwrap();
         assert_eq!(
             cfg.build_cache.as_deref(),
             Some("build-fprime-automatic-native")
@@ -280,7 +279,10 @@ mod tests {
         };
         match cfg.resolve(base) {
             Workspace::LocsFile(uri) => {
-                assert!(uri.as_str().ends_with("/proj/build-fprime-automatic-native/locs.fpp"))
+                assert!(
+                    uri.as_str()
+                        .ends_with("/proj/build-fprime-automatic-native/locs.fpp")
+                )
             }
             other => panic!("expected LocsFile, got {other:?}"),
         }
@@ -305,7 +307,8 @@ mod tests {
 
     // A unique temp dir per test without pulling in a tempfile dependency.
     fn temp_dir(tag: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("fpp-lsp-config-test-{tag}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("fpp-lsp-config-test-{tag}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir
@@ -326,7 +329,11 @@ mod tests {
     #[test]
     fn reads_project_root_with_equals_separator() {
         let dir = temp_dir("settings-eq");
-        std::fs::write(dir.join("settings.ini"), "[fprime]\nproject_root = subdir\n").unwrap();
+        std::fs::write(
+            dir.join("settings.ini"),
+            "[fprime]\nproject_root = subdir\n",
+        )
+        .unwrap();
         assert_eq!(read_fprime_project_root(&dir).as_deref(), Some("subdir"));
         std::fs::remove_dir_all(&dir).unwrap();
     }
@@ -355,7 +362,10 @@ mod tests {
         assert!(yaml.contains("# buildCache: build-fprime-automatic-native-ut"));
         // The generated file should itself parse back into a valid config.
         let cfg = FppLspConfig::parse(&yaml).unwrap();
-        assert_eq!(cfg.build_cache.as_deref(), Some("build-fprime-automatic-native"));
+        assert_eq!(
+            cfg.build_cache.as_deref(),
+            Some("build-fprime-automatic-native")
+        );
     }
 
     #[test]

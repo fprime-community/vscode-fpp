@@ -3,13 +3,13 @@ use crate::global_state::GlobalState;
 use fpp_analysis::semantics::{NameGroup, Symbol, SymbolInterface, Type};
 use fpp_ast::{AstNode, FormalParam, FormalParamKind, MoveWalkable, Name, Node, Visitor};
 use fpp_core::{BytePos, CompilerContext, LineCol, SourceFile};
-use fpp_lsp_parser::{SyntaxElement, SyntaxKind, SyntaxToken, TextSize};
+use fpp_lsp_parser::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken, TextSize};
 use lsp_types::{
     CompletionItem, CompletionItemKind, CompletionItemLabelDetails, Documentation, Hover,
     HoverContents, Location, MarkupContent, MarkupKind, Position, Range, Uri,
 };
 use serde::de::DeserializeOwned;
-use std::ops::ControlFlow;
+use std::ops::{ControlFlow, Deref};
 use std::str::FromStr;
 
 pub fn from_json<T: DeserializeOwned>(
@@ -524,9 +524,6 @@ pub fn completion_items_in_name_group(
         })
         .collect();
 
-    eprintln!("completion for {:?} at scope", ng);
-    eprintln!("{:?}", current_scope);
-
     // Merge all symbols going up from each scope
     let items: Vec<Vec<CompletionItem>> = current_scope
         .iter()
@@ -572,6 +569,79 @@ pub fn completion_items_in_name_group(
     // The closest symbols should appear first
     // Flip the completion items and flatten everything
     Some(items.into_iter().rev().flatten().collect())
+}
+
+/// Complete member selection on a value expression such as `a.b.c.`.
+///
+/// The `postfix_expr` node covers the whole `EXPR_POSTFIX` up to (and
+/// including) the trailing `.` at the cursor. The receiver — everything
+/// before that dot — can resolve two different ways:
+///
+/// 1. A qualifier symbol (module / enum) reachable through the use-def map.
+///    In that case we complete the symbols in its scope's [`NameGroup::Value`]
+///    group (nested constants, enum constants, ...).
+/// 2. A struct-typed value. In that case the expression has an entry in the
+///    type map and we complete its struct member names.
+pub fn completion_items_for_postfix_expr(
+    state: &GlobalState,
+    postfix_expr: &SyntaxNode,
+    cursor_pos: TextSize,
+    uri: &Uri,
+) -> Option<Vec<CompletionItem>> {
+    // Collect the identifier tokens making up the receiver expression
+    // (everything before the trailing dot at the cursor).
+    let tokens: Vec<SyntaxToken> = postfix_expr
+        .descendants_with_tokens()
+        .filter_map(|s| s.as_token().cloned())
+        .filter(|t| t.kind() == SyntaxKind::IDENT && t.text_range().end() <= cursor_pos)
+        .collect();
+
+    // The receiver must end in an identifier for us to resolve it.
+    let last_token_pos = tokens.last()?.text_range().start().into();
+
+    // Case 1: the receiver resolves to a symbol that owns a scope
+    // (e.g. `Svc.Fpy` -> a module, or an enum used as a qualifier).
+    if let Some(items) = symbol_at_position(state, uri, last_token_pos)
+        .and_then(|(_, symbol)| state.analysis.symbol_scope_map.get(&symbol))
+        .map(|scope| {
+            scope
+                .get_group(NameGroup::Value)
+                .iter()
+                .map(|(_, child_symbol)| symbol_to_completion_item(state, child_symbol))
+                .collect::<Vec<_>>()
+        })
+    {
+        return Some(items);
+    }
+
+    // Case 2: the receiver is a struct-typed value expression. Find the AST
+    // expression node covering the receiver and complete its struct members.
+    let nodes = nodes_at_offset(state, uri, last_token_pos)?;
+    let receiver_ty = nodes
+        .iter()
+        .find_map(|node| state.analysis.type_map.get(&node.id()))?;
+
+    let underlying = Type::underlying_type(receiver_ty);
+    let members = match underlying.deref() {
+        Type::Struct(struct_ty) => &struct_ty.anon_struct.members,
+        Type::AnonStruct(anon_struct) => &anon_struct.members,
+        _ => return None,
+    };
+
+    let mut items: Vec<CompletionItem> = members
+        .iter()
+        .map(|(name, member_ty)| CompletionItem {
+            label: name.clone(),
+            kind: Some(CompletionItemKind::FIELD),
+            label_details: Some(CompletionItemLabelDetails {
+                detail: Some(format!(": {}", member_ty)),
+                description: None,
+            }),
+            ..Default::default()
+        })
+        .collect();
+    items.sort_by(|a, b| a.label.cmp(&b.label));
+    Some(items)
 }
 
 pub fn completion_items_for_qual_ident(
