@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/spec_loc/component_instance_path_error.fpp:1:22
+  |
+1 | locate instance i at "incorrect.fpp"
+  |                      ^^^^^^^^^^^^^^^ incorrect location path [ local path prefix ]/spec_loc/incorrect.fpp
+  |
+ ::: [ local path prefix ]/spec_loc/component_instance_path_error.fpp:7:1
+  |
+7 | instance i: C base id 0x100
+  | --------------------------- actual location is here
+

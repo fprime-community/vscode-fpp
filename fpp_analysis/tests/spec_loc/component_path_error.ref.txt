@@ -1,0 +1,12 @@
+ --> [ local path prefix ]/spec_loc/component_path_error.fpp:1:23
+  |
+1 |   locate component C at "incorrect.fpp"
+  |                         ^^^^^^^^^^^^^^^ incorrect location path [ local path prefix ]/spec_loc/incorrect.fpp
+  |
+ ::: [ local path prefix ]/spec_loc/component_path_error.fpp:2:1
+  |
+2 | / passive component C {
+3 | |
+4 | | }
+  | |_- actual location is here
+

@@ -3,9 +3,10 @@ use crate::lsp;
 use crate::lsp::utils::semantic_token_delta;
 use crate::lsp_ext::UriRequest;
 use crate::util::{
-    completion_items_for_postfix_expr, completion_items_for_qual_ident,
-    completion_items_in_name_group, hover_for_node, hover_for_symbol, node_to_location,
-    nodes_at_offset, position_to_offset, symbol_at_position, symbol_to_completion_item,
+    completion_items_for_port_instance, completion_items_for_postfix_expr,
+    completion_items_for_qual_ident, completion_items_in_name_group, hover_for_node,
+    hover_for_port_instance, hover_for_symbol, node_to_location, nodes_at_offset,
+    port_instance_at_position, position_to_offset, symbol_at_position, symbol_to_completion_item,
 };
 use anyhow::Result;
 use fpp_analysis::semantics::{NameGroup, SymbolInterface};
@@ -397,11 +398,21 @@ pub fn handle_goto_definition(
         &request.text_document_position_params.position,
     );
 
-    if let Some((_, symbol)) = symbol_at_position(
-        state,
-        &request.text_document_position_params.text_document.uri,
-        offset,
-    ) {
+    let uri = &request.text_document_position_params.text_document.uri;
+
+    // Port names in connections resolve to a port instance rather than a symbol;
+    // jump to the port instance's declaration. This must be checked *before*
+    // `symbol_at_position`: for a qualified port (`A.Sub.someOut`) the instance
+    // qualifier's use node spans through the port name, so the generic symbol
+    // lookup would otherwise resolve the port name to the (sub)topology.
+    // `port_instance_at_position` only matches when the cursor is on the port
+    // name itself, so it does not interfere with the qualifier.
+    if let Some((_, port_instance)) = port_instance_at_position(state, uri, offset) {
+        Ok(Some(GotoDefinitionResponse::Scalar(node_to_location(
+            state,
+            port_instance.get_node_id(),
+        ))))
+    } else if let Some((_, symbol)) = symbol_at_position(state, uri, offset) {
         Ok(Some(GotoDefinitionResponse::Scalar(node_to_location(
             state,
             symbol.name().id(),
@@ -426,6 +437,24 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
         None => return Ok(None),
         Some(nodes) => nodes,
     };
+
+    // Port names in connections resolve to a port instance, not a symbol, so
+    // they are absent from use_def_map. Resolve them first: for a qualified port
+    // (`A.Sub.someOut`) the instance qualifier's use node spans through the port
+    // name, so the generic use_def_map lookup below would otherwise show the
+    // (sub)topology. `port_instance_at_position` only matches when the cursor is
+    // on the port name, so it does not shadow the qualifier's own hover.
+    if let Some((name_node, port_instance)) = port_instance_at_position(
+        state,
+        &request.text_document_position_params.text_document.uri,
+        offset,
+    ) {
+        return Ok(Some(hover_for_port_instance(
+            state,
+            name_node,
+            &port_instance,
+        )));
+    }
 
     // Check if this node is a use/reference to definition
     if let Some((node, symbol)) = nodes.iter().find_map(|node| {
@@ -509,6 +538,22 @@ pub fn handle_references(
     }
 }
 
+/// Determine the required port direction for a port-instance identifier, based
+/// on which connection endpoint (if any) encloses it.
+///
+/// The `from` side of a connection accepts only output ports and the `to` side
+/// only input ports. A topology port alias (`port Foo = i.p`) may re-export a
+/// port of either direction, so it is left unfiltered (`None`) — the direction
+/// of the port being *used* is still surfaced via each item's detail.
+fn connection_endpoint_direction(pii: &SyntaxNode) -> Option<fpp_analysis::semantics::Direction> {
+    use fpp_analysis::semantics::Direction;
+    pii.ancestors().find_map(|s| match s.kind() {
+        SyntaxKind::CONNECTION_FROM => Some(Direction::Output),
+        SyntaxKind::CONNECTION_TO => Some(Direction::Input),
+        _ => None,
+    })
+}
+
 pub fn handle_completion(
     state: &GlobalState,
     request: CompletionParams,
@@ -552,7 +597,7 @@ pub fn handle_completion(
 
     let parse = fpp_lsp_parser::parse(&text, entry_kind);
 
-    fn non_white_space_left(mut l: SyntaxToken) -> SyntaxToken {
+    fn non_white_space_left(root: &SyntaxNode, mut l: SyntaxToken) -> SyntaxToken {
         loop {
             match l.kind() {
                 SyntaxKind::EOL
@@ -560,7 +605,19 @@ pub fn handle_completion(
                 | SyntaxKind::WHITESPACE
                 | SyntaxKind::PRE_ANNOTATION
                 | SyntaxKind::POST_ANNOTATION => {
-                    l = match l.prev_token() {
+                    // `prev_token()` dead-ends on trailing zero-width nodes (e.g.
+                    // an empty `CONNECTION_TO` after `->`). Fall back to
+                    // `token_at_offset` at this token's start, which crosses
+                    // empty nodes; the range guard prevents looping on self.
+                    let prev = l.prev_token().or_else(|| {
+                        match root.token_at_offset(l.text_range().start()) {
+                            TokenAtOffset::Between(a, _) => Some(a),
+                            TokenAtOffset::Single(t) => Some(t),
+                            TokenAtOffset::None => None,
+                        }
+                        .filter(|t| t.text_range() != l.text_range())
+                    });
+                    l = match prev {
                         Some(ll) => ll,
                         None => return l,
                     };
@@ -588,21 +645,22 @@ pub fn handle_completion(
         }
     }
 
-    let cursor_token = parse.syntax_node().token_at_offset(cursor_pos);
+    let root = parse.syntax_node();
+    let cursor_token = root.token_at_offset(cursor_pos);
     let expected_error_range = match &cursor_token {
         TokenAtOffset::None => return Ok(None),
-        TokenAtOffset::Single(tok) => non_white_space_left(tok.clone())
+        TokenAtOffset::Single(tok) => non_white_space_left(&root, tok.clone())
             .text_range()
             .cover(non_white_space_right(tok.clone()).text_range()),
-        TokenAtOffset::Between(l, r) => non_white_space_left(l.clone())
+        TokenAtOffset::Between(l, r) => non_white_space_left(&root, l.clone())
             .text_range()
             .cover(non_white_space_right(r.clone()).text_range()),
     };
 
     let left_token = match &cursor_token {
         TokenAtOffset::None => unreachable!(),
-        TokenAtOffset::Single(tok) => non_white_space_left(tok.clone()),
-        TokenAtOffset::Between(l, _) => non_white_space_left(l.clone()),
+        TokenAtOffset::Single(tok) => non_white_space_left(&root, tok.clone()),
+        TokenAtOffset::Between(l, _) => non_white_space_left(&root, l.clone()),
     };
 
     if left_token.kind() == SyntaxKind::DOT
@@ -663,6 +721,66 @@ pub fn handle_completion(
             completion_items_for_postfix_expr(state, &postfix_expr, cursor_pos, &uri)
                 .map(CompletionResponse::Array),
         )
+    } else if let Some(pii) = left_token
+        .parent_ancestors()
+        .find(|s| s.kind() == SyntaxKind::PORT_INSTANCE_IDENTIFIER)
+    {
+        // Completion inside a port-instance identifier (`instance.PortName`),
+        // used by topology connection endpoints and topology port aliases.
+        //
+        // The identifier is a flat `IDENT (DOT IDENT)*` sequence. If the cursor
+        // follows a dot we are completing a port name (or a nested instance);
+        // otherwise we are on the first bare segment and complete instance names.
+        let last_dot_start = pii
+            .descendants_with_tokens()
+            .filter_map(|s| s.as_token().cloned())
+            .filter(|t| t.kind() == SyntaxKind::DOT && t.text_range().end() <= cursor_pos)
+            .map(|t| t.text_range().start())
+            .max();
+
+        let after_dot = last_dot_start.is_some();
+
+        // The receiver is every identifier before the final relevant dot.
+        let receiver_tokens: Vec<SyntaxToken> = match last_dot_start {
+            Some(dot_start) => pii
+                .descendants_with_tokens()
+                .filter_map(|s| s.as_token().cloned())
+                .filter(|t| t.kind() == SyntaxKind::IDENT && t.text_range().end() <= dot_start)
+                .collect(),
+            None => vec![],
+        };
+
+        // Ports on the `from` side of `->` must be outputs, the `to` side
+        // inputs. Topology port aliases (and anything else) are unfiltered.
+        let direction_filter = connection_endpoint_direction(&pii);
+
+        Ok(completion_items_for_port_instance(
+            state,
+            &receiver_tokens,
+            after_dot,
+            direction_filter,
+            cursor_pos,
+            &uri,
+        )
+        .map(CompletionResponse::Array))
+    } else if left_token.kind() == SyntaxKind::RIGHT_ARROW
+        && left_token
+            .parent_ancestors()
+            .any(|s| s.kind() == SyntaxKind::CONNECTION)
+    {
+        // Just after the `->` in a connection (`a.b -> `), before any `to`
+        // endpoint identifier has been typed. The empty CONNECTION_TO endpoint
+        // does not contain the cursor, so complete the first segment (an
+        // interface-instance name) directly.
+        Ok(completion_items_for_port_instance(
+            state,
+            &[],
+            false,
+            Some(fpp_analysis::semantics::Direction::Input),
+            cursor_pos,
+            &uri,
+        )
+        .map(CompletionResponse::Array))
     } else {
         // Check for parsing errors to extract the next expected token
         Ok(Some(CompletionResponse::Array(

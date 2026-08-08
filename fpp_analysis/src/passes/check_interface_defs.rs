@@ -5,78 +5,56 @@ use fpp_ast::{
     SpecSpecialPortInstance, Visitor, Walkable,
 };
 use fpp_core::Span;
-use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
-use std::cell::RefCell;
 use std::ops::ControlFlow;
 
 /// Check interface definitions.
-pub struct CheckInterfaceDefs {
-    /// Unresolved interfaces built during the walk, keyed by interface symbol.
-    raw: RefCell<HashMap<Symbol, Interface>>,
-}
-
-impl Default for CheckInterfaceDefs {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+pub struct CheckInterfaceDefs;
 
 impl CheckInterfaceDefs {
-    pub fn new() -> CheckInterfaceDefs {
-        CheckInterfaceDefs {
-            raw: RefCell::new(HashMap::default()),
+    /// Resolve an interface: collect its ports and imports, resolve the
+    /// interfaces it directly imports, then merge them in. Results are
+    /// memoized in `a.interface_map`.
+    fn resolve(&self, a: &mut Analysis, symbol: &Symbol) {
+        // Interface is already in the map: nothing to do
+        if a.interface_map.contains_key(symbol) {
+            return;
         }
-    }
+        let Symbol::Interface(node) = symbol.clone() else {
+            return;
+        };
 
-    /// Resolve all interfaces built during the walk, merging imports
-    /// transitively, and store the results in `a.interface_map`.
-    pub fn resolve_all(&self, a: &mut Analysis) {
-        let raw = self.raw.borrow();
-        let mut resolved: HashMap<Symbol, Interface> = HashMap::default();
-        let mut in_progress: HashSet<Symbol> = HashSet::default();
-        for symbol in raw.keys() {
-            resolve_one(&raw, symbol, &mut resolved, &mut in_progress);
+        // Interface is not in the map: visit it
+        let saved = a.interface.take();
+        a.interface = Some(Interface::new(symbol.clone()));
+        let _ = node.walk(a, self);
+        let iface = a
+            .interface
+            .take()
+            .expect("interface slot is populated during the walk");
+        a.interface = saved;
+
+        // Resolve interfaces directly imported by iface, updating a
+        let imports: Vec<(Symbol, Span)> = iface
+            .import_map
+            .iter()
+            .map(|(s, (_, loc))| (s.clone(), *loc))
+            .collect();
+        for (import_symbol, _) in &imports {
+            self.resolve(a, import_symbol);
         }
-        for (symbol, interface) in resolved {
-            a.interface_map.insert(symbol, interface);
-        }
-    }
-}
 
-fn resolve_one(
-    raw: &HashMap<Symbol, Interface>,
-    symbol: &Symbol,
-    resolved: &mut HashMap<Symbol, Interface>,
-    in_progress: &mut HashSet<Symbol>,
-) -> Option<Interface> {
-    if let Some(iface) = resolved.get(symbol) {
-        return Some(iface.clone());
-    }
-    let raw_iface = raw.get(symbol)?.clone();
-    // Break import cycles (already reported by CheckUseDefCycles).
-    if !in_progress.insert(symbol.clone()) {
-        return Some(raw_iface);
-    }
-
-    let mut result = raw_iface.clone();
-    let imports: Vec<(Symbol, Span)> = raw_iface
-        .import_map
-        .iter()
-        .map(|(s, (_, loc))| (s.clone(), *loc))
-        .collect();
-
-    for (import_symbol, loc) in imports {
-        if let Some(imported) = resolve_one(raw, &import_symbol, resolved, in_progress) {
-            match result.add_imported_interface(&imported, loc) {
-                Ok(merged) => result = merged,
-                Err(err) => err.emit(),
+        // Use the updated analysis to resolve iface
+        let mut result = iface;
+        for (import_symbol, loc) in imports {
+            if let Some(imported) = a.interface_map.get(&import_symbol).cloned() {
+                match result.add_imported_interface(&imported, loc) {
+                    Ok(merged) => result = merged,
+                    Err(err) => err.emit(),
+                }
             }
         }
+        a.interface_map.insert(symbol.clone(), result);
     }
-
-    in_progress.remove(symbol);
-    resolved.insert(symbol.clone(), result.clone());
-    Some(result)
 }
 
 impl<'ast> Visitor<'ast> for CheckInterfaceDefs {
@@ -98,17 +76,7 @@ impl<'ast> Visitor<'ast> for CheckInterfaceDefs {
         node: &'ast DefInterface,
     ) -> ControlFlow<Self::Break> {
         let symbol = a.get_symbol(node);
-        if self.raw.borrow().contains_key(&symbol) {
-            return ControlFlow::Continue(());
-        }
-
-        let saved = a.interface.take();
-        a.interface = Some(Interface::new(symbol.clone()));
-        node.walk(a, self)?;
-        if let Some(iface) = a.interface.take() {
-            self.raw.borrow_mut().insert(symbol, iface);
-        }
-        a.interface = saved;
+        self.resolve(a, &symbol);
         ControlFlow::Continue(())
     }
 

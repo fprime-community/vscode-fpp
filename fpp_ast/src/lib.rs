@@ -324,7 +324,7 @@ pub enum ModuleMember {
     SpecLoc(SpecLoc),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SpecLocKind {
     Component,
     Instance,

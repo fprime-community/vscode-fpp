@@ -1,0 +1,12 @@
+ --> [ local path prefix ]/spec_loc/constant_dictionary_error.fpp:1:1
+  |
+1 | locate constant c at "constant_dictionary_error.fpp"
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ incorrect location specifier
+  |
+ ::: [ local path prefix ]/spec_loc/constant_dictionary_error.fpp:2:1
+  |
+2 | dictionary constant c = 0
+  | ------------------------- actual definition is here
+  |
+  = note: one specifies dictionary and one does not
+

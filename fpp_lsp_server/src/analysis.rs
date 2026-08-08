@@ -427,10 +427,15 @@ impl GlobalState {
                         }
                     }
 
-                    tracing::info!("analyzing {} Translation Units", self.cache.len());
+                    let start = std::time::Instant::now();
                     let _ = fpp_analysis::check_semantics(
                         &mut analysis,
                         self.cache.values().map(|v| &v.ast).collect(),
+                    );
+                    tracing::info!(
+                        "analyzed {} Translation Units in {:.2?}",
+                        self.cache.len(),
+                        start.elapsed()
                     );
 
                     (analysis, files)

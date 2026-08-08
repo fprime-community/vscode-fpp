@@ -44,7 +44,7 @@ pub struct Connection {
     pub to_index: Option<Expr>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ConnectionPatternKind {
     Command,
     Event,

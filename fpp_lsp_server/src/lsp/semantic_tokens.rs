@@ -247,6 +247,7 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::DEF_TOPOLOGY => SemanticTokenKind::Topology,
                         SyntaxKind::STRUCT_MEMBER => SemanticTokenKind::StructMember,
                         SyntaxKind::SPEC_CONNECTION_GRAPH_DIRECT => SemanticTokenKind::GraphGroup,
+                        SyntaxKind::SPEC_TOP_PORT => SemanticTokenKind::PortInstance,
                         SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => SemanticTokenKind::PortInstance,
                         SyntaxKind::SPEC_PORT_INSTANCE_SPECIAL => SemanticTokenKind::PortInstance,
                         SyntaxKind::SPEC_PORT_INSTANCE_INTERNAL => SemanticTokenKind::PortInstance,

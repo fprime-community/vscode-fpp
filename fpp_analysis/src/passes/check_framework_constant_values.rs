@@ -15,17 +15,7 @@ enum ValueCheck {
 /// Check F Prime framework constant values.
 pub struct CheckFrameworkConstantValues;
 
-impl Default for CheckFrameworkConstantValues {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl CheckFrameworkConstantValues {
-    pub fn new() -> CheckFrameworkConstantValues {
-        CheckFrameworkConstantValues
-    }
-
     pub fn check(&self, a: &Analysis) {
         // Collect first to avoid borrowing `a` while emitting.
         let entries: Vec<(String, Symbol)> = a

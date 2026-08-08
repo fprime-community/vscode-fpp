@@ -8,18 +8,6 @@ use std::ops::ControlFlow;
 /// Check port definitions.
 pub struct CheckPortDefs;
 
-impl Default for CheckPortDefs {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl CheckPortDefs {
-    pub fn new() -> CheckPortDefs {
-        CheckPortDefs
-    }
-}
-
 impl<'ast> Visitor<'ast> for CheckPortDefs {
     type Break = ();
     type State = Analysis;

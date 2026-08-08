@@ -39,6 +39,20 @@ pub enum Symbol {
     Topology(Arc<fpp_ast::DefTopology>),
 }
 
+impl Symbol {
+    /// Whether the definition named by this symbol is a dictionary definition.
+    pub fn is_dictionary_def(&self) -> bool {
+        match self {
+            Symbol::AliasType(def) => def.is_dictionary_def,
+            Symbol::Array(def) => def.is_dictionary_def,
+            Symbol::Constant(def) => def.is_dictionary_def,
+            Symbol::Enum(def) => def.is_dictionary_def,
+            Symbol::Struct(def) => def.is_dictionary_def,
+            _ => false,
+        }
+    }
+}
+
 impl SymbolInterface for Symbol {
     fn node(&self) -> Node {
         match self {

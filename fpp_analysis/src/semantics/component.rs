@@ -435,6 +435,25 @@ pub struct Component {
     pub default_record_id: i128,
     pub state_machine_instance_map: HashMap<String, StateMachineInstance>,
     pub spec_port_matching_list: Vec<Arc<SpecPortMatching>>,
+    /// The resolved port matchings of this component. Populated with the
+    /// matched-port-numbering phase; empty otherwise.
+    pub port_matching_list: Vec<PortMatching>,
+}
+
+/// A resolved port matching between two general port instances.
+#[derive(Debug, Clone)]
+pub struct PortMatching {
+    pub instance1: PortInstance,
+    pub instance2: PortInstance,
+    pub loc: Span,
+}
+
+impl PortMatching {
+    /// Whether the given port instance participates in this matching.
+    pub fn matches(&self, pi: &PortInstance) -> bool {
+        self.instance1.get_node_id() == pi.get_node_id()
+            || self.instance2.get_node_id() == pi.get_node_id()
+    }
 }
 
 impl Component {
@@ -460,6 +479,7 @@ impl Component {
             default_record_id: 0,
             state_machine_instance_map: HashMap::default(),
             spec_port_matching_list: vec![],
+            port_matching_list: vec![],
         }
     }
 
@@ -644,8 +664,8 @@ impl Component {
     }
 
     /// Complete a component definition.
-    pub fn complete(self) -> SemanticResult<Component> {
-        self.construct_port_matching_list()?;
+    pub fn complete(mut self) -> SemanticResult<Component> {
+        self.port_matching_list = self.construct_port_matching_list()?;
         self.check_validity()?;
         Ok(self)
     }
@@ -791,14 +811,15 @@ impl Component {
         }
     }
 
-    fn construct_port_matching_list(&self) -> SemanticResult {
+    fn construct_port_matching_list(&self) -> SemanticResult<Vec<PortMatching>> {
+        let mut list = Vec::new();
         for node in &self.spec_port_matching_list {
-            self.construct_port_matching(node)?;
+            list.push(self.construct_port_matching(node)?);
         }
-        Ok(())
+        Ok(list)
     }
 
-    fn construct_port_matching(&self, node: &SpecPortMatching) -> SemanticResult {
+    fn construct_port_matching(&self, node: &SpecPortMatching) -> SemanticResult<PortMatching> {
         let loc = node.span();
         let name1 = &node.port1.data;
         let name2 = &node.port2.data;
@@ -808,9 +829,9 @@ impl Component {
                 msg: format!("repeated name {}", name1),
             });
         }
-        let get = |name: &str, span: Span| -> SemanticResult<i128> {
+        let get = |name: &str, span: Span| -> SemanticResult<PortInstance> {
             match self.port_interface.port_map.get(name) {
-                Some(PortInstance::General { size, .. }) => Ok(*size),
+                Some(pi @ PortInstance::General { .. }) => Ok(pi.clone()),
                 Some(_) => Err(SemanticError::InvalidPortMatching {
                     loc: span,
                     msg: format!("{} is not a valid port instance for matching", name),
@@ -825,15 +846,21 @@ impl Component {
                 }),
             }
         };
-        let size1 = get(name1, node.port1.span())?;
-        let size2 = get(name2, node.port2.span())?;
+        let instance1 = get(name1, node.port1.span())?;
+        let instance2 = get(name2, node.port2.span())?;
+        let size1 = instance1.get_array_size();
+        let size2 = instance2.get_array_size();
         if size1 != size2 {
             return Err(SemanticError::InvalidPortMatching {
                 loc,
                 msg: format!("mismatched port sizes ({} vs. {})", size1, size2),
             });
         }
-        Ok(())
+        Ok(PortMatching {
+            instance1,
+            instance2,
+            loc,
+        })
     }
 }
 

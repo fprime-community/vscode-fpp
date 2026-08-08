@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/top_import/duplicate_topology.fpp:8.3
-  import A
-  ^
-error: duplicate instance A
-previous occurrence is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/top_import/duplicate_topology.fpp:7.3
-  import A
-  ^
+ --> [ local path prefix ]/top_import/duplicate_topology.fpp:8:3
+  |
+8 |   import A
+  |   ^^^^^^^^ duplicate instance A
+  |
+ ::: [ local path prefix ]/top_import/duplicate_topology.fpp:7:3
+  |
+7 |   import A
+  |   -------- previous instance is here
+

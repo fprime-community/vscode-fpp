@@ -7,19 +7,9 @@ use std::ops::ControlFlow;
 /// Check component instance definitions.
 pub struct CheckComponentInstanceDefs;
 
-impl Default for CheckComponentInstanceDefs {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl CheckComponentInstanceDefs {
-    pub fn new() -> CheckComponentInstanceDefs {
-        CheckComponentInstanceDefs
-    }
-
     /// Ensure that ID ranges do not overlap.
-    pub fn check_id_ranges(&self, a: &Analysis) {
+    pub fn check_id_ranges(a: &Analysis) {
         let mut instances: Vec<&ComponentInstance> = a.component_instance_map.values().collect();
         instances.sort_by_key(|ci| ci.base_id);
 

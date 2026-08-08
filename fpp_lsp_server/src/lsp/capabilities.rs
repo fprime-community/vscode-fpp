@@ -109,7 +109,7 @@ pub fn server_capabilities(caps: &ClientCapabilities) -> ServerCapabilities {
         // workspace_symbol_provider: Some(OneOf::Left(true)),
         completion_provider: Some(CompletionOptions {
             resolve_provider: None,
-            trigger_characters: Some(vec![" ".into(), ".".into(), ":".into()]),
+            trigger_characters: Some(vec![" ".into(), ".".into(), ":".into(), ">".into()]),
             all_commit_characters: None,
             work_done_progress_options: Default::default(),
             completion_item: None,

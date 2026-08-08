@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/spec_loc/abs_type_path_error.fpp:1:18
+  |
+1 | locate type T at "incorrect.fpp"
+  |                  ^^^^^^^^^^^^^^^ incorrect location path [ local path prefix ]/spec_loc/incorrect.fpp
+  |
+ ::: [ local path prefix ]/spec_loc/abs_type_path_error.fpp:2:1
+  |
+2 | type T
+  | ------ actual location is here
+

@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/spec_loc/port_path_error.fpp:1:18
+  |
+1 | locate port P at "incorrect.fpp"
+  |                  ^^^^^^^^^^^^^^^ incorrect location path [ local path prefix ]/spec_loc/incorrect.fpp
+  |
+ ::: [ local path prefix ]/spec_loc/port_path_error.fpp:3:1
+  |
+3 | port P
+  | ------ actual location is here
+

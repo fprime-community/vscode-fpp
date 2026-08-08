@@ -93,7 +93,12 @@ impl RequestDispatcher<'_> {
         let _guard =
             tracing::debug_span!("request", method = ?req.method, "request_id" = ?req.id).entered();
         tracing::debug!(?params);
-        let result = f(self.global_state, params);
+        // Run the read-only handler with the compiler context set on this
+        // thread, so analysis reflection APIs (spans, annotations, port
+        // lookups) are usable. `run_ref` takes a shared borrow, matching the
+        // `&GlobalState` the handler receives.
+        let global_state = &*self.global_state;
+        let result = fpp_core::run_ref(&global_state.context, || f(global_state, params));
 
         if let Some(response) = result_to_response::<R>(req.id, result) {
             self.global_state.respond(response);

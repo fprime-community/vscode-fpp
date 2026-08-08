@@ -31,6 +31,8 @@ pub struct ComponentInstance {
     pub base_id: i128,
     pub max_id: i128,
     pub init_specifier_map: HashMap<i128, InitSpecifier>,
+    /// The symbol of the component this instance is an instance of.
+    pub component_symbol: Symbol,
 }
 
 impl ComponentInstance {
@@ -91,6 +93,7 @@ impl ComponentInstance {
             base_id,
             max_id,
             init_specifier_map: HashMap::default(),
+            component_symbol: component.symbol.clone(),
         }))
     }
 }

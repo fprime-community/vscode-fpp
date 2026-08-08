@@ -2,8 +2,9 @@ mod analysis;
 mod errors;
 
 use crate::passes::{
-    CheckComponentDefs, CheckComponentInstanceDefs, CheckExprTypes, CheckFrameworkConstantValues,
-    CheckFrameworkDefs, CheckInterfaceDefs, CheckPortDefs, CheckTypeUses, CheckUseDefCycles,
+    BuildSpecLocMap, CheckComponentDefs, CheckComponentInstanceDefs, CheckExprTypes,
+    CheckFrameworkConstantValues, CheckFrameworkDefs, CheckInterfaceDefs, CheckPortDefs,
+    CheckSpecLocs, CheckTopologyDefs, CheckTopologyInstances, CheckTypeUses, CheckUseDefCycles,
     CheckUses, EnterSymbols, EvalConstantExprs, EvalImpliedEnumConsts, FinalizeTypeDefs,
 };
 pub use analysis::*;
@@ -67,6 +68,18 @@ pub mod passes {
 
     mod check_component_instance_defs;
     pub use check_component_instance_defs::*;
+
+    mod check_topology_instances;
+    pub use check_topology_instances::*;
+
+    mod check_topology_defs;
+    pub use check_topology_defs::*;
+
+    pub(crate) mod check_spec_locs;
+    pub use check_spec_locs::*;
+
+    mod build_spec_loc_map;
+    pub use build_spec_loc_map::*;
 }
 
 pub mod semantics {
@@ -90,6 +103,14 @@ pub mod semantics {
 
     mod component_instance;
     pub use component_instance::*;
+
+    mod topology;
+    pub use topology::*;
+
+    pub(crate) mod resolve_topology;
+
+    mod connection;
+    pub use connection::*;
 
     mod scope;
     pub use scope::*;
@@ -123,24 +144,25 @@ pub fn resolve_includes<Reader: FileReader>(
 }
 
 pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> ControlFlow<()> {
-    EnterSymbols::new().visit_trans_units(a, ast.iter().cloned())?;
+    EnterSymbols.visit_trans_units(a, ast.iter().cloned())?;
     CheckUses::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckUseDefCycles::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckTypeUses::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckExprTypes::new().visit_trans_units(a, ast.iter().cloned())?;
-    CheckFrameworkDefs::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckFrameworkDefs.visit_trans_units(a, ast.iter().cloned())?;
     EvalImpliedEnumConsts::new().visit_trans_units(a, ast.iter().cloned())?;
     EvalConstantExprs::new().visit_trans_units(a, ast.iter().cloned())?;
     FinalizeTypeDefs::new().visit_trans_units(a, ast.iter().cloned())?;
-    CheckFrameworkConstantValues::new().check(a);
-    CheckPortDefs::new().visit_trans_units(a, ast.iter().cloned())?;
-    let check_interface_defs = CheckInterfaceDefs::new();
-    check_interface_defs.visit_trans_units(a, ast.iter().cloned())?;
-    check_interface_defs.resolve_all(a);
-    CheckComponentDefs::new().visit_trans_units(a, ast.iter().cloned())?;
-    let check_component_instance_defs = CheckComponentInstanceDefs::new();
-    check_component_instance_defs.visit_trans_units(a, ast.iter().cloned())?;
-    check_component_instance_defs.check_id_ranges(a);
+    CheckFrameworkConstantValues.check(a);
+    CheckPortDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckInterfaceDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckComponentDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckComponentInstanceDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckComponentInstanceDefs::check_id_ranges(a);
+    CheckTopologyInstances.visit_trans_units(a, ast.iter().cloned())?;
+    CheckTopologyDefs.resolve_all(a);
+    BuildSpecLocMap.visit_trans_units(a, ast.iter().cloned())?;
+    CheckSpecLocs.visit_trans_units(a, ast.iter().cloned())?;
 
     ControlFlow::Continue(())
 }
