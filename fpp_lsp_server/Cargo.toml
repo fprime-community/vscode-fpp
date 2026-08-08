@@ -1,17 +1,20 @@
 [package]
 name = "fpp_lsp_server"
+description = "Language Server Protocol implementation for the FPP language"
 
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
-fpp_analysis = { path = "../fpp_analysis" }
-fpp_ast = { path = "../fpp_ast" }
-fpp_core = { path = "../fpp_core" }
-fpp_parser = { path = "../fpp_parser" }
-fpp_lsp_parser = { path = "../fpp_lsp_parser" }
-fpp_format = { path = "../fpp_format" }
+fpp_analysis = { path = "../fpp_analysis", version = "=0.0.0" }
+fpp_ast = { path = "../fpp_ast", version = "=0.0.0" }
+fpp_core = { path = "../fpp_core", version = "=0.0.0" }
+fpp_parser = { path = "../fpp_parser", version = "=0.0.0" }
+fpp_lsp_parser = { path = "../fpp_lsp_parser", version = "=0.0.0" }
+fpp_format = { path = "../fpp_format", version = "=0.0.0" }
 
 lsp-server = "=0.7.9"
 serde_json = "1.0.145"

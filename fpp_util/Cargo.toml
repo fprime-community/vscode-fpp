@@ -1,8 +1,11 @@
 [package]
 name = "fpp_util"
+description = "Shared utility functions for the FPP compiler"
 
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]

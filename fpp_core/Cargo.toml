@@ -1,9 +1,12 @@
 [package]
 name = "fpp_core"
+description = "Core compiler infrastructure (context, spans, diagnostics) for the FPP compiler"
 
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 scoped-tls = "1.0"

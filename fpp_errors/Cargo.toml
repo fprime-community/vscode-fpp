@@ -1,11 +1,14 @@
 [package]
 name = "fpp_errors"
+description = "Error reporting and diagnostic emission for the FPP compiler"
 
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 annotate-snippets = "0.12.8"
 anstream = "0.6.21"
-fpp_core = { path = "../fpp_core" }
+fpp_core = { path = "../fpp_core", version = "=0.0.0" }

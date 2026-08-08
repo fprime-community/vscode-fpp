@@ -1,12 +1,15 @@
 [package]
 name = "fpp_lsp_parser"
+description = "Lossless red/green syntax tree parser for the FPP language server"
 
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
-fpp_lexer = { path = "../fpp_lexer" }
+fpp_lexer = { path = "../fpp_lexer", version = "=0.0.0" }
 pretty_assertions = "1.4.1"
 
 rowan = "0.16.1"
