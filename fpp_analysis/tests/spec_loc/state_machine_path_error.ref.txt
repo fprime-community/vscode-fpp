@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/spec_loc/state_machine_path_error.fpp:1:28
+  |
+1 | locate state machine SM at "incorrect.fpp"
+  |                            ^^^^^^^^^^^^^^^ incorrect location path [ local path prefix ]/spec_loc/incorrect.fpp
+  |
+ ::: [ local path prefix ]/spec_loc/state_machine_path_error.fpp:2:1
+  |
+2 | state machine SM
+  | ---------------- actual location is here
+

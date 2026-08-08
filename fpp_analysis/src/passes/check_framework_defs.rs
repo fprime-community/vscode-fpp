@@ -21,17 +21,7 @@ enum TypeCheck {
 /// Check F Prime framework definitions.
 pub struct CheckFrameworkDefs;
 
-impl Default for CheckFrameworkDefs {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl CheckFrameworkDefs {
-    pub fn new() -> CheckFrameworkDefs {
-        CheckFrameworkDefs
-    }
-
     fn is_int(ty: &Arc<Type>) -> bool {
         matches!(
             Type::underlying_type(ty).deref(),

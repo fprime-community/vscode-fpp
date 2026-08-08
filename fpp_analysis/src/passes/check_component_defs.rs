@@ -17,18 +17,6 @@ use std::sync::Arc;
 /// Check component definitions.
 pub struct CheckComponentDefs;
 
-impl Default for CheckComponentDefs {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl CheckComponentDefs {
-    pub fn new() -> CheckComponentDefs {
-        CheckComponentDefs
-    }
-}
-
 /// Run a builder that produces an updated component, emitting any error and
 /// marking the component as broken (so subsequent members are skipped) on error.
 fn update(a: &mut Analysis, f: impl FnOnce(&Analysis, Component) -> SemanticResult<Component>) {

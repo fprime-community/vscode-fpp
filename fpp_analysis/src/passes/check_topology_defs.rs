@@ -1,29 +1,12 @@
 use crate::Analysis;
 use crate::semantics::resolve_topology;
 use crate::semantics::{cmp_span, Connection, ConnectionPattern, Symbol};
-use rustc_hash::FxHashSet as HashSet;
-use std::cell::RefCell;
 
 /// Check topology definitions: resolve direct connections, build the resolved
 /// instance map across imports, and check connection membership.
-pub struct CheckTopologyDefs {
-    /// Topologies currently being resolved (cycle guard).
-    in_progress: RefCell<HashSet<Symbol>>,
-}
-
-impl Default for CheckTopologyDefs {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+pub struct CheckTopologyDefs;
 
 impl CheckTopologyDefs {
-    pub fn new() -> CheckTopologyDefs {
-        CheckTopologyDefs {
-            in_progress: RefCell::new(HashSet::default()),
-        }
-    }
-
     /// Resolve every topology in dependency order (source order for stability).
     pub fn resolve_all(&self, a: &mut Analysis) {
         let mut symbols: Vec<(Symbol, fpp_core::Span)> = a
@@ -41,10 +24,6 @@ impl CheckTopologyDefs {
         if a.topology_map.contains_key(symbol) {
             return;
         }
-        if !self.in_progress.borrow_mut().insert(symbol.clone()) {
-            // Import cycle (reported elsewhere); avoid infinite recursion.
-            return;
-        }
 
         // Resolve directly imported topologies first.
         let deps: Vec<Symbol> = a
@@ -57,7 +36,6 @@ impl CheckTopologyDefs {
         }
 
         let Some(mut top) = a.partial_topology_map.get(symbol).cloned() else {
-            self.in_progress.borrow_mut().remove(symbol);
             return;
         };
 
@@ -94,6 +72,5 @@ impl CheckTopologyDefs {
         }
 
         a.topology_map.insert(symbol.clone(), top);
-        self.in_progress.borrow_mut().remove(symbol);
     }
 }

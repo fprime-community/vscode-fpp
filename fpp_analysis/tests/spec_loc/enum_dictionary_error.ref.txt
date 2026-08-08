@@ -1,0 +1,12 @@
+ --> [ local path prefix ]/spec_loc/enum_dictionary_error.fpp:1:1
+  |
+1 | locate dictionary type E at "enum_dictionary_error.fpp"
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ incorrect location specifier
+  |
+ ::: [ local path prefix ]/spec_loc/enum_dictionary_error.fpp:2:1
+  |
+2 | enum E { X }
+  | ------------ actual definition is here
+  |
+  = note: one specifies dictionary and one does not
+

@@ -1,0 +1,12 @@
+ --> [ local path prefix ]/spec_loc/abs_type_dictionary_error.fpp:1:1
+  |
+1 | locate dictionary type T at "abs_type_dictionary_error.fpp"
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ incorrect location specifier
+  |
+ ::: [ local path prefix ]/spec_loc/abs_type_dictionary_error.fpp:2:1
+  |
+2 | type T
+  | ------ actual definition is here
+  |
+  = note: one specifies dictionary and one does not
+

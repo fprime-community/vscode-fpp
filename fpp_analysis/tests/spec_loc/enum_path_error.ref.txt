@@ -1,9 +1,9 @@
- --> [ local path prefix ]/spec_loc/enum_error.fpp:1:18
+ --> [ local path prefix ]/spec_loc/enum_path_error.fpp:1:18
   |
 1 | locate type E at "incorrect.fpp"
   |                  ^^^^^^^^^^^^^^^ incorrect location path [ local path prefix ]/spec_loc/incorrect.fpp
   |
- ::: [ local path prefix ]/spec_loc/enum_error.fpp:2:1
+ ::: [ local path prefix ]/spec_loc/enum_path_error.fpp:2:1
   |
 2 | enum E { X }
   | ------------ actual location is here

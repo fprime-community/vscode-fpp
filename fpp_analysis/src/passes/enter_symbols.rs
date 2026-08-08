@@ -6,19 +6,9 @@ use fpp_core::Spanned;
 use std::ops::ControlFlow;
 use std::sync::Arc;
 
-pub struct EnterSymbols {}
-
-impl Default for EnterSymbols {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+pub struct EnterSymbols;
 
 impl EnterSymbols {
-    pub fn new() -> EnterSymbols {
-        Self {}
-    }
-
     fn update_parent_symbol_map(&self, a: &mut Analysis, sym: Symbol) {
         match &a.parent_symbol {
             None => {}

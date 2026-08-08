@@ -284,6 +284,18 @@ pub enum SemanticError {
         /// The path named by the second specifier
         prev_path: String,
     },
+    IncorrectDictionarySpecifier {
+        /// Location of the location specifier
+        loc: Span,
+        /// Location of the actual definition
+        def_loc: Span,
+    },
+    InconsistentDictionarySpecifier {
+        /// Location of the location specifier
+        loc: Span,
+        /// Location of the previous specifier
+        prev_loc: Span,
+    },
     DuplicateOutputConnection {
         loc: Span,
         port_num: i128,
@@ -796,6 +808,16 @@ impl From<SemanticError> for Diagnostic {
                 format!("inconsistent location path {}", path),
             )
             .span_note(prev_loc, format!("previous path {} is here", prev_path)),
+            SemanticError::IncorrectDictionarySpecifier { loc, def_loc } => {
+                Diagnostic::new(loc, Level::Error, "incorrect location specifier")
+                    .span_note(def_loc, "actual definition is here")
+                    .note("one specifies dictionary and one does not")
+            }
+            SemanticError::InconsistentDictionarySpecifier { loc, prev_loc } => {
+                Diagnostic::new(loc, Level::Error, "inconsistent location specifier")
+                    .span_note(prev_loc, "previous occurrence is here")
+                    .note("one specifies dictionary and one does not")
+            }
             SemanticError::DuplicateOutputConnection {
                 loc,
                 port_num,

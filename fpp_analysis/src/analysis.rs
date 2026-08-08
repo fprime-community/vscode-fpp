@@ -62,11 +62,15 @@ pub struct Analysis {
     /** The mapping from (location specifier kind, qualified name) to the
      *  location specifier that named it. */
     pub location_specifier_map: HashMap<(fpp_ast::SpecLocKind, String), SpecLocEntry>,
+    /** The list of enclosing scope (module) names on the current path. */
+    pub scope_name_list: Vec<String>,
 }
 
 /// A recorded location specifier, keyed in `location_specifier_map`.
 #[derive(Debug, Clone)]
 pub struct SpecLocEntry {
+    /** Span of the location specifier statement */
+    pub spec_span: Span,
     /** Span of the file string literal (error location + base for path resolution) */
     pub file_span: Span,
     /** The specified (relative) path string */
@@ -112,6 +116,7 @@ impl Analysis {
             partial_topology_map: Default::default(),
             topology_map: Default::default(),
             location_specifier_map: Default::default(),
+            scope_name_list: Vec::new(),
         }
     }
 

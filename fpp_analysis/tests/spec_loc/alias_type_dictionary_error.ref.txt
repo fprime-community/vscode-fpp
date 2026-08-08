@@ -1,0 +1,12 @@
+ --> [ local path prefix ]/spec_loc/alias_type_dictionary_error.fpp:1:1
+  |
+1 | locate type T at "alias_type_dictionary_error.fpp"
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ incorrect location specifier
+  |
+ ::: [ local path prefix ]/spec_loc/alias_type_dictionary_error.fpp:2:1
+  |
+2 | dictionary type T = U32
+  | ----------------------- actual definition is here
+  |
+  = note: one specifies dictionary and one does not
+

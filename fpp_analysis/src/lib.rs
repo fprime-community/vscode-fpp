@@ -144,28 +144,25 @@ pub fn resolve_includes<Reader: FileReader>(
 }
 
 pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> ControlFlow<()> {
-    EnterSymbols::new().visit_trans_units(a, ast.iter().cloned())?;
+    EnterSymbols.visit_trans_units(a, ast.iter().cloned())?;
     CheckUses::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckUseDefCycles::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckTypeUses::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckExprTypes::new().visit_trans_units(a, ast.iter().cloned())?;
-    CheckFrameworkDefs::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckFrameworkDefs.visit_trans_units(a, ast.iter().cloned())?;
     EvalImpliedEnumConsts::new().visit_trans_units(a, ast.iter().cloned())?;
     EvalConstantExprs::new().visit_trans_units(a, ast.iter().cloned())?;
     FinalizeTypeDefs::new().visit_trans_units(a, ast.iter().cloned())?;
-    CheckFrameworkConstantValues::new().check(a);
-    CheckPortDefs::new().visit_trans_units(a, ast.iter().cloned())?;
-    let check_interface_defs = CheckInterfaceDefs::new();
-    check_interface_defs.visit_trans_units(a, ast.iter().cloned())?;
-    check_interface_defs.resolve_all(a);
-    CheckComponentDefs::new().visit_trans_units(a, ast.iter().cloned())?;
-    let check_component_instance_defs = CheckComponentInstanceDefs::new();
-    check_component_instance_defs.visit_trans_units(a, ast.iter().cloned())?;
-    check_component_instance_defs.check_id_ranges(a);
-    CheckTopologyInstances::new().visit_trans_units(a, ast.iter().cloned())?;
-    CheckTopologyDefs::new().resolve_all(a);
-    BuildSpecLocMap::new().visit_trans_units(a, ast.iter().cloned())?;
-    CheckSpecLocs::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckFrameworkConstantValues.check(a);
+    CheckPortDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckInterfaceDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckComponentDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckComponentInstanceDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckComponentInstanceDefs::check_id_ranges(a);
+    CheckTopologyInstances.visit_trans_units(a, ast.iter().cloned())?;
+    CheckTopologyDefs.resolve_all(a);
+    BuildSpecLocMap.visit_trans_units(a, ast.iter().cloned())?;
+    CheckSpecLocs.visit_trans_units(a, ast.iter().cloned())?;
 
     ControlFlow::Continue(())
 }

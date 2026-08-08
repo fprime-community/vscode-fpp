@@ -11,18 +11,6 @@ use std::ops::ControlFlow;
 /// instances and imported topologies declared in each topology.
 pub struct CheckTopologyInstances;
 
-impl Default for CheckTopologyInstances {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl CheckTopologyInstances {
-    pub fn new() -> CheckTopologyInstances {
-        CheckTopologyInstances
-    }
-}
-
 impl<'ast> Visitor<'ast> for CheckTopologyInstances {
     type Break = ();
     type State = Analysis;
