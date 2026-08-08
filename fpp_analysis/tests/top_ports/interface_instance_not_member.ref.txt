@@ -1,0 +1,5 @@
+  --> [ local path prefix ]/top_ports/interface_instance_not_member.fpp:24:12
+   |
+24 |   port b = c2.pIn
+   |            ^^^^^^ instance c2 is not a member of topology A
+

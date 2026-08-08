@@ -2,8 +2,8 @@ use crate::Analysis;
 use crate::errors::SemanticError;
 use fpp_ast::{
     AstNode, DefAbsType, DefAliasType, DefArray, DefComponent, DefComponentInstance, DefConstant,
-    DefEnum, DefInterface, DefModule, DefPort, DefStateMachine, DefStruct, DefTopology, SpecLocKind,
-    Visitor, Walkable,
+    DefEnum, DefInterface, DefModule, DefPort, DefStateMachine, DefStruct, DefTopology,
+    SpecLocKind, Visitor, Walkable,
 };
 use fpp_core::{Span, Spanned};
 use std::ops::ControlFlow;
@@ -92,7 +92,11 @@ impl<'ast> Visitor<'ast> for CheckSpecLocs {
         ControlFlow::Continue(())
     }
 
-    fn visit_def_array(&self, a: &mut Self::State, node: &'ast DefArray) -> ControlFlow<Self::Break> {
+    fn visit_def_array(
+        &self,
+        a: &mut Self::State,
+        node: &'ast DefArray,
+    ) -> ControlFlow<Self::Break> {
         self.check_spec_loc(a, SpecLocKind::Type, node);
         ControlFlow::Continue(())
     }

@@ -7,7 +7,7 @@ use crate::semantics::{
 use fpp_core::Span;
 use rustc_hash::FxHashSet as HashSet;
 
-/// Resolve a partially numbered topology
+// Resolve a partially numbered topology
 
 /// Check that connection instances are legal
 fn check_connection_instances(t: &Topology) -> SemanticResult {
@@ -94,7 +94,8 @@ fn resolve_patterns(a: &Analysis, t: &mut Topology) -> SemanticResult {
 fn resolve_imported_connections(a: &Analysis, t: &mut Topology) {
     // Check whether an instance exists
     let endpoint_exists = |t: &Topology, endpoint: &crate::semantics::Endpoint| -> bool {
-        t.instance_map.contains_key(&endpoint.port.interface_instance)
+        t.instance_map
+            .contains_key(&endpoint.port.interface_instance)
     };
     // Import connections from transitively imported topologies
     let syms: Vec<Symbol> = t.transitive_import_set.iter().cloned().collect();

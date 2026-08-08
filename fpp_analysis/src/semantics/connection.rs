@@ -13,7 +13,8 @@ use std::cmp::Ordering;
 pub fn cmp_span(a: &Span, b: &Span) -> Ordering {
     let fa = format!("{}", a.file());
     let fb = format!("{}", b.file());
-    fa.cmp(&fb).then_with(|| a.start().pos().cmp(&b.start().pos()))
+    fa.cmp(&fb)
+        .then_with(|| a.start().pos().cmp(&b.start().pos()))
 }
 
 /// An imported topology used as an interface instance.
@@ -97,11 +98,8 @@ impl InterfaceInstance {
                     .topology_map
                     .get(&t.symbol)
                     .expect("topology instance references a resolved topology");
-                top.port_interface.get_port_instance(
-                    &name.data,
-                    name.span(),
-                    &t.symbol.name().data,
-                )
+                top.port_interface
+                    .get_port_instance(&name.data, name.span(), &t.symbol.name().data)
             }
         }
     }
@@ -216,10 +214,7 @@ impl PartialOrd for Endpoint {
 }
 impl Ord for Endpoint {
     fn cmp(&self, other: &Self) -> Ordering {
-        let name_cmp = self
-            .port
-            .qualified_name()
-            .cmp(&other.port.qualified_name());
+        let name_cmp = self.port.qualified_name().cmp(&other.port.qualified_name());
         if name_cmp != Ordering::Equal {
             return name_cmp;
         }
@@ -370,10 +365,7 @@ impl Connection {
     }
 
     /// Build a connection from an AST connection. Returns `None` if unresolved.
-    pub fn from_node(
-        a: &Analysis,
-        conn: &ast::Connection,
-    ) -> SemanticResult<Option<Connection>> {
+    pub fn from_node(a: &Analysis, conn: &ast::Connection) -> SemanticResult<Option<Connection>> {
         let Some(from) = Endpoint::from_node(a, &conn.from_port, &conn.from_index)? else {
             return Ok(None);
         };
@@ -496,10 +488,7 @@ impl Connection {
     fn is_match_constrained(&self, a: &Analysis) -> bool {
         let check = |ci: &ComponentInstance, pi: &PortInstance| -> bool {
             match a.component_map.get(&ci.component_symbol) {
-                Some(comp) => comp
-                    .port_matching_list
-                    .iter()
-                    .any(|pm| pm.matches(pi)),
+                Some(comp) => comp.port_matching_list.iter().any(|pm| pm.matches(pi)),
                 None => false,
             }
         };

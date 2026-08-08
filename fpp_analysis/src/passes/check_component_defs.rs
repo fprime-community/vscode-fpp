@@ -1,12 +1,12 @@
 use crate::Analysis;
 use crate::errors::SemanticResult;
 use crate::semantics::{
-    Command, Component, Container, Event, Param, PortInstance, Record, StateMachineInstance, Symbol,
-    TlmChannel,
+    Command, Component, Container, Event, Param, PortInstance, Record, StateMachineInstance,
+    Symbol, TlmChannel,
 };
 use fpp_ast::{
     AstNode, DefComponent, DefModule, SpecCommand, SpecContainer, SpecEvent,
-    SpecGeneralPortInstance, SpecInternalPort, SpecInterfaceImport, SpecParam, SpecPortMatching,
+    SpecGeneralPortInstance, SpecInterfaceImport, SpecInternalPort, SpecParam, SpecPortMatching,
     SpecRecord, SpecSpecialPortInstance, SpecStateMachineInstance, SpecTlmChannel, Visitor,
     Walkable,
 };

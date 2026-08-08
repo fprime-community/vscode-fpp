@@ -5,7 +5,7 @@ use crate::semantics::{Connection, PortInstanceIdentifier, Topology};
 use rustc_hash::FxHashMap as HashMap;
 use std::collections::BTreeSet;
 
-/// Resolve port numbers
+// Resolve port numbers
 
 /// Check output ports for t
 fn check_output_ports(t: &Topology) -> SemanticResult {
@@ -21,8 +21,8 @@ fn check_output_ports(t: &Topology) -> SemanticResult {
 fn check_duplicate_output_connections(connections: &BTreeSet<Connection>) -> SemanticResult {
     let mut port_num_map: HashMap<i128, Connection> = HashMap::default();
     for c in connections {
-        match c.from.port_number {
-            Some(port_num) => match port_num_map.get(&port_num) {
+        if let Some(port_num) = c.from.port_number {
+            match port_num_map.get(&port_num) {
                 Some(prev_c) => {
                     let loc = c.from.loc;
                     let prev_loc = prev_c.from.loc;
@@ -35,8 +35,7 @@ fn check_duplicate_output_connections(connections: &BTreeSet<Connection>) -> Sem
                 None => {
                     port_num_map.insert(port_num, c.clone());
                 }
-            },
-            None => {}
+            }
         }
     }
     Ok(())

@@ -216,10 +216,27 @@ fn resolve_command(
     instances: &[ComponentInstance],
 ) -> SemanticResult<Vec<(String, Connection)>> {
     let loc = pattern.loc;
-    let cmd_reg_in = get_general_port(a, &pattern.source, "command reg", Direction::Input, "Fw.CmdReg")?;
-    let cmd_out = get_general_port(a, &pattern.source, "command send", Direction::Output, "Fw.Cmd")?;
-    let cmd_response_in =
-        get_general_port(a, &pattern.source, "command resp", Direction::Input, "Fw.CmdResponse")?;
+    let cmd_reg_in = get_general_port(
+        a,
+        &pattern.source,
+        "command reg",
+        Direction::Input,
+        "Fw.CmdReg",
+    )?;
+    let cmd_out = get_general_port(
+        a,
+        &pattern.source,
+        "command send",
+        Direction::Output,
+        "Fw.Cmd",
+    )?;
+    let cmd_response_in = get_general_port(
+        a,
+        &pattern.source,
+        "command resp",
+        Direction::Input,
+        "Fw.CmdResponse",
+    )?;
 
     for_targets(pattern, instances, |target| {
         let cmd_reg_out = get_special_port(a, target, SpecialPortInstanceKind::CommandReg)?;
@@ -284,8 +301,14 @@ fn resolve_health(
         let (target_in, target_out) = get_ping_ports(a, target)?;
         if source_out.interface_instance != target_in.interface_instance {
             Ok(vec![
-                ("Health".to_string(), connect(loc, source_out.clone(), target_in)),
-                ("Health".to_string(), connect(loc, target_out, source_in.clone())),
+                (
+                    "Health".to_string(),
+                    connect(loc, source_out.clone(), target_in),
+                ),
+                (
+                    "Health".to_string(),
+                    connect(loc, target_out, source_in.clone()),
+                ),
             ])
         } else {
             Ok(vec![])
@@ -299,14 +322,32 @@ fn resolve_param(
     instances: &[ComponentInstance],
 ) -> SemanticResult<Vec<(String, Connection)>> {
     let loc = pattern.loc;
-    let prm_get_in = get_general_port(a, &pattern.source, "param get", Direction::Input, "Fw.PrmGet")?;
-    let prm_set_in = get_general_port(a, &pattern.source, "param set", Direction::Input, "Fw.PrmSet")?;
+    let prm_get_in = get_general_port(
+        a,
+        &pattern.source,
+        "param get",
+        Direction::Input,
+        "Fw.PrmGet",
+    )?;
+    let prm_set_in = get_general_port(
+        a,
+        &pattern.source,
+        "param set",
+        Direction::Input,
+        "Fw.PrmSet",
+    )?;
     for_targets(pattern, instances, |target| {
         let prm_get_out = get_special_port(a, target, SpecialPortInstanceKind::ParamGet)?;
         let prm_set_out = get_special_port(a, target, SpecialPortInstanceKind::ParamSet)?;
         Ok(vec![
-            ("Parameters".to_string(), connect(loc, prm_get_out, prm_get_in.clone())),
-            ("Parameters".to_string(), connect(loc, prm_set_out, prm_set_in.clone())),
+            (
+                "Parameters".to_string(),
+                connect(loc, prm_get_out, prm_get_in.clone()),
+            ),
+            (
+                "Parameters".to_string(),
+                connect(loc, prm_set_out, prm_set_in.clone()),
+            ),
         ])
     })
 }

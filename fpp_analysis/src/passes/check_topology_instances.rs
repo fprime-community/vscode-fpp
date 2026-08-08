@@ -56,13 +56,13 @@ impl<'ast> Visitor<'ast> for CheckTopologyInstances {
         // An instance/import reference resolves to a component instance symbol
         // (for `instance c`) or a topology symbol (for `import A`). Undefined
         // references are already reported by CheckUses.
-        if let Some(symbol) = a.use_def_map.get(&node.instance.id()).cloned() {
-            if let Some(mut top) = a.topology.take() {
-                if let Err(err) = top.add_instance_symbol(symbol, node.span()) {
-                    err.emit();
-                }
-                a.topology = Some(top);
+        if let Some(symbol) = a.use_def_map.get(&node.instance.id()).cloned()
+            && let Some(mut top) = a.topology.take()
+        {
+            if let Err(err) = top.add_instance_symbol(symbol, node.span()) {
+                err.emit();
             }
+            a.topology = Some(top);
         }
         ControlFlow::Continue(())
     }

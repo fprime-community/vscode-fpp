@@ -9,7 +9,7 @@ use fpp_core::Span;
 use rustc_hash::FxHashMap as HashMap;
 use std::collections::BTreeSet;
 
-/// Apply matched port numbering
+// Apply matched port numbering
 
 // A map from component instances to connections for tracking
 // matching pairs of connections
@@ -318,8 +318,8 @@ fn compute_port_connection_map(
     let cs = t.get_connections_at(&pii);
     let mut m: PortConnectionMap = HashMap::default();
     for c in cs {
-        match t.get_port_number(pi, &c) {
-            Some(n) => match m.get(&n) {
+        if let Some(n) = t.get_port_number(pi, &c) {
+            match m.get(&n) {
                 Some(prev_c) => {
                     return Err(SemanticError::DuplicateConnectionAtMatchedPort {
                         loc: c.get_loc(),
@@ -332,8 +332,7 @@ fn compute_port_connection_map(
                 None => {
                     m.insert(n, c);
                 }
-            },
-            None => {}
+            }
         }
     }
     Ok(m)

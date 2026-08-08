@@ -210,7 +210,7 @@ impl Vfs {
 
         let parent_file_path = std::path::Path::new(&fs_path).canonicalize()?;
         match parent_file_path.parent() {
-            None => Err(format!("Cannot resolve parent directory of {}", &fs_path).into()),
+            None => Err(format!("Cannot resolve parent directory of {}", fs_path).into()),
             Some(parent_dir) => {
                 let final_path = parent_dir.join(relative).canonicalize()?;
                 match final_path.as_path().to_str() {

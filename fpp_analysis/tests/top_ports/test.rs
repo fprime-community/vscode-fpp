@@ -44,3 +44,13 @@ fn out_to_out() {
 fn internal_port() {
     run_test("top_ports/internal_port")
 }
+
+#[test]
+fn interface_instance_not_member() {
+    run_test("top_ports/interface_instance_not_member")
+}
+
+#[test]
+fn top_to_top() {
+    run_test("top_ports/top_to_top")
+}
