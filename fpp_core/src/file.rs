@@ -18,7 +18,7 @@ pub trait FileReader {
 
         let parent_file_path = std::path::Path::new(&current_path).canonicalize()?;
         match parent_file_path.parent() {
-            None => Err(format!("Cannot resolve parent directory of {}", &current_path).into()),
+            None => Err(format!("Cannot resolve parent directory of {}", current_path).into()),
             Some(parent_dir) => {
                 let final_path = parent_dir.join(include);
                 match final_path.as_path().to_str() {

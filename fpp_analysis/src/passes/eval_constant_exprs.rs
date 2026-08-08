@@ -109,10 +109,7 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
         self.super_visit(a, Node::DefEnumConstant(node))?;
 
         fn apply_value(a: &mut Analysis, node: &DefEnumConstant) -> Option<()> {
-            let value_expr = match &node.value {
-                None => return None,
-                Some(v) => v,
-            };
+            let value_expr = node.value.as_ref()?;
 
             let value = match a
                 .value_map
