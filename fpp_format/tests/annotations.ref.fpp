@@ -39,7 +39,8 @@ module AnnotatedModule {
     } @< Post-annotation for struct
 
     @ Constant with inline and post
-    constant MIN_VALUE = 0 # inline comment @< Post-annotation for constant
+    constant MIN_VALUE = 0 # inline comment
+    @< Post-annotation for constant
 
     # Final standalone comment
 } @< Post-annotation for module
