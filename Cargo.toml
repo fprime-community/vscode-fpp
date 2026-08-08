@@ -32,19 +32,16 @@ default-members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0-a1"
+version = "0.0.0"
 edition = "2024"
 authors = ["Andrei Tumbar"]
+license = "Apache-2.0"
+repository = "https://github.com/fprime-community/fpp-tools"
 
 [workspace.lints.clippy]
 all = "warn"
 pedantic = "warn"
-nursery = "warn"
 cargo = "warn"
-restriction = "warn"
-
-[patch.crates-io]
-fpp = { path = "fpp" }
 
 [profile.release]
 strip = "debuginfo"

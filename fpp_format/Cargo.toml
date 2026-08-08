@@ -1,15 +1,18 @@
 [package]
 name = "fpp_format"
+description = "Source code formatter for the FPP language"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [[bin]]
 name = "fpp-format"
 path = "src/main.rs"
 
 [dependencies]
-fpp_lsp_parser = { path = "../fpp_lsp_parser" }
+fpp_lsp_parser = { path = "../fpp_lsp_parser", version = "=0.0.0" }
 clap = { version = "4.5.60", features = ["derive"] }
 
 [dev-dependencies]

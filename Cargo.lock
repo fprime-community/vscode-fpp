@@ -288,7 +288,7 @@ dependencies = [
 
 [[package]]
 name = "fpp"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "fpp_analysis",
  "fpp_core",
@@ -299,7 +299,7 @@ dependencies = [
 
 [[package]]
 name = "fpp_analysis"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "fpp_ast",
  "fpp_core",
@@ -314,7 +314,7 @@ dependencies = [
 
 [[package]]
 name = "fpp_ast"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "fpp_core",
  "fpp_macros",
@@ -322,7 +322,7 @@ dependencies = [
 
 [[package]]
 name = "fpp_core"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "line-index",
  "rustc-hash 2.1.1",
@@ -331,7 +331,7 @@ dependencies = [
 
 [[package]]
 name = "fpp_errors"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "annotate-snippets",
  "anstream",
@@ -340,7 +340,7 @@ dependencies = [
 
 [[package]]
 name = "fpp_format"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "clap",
  "fpp_lsp_parser",
@@ -349,14 +349,14 @@ dependencies = [
 
 [[package]]
 name = "fpp_fs"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "fpp_core",
 ]
 
 [[package]]
 name = "fpp_lexer"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "memchr",
  "pretty_assertions",
@@ -365,7 +365,7 @@ dependencies = [
 
 [[package]]
 name = "fpp_lsp_parser"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "drop_bomb",
  "fpp_lexer",
@@ -375,7 +375,7 @@ dependencies = [
 
 [[package]]
 name = "fpp_lsp_server"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -402,7 +402,7 @@ dependencies = [
 
 [[package]]
 name = "fpp_macros"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -412,7 +412,7 @@ dependencies = [
 
 [[package]]
 name = "fpp_parser"
-version = "0.1.0-a1"
+version = "0.0.0"
 dependencies = [
  "fpp_ast",
  "fpp_core",
@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "fpp_util"
-version = "0.1.0-a1"
+version = "0.0.0"
 
 [[package]]
 name = "globset"

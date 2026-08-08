@@ -1,14 +1,17 @@
 [package]
 name = "fpp_parser"
+description = "Recursive descent AST parser for the FPP compiler"
 
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
-fpp_lexer = { path = "../fpp_lexer" }
-fpp_core = { path = "../fpp_core" }
-fpp_ast = { path = "../fpp_ast" }
+fpp_lexer = { path = "../fpp_lexer", version = "=0.0.0" }
+fpp_core = { path = "../fpp_core", version = "=0.0.0" }
+fpp_ast = { path = "../fpp_ast", version = "=0.0.0" }
 rustc-hash = "2.1.1"
 
 [dev-dependencies]

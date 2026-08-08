@@ -1,10 +1,13 @@
 [package]
 name = "fpp_ast"
+description = "Abstract syntax tree node definitions and visitor traits for the FPP compiler"
 
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
-fpp_core = { path = "../fpp_core" }
-fpp_macros = { path = "../fpp_macros" }
+fpp_core = { path = "../fpp_core", version = "=0.0.0" }
+fpp_macros = { path = "../fpp_macros", version = "=0.0.0" }

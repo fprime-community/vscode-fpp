@@ -1,13 +1,16 @@
 [package]
 name = "fpp"
+description = "The FPP (F Prime Prime) compiler for NASA's F Prime flight software framework"
 
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
-fpp_analysis = { path = "../fpp_analysis" }
-fpp_core = { path = "../fpp_core" }
-fpp_errors = { path = "../fpp_errors" }
-fpp_fs = { path = "../fpp_fs" }
-fpp_parser = { path = "../fpp_parser" }
+fpp_analysis = { path = "../fpp_analysis", version = "=0.0.0" }
+fpp_core = { path = "../fpp_core", version = "=0.0.0" }
+fpp_errors = { path = "../fpp_errors", version = "=0.0.0" }
+fpp_fs = { path = "../fpp_fs", version = "=0.0.0" }
+fpp_parser = { path = "../fpp_parser", version = "=0.0.0" }

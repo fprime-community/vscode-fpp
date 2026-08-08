@@ -19,7 +19,10 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
+        # Pinned to the Swatinem/rust-cache v2.9.2 release commit.
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          cache-bin: false
 
       - name: Inject version from tag
         run: |
