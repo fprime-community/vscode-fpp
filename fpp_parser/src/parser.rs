@@ -265,7 +265,10 @@ impl<'a> Parser<'a> {
                 }
             }
             Keyword(Struct) => Ok(ComponentMember::DefStruct(self.def_struct()?)),
-            Keyword(Async | Guarded | Sync) if self.peek(1) == Keyword(Command) => {
+            Keyword(Async | Guarded | Sync)
+                if self.peek(1) == Keyword(Command)
+                    && !matches!(self.peek(2), Keyword(Recv | Reg | Resp)) =>
+            {
                 Ok(ComponentMember::SpecCommand(self.spec_command()?))
             }
             Keyword(Async | Guarded | Sync | Output | Command | Text | Time) => Ok(

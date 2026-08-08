@@ -1,5 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/port_instance/undef_command_reg.fpp:3.3
-  command reg port cmdRegOut
-  ^
-error: undefined symbol Fw
+ --> [ local path prefix ]/port_instance/undef_command_reg.fpp:3:3
+  |
+3 |   command reg port cmdRegOut
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot find port `Fw` in scope
+
+ --> [ local path prefix ]/port_instance/undef_command_reg.fpp:3:3
+  |
+3 |   command reg port cmdRegOut
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^ not a port symbol
+

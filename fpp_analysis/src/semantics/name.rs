@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use std::fmt::{Debug, Formatter, Write};
+use std::fmt::{Debug, Display, Formatter, Write};
 
 pub struct QualifiedName {
     qualifier: VecDeque<String>,
@@ -80,5 +80,12 @@ impl Debug for QualifiedName {
         f.write_str(&v.join("."))?;
         f.write_char('.')?;
         f.write_str(&self.base)
+    }
+}
+
+impl Display for QualifiedName {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let v: Vec<String> = self.to_ident_list().into();
+        f.write_str(&v.join("."))
     }
 }

@@ -126,7 +126,6 @@ mod component_instance_def {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod port_instance {
     mod test;
 }
@@ -200,7 +199,6 @@ mod connection_pattern {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod internal_port {
     mod test;
 }

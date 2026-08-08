@@ -1,0 +1,10 @@
+  --> [ local path prefix ]/port_instance/shadowed_time_get.fpp:11:5
+   |
+11 |     time get port timeGetOut
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^ invalid use of symbol M.Fw.Time: it shadows Fw.Time here
+   |
+  ::: [ local path prefix ]/port_instance/shadowed_time_get.fpp:5:5
+   |
+ 5 |     port Time
+   |     --------- M.Fw.Time defined here
+

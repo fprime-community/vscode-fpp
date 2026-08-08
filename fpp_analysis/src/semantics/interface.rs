@@ -348,7 +348,7 @@ impl PortInstance {
             }
         };
 
-        let kind_string = format!("{:?}", specifier.kind);
+        let kind_string = specifier.kind.to_string();
         match (&specifier.input_kind, &specifier.kind) {
             (Some(_), SpecialPortInstanceKind::ProductRecv) => {}
             (Some(_), _) => {

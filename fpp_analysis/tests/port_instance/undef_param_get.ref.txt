@@ -1,5 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/port_instance/undef_param_get.fpp:3.3
-  param get port paramGetOut
-  ^
-error: undefined symbol Fw
+ --> [ local path prefix ]/port_instance/undef_param_get.fpp:3:3
+  |
+3 |   param get port paramGetOut
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot find port `Fw` in scope
+
+ --> [ local path prefix ]/port_instance/undef_param_get.fpp:3:3
+  |
+3 |   param get port paramGetOut
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^^ not a port symbol
+

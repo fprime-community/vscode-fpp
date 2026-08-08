@@ -36,6 +36,11 @@ fn undef_time_get() {
 }
 
 #[test]
+fn shadowed_time_get() {
+    run_test("port_instance/shadowed_time_get")
+}
+
+#[test]
 fn async_input_passive() {
     run_test("port_instance/async_input_passive")
 }
