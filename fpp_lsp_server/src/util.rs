@@ -1,6 +1,9 @@
 use crate::diagnostics::LspDiagnosticsEmitter;
 use crate::global_state::GlobalState;
-use fpp_analysis::semantics::{NameGroup, Symbol, SymbolInterface, Type};
+use fpp_analysis::semantics::{
+    Direction, NameGroup, PortInstance, PortInstanceType, PortInterface, Scope, Symbol,
+    SymbolInterface, Type,
+};
 use fpp_ast::{AstNode, FormalParam, FormalParamKind, MoveWalkable, Name, Node, Visitor};
 use fpp_core::{BytePos, CompilerContext, LineCol, SourceFile};
 use fpp_lsp_parser::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken, TextSize};
@@ -642,6 +645,339 @@ pub fn completion_items_for_postfix_expr(
         .collect();
     items.sort_by(|a, b| a.label.cmp(&b.label));
     Some(items)
+}
+
+/// Resolve an interface-instance symbol to its port interface.
+///
+/// An interface instance is either a component instance (whose ports come from
+/// its component's port interface) or an imported (sub)topology (whose ports
+/// come from the topology's own port interface). This is the generic lookup
+/// shared by connection endpoints and topology port aliases.
+fn port_interface_for_instance_symbol<'a>(
+    state: &'a GlobalState,
+    symbol: &Symbol,
+) -> Option<&'a PortInterface> {
+    match symbol {
+        Symbol::ComponentInstance(_) => {
+            let instance = state.analysis.component_instance_map.get(symbol)?;
+            let component = state
+                .analysis
+                .component_map
+                .get(&instance.component_symbol)?;
+            Some(&component.port_interface)
+        }
+        Symbol::Topology(_) => Some(&state.analysis.topology_map.get(symbol)?.port_interface),
+        _ => None,
+    }
+}
+
+/// Format the signature of the port definition backing a port instance, as a
+/// function-call-style string: `(param: Type, ...): ReturnType`.
+///
+/// Returns `None` for serial ports and instances with no underlying port
+/// definition (e.g. internal ports), which have no parameter signature.
+fn port_signature(state: &GlobalState, pi: &PortInstance) -> Option<String> {
+    let symbol = match pi.get_type()? {
+        PortInstanceType::DefPort(symbol) => symbol,
+        PortInstanceType::Serial => return None,
+    };
+    let def = match &symbol {
+        Symbol::Port(def) => def,
+        _ => return None,
+    };
+
+    let args: Vec<String> = def
+        .params
+        .iter()
+        .map(|prm| formal_param_to_string(state, prm))
+        .collect();
+
+    let return_ty = def.return_type.as_ref().and_then(|tn| {
+        state
+            .analysis
+            .type_map
+            .get(&tn.node_id)
+            .map(|ty| format!(": {ty}"))
+    });
+
+    Some(format!(
+        "({}){}",
+        args.join(", "),
+        return_ty.unwrap_or_default()
+    ))
+}
+
+/// Resolve a port-instance identifier's port name at `position` to its
+/// underlying [`PortInstance`].
+///
+/// Port names in connections (`instance.portName`) resolve to a `PortInstance`,
+/// not a `Symbol`, so they are absent from `use_def_map` and are not handled by
+/// the generic hover/goto paths. This re-runs the same resolution that
+/// [`fpp_analysis::semantics::PortInstanceIdentifier::from_node`] uses: the
+/// instance qualifier is already in `use_def_map`, so we resolve it via
+/// [`Analysis::get_interface_instance`] and then look up the port by name.
+///
+/// Returns the port name's AST node (for locating/ranging the hover) together
+/// with the resolved port instance. Returns `None` if the cursor is not on a
+/// port name, or the instance/port does not resolve.
+pub(crate) fn port_instance_at_position<'a>(
+    state: &'a GlobalState,
+    document: &Uri,
+    position: BytePos,
+) -> Option<(Node<'a>, PortInstance)> {
+    let nodes = nodes_at_offset(state, document, position)?;
+
+    // Find the enclosing port-instance identifier and confirm the cursor is on
+    // the port name (not the instance qualifier).
+    let pii = nodes.iter().find_map(|n| match n {
+        Node::PortInstanceIdentifier(pii) => Some(*pii),
+        _ => None,
+    })?;
+
+    let name_span = state
+        .context
+        .span_get(&state.context.node_get_span(&pii.port_name.id()));
+    if position < name_span.start || position > name_span.start + name_span.length {
+        return None;
+    }
+
+    // Resolve the instance qualifier to an interface instance, then look up the
+    // port by name. This reuses the analysis resolution helpers, which are
+    // usable here because the request runs under `fpp_core::run_ref` (the
+    // compiler context is set on this thread).
+    let interface_instance = state
+        .analysis
+        .get_interface_instance(pii.interface_instance.id())?;
+    let port_instance = interface_instance
+        .get_port_instance(&state.analysis, &pii.port_name)
+        .ok()?;
+
+    // Look up the port name node among the resolved nodes for ranging.
+    let name_node = nodes
+        .iter()
+        .find(|n| n.id() == pii.port_name.id())
+        .copied()
+        .unwrap_or(Node::PortInstanceIdentifier(pii));
+
+    Some((name_node, port_instance))
+}
+
+/// Build hover information for a resolved port instance, mirroring the
+/// signature + annotation format used by the port completion items.
+pub fn hover_for_port_instance(state: &GlobalState, hover_node: Node, pi: &PortInstance) -> Hover {
+    let direction = Direction::show(&pi.get_direction());
+    let port_ty = PortInstanceType::show(&pi.get_type());
+    let signature = port_signature(state, pi).unwrap_or_default();
+
+    let node_data = state.context.node_get(&pi.get_node_id());
+    let kind_line = format!(
+        "({direction} port) {}: {port_ty}{signature}",
+        pi.get_unqualified_name()
+    );
+
+    let markdown_lines: Vec<String> = node_data
+        .pre_annotation
+        .clone()
+        .into_iter()
+        .chain(vec!["".to_string(), kind_line, "".to_string()])
+        .chain(node_data.post_annotation.clone())
+        .collect();
+
+    Hover {
+        contents: HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: markdown_lines.join("\n").trim().to_string(),
+        }),
+        range: Some(node_to_range(state, hover_node.id())),
+    }
+}
+
+/// Build completion items for the ports of a port interface.
+///
+/// The `port_map` holds every port instance (general, special, and internal),
+/// which is the set of names valid after `instance.` in a connection endpoint
+/// or topology port alias.
+///
+/// Each item is formatted like a function-call lookup: the label detail carries
+/// the port's `(params): ReturnType` signature (from the underlying port
+/// definition) alongside its direction and port type, and the port instance's
+/// annotation is shown as documentation.
+///
+/// `direction_filter` restricts the results to ports of a given direction: the
+/// `from` side of a connection accepts only outputs and the `to` side only
+/// inputs. `None` keeps every port (used for topology port aliases, which may
+/// alias either direction). Internal ports have no direction, so any directional
+/// filter also (correctly) excludes them — they cannot be connected.
+fn completion_items_for_ports(
+    state: &GlobalState,
+    port_interface: &PortInterface,
+    direction_filter: Option<Direction>,
+) -> Vec<CompletionItem> {
+    let mut items: Vec<CompletionItem> = port_interface
+        .port_map
+        .values()
+        .filter(|pi| match direction_filter {
+            Some(want) => pi.get_direction() == Some(want),
+            None => true,
+        })
+        .map(|pi| {
+            let direction = Direction::show(&pi.get_direction());
+            let port_ty = PortInstanceType::show(&pi.get_type());
+            let signature = port_signature(state, pi);
+
+            // The annotation on the port instance definition, if any.
+            let annotation = {
+                let node = state.context.node_get(&pi.get_node_id());
+                if node.pre_annotation.is_empty() {
+                    None
+                } else {
+                    Some(node.pre_annotation.join(" "))
+                }
+            };
+
+            CompletionItem {
+                label: pi.get_unqualified_name().to_string(),
+                kind: Some(CompletionItemKind::FUNCTION),
+                label_details: Some(CompletionItemLabelDetails {
+                    // Function-call-style signature next to the label.
+                    detail: signature.clone(),
+                    // The port type shown on the right, e.g. `Drv.DataReturn`.
+                    description: Some(port_ty.clone()),
+                }),
+                detail: Some(format!(
+                    "{direction} port {port_ty}{}",
+                    signature.unwrap_or_default()
+                )),
+                documentation: annotation.map(|a| {
+                    Documentation::MarkupContent(MarkupContent {
+                        kind: MarkupKind::Markdown,
+                        value: a,
+                    })
+                }),
+                ..Default::default()
+            }
+        })
+        .collect();
+    items.sort_by(|a, b| a.label.cmp(&b.label));
+    items
+}
+
+/// Resolve a dotted name (given as its segment strings) to a symbol by walking
+/// the lexical scope chain at `cursor_pos`, in the given name group.
+///
+/// Unlike [`symbol_at_position`], this does not depend on `use_def_map`, so it
+/// works even when the surrounding construct fails to parse in the semantic
+/// parser (e.g. an incomplete `instance.` connection endpoint). It mirrors the
+/// scope-chain construction in [`completion_items_in_name_group`].
+fn resolve_symbol_in_scope_chain(
+    state: &GlobalState,
+    segments: &[String],
+    ng: NameGroup,
+    cursor_pos: TextSize,
+    uri: &Uri,
+) -> Option<Symbol> {
+    let (first, rest) = segments.split_first()?;
+
+    // Build the stack of enclosing scopes from outermost (global) to innermost.
+    let enclosing_names: Vec<String> = scope_at_offset(state, uri, cursor_pos.into())
+        .unwrap_or_default()
+        .into_iter()
+        .rev()
+        .map(|n| match n {
+            Node::DefComponent(n) => n.name.data.clone(),
+            Node::DefEnum(n) => n.name.data.clone(),
+            Node::DefModule(n) => n.name.data.clone(),
+            Node::DefStateMachine(n) => n.name.data.clone(),
+            _ => unreachable!(),
+        })
+        .collect();
+
+    let mut scopes: Vec<&Scope> = vec![&state.analysis.global_scope];
+    for name in &enclosing_names {
+        match scopes
+            .last()
+            .and_then(|s| s.get(ng, name))
+            .and_then(|sym| state.analysis.symbol_scope_map.get(&sym))
+        {
+            Some(scope) => scopes.push(scope),
+            None => break,
+        }
+    }
+
+    // Resolve the first segment by searching innermost scope outward.
+    let mut symbol = scopes.iter().rev().find_map(|scope| scope.get(ng, first))?;
+
+    // Descend into each subsequent qualifier segment.
+    for seg in rest {
+        let scope = state.analysis.symbol_scope_map.get(&symbol)?;
+        symbol = scope.get(ng, seg)?;
+    }
+
+    Some(symbol)
+}
+
+/// Complete a port-instance identifier (`instance.PortName`) as used in
+/// topology connection endpoints and topology port aliases.
+///
+/// `receiver_tokens` are the `IDENT` tokens of the qualifier before the final
+/// dot. `after_dot` indicates whether the cursor follows a `.` (so we complete
+/// port names / nested instances) versus sitting on the first bare segment (so
+/// we complete interface-instance names). `direction_filter` restricts port
+/// results by direction: outputs on the `from` side of `->`, inputs on the `to`
+/// side, and `None` (unfiltered) for topology port aliases.
+pub fn completion_items_for_port_instance(
+    state: &GlobalState,
+    receiver_tokens: &[SyntaxToken],
+    after_dot: bool,
+    direction_filter: Option<Direction>,
+    cursor_pos: TextSize,
+    uri: &Uri,
+) -> Option<Vec<CompletionItem>> {
+    if !after_dot {
+        // First segment: complete the available interface-instance names.
+        return completion_items_in_name_group(
+            state,
+            cursor_pos,
+            NameGroup::PortInterfaceInstance,
+            uri,
+        );
+    }
+
+    // After a dot: resolve the receiver through the scope chain. We cannot use
+    // `use_def_map` here because an incomplete `instance.` endpoint fails to
+    // parse in the semantic parser, so the receiver has no use-def entry.
+    let segments: Vec<String> = receiver_tokens
+        .iter()
+        .map(|t| t.text().to_string())
+        .collect();
+
+    let symbol = resolve_symbol_in_scope_chain(
+        state,
+        &segments,
+        NameGroup::PortInterfaceInstance,
+        cursor_pos,
+        uri,
+    )?;
+
+    // If the receiver is an interface instance, complete its ports.
+    if let Some(port_interface) = port_interface_for_instance_symbol(state, &symbol) {
+        return Some(completion_items_for_ports(
+            state,
+            port_interface,
+            direction_filter,
+        ));
+    }
+
+    // Otherwise the receiver is a qualifier still being typed (e.g. a
+    // subtopology / module namespace); complete the interface instances in its
+    // scope.
+    state.analysis.symbol_scope_map.get(&symbol).map(|scope| {
+        scope
+            .get_group(NameGroup::PortInterfaceInstance)
+            .iter()
+            .map(|(_, child_symbol)| symbol_to_completion_item(state, child_symbol))
+            .collect()
+    })
 }
 
 pub fn completion_items_for_qual_ident(

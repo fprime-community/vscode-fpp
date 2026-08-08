@@ -97,9 +97,9 @@ impl LexedStr<'_> {
                     };
                 }
 
-                // Tokens that eat newlines after them
-                STAR | RIGHT_ARROW | SLASH | MINUS | PLUS | EQUALS | SEMI | COMMA | COLON
-                | LEFT_PAREN | LEFT_CURLY | LEFT_SQUARE => {
+                // Tokens that eat newlines after them.
+                STAR | SLASH | MINUS | PLUS | EQUALS | SEMI | COMMA | COLON | LEFT_PAREN
+                | LEFT_CURLY | LEFT_SQUARE => {
                     if skip > 0 {
                         return TriviaRegion::Remove(skip);
                     }

@@ -261,7 +261,8 @@ impl<'a> Cursor<'a> {
                 | TokenKind::Dot
                 | TokenKind::RightParen
                 | TokenKind::RightCurly
-                | TokenKind::RightSquare => {
+                | TokenKind::RightSquare
+                | TokenKind::RightArrow => {
                     return Some(Token::new(
                         tok.kind,
                         None,
@@ -274,7 +275,6 @@ impl<'a> Cursor<'a> {
 
                 // Tokens that eat the newlines after them
                 TokenKind::Star
-                | TokenKind::RightArrow
                 | TokenKind::Slash
                 | TokenKind::Minus
                 | TokenKind::Plus

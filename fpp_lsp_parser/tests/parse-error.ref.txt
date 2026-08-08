@@ -71,9 +71,9 @@ ROOT@0..206
         QUAL_IDENT@129..130
           IDENT@129..130 "d"
       WHITESPACE@130..131 " "
-      ERROR@131..134
+      ERROR@131..133
         RIGHT_ARROW@131..133 "->"
-        WHITESPACE@133..134 " "
+      WHITESPACE@133..134 " "
       ERROR@134..135
         IDENT@134..135 "d"
       EOL@135..137 "\n\n"
