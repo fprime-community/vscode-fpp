@@ -3,7 +3,7 @@ use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::{Symbol, SymbolInterface};
 use fpp_ast::{
     AstNode, GeneralPortInstanceKind, InputPortKind, QueueFull, SpecGeneralPortInstance,
-    SpecInternalPort, SpecInterfaceImport, SpecSpecialPortInstance, SpecialPortInstanceKind,
+    SpecInterfaceImport, SpecInternalPort, SpecSpecialPortInstance, SpecialPortInstanceKind,
 };
 use fpp_core::{Node, Span, Spanned};
 use rustc_hash::FxHashMap as HashMap;
@@ -26,7 +26,10 @@ impl Direction {
 
     /// Directions are compatible iff the connection goes output -> input.
     pub fn are_compatible(from: &Option<Direction>, to: &Option<Direction>) -> bool {
-        matches!((from, to), (Some(Direction::Output), Some(Direction::Input)))
+        matches!(
+            (from, to),
+            (Some(Direction::Output), Some(Direction::Input))
+        )
     }
 }
 
@@ -204,7 +207,12 @@ impl PortInstance {
     }
 
     /// Build a topology port aliasing an underlying port instance.
-    pub fn topology(node_id: Node, loc: Span, name: String, underlying: PortInstance) -> PortInstance {
+    pub fn topology(
+        node_id: Node,
+        loc: Span,
+        name: String,
+        underlying: PortInstance,
+    ) -> PortInstance {
         PortInstance::Topology {
             node_id,
             loc,
@@ -422,14 +430,13 @@ fn check_general_async_input(instance: &PortInstance) -> SemanticResult {
         ty: PortInstanceType::DefPort(Symbol::Port(def)),
         ..
     } = instance
+        && def.return_type.is_some()
     {
-        if def.return_type.is_some() {
-            return Err(SemanticError::InvalidPortInstance {
-                loc: *loc,
-                msg: "async input port may not return a value".to_string(),
-                def_loc: def.name.span(),
-            });
-        }
+        return Err(SemanticError::InvalidPortInstance {
+            loc: *loc,
+            msg: "async input port may not return a value".to_string(),
+            def_loc: def.name.span(),
+        });
     }
     Ok(())
 }
@@ -604,7 +611,9 @@ impl Interface {
         interface: &Interface,
         import_loc: Span,
     ) -> SemanticResult<Interface> {
-        let pi = self.port_interface.add_imported_interface(interface, import_loc)?;
+        let pi = self
+            .port_interface
+            .add_imported_interface(interface, import_loc)?;
         let mut result = self.clone();
         result.port_interface = pi;
         Ok(result)

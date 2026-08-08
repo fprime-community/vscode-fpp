@@ -3,7 +3,7 @@ use super::port_numbering_state::PortNumberingState;
 use crate::Analysis;
 use crate::semantics::{Direction, PortInstanceIdentifier, Topology};
 
-/// Apply general port numbering
+// Apply general port numbering
 
 // Number an input port array
 fn number_input_port_array(t: &mut Topology, pii: &PortInstanceIdentifier) {

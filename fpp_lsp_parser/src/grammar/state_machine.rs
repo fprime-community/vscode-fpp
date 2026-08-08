@@ -1,8 +1,20 @@
 use super::*;
 
 const STATE_MACHINE_MEMBER_RECOVERY_SET: TokenSet = TokenSet::new(&[
-    EOL, SEMI, STATE_KW, SIGNAL_KW, INITIAL_KW, ACTION_KW, GUARD_KW, CHOICE_KW, TYPE_KW, ARRAY_KW,
-    CONSTANT_KW, ENUM_KW, STRUCT_KW, INCLUDE_KW,
+    EOL,
+    SEMI,
+    STATE_KW,
+    SIGNAL_KW,
+    INITIAL_KW,
+    ACTION_KW,
+    GUARD_KW,
+    CHOICE_KW,
+    TYPE_KW,
+    ARRAY_KW,
+    CONSTANT_KW,
+    ENUM_KW,
+    STRUCT_KW,
+    INCLUDE_KW,
 ]);
 
 const STATE_MEMBER_RECOVERY_SET: TokenSet = TokenSet::new(&[

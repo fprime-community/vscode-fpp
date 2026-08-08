@@ -1,6 +1,6 @@
 use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::{
-    FrameworkDefinitions, Interface, IntegerValue, NameGroup, NestedScope, Scope, Symbol,
+    FrameworkDefinitions, IntegerValue, Interface, NameGroup, NestedScope, Scope, Symbol,
     SymbolInterface, Type, UseDefMatching, Value,
 };
 use fpp_ast::{Expr, FormalParam, FormalParamKind, QueueFull};
@@ -138,7 +138,11 @@ impl Analysis {
     }
 
     /// Get an array size (>= 1) for an AST node.
-    pub fn get_array_size(&self, node: fpp_core::Node, loc: fpp_core::Span) -> SemanticResult<i128> {
+    pub fn get_array_size(
+        &self,
+        node: fpp_core::Node,
+        loc: fpp_core::Span,
+    ) -> SemanticResult<i128> {
         let v = self.get_int_value(node).unwrap_or(1);
         if v >= 1 {
             Ok(v)
@@ -179,13 +183,19 @@ impl Analysis {
         expr: &Option<Expr>,
     ) -> SemanticResult<Option<i128>> {
         match expr {
-            Some(e) => Ok(Some(self.get_nonnegative_big_int_value(e.node_id, e.span())?)),
+            Some(e) => Ok(Some(
+                self.get_nonnegative_big_int_value(e.node_id, e.span())?,
+            )),
             None => Ok(None),
         }
     }
 
     /// Get a nonnegative int value (in i32 range) for an AST node.
-    pub fn get_nonnegative_int_value(&self, node: fpp_core::Node, loc: Span) -> SemanticResult<i128> {
+    pub fn get_nonnegative_int_value(
+        &self,
+        node: fpp_core::Node,
+        loc: Span,
+    ) -> SemanticResult<i128> {
         let v = self.get_int_value(node).unwrap_or(0);
         if v < i32::MIN as i128 || v > i32::MAX as i128 {
             return Err(SemanticError::InvalidIntValue {

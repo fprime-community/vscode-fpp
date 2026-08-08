@@ -209,10 +209,7 @@ impl Type {
             }
             Type::String(size) => {
                 let store_symbol = a.framework_definitions.type_map.get("FwSizeStoreType")?;
-                let store_size = a
-                    .type_map
-                    .get(&store_symbol.node())?
-                    .serialized_size(a)?;
+                let store_size = a.type_map.get(&store_symbol.node())?.serialized_size(a)?;
                 let data_size = match size {
                     Some(n) => *n,
                     None => {

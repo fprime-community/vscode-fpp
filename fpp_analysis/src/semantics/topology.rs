@@ -205,8 +205,12 @@ impl Topology {
                 def_loc: underlying.port_instance.get_loc(),
             });
         }
-        let topology_pi =
-            PortInstance::topology(node_id, loc, name.to_string(), underlying.port_instance.clone());
+        let topology_pi = PortInstance::topology(
+            node_id,
+            loc,
+            name.to_string(),
+            underlying.port_instance.clone(),
+        );
         let new_interface = self.port_interface.add_port_instance(topology_pi)?;
         if let Some(prev) = self.port_map.get(name) {
             return Err(SemanticError::DuplicatePortInstance {

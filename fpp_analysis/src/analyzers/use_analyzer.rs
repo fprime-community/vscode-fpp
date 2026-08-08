@@ -42,9 +42,7 @@ impl<'ast, V: UseAnalysisPass<'ast, Analysis>> Analyzer<'ast, V> for UseAnalyzer
                                 // Analyze the left-hand expression representing the struct value
                                 e.visit(a, visitor)
                             }
-                            Some(_) => {
-                                ControlFlow::Continue(())
-                            }
+                            Some(_) => ControlFlow::Continue(()),
                         }
                     }
                     _ => self.super_.visit(visitor, a, node),

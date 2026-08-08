@@ -1,6 +1,6 @@
 use crate::Analysis;
 use crate::errors::{SemanticError, SemanticResult};
-use crate::semantics::{component_kind_str, Component, Symbol};
+use crate::semantics::{Component, Symbol, component_kind_str};
 use fpp_ast::{AstNode, ComponentKind, DefComponentInstance, Expr, SpecInit};
 use fpp_core::{Span, Spanned};
 use rustc_hash::FxHashMap as HashMap;
@@ -15,9 +15,7 @@ pub struct InitSpecifier {
 impl InitSpecifier {
     pub fn from_node(a: &Analysis, node: &SpecInit) -> SemanticResult<InitSpecifier> {
         let loc = node.span();
-        let phase = a
-            .get_int_value(node.phase.node_id)
-            .unwrap_or(0);
+        let phase = a.get_int_value(node.phase.node_id).unwrap_or(0);
         Ok(InitSpecifier { loc, phase })
     }
 }
@@ -131,7 +129,10 @@ fn get_queue_size(
         (kind, None) => Err(invalid(
             name,
             loc,
-            format!("{} component must have queue size", component_kind_str(kind)),
+            format!(
+                "{} component must have queue size",
+                component_kind_str(kind)
+            ),
         )),
     }
 }
@@ -155,7 +156,11 @@ fn get_active_attribute(
         (_, Some(e)) => Err(invalid(
             name,
             e.span(),
-            format!("{} component may not have {}", component_kind_str(kind), attr),
+            format!(
+                "{} component may not have {}",
+                component_kind_str(kind),
+                attr
+            ),
         )),
         (_, None) => Ok(None),
     }

@@ -91,11 +91,9 @@ impl<'ast> Visitor<'ast> for CheckComponentInstanceDefs {
             }
         }
 
-        if ok {
-            if let Some(ci) = a.component_instance.take() {
-                let symbol = a.get_symbol(node);
-                a.component_instance_map.insert(symbol, ci);
-            }
+        if ok && let Some(ci) = a.component_instance.take() {
+            let symbol = a.get_symbol(node);
+            a.component_instance_map.insert(symbol, ci);
         }
         a.component_instance = None;
         ControlFlow::Continue(())

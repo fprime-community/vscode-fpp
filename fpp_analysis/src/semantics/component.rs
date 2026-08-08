@@ -1,8 +1,6 @@
 use crate::Analysis;
 use crate::errors::{SemanticError, SemanticResult};
-use crate::semantics::{
-    Format, PortInstance, PortInterface, Symbol, SymbolInterface, Type,
-};
+use crate::semantics::{Format, PortInstance, PortInterface, Symbol, SymbolInterface, Type};
 use fpp_ast::{
     AstNode, ComponentKind, DefComponent, InputPortKind, QueueFull, SpecCommand, SpecContainer,
     SpecEvent, SpecParam, SpecPortMatching, SpecRecord, SpecStateMachineInstance, SpecTlmChannel,
@@ -139,10 +137,7 @@ impl TlmChannel {
     }
 }
 
-fn compute_limits(
-    _a: &Analysis,
-    limits: &[fpp_ast::TlmChannelLimit],
-) -> SemanticResult {
+fn compute_limits(_a: &Analysis, limits: &[fpp_ast::TlmChannelLimit]) -> SemanticResult {
     let mut seen: HashMap<String, Span> = HashMap::default();
     for limit in limits {
         let key = format!("{:?}", limit.kind);
@@ -215,22 +210,22 @@ impl Param {
         // Check that the default value (if any) converts to the parameter type.
         // Resolve the finalized parameter type via its definition node, since the
         // type-name use node may hold an unfinalized type (e.g. array size unknown).
-        if let Some(default) = &node.default {
-            if let (Some(default_ty), Some(param_ty)) = (
+        if let Some(default) = &node.default
+            && let (Some(default_ty), Some(param_ty)) = (
                 a.type_map.get(&default.node_id).cloned(),
                 a.type_map.get(&node.type_name.node_id).cloned(),
-            ) {
-                let param_ty = match param_ty.def_node_id() {
-                    Some(def_node) => a.type_map.get(&def_node).cloned().unwrap_or(param_ty),
-                    None => param_ty,
-                };
-                if let Err(err) = Type::convert(&default_ty, &param_ty) {
-                    return Err(SemanticError::TypeConversion {
-                        loc: default.span(),
-                        msg: format!("default value cannot be converted to {}", param_ty),
-                        err: Box::new(err),
-                    });
-                }
+            )
+        {
+            let param_ty = match param_ty.def_node_id() {
+                Some(def_node) => a.type_map.get(&def_node).cloned().unwrap_or(param_ty),
+                None => param_ty,
+            };
+            if let Err(err) = Type::convert(&default_ty, &param_ty) {
+                return Err(SemanticError::TypeConversion {
+                    loc: default.span(),
+                    msg: format!("default value cannot be converted to {}", param_ty),
+                    err: Box::new(err),
+                });
             }
         }
         a.check_displayable_type(
@@ -523,7 +518,11 @@ impl Component {
         .unwrap_or(-1)
     }
 
-    pub fn add_command(&self, opcode_opt: Option<i128>, command: Command) -> SemanticResult<Component> {
+    pub fn add_command(
+        &self,
+        opcode_opt: Option<i128>,
+        command: Command,
+    ) -> SemanticResult<Component> {
         let opcode = opcode_opt.unwrap_or(self.default_opcode);
         if let Some(prev) = self.command_map.get(&opcode) {
             return Err(SemanticError::DuplicateOpcodeValue {
@@ -555,7 +554,11 @@ impl Component {
         Ok(c)
     }
 
-    pub fn add_container(&self, id_opt: Option<i128>, container: Container) -> SemanticResult<Component> {
+    pub fn add_container(
+        &self,
+        id_opt: Option<i128>,
+        container: Container,
+    ) -> SemanticResult<Component> {
         let (map, next) = add_to_id_map(
             &self.container_map,
             id_opt.unwrap_or(self.default_container_id),
@@ -651,7 +654,9 @@ impl Component {
         interface: &crate::semantics::Interface,
         import_loc: Span,
     ) -> SemanticResult<Component> {
-        let pi = self.port_interface.add_imported_interface(interface, import_loc)?;
+        let pi = self
+            .port_interface
+            .add_imported_interface(interface, import_loc)?;
         let mut c = self.clone();
         c.port_interface = pi;
         Ok(c)
@@ -691,7 +696,12 @@ impl Component {
             |t| t.name.clone(),
             |t| t.loc,
         )?;
-        check_dictionary_names(&self.container_map, "container", |c| c.name.clone(), |c| c.loc)?;
+        check_dictionary_names(
+            &self.container_map,
+            "container",
+            |c| c.name.clone(),
+            |c| c.loc,
+        )?;
         check_dictionary_names(&self.record_map, "record", |r| r.name.clone(), |r| r.loc)?;
         Ok(())
     }
@@ -725,7 +735,7 @@ impl Component {
                 });
             }
         }
-        for instance in self.state_machine_instance_map.values() {
+        if let Some(instance) = self.state_machine_instance_map.values().next() {
             return Err(SemanticError::PassiveStateMachine { loc: instance.loc });
         }
         Ok(())
@@ -739,7 +749,10 @@ impl Component {
 
     fn check_required_ports(&self) -> SemanticResult {
         use SpecialPortInstanceKind::*;
-        let require = |condition: bool, spec_msg: &str, kinds: &[SpecialPortInstanceKind]| -> SemanticResult {
+        let require = |condition: bool,
+                       spec_msg: &str,
+                       kinds: &[SpecialPortInstanceKind]|
+         -> SemanticResult {
             if condition {
                 for kind in kinds {
                     if !self.has_special_port(kind.clone()) {
@@ -763,8 +776,16 @@ impl Component {
             "command specifiers",
             &[CommandRecv, CommandReg, CommandResp],
         )?;
-        require(self.has_events(), "event specifiers", &[Event, TextEvent, TimeGet])?;
-        require(self.has_telemetry(), "telemetry specifiers", &[Telemetry, TimeGet])?;
+        require(
+            self.has_events(),
+            "event specifiers",
+            &[Event, TextEvent, TimeGet],
+        )?;
+        require(
+            self.has_telemetry(),
+            "telemetry specifiers",
+            &[Telemetry, TimeGet],
+        )?;
         if self.has_data_products()
             && !self.has_special_port(ProductGet)
             && !self.has_special_port(ProductRequest)

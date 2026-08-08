@@ -1,6 +1,6 @@
 use crate::Analysis;
 use crate::semantics::resolve_topology;
-use crate::semantics::{cmp_span, Connection, ConnectionPattern, Symbol};
+use crate::semantics::{Connection, ConnectionPattern, Symbol, cmp_span};
 
 /// Check topology definitions: resolve direct connections, build the resolved
 /// instance map across imports, and check connection membership.
