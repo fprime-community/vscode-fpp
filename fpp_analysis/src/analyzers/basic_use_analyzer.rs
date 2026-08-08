@@ -62,6 +62,16 @@ pub trait UseAnalysisPass<'ast, S: NestedScopeState>: Visitor<'ast, State = S> {
         ControlFlow::Continue(())
     }
 
+    /** An implied use of a port definition (from a special port instance) */
+    fn implied_port_use(
+        &self,
+        a: &mut Self::State,
+        node: &QualIdent,
+        name: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        self.port_use(a, node, name)
+    }
+
     /** A use of an interface definition */
     fn interface_use(
         &self,
@@ -215,7 +225,7 @@ impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Analyzer<'ast, V>
 
                 let port_qi = ImpliedUse::new(vec!["Fw".to_string(), name].into(), pi.node_id)
                     .as_qual_ident();
-                visitor.port_use(a, &port_qi, (&port_qi).into())?;
+                visitor.implied_port_use(a, &port_qi, (&port_qi).into())?;
                 self.super_.visit(visitor, a, node)
             }
             Node::PortInstanceIdentifier(pii) => visitor.interface_instance_use(

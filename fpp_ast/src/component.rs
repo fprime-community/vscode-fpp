@@ -139,6 +139,27 @@ pub enum SpecialPortInstanceKind {
     TimeGet,
 }
 
+impl std::fmt::Display for SpecialPortInstanceKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            SpecialPortInstanceKind::CommandRecv => "command recv",
+            SpecialPortInstanceKind::CommandReg => "command reg",
+            SpecialPortInstanceKind::CommandResp => "command resp",
+            SpecialPortInstanceKind::Event => "event",
+            SpecialPortInstanceKind::ParamGet => "param get",
+            SpecialPortInstanceKind::ParamSet => "param set",
+            SpecialPortInstanceKind::ProductGet => "product get",
+            SpecialPortInstanceKind::ProductRecv => "product recv",
+            SpecialPortInstanceKind::ProductRequest => "product request",
+            SpecialPortInstanceKind::ProductSend => "product send",
+            SpecialPortInstanceKind::Telemetry => "telemetry",
+            SpecialPortInstanceKind::TextEvent => "text event",
+            SpecialPortInstanceKind::TimeGet => "time get",
+        };
+        f.write_str(s)
+    }
+}
+
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecPortMatching {

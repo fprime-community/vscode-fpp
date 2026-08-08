@@ -1,5 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/port_instance/undef_event.fpp:3.3
-  event port eventOut
-  ^
-error: undefined symbol Fw
+ --> [ local path prefix ]/port_instance/undef_event.fpp:3:3
+  |
+3 |   event port eventOut
+  |   ^^^^^^^^^^^^^^^^^^^ cannot find port `Fw` in scope
+
+ --> [ local path prefix ]/port_instance/undef_event.fpp:3:3
+  |
+3 |   event port eventOut
+  |   ^^^^^^^^^^^^^^^^^^^ not a port symbol
+

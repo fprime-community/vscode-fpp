@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/port_instance/duplicate_general.fpp:6.3
-  output port p: P
-  ^
-error: duplicate port instance p
-previous instance is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/port_instance/duplicate_general.fpp:5.3
-  sync input port p: P
-  ^
+ --> [ local path prefix ]/port_instance/duplicate_general.fpp:6:3
+  |
+6 |   output port p: P
+  |   ^^^^^^^^^^^^^^^^ duplicate port instance p
+  |
+ ::: [ local path prefix ]/port_instance/duplicate_general.fpp:5:3
+  |
+5 |   sync input port p: P
+  |   -------------------- previous instance is here
+

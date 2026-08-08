@@ -1,5 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/port_instance/undef_time_get.fpp:3.3
-  time get port timeGetOut
-  ^
-error: undefined symbol Fw
+ --> [ local path prefix ]/port_instance/undef_time_get.fpp:3:3
+  |
+3 |   time get port timeGetOut
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^ cannot find port `Fw` in scope
+
+ --> [ local path prefix ]/port_instance/undef_time_get.fpp:3:3
+  |
+3 |   time get port timeGetOut
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^ not a port symbol
+

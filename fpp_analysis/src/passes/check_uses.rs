@@ -205,6 +205,44 @@ impl<'ast> UseAnalysisPass<'ast, Analysis> for CheckUses<'ast> {
         ControlFlow::Continue(())
     }
 
+    // Check that an implied use (a) is not a member
+    // of a def and (b) does not shadow the required def
+    fn implied_port_use(
+        &self,
+        a: &mut Analysis,
+        node: &QualIdent,
+        name: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        let sym = match self.visit_qual_ident_impl(a, NameGroup::Port, node) {
+            Ok(sym) => sym,
+            Err(err) => {
+                err.emit();
+                return ControlFlow::Continue(());
+            }
+        };
+        a.use_def_map.insert(node.id(), sym.clone());
+        let sym_qualified_name = a.get_qualified_name(&sym);
+        let iu_name = name.to_string();
+        // Check that the name of the def matches the name of the use
+        if sym_qualified_name != iu_name {
+            let msg = if sym_qualified_name.len() < iu_name.len() {
+                // Definition has a shorter name: the use is a member of the definition
+                format!("it has {} as a member", iu_name)
+            } else {
+                // Definition has a longer name: it shadows the required definition
+                format!("it shadows {} here", iu_name)
+            };
+            SemanticError::InvalidSymbol {
+                symbol_name: sym_qualified_name.clone(),
+                msg: format!("invalid use of symbol {}: {}", sym_qualified_name, msg),
+                loc: node.span(),
+                def_loc: sym.node().span(),
+            }
+            .emit();
+        }
+        ControlFlow::Continue(())
+    }
+
     fn interface_use(
         &self,
         a: &mut Analysis,

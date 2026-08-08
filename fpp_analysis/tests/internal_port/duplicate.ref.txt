@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/internal_port/duplicate.fpp:5.3
-  internal port p
-  ^
-error: duplicate port instance p
-previous instance is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/internal_port/duplicate.fpp:3.3
-  internal port p
-  ^
+ --> [ local path prefix ]/internal_port/duplicate.fpp:5:3
+  |
+5 |   internal port p
+  |   ^^^^^^^^^^^^^^^ duplicate port instance p
+  |
+ ::: [ local path prefix ]/internal_port/duplicate.fpp:3:3
+  |
+3 |   internal port p
+  |   --------------- previous instance is here
+
