@@ -57,7 +57,7 @@ impl Formatter {
                     RIGHT_CURLY | RIGHT_PAREN | RIGHT_SQUARE => {}
                     COMMENT => {
                         if saw_eol || items.is_empty() {
-                            items.push(Item::new(Doc::text(t.text()), blank));
+                            items.push(Item::line_swallowing(Doc::text(t.text()), blank));
                         } else {
                             attach(&mut items, Doc::text(t.text()));
                         }
@@ -66,14 +66,14 @@ impl Formatter {
                         started = true;
                     }
                     PRE_ANNOTATION => {
-                        items.push(Item::new(Doc::text(t.text()), blank));
+                        items.push(Item::line_swallowing(Doc::text(t.text()), blank));
                         saw_eol = false;
                         blank = false;
                         started = true;
                     }
                     POST_ANNOTATION => {
                         if items.is_empty() {
-                            items.push(Item::new(Doc::text(t.text()), blank));
+                            items.push(Item::line_swallowing(Doc::text(t.text()), blank));
                         } else {
                             attach(
                                 &mut items,
@@ -368,6 +368,17 @@ impl Item {
             doc,
             blank_before,
             comment: false,
+        }
+    }
+
+    /// An item whose text swallows the rest of its source line (a comment or an
+    /// annotation). Such items can never share a flat line with a sibling, so
+    /// they force their enclosing list to render as a block.
+    fn line_swallowing(doc: Doc, blank_before: bool) -> Self {
+        Item {
+            doc,
+            blank_before,
+            comment: true,
         }
     }
 }
