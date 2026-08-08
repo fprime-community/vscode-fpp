@@ -385,8 +385,13 @@ impl Item {
 
 fn attach(items: &mut [Item], extra: Doc) {
     if let Some(last) = items.last_mut() {
+        let sep = if last.comment {
+            Doc::hardline()
+        } else {
+            Doc::text(" ")
+        };
         let d = std::mem::replace(&mut last.doc, Doc::Nil);
-        last.doc = Doc::concat(vec![d, Doc::text(" "), extra]);
+        last.doc = Doc::concat(vec![d, sep, extra]);
         last.comment = true;
     }
 }
