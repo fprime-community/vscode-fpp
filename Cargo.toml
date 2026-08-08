@@ -43,7 +43,6 @@ nursery = "warn"
 cargo = "warn"
 restriction = "warn"
 
-
 [patch.crates-io]
 fpp = { path = "fpp" }
 
