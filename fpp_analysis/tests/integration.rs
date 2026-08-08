@@ -73,7 +73,6 @@ mod types {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod port_matching {
     mod test;
 }
@@ -82,7 +81,6 @@ mod record {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod port_numbering {
     mod test;
 }
@@ -157,7 +155,6 @@ mod numeric_shift {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod unconnected {
     mod test;
 }
@@ -170,12 +167,10 @@ mod port {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod instance_spec {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod connection_direct {
     mod test;
 }
@@ -188,12 +183,10 @@ mod event {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod spec_loc {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod top_import {
     mod test;
 }
@@ -203,7 +196,6 @@ mod state_machine_instance {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod connection_pattern {
     mod test;
 }
@@ -213,7 +205,6 @@ mod internal_port {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod top_ports {
     mod test;
 }

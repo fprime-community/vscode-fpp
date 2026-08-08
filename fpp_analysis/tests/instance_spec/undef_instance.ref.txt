@@ -1,5 +1,5 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/instance_spec/undef_instance.fpp:3.12
-  instance c
-           ^
-error: undefined symbol c
+ --> [ local path prefix ]/instance_spec/undef_instance.fpp:3:12
+  |
+3 |   instance c
+  |            ^ cannot find port interface instance `c` in scope
+

@@ -1,5 +1,5 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/connection_pattern/telemetry_missing_target_port.fpp:17.49
-    telemetry connections instance $telemetry { c }
-                                                ^
-error: instance c has no telemetry port
+  --> [ local path prefix ]/connection_pattern/telemetry_missing_target_port.fpp:17:49
+   |
+17 |     telemetry connections instance $telemetry { c }
+   |                                                 ^ instance c has no telemetry port
+

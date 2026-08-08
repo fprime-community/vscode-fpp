@@ -23,6 +23,11 @@ impl Direction {
             None => "none",
         }
     }
+
+    /// Directions are compatible iff the connection goes output -> input.
+    pub fn are_compatible(from: &Option<Direction>, to: &Option<Direction>) -> bool {
+        matches!((from, to), (Some(Direction::Output), Some(Direction::Input)))
+    }
 }
 
 /// A port instance type.
@@ -30,6 +35,37 @@ impl Direction {
 pub enum PortInstanceType {
     DefPort(Symbol),
     Serial,
+}
+
+impl PortInstanceType {
+    /// Show a type option, matching Scala's `PortInstance.Type.show`.
+    pub fn show(ty: &Option<PortInstanceType>) -> String {
+        match ty {
+            Some(PortInstanceType::DefPort(symbol)) => symbol.name().data.clone(),
+            Some(PortInstanceType::Serial) => "serial".to_string(),
+            None => "none".to_string(),
+        }
+    }
+
+    /// Two types are compatible if either is serial, or they are equal.
+    pub fn are_compatible(t1: &Option<PortInstanceType>, t2: &Option<PortInstanceType>) -> bool {
+        match (t1, t2) {
+            (Some(PortInstanceType::Serial), _) => true,
+            (_, Some(PortInstanceType::Serial)) => true,
+            (Some(a), Some(b)) => a == b,
+            _ => false,
+        }
+    }
+
+    /// If this is a defined port with a return type, get the port def symbol.
+    pub fn port_returns_value(&self) -> Option<Span> {
+        match self {
+            PortInstanceType::DefPort(Symbol::Port(def)) => {
+                def.return_type.as_ref().map(|_| def.span())
+            }
+            _ => None,
+        }
+    }
 }
 
 /// A general port instance kind.
@@ -75,6 +111,13 @@ pub enum PortInstance {
         queue_full: QueueFull,
         import_locs: Vec<Span>,
     },
+    /// A topology port aliasing an underlying port instance.
+    Topology {
+        node_id: Node,
+        loc: Span,
+        name: String,
+        underlying: Box<PortInstance>,
+    },
 }
 
 impl PortInstance {
@@ -82,7 +125,8 @@ impl PortInstance {
         match self {
             PortInstance::General { name, .. }
             | PortInstance::Special { name, .. }
-            | PortInstance::Internal { name, .. } => name,
+            | PortInstance::Internal { name, .. }
+            | PortInstance::Topology { name, .. } => name,
         }
     }
 
@@ -90,7 +134,8 @@ impl PortInstance {
         match self {
             PortInstance::General { loc, .. }
             | PortInstance::Special { loc, .. }
-            | PortInstance::Internal { loc, .. } => *loc,
+            | PortInstance::Internal { loc, .. }
+            | PortInstance::Topology { loc, .. } => *loc,
         }
     }
 
@@ -98,7 +143,8 @@ impl PortInstance {
         match self {
             PortInstance::General { node_id, .. }
             | PortInstance::Special { node_id, .. }
-            | PortInstance::Internal { node_id, .. } => *node_id,
+            | PortInstance::Internal { node_id, .. }
+            | PortInstance::Topology { node_id, .. } => *node_id,
         }
     }
 
@@ -106,6 +152,7 @@ impl PortInstance {
         match self {
             PortInstance::General { size, .. } => *size,
             PortInstance::Special { .. } | PortInstance::Internal { .. } => 1,
+            PortInstance::Topology { underlying, .. } => underlying.get_array_size(),
         }
     }
 
@@ -122,6 +169,7 @@ impl PortInstance {
                 _ => Direction::Output,
             }),
             PortInstance::Internal { .. } => None,
+            PortInstance::Topology { underlying, .. } => underlying.get_direction(),
         }
     }
 
@@ -130,13 +178,38 @@ impl PortInstance {
             PortInstance::General { ty, .. } => Some(ty.clone()),
             PortInstance::Special { symbol, .. } => Some(PortInstanceType::DefPort(symbol.clone())),
             PortInstance::Internal { .. } => None,
+            PortInstance::Topology { underlying, .. } => underlying.get_type(),
         }
     }
 
     pub fn get_special_kind(&self) -> Option<SpecialPortInstanceKind> {
         match self {
             PortInstance::Special { kind, .. } => Some(kind.clone()),
-            PortInstance::General { .. } | PortInstance::Internal { .. } => None,
+            PortInstance::General { .. }
+            | PortInstance::Internal { .. }
+            | PortInstance::Topology { .. } => None,
+        }
+    }
+
+    /// Check whether this port instance may be connected. Internal ports cannot.
+    pub fn require_connection_at(&self, loc: Span) -> SemanticResult {
+        match self {
+            PortInstance::Internal { .. } => Err(SemanticError::InvalidPortKind {
+                loc,
+                msg: "cannot connect to internal port".to_string(),
+                spec_loc: self.get_loc(),
+            }),
+            _ => Ok(()),
+        }
+    }
+
+    /// Build a topology port aliasing an underlying port instance.
+    pub fn topology(node_id: Node, loc: Span, name: String, underlying: PortInstance) -> PortInstance {
+        PortInstance::Topology {
+            node_id,
+            loc,
+            name,
+            underlying: Box::new(underlying),
         }
     }
 
@@ -153,6 +226,7 @@ impl PortInstance {
             }
             PortInstance::Internal { .. } => true,
             PortInstance::General { .. } => false,
+            PortInstance::Topology { underlying, .. } => underlying.is_async_input(),
         }
     }
 
@@ -161,6 +235,7 @@ impl PortInstance {
             PortInstance::General { import_locs, .. }
             | PortInstance::Special { import_locs, .. }
             | PortInstance::Internal { import_locs, .. } => import_locs,
+            PortInstance::Topology { .. } => &[],
         }
     }
 
@@ -170,6 +245,7 @@ impl PortInstance {
             PortInstance::General { import_locs, .. }
             | PortInstance::Special { import_locs, .. }
             | PortInstance::Internal { import_locs, .. } => import_locs.push(import_loc),
+            PortInstance::Topology { .. } => {}
         }
         clone
     }
@@ -383,6 +459,24 @@ impl PortInterface {
         Ok(result)
     }
 
+    /// Get a port instance by name, erroring if it is not present.
+    pub fn get_port_instance(
+        &self,
+        name: &str,
+        loc: Span,
+        interface_name: &str,
+    ) -> SemanticResult<PortInstance> {
+        match self.port_map.get(name) {
+            Some(pi) => Ok(pi.clone()),
+            None => Err(SemanticError::InvalidPortInstanceId {
+                loc,
+                port_name: name.to_string(),
+                instance_type: self.instance_type.clone(),
+                interface_name: interface_name.to_string(),
+            }),
+        }
+    }
+
     pub fn add_imported_interface(
         &self,
         interface: &Interface,
@@ -419,6 +513,42 @@ impl PortInterface {
                 Ok(result)
             }
         }
+    }
+
+    /// Check that `self` implements `other`: every port (general and special)
+    /// in `other` exists in `self` with a matching signature.
+    pub fn implements(&self, other: &PortInterface) -> SemanticResult {
+        for (name, pi) in &other.port_map {
+            match self.port_map.get(name) {
+                Some(found) => {
+                    if !found.signature_eq(pi) {
+                        return Err(SemanticError::PortInterfaceInvalidPort {
+                            loc: found.get_loc(),
+                            def_loc: pi.get_loc(),
+                        });
+                    }
+                }
+                None => {
+                    return Err(SemanticError::PortInterfaceMissingPort { loc: pi.get_loc() });
+                }
+            }
+        }
+        for (kind, pi) in &other.special_port_map {
+            match self.special_port_map.get(kind) {
+                Some(found) => {
+                    if !found.signature_eq(pi) {
+                        return Err(SemanticError::PortInterfaceInvalidPort {
+                            loc: found.get_loc(),
+                            def_loc: pi.get_loc(),
+                        });
+                    }
+                }
+                None => {
+                    return Err(SemanticError::PortInterfaceMissingPort { loc: pi.get_loc() });
+                }
+            }
+        }
+        Ok(())
     }
 
     fn update_special_port_map(

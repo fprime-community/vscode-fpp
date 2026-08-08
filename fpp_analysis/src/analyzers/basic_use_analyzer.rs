@@ -153,7 +153,7 @@ impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Analyzer<'ast, V>
             }
             Node::DefTopology(t) => {
                 for i in &t.implements {
-                    visitor.interface_instance_use(a, i, i.into())?;
+                    visitor.interface_use(a, i, i.into())?;
                 }
 
                 t.walk(a, visitor)

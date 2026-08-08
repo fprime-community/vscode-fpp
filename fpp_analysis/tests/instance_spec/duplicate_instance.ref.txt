@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/instance_spec/duplicate_instance.fpp:10.3
-  instance c
-  ^
-error: duplicate instance c
-previous occurrence is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/instance_spec/duplicate_instance.fpp:9.3
-  instance c
-  ^
+  --> [ local path prefix ]/instance_spec/duplicate_instance.fpp:10:3
+   |
+10 |   instance c
+   |   ^^^^^^^^^^ duplicate instance c
+   |
+  ::: [ local path prefix ]/instance_spec/duplicate_instance.fpp:9:3
+   |
+ 9 |   instance c
+   |   ---------- previous instance is here
+

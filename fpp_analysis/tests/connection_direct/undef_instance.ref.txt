@@ -1,5 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/connection_direct/undef_instance.fpp:3.5
-    c.out -> c.in
-    ^
-error: undefined symbol c
+ --> [ local path prefix ]/connection_direct/undef_instance.fpp:3:5
+  |
+3 |     c.out -> c.in
+  |     ^ cannot find port interface instance `c` in scope
+
+ --> [ local path prefix ]/connection_direct/undef_instance.fpp:3:14
+  |
+3 |     c.out -> c.in
+  |              ^ cannot find port interface instance `c` in scope
+

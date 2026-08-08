@@ -227,6 +227,130 @@ pub enum SemanticError {
         name2: String,
         loc2: Span,
     },
+    DuplicateInstance {
+        name: String,
+        loc: Span,
+        prev_loc: Span,
+    },
+    InvalidInterfaceInstance {
+        loc: Span,
+        instance_name: String,
+        top_name: String,
+    },
+    InvalidConnection {
+        loc: Span,
+        msg: String,
+        from_loc: Span,
+        to_loc: Span,
+        from_port_def_loc: Option<Span>,
+        to_port_def_loc: Option<Span>,
+    },
+    InvalidPortInstanceId {
+        loc: Span,
+        port_name: String,
+        instance_type: String,
+        interface_name: String,
+    },
+    InvalidPortKind {
+        loc: Span,
+        msg: String,
+        spec_loc: Span,
+    },
+    InvalidPortNumber {
+        loc: Span,
+        port_number: i128,
+        port: String,
+        array_size: i128,
+        spec_loc: Span,
+    },
+    MissingPortMatching {
+        loc: Span,
+    },
+    IncorrectLocationPath {
+        /// Location of the file string literal in the location specifier
+        loc: Span,
+        /// The path named by the specifier
+        specified_path: String,
+        /// Location of the actual definition (in the translation unit)
+        actual_loc: Span,
+    },
+    InconsistentLocationPath {
+        /// Location of the first specifier's file string literal
+        loc: Span,
+        /// The path named by the first specifier
+        path: String,
+        /// Location of the second specifier's file string literal
+        prev_loc: Span,
+        /// The path named by the second specifier
+        prev_path: String,
+    },
+    DuplicateOutputConnection {
+        loc: Span,
+        port_num: i128,
+        prev_loc: Span,
+    },
+    TooManyOutputPorts {
+        loc: Span,
+        num_ports: i128,
+        array_size: i128,
+        instance_loc: Span,
+    },
+    MismatchedPortNumbers {
+        p1_loc: Span,
+        p1_number: i128,
+        p2_loc: Span,
+        p2_number: i128,
+        matching_loc: Span,
+    },
+    ImplicitDuplicateConnectionAtMatchedPort {
+        loc: Span,
+        port: String,
+        port_num: i128,
+        implying_loc: Span,
+        matching_loc: Span,
+        prev_loc: Span,
+    },
+    NoPortAvailableForMatchedNumbering {
+        loc1: Span,
+        loc2: Span,
+        matching_loc: Span,
+    },
+    MissingConnection {
+        loc: Span,
+        matching_loc: Span,
+    },
+    DuplicateMatchedConnection {
+        loc: Span,
+        prev_loc: Span,
+        matching_loc: Span,
+    },
+    DuplicateConnectionAtMatchedPort {
+        loc: Span,
+        port: String,
+        port_num: i128,
+        prev_loc: Span,
+        matching_loc: Span,
+    },
+    InvalidPattern {
+        loc: Span,
+        msg: String,
+    },
+    PortInterfaceMissingPort {
+        loc: Span,
+    },
+    PortInterfaceInvalidPort {
+        loc: Span,
+        def_loc: Span,
+    },
+    InterfaceImplements {
+        loc: Span,
+        inner: Box<SemanticError>,
+    },
+    DuplicatePattern {
+        kind: String,
+        loc: Span,
+        prev_loc: Span,
+    },
 }
 
 pub type SemanticResult<T = ()> = Result<T, SemanticError>;
@@ -575,6 +699,224 @@ impl From<SemanticError> for Diagnostic {
                 ),
             )
             .span_note(loc2, "conflicting instance is here"),
+            SemanticError::DuplicateInstance {
+                name,
+                loc,
+                prev_loc,
+            } => Diagnostic::new(loc, Level::Error, format!("duplicate instance {}", name))
+                .span_note(prev_loc, "previous instance is here"),
+            SemanticError::InvalidInterfaceInstance {
+                loc,
+                instance_name,
+                top_name,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!(
+                    "instance {} is not a member of topology {}",
+                    instance_name, top_name
+                ),
+            ),
+            SemanticError::InvalidConnection {
+                loc,
+                msg,
+                from_loc,
+                to_loc,
+                from_port_def_loc,
+                to_port_def_loc,
+            } => {
+                let mut d = Diagnostic::new(loc, Level::Error, msg)
+                    .span_note(from_loc, "from port is specified here")
+                    .span_note(to_loc, "to port is specified here");
+                if let Some(l) = from_port_def_loc {
+                    d = d.span_note(l, "from port type is defined here");
+                }
+                if let Some(l) = to_port_def_loc {
+                    d = d.span_note(l, "to port type is defined here");
+                }
+                d
+            }
+            SemanticError::InvalidPortInstanceId {
+                loc,
+                port_name,
+                instance_type,
+                interface_name,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!(
+                    "{} is not a port instance of {} {}",
+                    port_name, instance_type, interface_name
+                ),
+            ),
+            SemanticError::InvalidPortKind { loc, msg, spec_loc } => {
+                Diagnostic::new(loc, Level::Error, msg)
+                    .span_note(spec_loc, "port instance is specified here")
+            }
+            SemanticError::InvalidPortNumber {
+                loc,
+                port_number,
+                port,
+                array_size,
+                spec_loc,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!(
+                    "invalid port number {} for port {} (max is {})",
+                    port_number,
+                    port,
+                    array_size - 1
+                ),
+            )
+            .span_note(spec_loc, "port instance is specified here"),
+            SemanticError::MissingPortMatching { loc } => Diagnostic::new(
+                loc,
+                Level::Error,
+                "unmatched connection must go from or to a matched port",
+            ),
+            SemanticError::IncorrectLocationPath {
+                loc,
+                specified_path,
+                actual_loc,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!("incorrect location path {}", specified_path),
+            )
+            .span_note(actual_loc, "actual location is here"),
+            SemanticError::InconsistentLocationPath {
+                loc,
+                path,
+                prev_loc,
+                prev_path,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!("inconsistent location path {}", path),
+            )
+            .span_note(prev_loc, format!("previous path {} is here", prev_path)),
+            SemanticError::DuplicateOutputConnection {
+                loc,
+                port_num,
+                prev_loc,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!("duplicate connection at output port {}", port_num),
+            )
+            .span_note(prev_loc, "previous occurrence is here"),
+            SemanticError::TooManyOutputPorts {
+                loc,
+                num_ports,
+                array_size,
+                instance_loc,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!(
+                    "too many ports connected here (found {}, max is {})",
+                    num_ports, array_size
+                ),
+            )
+            .span_note(instance_loc, "for this component instance"),
+            SemanticError::MismatchedPortNumbers {
+                p1_loc,
+                p1_number,
+                p2_loc,
+                p2_number,
+                matching_loc,
+            } => Diagnostic::new(
+                p1_loc,
+                Level::Error,
+                format!("mismatched port numbers ({} vs. {})", p1_number, p2_number),
+            )
+            .span_note(p2_loc, "conflicting port number is here")
+            .span_note(matching_loc, "port matching is specified here"),
+            SemanticError::ImplicitDuplicateConnectionAtMatchedPort {
+                loc,
+                port,
+                port_num,
+                implying_loc,
+                matching_loc,
+                prev_loc,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!("implicit duplicate connection at matched port {}[{}]", port, port_num),
+            )
+            .span_note(implying_loc, "connection is implied here")
+            .span_note(matching_loc, "because of matching specified here")
+            .span_note(prev_loc, "conflicting connection is here"),
+            SemanticError::NoPortAvailableForMatchedNumbering {
+                loc1,
+                loc2,
+                matching_loc,
+            } => Diagnostic::new(loc1, Level::Error, "no port available for matched numbering")
+                .span_note(loc1, "matched connections are specified here")
+                .span_note(loc2, "matched connections are specified here")
+                .span_note(matching_loc, "port matching is specified here")
+                .note("to be available, a port number must be in bounds and unassigned at each of the matched ports"),
+            SemanticError::MissingConnection { loc, matching_loc } => {
+                Diagnostic::new(loc, Level::Error, "no match for this connection")
+                    .span_note(matching_loc, "port matching is specified here")
+            }
+            SemanticError::DuplicateMatchedConnection {
+                loc,
+                prev_loc,
+                matching_loc,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                "duplicate connection between a matched port array and a single instance",
+            )
+            .span_note(prev_loc, "previous occurrence is here")
+            .span_note(matching_loc, "port matching is specified here")
+            .note("each port in a matched port array must be connected to a separate instance"),
+            SemanticError::DuplicateConnectionAtMatchedPort {
+                loc,
+                port,
+                port_num,
+                prev_loc,
+                matching_loc,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!("duplicate connection at matched port {}[{}]", port, port_num),
+            )
+            .span_note(prev_loc, "previous occurrence is here")
+            .span_note(matching_loc, "port matching is specified here"),
+            SemanticError::InvalidPattern { loc, msg } => Diagnostic::new(loc, Level::Error, msg),
+            SemanticError::PortInterfaceMissingPort { loc } => {
+                Diagnostic::new(loc, Level::Error, "port instance missing")
+            }
+            SemanticError::PortInterfaceInvalidPort { loc, def_loc } => Diagnostic::new(
+                loc,
+                Level::Error,
+                "port instance does not match definition in interface",
+            )
+            .span_note(def_loc, "interface definition is here"),
+            SemanticError::InterfaceImplements { loc, inner } => {
+                let d = Diagnostic::new(loc, Level::Error, "port interface not implemented");
+                match *inner {
+                    SemanticError::PortInterfaceMissingPort { loc: iloc } => {
+                        d.span_note(iloc, "port instance missing")
+                    }
+                    SemanticError::PortInterfaceInvalidPort {
+                        loc: iloc,
+                        def_loc,
+                    } => d
+                        .span_note(iloc, "port instance does not match definition in interface")
+                        .span_note(def_loc, "interface definition is here"),
+                    other => d.span_note(loc, format!("{:?}", other)),
+                }
+            }
+            SemanticError::DuplicatePattern {
+                kind,
+                loc,
+                prev_loc,
+            } => Diagnostic::new(loc, Level::Error, format!("duplicate {} pattern", kind))
+                .span_note(prev_loc, "previous occurrence is here"),
         }
     }
 }

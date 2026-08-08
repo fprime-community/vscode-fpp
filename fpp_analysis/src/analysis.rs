@@ -53,6 +53,26 @@ pub struct Analysis {
     pub component_instance: Option<crate::semantics::ComponentInstance>,
     /** The mapping from component instance symbols to their instances. */
     pub component_instance_map: HashMap<Symbol, crate::semantics::ComponentInstance>,
+    /** The topology currently being analyzed. */
+    pub topology: Option<crate::semantics::Topology>,
+    /** The mapping from topology symbols to their partially resolved topologies. */
+    pub partial_topology_map: HashMap<Symbol, crate::semantics::Topology>,
+    /** The mapping from topology symbols to their fully resolved topologies. */
+    pub topology_map: HashMap<Symbol, crate::semantics::Topology>,
+    /** The mapping from (location specifier kind, qualified name) to the
+     *  location specifier that named it. */
+    pub location_specifier_map: HashMap<(fpp_ast::SpecLocKind, String), SpecLocEntry>,
+}
+
+/// A recorded location specifier, keyed in `location_specifier_map`.
+#[derive(Debug, Clone)]
+pub struct SpecLocEntry {
+    /** Span of the file string literal (error location + base for path resolution) */
+    pub file_span: Span,
+    /** The specified (relative) path string */
+    pub file_value: String,
+    /** Whether this is a dictionary specifier */
+    pub is_dictionary_def: bool,
 }
 
 impl Default for Analysis {
@@ -88,6 +108,10 @@ impl Analysis {
             component_map: Default::default(),
             component_instance: None,
             component_instance_map: Default::default(),
+            topology: None,
+            partial_topology_map: Default::default(),
+            topology_map: Default::default(),
+            location_specifier_map: Default::default(),
         }
     }
 

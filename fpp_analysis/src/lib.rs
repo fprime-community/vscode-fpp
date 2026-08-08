@@ -2,8 +2,9 @@ mod analysis;
 mod errors;
 
 use crate::passes::{
-    CheckComponentDefs, CheckComponentInstanceDefs, CheckExprTypes, CheckFrameworkConstantValues,
-    CheckFrameworkDefs, CheckInterfaceDefs, CheckPortDefs, CheckTypeUses, CheckUseDefCycles,
+    BuildSpecLocMap, CheckComponentDefs, CheckComponentInstanceDefs, CheckExprTypes,
+    CheckFrameworkConstantValues, CheckFrameworkDefs, CheckInterfaceDefs, CheckPortDefs,
+    CheckSpecLocs, CheckTopologyDefs, CheckTopologyInstances, CheckTypeUses, CheckUseDefCycles,
     CheckUses, EnterSymbols, EvalConstantExprs, EvalImpliedEnumConsts, FinalizeTypeDefs,
 };
 pub use analysis::*;
@@ -67,6 +68,18 @@ pub mod passes {
 
     mod check_component_instance_defs;
     pub use check_component_instance_defs::*;
+
+    mod check_topology_instances;
+    pub use check_topology_instances::*;
+
+    mod check_topology_defs;
+    pub use check_topology_defs::*;
+
+    pub(crate) mod check_spec_locs;
+    pub use check_spec_locs::*;
+
+    mod build_spec_loc_map;
+    pub use build_spec_loc_map::*;
 }
 
 pub mod semantics {
@@ -90,6 +103,14 @@ pub mod semantics {
 
     mod component_instance;
     pub use component_instance::*;
+
+    mod topology;
+    pub use topology::*;
+
+    pub(crate) mod resolve_topology;
+
+    mod connection;
+    pub use connection::*;
 
     mod scope;
     pub use scope::*;
@@ -141,6 +162,10 @@ pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> Contr
     let check_component_instance_defs = CheckComponentInstanceDefs::new();
     check_component_instance_defs.visit_trans_units(a, ast.iter().cloned())?;
     check_component_instance_defs.check_id_ranges(a);
+    CheckTopologyInstances::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckTopologyDefs::new().resolve_all(a);
+    BuildSpecLocMap::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckSpecLocs::new().visit_trans_units(a, ast.iter().cloned())?;
 
     ControlFlow::Continue(())
 }
