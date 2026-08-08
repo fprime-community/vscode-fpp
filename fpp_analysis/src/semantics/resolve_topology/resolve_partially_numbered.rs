@@ -119,7 +119,7 @@ fn resolve_imported_connections(a: &Analysis, t: &mut Topology) {
 }
 
 /// Resolve connections to interface instances of t to component instances
-fn resolve_interfaces_to_component_instances(t: &mut Topology) {
+fn resolve_interfaces_to_component_instances(a: &Analysis, t: &mut Topology) {
     // Clear out connections of T and reprocess them
     // Resolve all port instance identifiers to their 'true' component instance port
     let graphs: Vec<(String, Vec<Connection>)> = t
@@ -133,8 +133,8 @@ fn resolve_interfaces_to_component_instances(t: &mut Topology) {
             t.add_local_connection(
                 &graph_name,
                 Connection {
-                    from: c.from.get_underlying_endpoint(),
-                    to: c.to.get_underlying_endpoint(),
+                    from: c.from.get_underlying_endpoint(a),
+                    to: c.to.get_underlying_endpoint(a),
                     is_unmatched: c.is_unmatched,
                 },
             );
@@ -165,7 +165,7 @@ pub fn resolve(a: &Analysis, t: &mut Topology) -> SemanticResult {
     resolve_instances(a, t);
     check_port_instances(t)?;
     check_connection_instances(t)?;
-    resolve_interfaces_to_component_instances(t);
+    resolve_interfaces_to_component_instances(a, t);
     resolve_imported_connections(a, t);
     resolve_patterns(a, t)?;
     Ok(())

@@ -12,7 +12,7 @@ pub fn resolve(a: &Analysis, t: &mut Topology) {
             .collect();
         for (sym, loc) in tops {
             if let Some(dep) = a.topology_map.get(&sym) {
-                let ii = InterfaceInstance::from_topology(dep.clone());
+                let ii = InterfaceInstance::from_topology(dep);
                 t.add_instance(ii, loc);
             }
         }

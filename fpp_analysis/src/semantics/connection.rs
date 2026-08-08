@@ -1,7 +1,8 @@
 use crate::Analysis;
 use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::{
-    ComponentInstance, Direction, Interface, PortInstance, PortInstanceType, Symbol, Topology,
+    ComponentInstance, Direction, Interface, PortInstance, PortInstanceType, Symbol,
+    SymbolInterface, Topology,
 };
 use fpp_ast::{self as ast, AstNode};
 use fpp_core::{Span, Spanned};
@@ -15,11 +16,29 @@ pub fn cmp_span(a: &Span, b: &Span) -> Ordering {
     fa.cmp(&fb).then_with(|| a.start().pos().cmp(&b.start().pos()))
 }
 
+/// An imported topology used as an interface instance.
+///
+/// This stores identity only (symbol + resolved name + location). The full
+/// [`Topology`] is looked up lazily from [`Analysis::topology_map`] when its
+/// port interface or top-port map is actually needed. Embedding a whole
+/// `Topology` here would make cloning/dropping a single [`Connection`]
+/// deep-copy every transitively imported topology, which dominated analysis
+/// time for deeply-imported models.
+#[derive(Debug, Clone)]
+pub struct TopologyInstance {
+    /// The topology symbol, used to look up the resolved `Topology`.
+    pub symbol: Symbol,
+    /// The fully qualified name of the topology.
+    pub qualified_name: String,
+    /// The location of the topology definition.
+    pub loc: Span,
+}
+
 /// An FPP interface instance: a component instance or an imported topology.
 #[derive(Debug, Clone)]
 pub enum InterfaceInstance {
     Component(ComponentInstance),
-    Topology(Topology),
+    Topology(TopologyInstance),
 }
 
 impl InterfaceInstance {
@@ -27,7 +46,7 @@ impl InterfaceInstance {
     pub fn qualified_name(&self) -> String {
         match self {
             InterfaceInstance::Component(ci) => ci.qualified_name.clone(),
-            InterfaceInstance::Topology(t) => t.name.clone(),
+            InterfaceInstance::Topology(t) => t.qualified_name.clone(),
         }
     }
 
@@ -35,7 +54,7 @@ impl InterfaceInstance {
     pub fn unqualified_name(&self) -> String {
         match self {
             InterfaceInstance::Component(ci) => ci.name.clone(),
-            InterfaceInstance::Topology(t) => t.unqualified_name(),
+            InterfaceInstance::Topology(t) => t.symbol.name().data.clone(),
         }
     }
 
@@ -44,6 +63,17 @@ impl InterfaceInstance {
         match self {
             InterfaceInstance::Component(ci) => ci.loc,
             InterfaceInstance::Topology(t) => t.loc,
+        }
+    }
+
+    /// Look up the resolved topology this instance refers to, if any.
+    ///
+    /// Returns `None` for component instances or if the topology is not (yet)
+    /// resolved in the analysis.
+    pub fn as_topology<'a>(&self, a: &'a Analysis) -> Option<&'a Topology> {
+        match self {
+            InterfaceInstance::Component(_) => None,
+            InterfaceInstance::Topology(t) => a.topology_map.get(&t.symbol),
         }
     }
 
@@ -63,8 +93,15 @@ impl InterfaceInstance {
                     .get_port_instance(&name.data, name.span(), &ci.name)
             }
             InterfaceInstance::Topology(t) => {
-                t.port_interface
-                    .get_port_instance(&name.data, name.span(), &t.unqualified_name())
+                let top = a
+                    .topology_map
+                    .get(&t.symbol)
+                    .expect("topology instance references a resolved topology");
+                top.port_interface.get_port_instance(
+                    &name.data,
+                    name.span(),
+                    &t.symbol.name().data,
+                )
             }
         }
     }
@@ -75,8 +112,12 @@ impl InterfaceInstance {
         InterfaceInstance::Component(ci)
     }
 
-    pub fn from_topology(top: Topology) -> InterfaceInstance {
-        InterfaceInstance::Topology(top)
+    pub fn from_topology(top: &Topology) -> InterfaceInstance {
+        InterfaceInstance::Topology(TopologyInstance {
+            symbol: top.symbol.clone(),
+            qualified_name: top.name.clone(),
+            loc: top.loc,
+        })
     }
 }
 
@@ -227,10 +268,13 @@ impl Endpoint {
 
     /// Resolve this endpoint through topology-port aliases to the underlying
     /// component-instance port.
-    pub fn get_underlying_endpoint(&self) -> Endpoint {
+    pub fn get_underlying_endpoint(&self, a: &Analysis) -> Endpoint {
         match &self.port.interface_instance {
             InterfaceInstance::Component(_) => self.clone(),
-            InterfaceInstance::Topology(top) => {
+            InterfaceInstance::Topology(_) => {
+                let Some(top) = self.port.interface_instance.as_topology(a) else {
+                    return self.clone();
+                };
                 let name = self.port.port_instance.get_unqualified_name();
                 match top.port_map.get(name) {
                     Some(tp) => {
@@ -240,7 +284,7 @@ impl Endpoint {
                             port_number: self.port_number,
                             topology_port: Some(Box::new(self.clone())),
                         };
-                        next.get_underlying_endpoint()
+                        next.get_underlying_endpoint(a)
                     }
                     None => self.clone(),
                 }
@@ -486,8 +530,7 @@ impl Analysis {
             Some(symbol @ Symbol::Topology(_)) => self
                 .topology_map
                 .get(symbol)
-                .cloned()
-                .map(InterfaceInstance::Topology),
+                .map(InterfaceInstance::from_topology),
             _ => None,
         }
     }

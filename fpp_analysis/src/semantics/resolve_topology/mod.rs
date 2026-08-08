@@ -39,7 +39,9 @@ pub(crate) fn for_each_port(
                 .component_map
                 .get(&ci.component_symbol)
                 .map(|c| &c.port_interface),
-            InterfaceInstance::Topology(top) => Some(&top.port_interface),
+            InterfaceInstance::Topology(top) => {
+                a.topology_map.get(&top.symbol).map(|t| &t.port_interface)
+            }
         };
         let Some(port_interface) = port_interface else {
             continue;
