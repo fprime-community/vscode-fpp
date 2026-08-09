@@ -29,11 +29,8 @@ impl CheckChoiceCycles {
         let nodes: Vec<TgNode> = sma.transition_graph.arc_map.keys().cloned().collect();
         let mut s = State::default();
         for node in nodes {
-            match node.soc {
-                StateOrChoice::Choice(c) => {
-                    s = Self::visit(sma, s.clear_path(), c)?;
-                }
-                _ => {}
+            if let StateOrChoice::Choice(c) = node.soc {
+                s = Self::visit(sma, s.clear_path(), c)?;
             }
         }
         Ok(())
