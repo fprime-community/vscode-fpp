@@ -46,6 +46,7 @@ enum class FppColors(humanName: Supplier<@AttributeDescriptor String>, default: 
     GUARD(FppBundle.messagePointer("settings.fpp.color.guard"), Default.LOCAL_VARIABLE),
     SIGNAL(FppBundle.messagePointer("settings.fpp.color.signal"), Default.FUNCTION_CALL),
     STATE(FppBundle.messagePointer("settings.fpp.color.state"), Default.GLOBAL_VARIABLE),
+    CHOICE(FppBundle.messagePointer("settings.fpp.color.choice"), Default.GLOBAL_VARIABLE),
 
     // Other
     ANNOTATION(FppBundle.messagePointer("settings.fpp.color.annotation"), Default.DOC_COMMENT),

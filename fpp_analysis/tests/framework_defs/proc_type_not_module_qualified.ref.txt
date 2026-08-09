@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/framework_defs/proc_type_not_module_qualified.fpp:5:5
+  |
+5 |     enum ProcType { X, Y }
+  |     ^^^^^^^^^^^^^^^^^^^^^^ framework definition Fw.DpCfg.ProcType must have module qualifiers: Fw.DpCfg is not a module symbol
+  |
+ ::: [ local path prefix ]/framework_defs/proc_type_not_module_qualified.fpp:3:21
+  |
+3 |   passive component DpCfg {
+  |                     ----- not a module symbol
+

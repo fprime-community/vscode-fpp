@@ -32,6 +32,7 @@ object SemanticTokenTypes {
     const val Guard: String = "guard"
     const val Signal: String = "signal"
     const val State: String = "state"
+    const val Choice: String = "choice"
     const val Annotation: String = "annotation"
     const val Comment: String = "comment"
     const val Number: String = "number"

@@ -1,5 +1,6 @@
 use crate::diagnostics::LspDiagnosticsEmitter;
 use crate::global_state::GlobalState;
+use fpp_analysis::semantics::state_machine::{StateMachine, StateMachineSymbol};
 use fpp_analysis::semantics::{
     Direction, NameGroup, PortInstance, PortInstanceType, PortInterface, Scope, Symbol,
     SymbolInterface, Type,
@@ -774,6 +775,76 @@ pub fn hover_for_port_instance(state: &GlobalState, hover_node: Node, pi: &PortI
         "({direction} port) {}: {port_ty}{signature}",
         pi.get_unqualified_name()
     );
+
+    let markdown_lines: Vec<String> = node_data
+        .pre_annotation
+        .clone()
+        .into_iter()
+        .chain(vec!["".to_string(), kind_line, "".to_string()])
+        .chain(node_data.post_annotation.clone())
+        .collect();
+
+    Hover {
+        contents: HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: markdown_lines.join("\n").trim().to_string(),
+        }),
+        range: Some(node_to_range(state, hover_node.id())),
+    }
+}
+
+/// Resolve a use inside a state machine at `position` to its state machine
+/// symbol (action, guard, signal, state, or choice).
+///
+/// Uses inside a state machine are recorded in that state machine's own
+/// `use_def_map` (keyed by node id), separate from the global `use_def_map`, so
+/// hover/goto must resolve them here. Returns the resolved use node together
+/// with its symbol.
+pub(crate) fn sm_symbol_at_position<'a>(
+    state: &'a GlobalState,
+    document: &Uri,
+    position: BytePos,
+) -> Option<(Node<'a>, &'a StateMachine, StateMachineSymbol)> {
+    let nodes = nodes_at_offset(state, document, position)?;
+
+    // Find the enclosing state machine definition and its analysis.
+    let sm_node = nodes.iter().find_map(|n| match n {
+        Node::DefStateMachine(def) => Some(*def),
+        _ => None,
+    })?;
+    let sm_symbol = state.analysis.symbol_map.get(&sm_node.node_id)?;
+    let state_machine = state.analysis.state_machine_map.get(sm_symbol)?;
+
+    // Find the deepest node at the cursor that is a use in this state machine.
+    nodes.iter().find_map(|n| {
+        state_machine
+            .sma
+            .use_def_map
+            .get(&n.id())
+            .map(|sym| (*n, state_machine, sym.clone()))
+    })
+}
+
+/// Build hover information for a resolved state machine symbol, mirroring the
+/// `(kind) qualified.name` format used by [`hover_for_symbol`].
+pub fn hover_for_sm_symbol(
+    state: &GlobalState,
+    hover_node: Node,
+    state_machine: &StateMachine,
+    symbol: &StateMachineSymbol,
+) -> Hover {
+    let kind = match symbol {
+        StateMachineSymbol::Action(_) => "Action",
+        StateMachineSymbol::Guard(_) => "Guard",
+        StateMachineSymbol::Signal(_) => "Signal",
+        StateMachineSymbol::State(_) => "State",
+        StateMachineSymbol::Choice(_) => "Choice",
+    };
+
+    let node_data = state.context.node_get(&symbol.node());
+    let sm_name = state_machine.node.name.data.as_str();
+    let qualified_name = format!("{sm_name}.{}", state_machine.sma.get_qualified_name(symbol));
+    let kind_line = format!("({kind}) {qualified_name}");
 
     let markdown_lines: Vec<String> = node_data
         .pre_annotation

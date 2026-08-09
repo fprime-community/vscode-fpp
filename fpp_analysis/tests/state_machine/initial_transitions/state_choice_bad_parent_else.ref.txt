@@ -1,17 +1,26 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/initial_transitions/state_choice_bad_parent_else.fpp:9.5
-    initial enter C1
-    ^
-error: initial transition of state must go to state or choice defined in the same state
-transition path goes here:
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/initial_transitions/state_choice_bad_parent_else.fpp:10.5
-    choice C1 { if g enter C2 else enter T }
-    ^
-transition path goes here:
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/initial_transitions/state_choice_bad_parent_else.fpp:11.5
-    choice C2 { if g enter T else enter S }
-    ^
-transition path goes here:
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/initial_transitions/state_choice_bad_parent_else.fpp:4.3
-  state S {
-  ^
+  --> [ local path prefix ]/state_machine/initial_transitions/state_choice_bad_parent_else.fpp:9:5
+   |
+ 9 |       initial enter C1
+   |       ^^^^^^^^^^^^^^^^ initial transition of state must go to state or choice defined in the same state
+   |
+  ::: [ local path prefix ]/state_machine/initial_transitions/state_choice_bad_parent_else.fpp:10:5
+   |
+10 |       choice C1 { if g enter C2 else enter T }
+   |       ---------------------------------------- transition path goes here
+   |
+  ::: [ local path prefix ]/state_machine/initial_transitions/state_choice_bad_parent_else.fpp:11:5
+   |
+11 |       choice C2 { if g enter T else enter S }
+   |       --------------------------------------- transition path goes here
+   |
+  ::: [ local path prefix ]/state_machine/initial_transitions/state_choice_bad_parent_else.fpp:4:3
+   |
+ 4 | /   state S {
+ 5 | |     state T {
+ 6 | |       initial enter U
+ 7 | |       state U
+...  |
+11 | |     choice C2 { if g enter T else enter S }
+12 | |   }
+   | |___- transition path goes here
+

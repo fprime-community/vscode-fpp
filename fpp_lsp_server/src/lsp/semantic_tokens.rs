@@ -5,9 +5,10 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use crate::global_state::GlobalState;
 use fpp_analysis::Analysis;
 use fpp_analysis::semantics::Symbol;
+use fpp_analysis::semantics::state_machine::StateMachineSymbol;
 use fpp_ast::{
-    Expr, ExprKind, Ident, MoveWalkable, Node, PortInstanceIdentifier, TlmChannelIdentifier,
-    Visitor, Walkable,
+    DefStateMachine, Expr, ExprKind, Ident, MoveWalkable, Node, PortInstanceIdentifier,
+    TlmChannelIdentifier, Visitor, Walkable,
 };
 use fpp_core::{LineCol, LineIndex, SourceFile, SourceFileData};
 use fpp_lsp_parser::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
@@ -49,6 +50,7 @@ pub enum SemanticTokenKind {
     Guard,
     Signal,
     State,
+    Choice,
 
     Annotation,
     Comment,
@@ -60,7 +62,7 @@ pub enum SemanticTokenKind {
 }
 
 impl SemanticTokenKind {
-    pub const TOKEN_TYPES: [SemanticTokenType; 36] = [
+    pub const TOKEN_TYPES: [SemanticTokenType; 37] = [
         SemanticTokenType::new("module"),
         SemanticTokenType::new("topology"),
         SemanticTokenType::new("component"),
@@ -92,6 +94,7 @@ impl SemanticTokenKind {
         SemanticTokenType::new("guard"),
         SemanticTokenType::new("signal"),
         SemanticTokenType::new("state"),
+        SemanticTokenType::new("choice"),
         SemanticTokenType::new("annotation"),
         SemanticTokenType::new("comment"),
         SemanticTokenType::new("number"),
@@ -263,6 +266,7 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::DEF_GUARD => SemanticTokenKind::Guard,
                         SyntaxKind::DEF_SIGNAL => SemanticTokenKind::Signal,
                         SyntaxKind::DEF_STATE => SemanticTokenKind::State,
+                        SyntaxKind::DEF_CHOICE => SemanticTokenKind::Choice,
                         SyntaxKind::DEF_STATE_MACHINE => SemanticTokenKind::StateMachine,
                         SyntaxKind::TLM_PACKET_SET => SemanticTokenKind::TelemetryPacketSet,
                         SyntaxKind::SPEC_TLM_PACKET => SemanticTokenKind::TelemetryPacket,
@@ -308,6 +312,23 @@ struct SemanticUses<'ast> {
 }
 
 impl<'ast> SemanticUses<'ast> {
+    /// The text range of a node, if it lies in the file being tokenized.
+    #[inline]
+    fn node_range(&self, node: &fpp_core::Node) -> Option<TextRange> {
+        let span = self.context.context.node_get_span(node);
+        let span_data = self.context.context.span_get(&span);
+        let src_file_handle = span_data.file.upgrade().unwrap().handle;
+
+        if src_file_handle == self.source_file.handle {
+            Some(TextRange::new(
+                span_data.start.into(),
+                (span_data.start + span_data.length).into(),
+            ))
+        } else {
+            None
+        }
+    }
+
     #[inline]
     fn mark_node(
         &self,
@@ -315,18 +336,8 @@ impl<'ast> SemanticUses<'ast> {
         node: fpp_core::Node,
         semantic_kind: SemanticTokenKind,
     ) {
-        let span = self.context.context.node_get_span(&node);
-        let span_data = self.context.context.span_get(&span);
-        let src_file_handle = span_data.file.upgrade().unwrap().handle;
-
-        if src_file_handle == self.source_file.handle {
-            a.add_text_range(
-                TextRange::new(
-                    span_data.start.into(),
-                    (span_data.start + span_data.length).into(),
-                ),
-                semantic_kind,
-            );
+        if let Some(range) = self.node_range(&node) {
+            a.add_text_range(range, semantic_kind);
         }
     }
 
@@ -408,6 +419,65 @@ impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
         // Port instance is not a use, we need to mark it manually
         self.mark_node(a, node.port_name.node_id, SemanticTokenKind::PortInstance);
         node.interface_instance.walk(a, self)
+    }
+
+    fn visit_def_state_machine(
+        &self,
+        a: &mut Self::State,
+        node: &'ast DefStateMachine,
+    ) -> ControlFlow<Self::Break> {
+        // Uses inside a state machine (actions, guards, signals, states,
+        // choices) are resolved into the state machine's own use-def map during
+        // state machine analysis, not the global one. Color them the same way
+        // the outer use-def map is colored: look up each use node's resolved
+        // symbol and mark it by kind.
+        //
+        // Resolve each use node to a (range, kind). Qualified state uses (`A.B`)
+        // record a use on both the whole qualified-identifier node and its
+        // qualifier, whose ranges nest; the semantic token stream forbids
+        // overlaps, so we keep only the widest range in any overlapping group
+        // (all segments of a state path share the `State` color anyway).
+        let mut ranges: Vec<(TextRange, SemanticTokenKind)> = a
+            .analysis
+            .symbol_map
+            .get(&node.node_id)
+            .and_then(|symbol| a.analysis.state_machine_map.get(symbol))
+            .map(|state_machine| {
+                state_machine
+                    .sma
+                    .use_def_map
+                    .iter()
+                    .filter_map(|(use_node, sm_symbol)| {
+                        Some((self.node_range(use_node)?, sm_symbol_kind(sm_symbol)))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        // Sort by start, then widest first, and drop any range that overlaps
+        // one already kept.
+        ranges.sort_by(|(a, _), (b, _)| a.start().cmp(&b.start()).then(b.end().cmp(&a.end())));
+        let mut last_end = TextRange::default().end();
+        for (range, kind) in ranges {
+            if range.start() < last_end {
+                continue;
+            }
+            last_end = range.end();
+            a.add_text_range(range, kind);
+        }
+
+        ControlFlow::Continue(())
+    }
+}
+
+/// The semantic token color for a state machine symbol.
+fn sm_symbol_kind(symbol: &StateMachineSymbol) -> SemanticTokenKind {
+    match symbol {
+        StateMachineSymbol::Action(_) => SemanticTokenKind::Action,
+        StateMachineSymbol::Guard(_) => SemanticTokenKind::Guard,
+        StateMachineSymbol::Choice(_) => SemanticTokenKind::Choice,
+        StateMachineSymbol::Signal(_) => SemanticTokenKind::Signal,
+        StateMachineSymbol::State(_) => SemanticTokenKind::State,
     }
 }
 

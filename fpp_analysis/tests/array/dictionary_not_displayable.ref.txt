@@ -1,0 +1,5 @@
+ --> [ local path prefix ]/array/dictionary_not_displayable.fpp:2:1
+  |
+2 | dictionary array A = [3] T
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^ dictionary type is not displayable
+

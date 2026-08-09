@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/redef/state.fpp:3.3
-  state S
-  ^
-error: redefinition of symbol S
-previous definition is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/redef/state.fpp:2.3
-  state S
-  ^
+ --> [ local path prefix ]/state_machine/redef/state.fpp:3:9
+  |
+3 |   state S
+  |         ^ redefinition of symbol S
+  |
+ ::: [ local path prefix ]/state_machine/redef/state.fpp:2:3
+  |
+2 |   state S
+  |   ------- previous definition is here
+

@@ -3,7 +3,7 @@ use crate::semantics::SymbolInterface;
 use fpp_core::Spanned;
 use rustc_hash::FxHashMap as HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GenericNameSymbolMap<S: SymbolInterface>(HashMap<String, S>);
 
 impl<S: SymbolInterface> GenericNameSymbolMap<S> {

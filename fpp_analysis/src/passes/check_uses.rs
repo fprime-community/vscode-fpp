@@ -94,6 +94,35 @@ impl<'ast> CheckUses<'ast> {
             }
         }
     }
+
+    // Check that an implied use (a) is not a member of a def and (b) does not
+    // shadow the required def. Mirrors the check in `implied_port_use`.
+    fn implied_use_shadow_check(
+        &self,
+        a: &Analysis,
+        loc: fpp_core::Span,
+        iu_name: &QualifiedName,
+        sym: &Symbol,
+    ) {
+        let sym_qualified_name = a.get_qualified_name(sym);
+        let iu_name = iu_name.to_string();
+        if sym_qualified_name != iu_name {
+            let msg = if sym_qualified_name.len() < iu_name.len() {
+                // Definition has a shorter name: the use is a member of the definition
+                format!("it has {} as a member", iu_name)
+            } else {
+                // Definition has a longer name: it shadows the required definition
+                format!("it shadows {} here", iu_name)
+            };
+            SemanticError::InvalidSymbol {
+                symbol_name: sym_qualified_name.clone(),
+                msg: format!("invalid use of symbol {}: {}", sym_qualified_name, msg),
+                loc,
+                def_loc: sym.node().span(),
+            }
+            .emit();
+        }
+    }
 }
 
 impl<'ast> Visitor<'ast> for CheckUses<'ast> {
@@ -221,25 +250,56 @@ impl<'ast> UseAnalysisPass<'ast, Analysis> for CheckUses<'ast> {
             }
         };
         a.use_def_map.insert(node.id(), sym.clone());
-        let sym_qualified_name = a.get_qualified_name(&sym);
-        let iu_name = name.to_string();
-        // Check that the name of the def matches the name of the use
-        if sym_qualified_name != iu_name {
-            let msg = if sym_qualified_name.len() < iu_name.len() {
-                // Definition has a shorter name: the use is a member of the definition
-                format!("it has {} as a member", iu_name)
-            } else {
-                // Definition has a longer name: it shadows the required definition
-                format!("it shadows {} here", iu_name)
-            };
-            SemanticError::InvalidSymbol {
-                symbol_name: sym_qualified_name.clone(),
-                msg: format!("invalid use of symbol {}: {}", sym_qualified_name, msg),
-                loc: node.span(),
-                def_loc: sym.node().span(),
+        self.implied_use_shadow_check(a, node.span(), &name, &sym);
+        ControlFlow::Continue(())
+    }
+
+    // An implied use of a type (e.g. `FwSizeStoreType` for a string type).
+    // Resolve it and check it does not shadow / is not a member of another def.
+    fn implied_type_use(
+        &self,
+        a: &mut Analysis,
+        node: &QualIdent,
+        name: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        let sym = match self.visit_qual_ident_impl(a, NameGroup::Type, node) {
+            Ok(sym) => sym,
+            Err(err) => {
+                err.emit();
+                return ControlFlow::Continue(());
             }
-            .emit();
-        }
+        };
+        a.use_def_map.insert(node.id(), sym.clone());
+        self.implied_use_shadow_check(a, node.span(), &name, &sym);
+        ControlFlow::Continue(())
+    }
+
+    // An implied use of a constant (e.g. `FW_FIXED_LENGTH_STRING_SIZE` for a
+    // default-size string type). Implied constant uses are always unqualified.
+    fn implied_constant_use(
+        &self,
+        a: &mut Analysis,
+        node: &Expr,
+        name: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        let ident = match &node.kind {
+            ExprKind::Ident(id) => id,
+            _ => return ControlFlow::Continue(()),
+        };
+        let sym = match a.symbol_get(NameGroup::Value, ident) {
+            None => {
+                SemanticError::UndefinedSymbol {
+                    ng: NameGroup::Value.to_string(),
+                    name: ident.clone(),
+                    loc: node.span(),
+                }
+                .emit();
+                return ControlFlow::Continue(());
+            }
+            Some(sym) => sym,
+        };
+        a.use_def_map.insert(node.id(), sym.clone());
+        self.implied_use_shadow_check(a, node.span(), &name, &sym);
         ControlFlow::Continue(())
     }
 

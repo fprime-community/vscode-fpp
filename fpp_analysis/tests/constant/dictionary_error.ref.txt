@@ -1,0 +1,5 @@
+ --> [ local path prefix ]/constant/dictionary_error.fpp:1:1
+  |
+1 | dictionary constant c = { x = 0, y = 1 }
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ dictionary constant must have a numeric, Boolean, string, or enum type
+

@@ -124,3 +124,18 @@ fn format_numeric() {
 fn string_size_default_ok() {
     run_test("array/string_size_default_ok")
 }
+
+#[test]
+fn dictionary_not_displayable() {
+    run_test("array/dictionary_not_displayable")
+}
+
+#[test]
+fn dictionary_ok() {
+    run_test("array/dictionary_ok")
+}
+
+#[test]
+fn no_default_ok() {
+    run_test("array/no_default_ok")
+}

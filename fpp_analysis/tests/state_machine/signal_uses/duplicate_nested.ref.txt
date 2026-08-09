@@ -1,9 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/signal_uses/duplicate_nested.fpp:8.10
-      on s enter T
-         ^
-error: duplicate use of signal s in state T
-previous use is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/signal_uses/duplicate_nested.fpp:7.10
-      on s enter T
-         ^
+ --> [ local path prefix ]/state_machine/signal_uses/duplicate_nested.fpp:8:10
+  |
+8 |       on s enter T
+  |          ^ duplicate use of signal s in state T
+  |
+ ::: [ local path prefix ]/state_machine/signal_uses/duplicate_nested.fpp:7:10
+  |
+7 |       on s enter T
+  |          - previous use is here
+

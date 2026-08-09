@@ -1,7 +1,8 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/typed_elements/state_choice_bad_guard_type.fpp:6.19
-    choice C { if g enter T else enter T }
-                  ^
-error: type mismatch at choice
-type of choice is None
-type of guard is U32
+ --> [ local path prefix ]/state_machine/typed_elements/state_choice_bad_guard_type.fpp:6:19
+  |
+6 |     choice C { if g enter T else enter T }
+  |                   ^ type mismatch at choice
+  |
+  = note: type of choice is None
+  = note: type of guard is U32
+

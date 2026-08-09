@@ -1,0 +1,5 @@
+ --> [ local path prefix ]/structs/dictionary_not_displayable.fpp:2:1
+  |
+2 | dictionary struct S { x: T }
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ dictionary type is not displayable
+

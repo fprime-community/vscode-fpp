@@ -2,10 +2,11 @@ mod analysis;
 mod errors;
 
 use crate::passes::{
-    BuildSpecLocMap, CheckComponentDefs, CheckComponentInstanceDefs, CheckExprTypes,
-    CheckFrameworkConstantValues, CheckFrameworkDefs, CheckInterfaceDefs, CheckPortDefs,
-    CheckSpecLocs, CheckTopologyDefs, CheckTopologyInstances, CheckTypeUses, CheckUseDefCycles,
-    CheckUses, EnterSymbols, EvalConstantExprs, EvalImpliedEnumConsts, FinalizeTypeDefs,
+    BuildSpecLocMap, CheckComponentDefs, CheckComponentInstanceDefs, CheckDictionaryDefs,
+    CheckExprTypes, CheckFrameworkConstantValues, CheckFrameworkDefs, CheckInterfaceDefs,
+    CheckPortDefs, CheckSpecLocs, CheckStateMachineDefs, CheckTopologyDefs, CheckTopologyInstances,
+    CheckTypeUses, CheckUseDefCycles, CheckUses, ConstructImpliedUseMap, EnterSymbols,
+    EvalConstantExprs, EvalImpliedEnumConsts, FinalizeTypeDefs,
 };
 pub use analysis::*;
 use fpp_ast::{MutVisitor, Visitor};
@@ -24,11 +25,24 @@ pub mod analyzers {
 
     pub mod use_analyzer;
     pub use use_analyzer::*;
+
+    pub mod state_machine;
 }
 
 pub mod passes {
     mod enter_symbols;
     pub use enter_symbols::*;
+
+    mod check_state_machine_defs;
+    pub use check_state_machine_defs::*;
+
+    mod check_dictionary_defs;
+    pub use check_dictionary_defs::*;
+
+    mod construct_implied_use_map;
+    pub use construct_implied_use_map::*;
+
+    pub mod state_machine;
 
     mod check_uses;
     pub use check_uses::*;
@@ -82,6 +96,12 @@ pub mod passes {
     pub use build_spec_loc_map::*;
 }
 
+pub mod transform {
+    mod add_state_enums;
+    pub use add_state_enums::*;
+}
+pub use transform::add_state_enums;
+
 pub mod semantics {
     mod symbol;
     pub use symbol::*;
@@ -133,6 +153,8 @@ pub mod semantics {
     mod generic_name_symbol_map;
     mod generic_nested_scope;
     mod generic_scope;
+
+    pub mod state_machine;
 }
 
 pub fn resolve_includes<Reader: FileReader>(
@@ -145,6 +167,7 @@ pub fn resolve_includes<Reader: FileReader>(
 
 pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> ControlFlow<()> {
     EnterSymbols.visit_trans_units(a, ast.iter().cloned())?;
+    ConstructImpliedUseMap.visit_trans_units(a, ast.iter().cloned())?;
     CheckUses::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckUseDefCycles::new().visit_trans_units(a, ast.iter().cloned())?;
     CheckTypeUses::new().visit_trans_units(a, ast.iter().cloned())?;
@@ -159,10 +182,12 @@ pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> Contr
     CheckComponentDefs.visit_trans_units(a, ast.iter().cloned())?;
     CheckComponentInstanceDefs.visit_trans_units(a, ast.iter().cloned())?;
     CheckComponentInstanceDefs::check_id_ranges(a);
+    CheckStateMachineDefs.visit_trans_units(a, ast.iter().cloned())?;
     CheckTopologyInstances.visit_trans_units(a, ast.iter().cloned())?;
     CheckTopologyDefs.resolve_all(a);
     BuildSpecLocMap.visit_trans_units(a, ast.iter().cloned())?;
     CheckSpecLocs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckDictionaryDefs.visit_trans_units(a, ast.iter().cloned())?;
 
     ControlFlow::Continue(())
 }

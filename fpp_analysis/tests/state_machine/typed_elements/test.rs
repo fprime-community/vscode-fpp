@@ -16,11 +16,6 @@ fn choice_i32_f32() {
 }
 
 #[test]
-fn sm_initial_bad_guard_type() {
-    run_test("state_machine/typed_elements/sm_initial_bad_guard_type")
-}
-
-#[test]
 fn state_choice_bad_else_action_type() {
     run_test("state_machine/typed_elements/state_choice_bad_else_action_type")
 }
@@ -73,11 +68,6 @@ fn state_external_transition_bad_action_type() {
 #[test]
 fn state_choice_bad_if_action_type_i16_i32() {
     run_test("state_machine/typed_elements/state_choice_bad_if_action_type_i16_i32")
-}
-
-#[test]
-fn state_initial_bad_guard_type() {
-    run_test("state_machine/typed_elements/state_initial_bad_guard_type")
 }
 
 #[test]

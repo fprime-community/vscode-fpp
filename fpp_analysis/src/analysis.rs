@@ -1,7 +1,7 @@
 use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::{
-    FrameworkDefinitions, IntegerValue, Interface, NameGroup, NestedScope, Scope, Symbol,
-    SymbolInterface, Type, UseDefMatching, Value,
+    FrameworkDefinitions, ImpliedUseSet, IntegerValue, Interface, NameGroup, NestedScope, Scope,
+    Symbol, SymbolInterface, Type, UseDefMatching, Value,
 };
 use fpp_ast::{Expr, FormalParam, FormalParamKind, QueueFull};
 use fpp_core::{SourceFile, Span, Spanned};
@@ -64,6 +64,16 @@ pub struct Analysis {
     pub location_specifier_map: HashMap<(fpp_ast::SpecLocKind, String), SpecLocEntry>,
     /** The list of enclosing scope (module) names on the current path. */
     pub scope_name_list: Vec<String>,
+    /** The mapping from state machine symbols to their analyzed state machines. */
+    pub state_machine_map: HashMap<Symbol, crate::semantics::state_machine::StateMachine>,
+    /** The set of symbols marked as dictionary definitions and validated by
+     *  `CheckDictionaryDefs`. */
+    pub dictionary_symbol_set: HashSet<Symbol>,
+
+    /** Map from an AST node id to the implied uses of FPP symbols at that node.
+     *  Populated by `ConstructImpliedUseMap` and consumed by the use-analysis
+     *  passes (`CheckUses`, `CheckUseDefCycles`). */
+    pub implied_use_map: HashMap<fpp_core::Node, ImpliedUseSet>,
 }
 
 /// A recorded location specifier, keyed in `location_specifier_map`.
@@ -117,6 +127,9 @@ impl Analysis {
             topology_map: Default::default(),
             location_specifier_map: Default::default(),
             scope_name_list: Vec::new(),
+            state_machine_map: Default::default(),
+            dictionary_symbol_set: Default::default(),
+            implied_use_map: Default::default(),
         }
     }
 

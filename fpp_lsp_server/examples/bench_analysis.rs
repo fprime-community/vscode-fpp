@@ -72,6 +72,7 @@ fn main() {
             let mut include_context_map = Default::default();
             let _ = fpp_parser::ResolveIncludes::new(FsReader {})
                 .visit_trans_unit(&mut include_context_map, &mut ast);
+            fpp_analysis::add_state_enums(&mut ast);
             asts.push(ast);
         }
         eprintln!(

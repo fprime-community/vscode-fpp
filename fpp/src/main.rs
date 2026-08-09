@@ -13,6 +13,7 @@ fn compiler_main() -> String {
     let mut a = fpp_analysis::Analysis::new();
 
     let _ = fpp_analysis::resolve_includes(&mut a, fpp_fs::FsReader {}, &mut ast);
+    fpp_analysis::add_state_enums(&mut ast);
     let _ = fpp_analysis::check_semantics(&mut a, vec![&ast]);
 
     format!("{:#?}", ast)

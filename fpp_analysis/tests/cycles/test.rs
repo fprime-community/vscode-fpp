@@ -44,3 +44,13 @@ fn interface() {
 fn topology() {
     run_test("cycles/topology")
 }
+
+#[test]
+fn sizeof_string_1() {
+    run_test("cycles/sizeof_string_1")
+}
+
+#[test]
+fn sizeof_string_2() {
+    run_test("cycles/sizeof_string_2")
+}

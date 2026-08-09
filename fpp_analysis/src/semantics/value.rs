@@ -323,6 +323,11 @@ impl Value {
     }
 
     pub fn add(&self, other: &Value) -> MathResult {
+        // String concatenation
+        if let (Value::String(StringValue(left)), Value::String(StringValue(right))) = (self, other)
+        {
+            return Ok(Value::String(StringValue(format!("{left}{right}"))));
+        }
         self.binop(
             other,
             |left, right| Ok(left + right),

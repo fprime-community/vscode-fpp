@@ -1,4 +1,4 @@
-use fpp_analysis::{Analysis, check_semantics, resolve_includes};
+use fpp_analysis::{Analysis, add_state_enums, check_semantics, resolve_includes};
 use fpp_core::{FileReader, SourceFile};
 use fpp_fs::FsReader;
 use pretty_assertions::assert_eq;
@@ -36,6 +36,7 @@ pub(crate) fn run_test(file_path: &str) {
         let mut ast = fpp_parser::parse(src, |p| p.trans_unit(), None);
         let mut a = Analysis::new();
         let _ = resolve_includes(&mut a, file_reader, &mut ast);
+        add_state_enums(&mut ast);
         let _ = check_semantics(&mut a, vec![&ast]);
     });
 
@@ -190,7 +191,6 @@ mod top_import {
     mod test;
 }
 
-#[cfg(feature = "disabled-tests")]
 mod state_machine_instance {
     mod test;
 }
@@ -208,7 +208,15 @@ mod top_ports {
 }
 
 #[cfg(feature = "disabled-tests")]
+mod template {
+    mod test;
+}
+
 mod state_machine {
+    mod constants {
+        mod test;
+    }
+
     mod types {
         mod test;
     }

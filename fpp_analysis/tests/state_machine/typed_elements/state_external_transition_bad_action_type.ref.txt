@@ -1,7 +1,8 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/typed_elements/state_external_transition_bad_action_type.fpp:7.20
-    on s if g do { a } enter S
-                   ^
-error: type mismatch at state transition
-type of state transition is None
-type of action is U32
+ --> [ local path prefix ]/state_machine/typed_elements/state_external_transition_bad_action_type.fpp:7:20
+  |
+7 |     on s if g do { a } enter S
+  |                    ^ type mismatch at state transition
+  |
+  = note: type of state transition is None
+  = note: type of action is U32
+

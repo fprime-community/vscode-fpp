@@ -1,5 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/types/guard_undef_type.fpp:3.12
-  guard g: T
-           ^
-error: undefined symbol T
+ --> [ local path prefix ]/state_machine/types/guard_undef_type.fpp:3:12
+  |
+3 |   guard g: T
+  |            ^ cannot find type `T` in scope
+
+ --> [ local path prefix ]/state_machine/types/guard_undef_type.fpp:1:15
+  |
+1 | state machine M {
+  |               ^ state machine must have initial transition
+

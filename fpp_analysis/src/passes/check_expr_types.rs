@@ -321,8 +321,29 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                         }
                     };
 
-                    self.check_type_is_numerical(a, left);
-                    self.check_type_is_numerical(a, right);
+                    match op {
+                        // Addition allows numeric or string operands (string
+                        // concatenation). The check is on the common type,
+                        // matching the Scala compiler.
+                        fpp_ast::Binop::Add => {
+                            if !(ty.is_convertible_to_numeric()
+                                || matches!(ty.deref(), Type::String(_)))
+                            {
+                                SemanticError::InvalidType {
+                                    loc: node.span(),
+                                    msg: format!(
+                                        "cannot convert {} to a numeric or string type",
+                                        ty
+                                    ),
+                                }
+                                .emit();
+                            }
+                        }
+                        _ => {
+                            self.check_type_is_numerical(a, left);
+                            self.check_type_is_numerical(a, right);
+                        }
+                    }
                     a.type_map.insert(node.node_id, ty);
                 }
             },

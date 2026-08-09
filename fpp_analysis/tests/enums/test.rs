@@ -69,3 +69,8 @@ fn alias_rep_type_ok() {
 fn invalid_constants() {
     run_test("enums/invalid_constants")
 }
+
+#[test]
+fn dictionary_ok() {
+    run_test("enums/dictionary_ok")
+}

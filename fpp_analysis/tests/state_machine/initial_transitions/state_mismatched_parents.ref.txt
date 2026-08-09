@@ -1,9 +1,13 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/initial_transitions/state_mismatched_parents.fpp:4.5
-    initial enter S
-    ^
-error: initial transition of state must go to state or choice defined in the same state
-transition path goes here:
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/initial_transitions/state_mismatched_parents.fpp:3.3
-  state S {
-  ^
+ --> [ local path prefix ]/state_machine/initial_transitions/state_mismatched_parents.fpp:4:5
+  |
+4 |       initial enter S
+  |       ^^^^^^^^^^^^^^^ initial transition of state must go to state or choice defined in the same state
+  |
+ ::: [ local path prefix ]/state_machine/initial_transitions/state_mismatched_parents.fpp:3:3
+  |
+3 | /   state S {
+4 | |     initial enter S
+5 | |     state T
+6 | |   }
+  | |___- transition path goes here
+
