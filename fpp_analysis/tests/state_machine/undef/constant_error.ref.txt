@@ -3,10 +3,8 @@
 2 |   constant b = a
   |                ^ cannot find constant `a` in scope
 
- --> [ local path prefix ]/state_machine/undef/constant_error.fpp:1:1
+ --> [ local path prefix ]/state_machine/undef/constant_error.fpp:1:15
   |
-1 | / state machine SM {
-2 | |   constant b = a
-3 | | }
-  | |_^ state machine must have initial transition
+1 | state machine SM {
+  |               ^^ state machine must have initial transition
 

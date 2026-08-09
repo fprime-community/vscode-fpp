@@ -376,6 +376,8 @@ pub enum SemanticError {
         msg: String,
         /// Locations along the transition path (rendered as notes)
         path: Vec<Span>,
+        /// Locations of duplicate initial transistions
+        duplicate: Vec<Span>,
     },
     /// A cycle of choices in the transition graph
     ChoiceCycle {
@@ -990,10 +992,13 @@ impl From<SemanticError> for Diagnostic {
                 format!("duplicate use of signal {} in state {}", name, state_name),
             )
             .span_note(prev_loc, "previous use is here"),
-            SemanticError::InvalidInitialTransition { loc, msg, path } => {
+            SemanticError::InvalidInitialTransition { loc, msg, path, duplicate } => {
                 let mut d = Diagnostic::new(loc, Level::Error, msg);
                 for span in path {
                     d = d.span_note(span, "transition path goes here");
+                }
+                for span in duplicate {
+                    d = d.span_note(span, "initial transition defined here");
                 }
                 d
             }

@@ -17,22 +17,31 @@ impl CheckInitialTransitions {
     }
 
     // Checks that there is exactly one initial transition specifier
-    fn check_one_initial_transition(count: usize, loc: Span, def_kind: &str) -> SemanticResult<()> {
-        match count {
-            0 => Err(SemanticError::InvalidInitialTransition {
+    fn check_one_initial_transition(
+        initial_transitions: Vec<Span>,
+        loc: Span,
+        def_kind: &str,
+    ) -> SemanticResult<()> {
+        if initial_transitions.is_empty() {
+            Err(SemanticError::InvalidInitialTransition {
                 loc,
                 msg: format!("{} must have initial transition", def_kind),
                 path: Vec::new(),
-            }),
-            1 => Ok(()),
-            n => Err(SemanticError::InvalidInitialTransition {
+                duplicate: Vec::new(),
+            })
+        } else if initial_transitions.len() == 1 {
+            Ok(())
+        } else {
+            Err(SemanticError::InvalidInitialTransition {
                 loc,
                 msg: format!(
                     "{} has {} initial transitions; only one is allowed",
-                    def_kind, n
+                    def_kind,
+                    initial_transitions.len()
                 ),
                 path: Vec::new(),
-            }),
+                duplicate: initial_transitions.iter().map(|i| i.span()).collect(),
+            })
         }
     }
 
@@ -94,11 +103,16 @@ impl StateMachineAnalysisVisitor for CheckInitialTransitions {
     fn def_state_machine(&self, mut sma: StateMachineAnalysis, node: &DefStateMachine) -> SmResult {
         let members: &[StateMachineMember] = node.members.as_deref().unwrap_or(&[]);
         // Check that there is exactly one initial transition specifier
-        let count = members
+        let initial_transitions = members
             .iter()
-            .filter(|m| matches!(m, StateMachineMember::SpecInitialTransition(_)))
-            .count();
-        Self::check_one_initial_transition(count, node.span(), "state machine")?;
+            .filter_map(|m| match m {
+                StateMachineMember::SpecInitialTransition(spec_initial_transition) => {
+                    Some(spec_initial_transition.span())
+                }
+                _ => None,
+            })
+            .collect();
+        Self::check_one_initial_transition(initial_transitions, node.name.span(), "state machine")?;
         // Visit the members
         sma.parent_state = None;
         self.visit_sm_members(sma, members)
@@ -135,6 +149,7 @@ impl StateMachineAnalysisVisitor for CheckInitialTransitions {
                     loc,
                     msg: msg_head.to_string(),
                     path,
+                    duplicate: Vec::new(),
                 })
             }
             Ok(_) => Ok(sma),
@@ -142,18 +157,25 @@ impl StateMachineAnalysisVisitor for CheckInitialTransitions {
     }
 
     fn def_state(&self, mut sma: StateMachineAnalysis, node: &DefState) -> SmResult {
-        let loc = node.span();
+        let loc = node.name.span();
         let sub_states = node
             .members
             .iter()
             .filter(|m| matches!(m, StateMember::DefState(_)))
             .count();
-        let initial_transitions = node
+
+        let initial_transitions: Vec<Span> = node
             .members
             .iter()
-            .filter(|m| matches!(m, StateMember::SpecInitialTransition(_)))
-            .count();
-        match (sub_states, initial_transitions) {
+            .filter_map(|m| match m {
+                StateMember::SpecInitialTransition(spec_initial_transition) => {
+                    Some(spec_initial_transition.span())
+                }
+                _ => None,
+            })
+            .collect();
+
+        match (sub_states, initial_transitions.len()) {
             // No substates, no initial transition: OK
             (0, 0) => Ok(sma),
             // Substates or initial transitions: Check semantics
