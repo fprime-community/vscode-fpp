@@ -1,5 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/initial_transitions/state_multiple_transitions.fpp:3.3
-  state S {
-  ^
-error: state with substates has 2 initial transitions; only one is allowed
+ --> [ local path prefix ]/state_machine/initial_transitions/state_multiple_transitions.fpp:3:3
+  |
+3 | /   state S {
+4 | |     initial enter T
+5 | |     initial enter U
+6 | |     state T
+7 | |     state U
+8 | |   }
+  | |___^ state with substates has 2 initial transitions; only one is allowed
+

@@ -1,6 +1,6 @@
 use crate::Analysis;
 use crate::analyzers::analyzer::Analyzer;
-use crate::semantics::Symbol;
+use crate::semantics::{ImpliedUseSet, Symbol};
 use fpp_ast::{AstNode, MoveWalkable, Node, Visitor};
 use std::marker::PhantomData;
 use std::ops::ControlFlow;
@@ -20,6 +20,9 @@ pub trait NestedScopeState {
 
     /// Exit a scope
     fn pop_scope(&mut self);
+
+    /// Get the implied uses associated with an AST node, if any
+    fn implied_uses(&self, node: fpp_core::Node) -> Option<ImpliedUseSet>;
 }
 
 impl NestedScopeState for Analysis {
@@ -33,6 +36,10 @@ impl NestedScopeState for Analysis {
 
     fn pop_scope(&mut self) {
         self.nested_scope.pop()
+    }
+
+    fn implied_uses(&self, node: fpp_core::Node) -> Option<ImpliedUseSet> {
+        self.implied_use_map.get(&node).cloned()
     }
 }
 

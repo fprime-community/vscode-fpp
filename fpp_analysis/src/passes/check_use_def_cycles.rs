@@ -203,4 +203,22 @@ impl<'ast> UseAnalysisPass<'ast, Analysis> for CheckUseDefCycles<'ast> {
     ) -> ControlFlow<Self::Break> {
         self.visit_use(a, node.id(), name)
     }
+
+    fn implied_type_use(
+        &self,
+        a: &mut Analysis,
+        node: &QualIdent,
+        name: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        self.visit_use(a, node.id(), name)
+    }
+
+    fn implied_constant_use(
+        &self,
+        a: &mut Analysis,
+        node: &Expr,
+        name: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        self.visit_use(a, node.id(), name)
+    }
 }

@@ -74,3 +74,13 @@ fn format_ok() {
 fn format_numeric() {
     run_test("structs/format_numeric")
 }
+
+#[test]
+fn dictionary_not_displayable() {
+    run_test("structs/dictionary_not_displayable")
+}
+
+#[test]
+fn dictionary_ok() {
+    run_test("structs/dictionary_ok")
+}

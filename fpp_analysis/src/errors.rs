@@ -363,6 +363,46 @@ pub enum SemanticError {
         loc: Span,
         prev_loc: Span,
     },
+    /// Duplicate use of a signal in a state
+    DuplicateSignal {
+        name: String,
+        state_name: String,
+        loc: Span,
+        prev_loc: Span,
+    },
+    /// Invalid initial transition
+    InvalidInitialTransition {
+        loc: Span,
+        msg: String,
+        /// Locations along the transition path (rendered as notes)
+        path: Vec<Span>,
+    },
+    /// A cycle of choices in the transition graph
+    ChoiceCycle {
+        loc: Span,
+        msg: String,
+    },
+    /// A node in the transition graph is unreachable
+    UnreachableNode {
+        name: String,
+        loc: Span,
+    },
+    /// Type mismatch at a choice
+    ChoiceTypeMismatch {
+        loc: Span,
+        loc1: Span,
+        show1: String,
+        loc2: Span,
+        show2: String,
+    },
+    /// Type mismatch at a call site (action or guard)
+    CallSiteTypeMismatch {
+        loc: Span,
+        te_kind: String,
+        te_show: String,
+        site_kind: String,
+        site_show: String,
+    },
 }
 
 pub type SemanticResult<T = ()> = Result<T, SemanticError>;
@@ -939,6 +979,46 @@ impl From<SemanticError> for Diagnostic {
                 prev_loc,
             } => Diagnostic::new(loc, Level::Error, format!("duplicate {} pattern", kind))
                 .span_note(prev_loc, "previous occurrence is here"),
+            SemanticError::DuplicateSignal {
+                name,
+                state_name,
+                loc,
+                prev_loc,
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!("duplicate use of signal {} in state {}", name, state_name),
+            )
+            .span_note(prev_loc, "previous use is here"),
+            SemanticError::InvalidInitialTransition { loc, msg, path } => {
+                let mut d = Diagnostic::new(loc, Level::Error, msg);
+                for span in path {
+                    d = d.span_note(span, "transition path goes here");
+                }
+                d
+            }
+            SemanticError::ChoiceCycle { loc, msg } => Diagnostic::new(loc, Level::Error, msg),
+            SemanticError::UnreachableNode { name, loc } => {
+                Diagnostic::new(loc, Level::Error, format!("{} is unreachable", name))
+            }
+            SemanticError::ChoiceTypeMismatch {
+                loc,
+                loc1,
+                show1,
+                loc2,
+                show2,
+            } => Diagnostic::new(loc, Level::Error, "type mismatch at choice")
+                .span_note(loc1, format!("type of transition is {}", show1))
+                .span_note(loc2, format!("type of transition is {}", show2)),
+            SemanticError::CallSiteTypeMismatch {
+                loc,
+                te_kind,
+                te_show,
+                site_kind,
+                site_show,
+            } => Diagnostic::new(loc, Level::Error, format!("type mismatch at {}", te_kind))
+                .note(format!("type of {} is {}", te_kind, te_show))
+                .note(format!("type of {} is {}", site_kind, site_show)),
         }
     }
 }

@@ -1,7 +1,8 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/typed_elements/state_entry_bad_action_type.fpp:5.16
-    entry do { a }
-               ^
-error: type mismatch at entry actions
-type of entry actions is None
-type of action is U32
+ --> [ local path prefix ]/state_machine/typed_elements/state_entry_bad_action_type.fpp:5:16
+  |
+5 |     entry do { a }
+  |                ^ type mismatch at entry actions
+  |
+  = note: type of entry actions is None
+  = note: type of action is U32
+

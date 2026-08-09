@@ -74,6 +74,11 @@ impl GlobalState {
         let _ =
             ResolveIncludes::new(&self.vfs).visit_trans_unit(&mut include_context_map, &mut ast);
 
+        // Synthesize the `State` enum for each state machine. This must run once,
+        // here, so it is baked into the cached AST rather than re-applied on every
+        // analysis pass.
+        fpp_analysis::add_state_enums(&mut ast);
+
         tracing::debug!(file = %file, file_dbg = ?file, "computed translation unit cache");
 
         Ok(TranslationUnitCache {

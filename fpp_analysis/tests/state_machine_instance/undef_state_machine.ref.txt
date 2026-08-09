@@ -1,5 +1,14 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine_instance/undef_state_machine.fpp:3.30
-  state machine instance s1: S
-                             ^
-error: undefined symbol S
+ --> [ local path prefix ]/state_machine_instance/undef_state_machine.fpp:3:30
+  |
+3 |   state machine instance s1: S
+  |                              ^ cannot find state machine `S` in scope
+
+ --> [ local path prefix ]/state_machine_instance/undef_state_machine.fpp:1:1
+  |
+1 | / active component C {
+2 | |
+3 | |   state machine instance s1: S
+4 | |
+5 | | }
+  | |_^ active component must have async input
+

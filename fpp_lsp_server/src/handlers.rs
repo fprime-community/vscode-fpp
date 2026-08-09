@@ -5,8 +5,9 @@ use crate::lsp_ext::UriRequest;
 use crate::util::{
     completion_items_for_port_instance, completion_items_for_postfix_expr,
     completion_items_for_qual_ident, completion_items_in_name_group, hover_for_node,
-    hover_for_port_instance, hover_for_symbol, node_to_location, nodes_at_offset,
-    port_instance_at_position, position_to_offset, symbol_at_position, symbol_to_completion_item,
+    hover_for_port_instance, hover_for_sm_symbol, hover_for_symbol, node_to_location,
+    nodes_at_offset, port_instance_at_position, position_to_offset, sm_symbol_at_position,
+    symbol_at_position, symbol_to_completion_item,
 };
 use anyhow::Result;
 use fpp_analysis::semantics::{NameGroup, SymbolInterface};
@@ -412,6 +413,13 @@ pub fn handle_goto_definition(
             state,
             port_instance.get_node_id(),
         ))))
+    } else if let Some((_, _, sm_symbol)) = sm_symbol_at_position(state, uri, offset) {
+        // Uses inside a state machine resolve via the state machine's own
+        // use-def map, not the global one; jump to the definition.
+        Ok(Some(GotoDefinitionResponse::Scalar(node_to_location(
+            state,
+            sm_symbol.name().id(),
+        ))))
     } else if let Some((_, symbol)) = symbol_at_position(state, uri, offset) {
         Ok(Some(GotoDefinitionResponse::Scalar(node_to_location(
             state,
@@ -453,6 +461,21 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
             state,
             name_node,
             &port_instance,
+        )));
+    }
+
+    // Uses inside a state machine resolve via the state machine's own use-def
+    // map, not the global one; resolve them before the generic lookup.
+    if let Some((node, state_machine, sm_symbol)) = sm_symbol_at_position(
+        state,
+        &request.text_document_position_params.text_document.uri,
+        offset,
+    ) {
+        return Ok(Some(hover_for_sm_symbol(
+            state,
+            node,
+            state_machine,
+            &sm_symbol,
         )));
     }
 

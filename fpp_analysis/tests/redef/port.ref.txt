@@ -8,3 +8,13 @@
 1 | port P(a: U32)
   | -------------- previous definition is here
 
+ --> [ local path prefix ]/redef/port.fpp:2:11
+  |
+2 | port P(b: string)
+  |           ^^^^^^ cannot find type `FwSizeStoreType` in scope
+
+ --> [ local path prefix ]/redef/port.fpp:2:11
+  |
+2 | port P(b: string)
+  |           ^^^^^^ cannot find constant `FW_FIXED_LENGTH_STRING_SIZE` in scope
+

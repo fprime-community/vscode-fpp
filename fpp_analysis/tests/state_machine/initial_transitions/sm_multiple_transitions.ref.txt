@@ -1,5 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/initial_transitions/sm_multiple_transitions.fpp:1.1
-state machine M {
-^
-error: state machine has 2 initial transitions; only one is allowed
+ --> [ local path prefix ]/state_machine/initial_transitions/sm_multiple_transitions.fpp:1:1
+  |
+1 | / state machine M {
+2 | |   initial enter S
+3 | |   initial enter T
+4 | |   state S
+5 | |   state T
+6 | | }
+  | |_^ state machine has 2 initial transitions; only one is allowed
+

@@ -89,3 +89,8 @@ fn nested_choice_ok() {
 fn nested_action_ok() {
     run_test("state_machine/undef/nested_action_ok")
 }
+
+#[test]
+fn constant_error() {
+    run_test("state_machine/undef/constant_error")
+}

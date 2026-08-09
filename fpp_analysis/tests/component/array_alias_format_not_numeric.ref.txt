@@ -1,10 +1,10 @@
- --> [ local path prefix ]/component/array_alias_format_not_numeric.fpp:3:25
+ --> [ local path prefix ]/component/array_alias_format_not_numeric.fpp:6:25
   |
-3 | array A = [3] T format "{.3f}"
+6 | array A = [3] T format "{.3f}"
   |                         ^^^^^ Fixed format replacement cannot be used for type `T`
   |
- ::: [ local path prefix ]/component/array_alias_format_not_numeric.fpp:3:15
+ ::: [ local path prefix ]/component/array_alias_format_not_numeric.fpp:6:15
   |
-3 | array A = [3] T format "{.3f}"
+6 | array A = [3] T format "{.3f}"
   |               - type defined here
 

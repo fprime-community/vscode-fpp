@@ -19,3 +19,8 @@ fn choice_cycle() {
 fn cycle_ok() {
     run_test("state_machine/transition_graph/cycle_ok")
 }
+
+#[test]
+fn choice_cycle_ok() {
+    run_test("state_machine/transition_graph/choice_cycle_ok")
+}

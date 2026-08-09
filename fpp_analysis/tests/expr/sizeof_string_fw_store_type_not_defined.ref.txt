@@ -1,0 +1,5 @@
+ --> [ local path prefix ]/expr/sizeof_string_fw_store_type_not_defined.fpp:1:21
+  |
+1 | constant c = sizeof(string size 20)
+  |                     ^^^^^^^^^^^^^^ cannot find type `FwSizeStoreType` in scope
+

@@ -79,3 +79,23 @@ fn sizeof_string() {
 fn sizeof_propagation() {
     run_test("expr/sizeof_propagation")
 }
+
+#[test]
+fn sizeof_not_displayable() {
+    run_test("expr/sizeof_not_displayable")
+}
+
+#[test]
+fn sizeof_string_fw_store_type_not_defined() {
+    run_test("expr/sizeof_string_fw_store_type_not_defined")
+}
+
+#[test]
+fn string_concat_error() {
+    run_test("expr/string_concat_error")
+}
+
+#[test]
+fn string_concat_ok() {
+    run_test("expr/string_concat_ok")
+}

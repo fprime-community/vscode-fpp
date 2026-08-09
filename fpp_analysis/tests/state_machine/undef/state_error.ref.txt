@@ -1,5 +1,5 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/undef/state_error.fpp:2.17
-  initial enter S
-                ^
-error: undefined symbol S
+ --> [ local path prefix ]/state_machine/undef/state_error.fpp:2:17
+  |
+2 |   initial enter S
+  |                 ^ cannot find state `S` in scope
+

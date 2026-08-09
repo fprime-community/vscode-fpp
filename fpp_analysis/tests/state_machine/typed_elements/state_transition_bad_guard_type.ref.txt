@@ -1,7 +1,8 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/typed_elements/state_transition_bad_guard_type.fpp:6.13
-    on s if g enter S
-            ^
-error: type mismatch at state transition
-type of state transition is None
-type of guard is U32
+ --> [ local path prefix ]/state_machine/typed_elements/state_transition_bad_guard_type.fpp:6:13
+  |
+6 |     on s if g enter S
+  |             ^ type mismatch at state transition
+  |
+  = note: type of state transition is None
+  = note: type of guard is U32
+

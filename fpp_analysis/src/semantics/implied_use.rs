@@ -1,6 +1,23 @@
 use crate::semantics::QualifiedName;
 use fpp_core::Spanned;
 
+/** The kind of an implied use */
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub enum ImpliedUseKind {
+    Constant,
+    Port,
+    Type,
+}
+
+/** The set of implied uses associated with a single AST node, grouped by kind */
+#[derive(Clone, Default, Debug)]
+pub struct ImpliedUseSet {
+    pub constants: Vec<ImpliedUse>,
+    pub ports: Vec<ImpliedUse>,
+    pub types: Vec<ImpliedUse>,
+}
+
+#[derive(Clone, Debug)]
 pub struct ImpliedUse {
     /** The fully-qualified name of the implied use */
     name: QualifiedName,
@@ -11,6 +28,23 @@ pub struct ImpliedUse {
 impl ImpliedUse {
     pub fn new(name: QualifiedName, id: fpp_core::Node) -> ImpliedUse {
         ImpliedUse { name, id }
+    }
+
+    /** Construct an implied use from an identifier list, replicating the node id
+     * so the implied use has its own stable, distinct node id */
+    pub fn from_ident_list_and_id(idents: Vec<String>, id: fpp_core::Node) -> ImpliedUse {
+        ImpliedUse {
+            name: idents.into(),
+            id: ImpliedUse::replicate_node_id(id),
+        }
+    }
+
+    pub fn id(&self) -> fpp_core::Node {
+        self.id
+    }
+
+    pub fn name(&self) -> &QualifiedName {
+        &self.name
     }
 
     fn replicate_node_id(id: fpp_core::Node) -> fpp_core::Node {

@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 use std::fmt::{Debug, Display, Formatter, Write};
 
+#[derive(Clone)]
 pub struct QualifiedName {
     qualifier: VecDeque<String>,
     base: String,

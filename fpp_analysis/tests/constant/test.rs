@@ -39,3 +39,18 @@ fn undef_1() {
 fn array_index_out_of_bounds() {
     run_test("constant/array_index_out_of_bounds")
 }
+
+#[test]
+fn array_common_type_conversion() {
+    run_test("constant/array_common_type_conversion")
+}
+
+#[test]
+fn dictionary_error() {
+    run_test("constant/dictionary_error")
+}
+
+#[test]
+fn dictionary_ok() {
+    run_test("constant/dictionary_ok")
+}

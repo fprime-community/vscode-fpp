@@ -1,7 +1,8 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/typed_elements/state_choice_bad_if_action_type_i16_i32.fpp:9.26
-    choice C { if g do { a } enter T else enter T }
-                         ^
-error: type mismatch at choice
-type of choice is I32
-type of action is I16
+ --> [ local path prefix ]/state_machine/typed_elements/state_choice_bad_if_action_type_i16_i32.fpp:9:26
+  |
+9 |     choice C { if g do { a } enter T else enter T }
+  |                          ^ type mismatch at choice
+  |
+  = note: type of choice is I32
+  = note: type of action is I16
+

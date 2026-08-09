@@ -351,6 +351,11 @@
                 "description": "A state definition or use"
             },
             {
+                "id": "choice",
+                "superType": "variable",
+                "description": "A choice definition or use"
+            },
+            {
                 "id": "annotation",
                 "superType": "comment",
                 "description": "A documentation annotation"
@@ -451,6 +456,9 @@
                         "variable.other.event"
                     ],
                     "state": [
+                        "entity.name.variable"
+                    ],
+                    "choice": [
                         "entity.name.variable"
                     ],
                     "annotation": [

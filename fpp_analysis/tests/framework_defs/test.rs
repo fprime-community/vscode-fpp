@@ -34,3 +34,38 @@ fn user_data_size_not_integer() {
 fn fw_opcode_type_not_alias_type() {
     run_test("framework_defs/fw_opcode_type_not_alias_type")
 }
+
+#[test]
+fn fw_log_string_max_size_not_integer() {
+    run_test("framework_defs/fw_log_string_max_size_not_integer")
+}
+
+#[test]
+fn fw_obj_simple_reg_buff_size_not_integer() {
+    run_test("framework_defs/fw_obj_simple_reg_buff_size_not_integer")
+}
+
+#[test]
+fn invalid_nonnegative_integer_constant() {
+    run_test("framework_defs/invalid_nonnegative_integer_constant")
+}
+
+#[test]
+fn invalid_positive_integer_constant() {
+    run_test("framework_defs/invalid_positive_integer_constant")
+}
+
+#[test]
+fn invalid_string_size() {
+    run_test("framework_defs/invalid_string_size")
+}
+
+#[test]
+fn proc_type_not_module_qualified() {
+    run_test("framework_defs/proc_type_not_module_qualified")
+}
+
+#[test]
+fn user_data_size_not_module_qualified() {
+    run_test("framework_defs/user_data_size_not_module_qualified")
+}

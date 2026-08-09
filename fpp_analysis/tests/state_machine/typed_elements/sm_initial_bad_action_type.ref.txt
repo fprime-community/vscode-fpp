@@ -1,7 +1,8 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/typed_elements/sm_initial_bad_action_type.fpp:4.16
-  initial do { a } enter S
-               ^
-error: type mismatch at initial transition
-type of initial transition is None
-type of action is U32
+ --> [ local path prefix ]/state_machine/typed_elements/sm_initial_bad_action_type.fpp:4:16
+  |
+4 |   initial do { a } enter S
+  |                ^ type mismatch at initial transition
+  |
+  = note: type of initial transition is None
+  = note: type of action is U32
+

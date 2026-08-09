@@ -1,7 +1,8 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/state_machine/typed_elements/state_choice_bad_if_action_type.fpp:7.26
-    choice C { if g do { a } enter T else enter T }
-                         ^
-error: type mismatch at choice
-type of choice is None
-type of action is U32
+ --> [ local path prefix ]/state_machine/typed_elements/state_choice_bad_if_action_type.fpp:7:26
+  |
+7 |     choice C { if g do { a } enter T else enter T }
+  |                          ^ type mismatch at choice
+  |
+  = note: type of choice is None
+  = note: type of action is U32
+

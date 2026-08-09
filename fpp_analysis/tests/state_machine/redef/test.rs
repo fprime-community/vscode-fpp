@@ -49,3 +49,18 @@ fn guard() {
 fn state_choice() {
     run_test("state_machine/redef/state_choice")
 }
+
+#[test]
+fn constant() {
+    run_test("state_machine/redef/constant")
+}
+
+#[test]
+fn r#type() {
+    run_test("state_machine/redef/type")
+}
+
+#[test]
+fn state_enum() {
+    run_test("state_machine/redef/state_enum")
+}

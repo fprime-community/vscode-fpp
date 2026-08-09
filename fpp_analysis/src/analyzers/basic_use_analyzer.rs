@@ -72,6 +72,33 @@ pub trait UseAnalysisPass<'ast, S: NestedScopeState>: Visitor<'ast, State = S> {
         self.port_use(a, node, name)
     }
 
+    /** An implied use of a type definition (e.g. `FwSizeStoreType` for strings) */
+    fn implied_type_use(
+        &self,
+        a: &mut Self::State,
+        node: &QualIdent,
+        name: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        let _ = a;
+        let _ = node;
+        let _ = name;
+        ControlFlow::Continue(())
+    }
+
+    /** An implied use of a constant definition (e.g. `FW_FIXED_LENGTH_STRING_SIZE`
+     * for default-size strings) */
+    fn implied_constant_use(
+        &self,
+        a: &mut Self::State,
+        node: &Expr,
+        name: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        let _ = a;
+        let _ = node;
+        let _ = name;
+        ControlFlow::Continue(())
+    }
+
     /** A use of an interface definition */
     fn interface_use(
         &self,
@@ -243,7 +270,21 @@ impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Analyzer<'ast, V>
             }
             Node::TypeName(tn) => match &tn.kind {
                 TypeNameKind::QualIdent(qi) => visitor.type_use(a, qi, qi.into()),
-                TypeNameKind::String(_) => self.super_.visit(visitor, a, node),
+                TypeNameKind::String(_) => {
+                    // Dispatch the implied uses of the framework definitions
+                    // required by a string type (populated by ConstructImpliedUseMap).
+                    if let Some(uses) = a.implied_uses(tn.node_id) {
+                        for iu in &uses.types {
+                            let qi = iu.as_qual_ident();
+                            visitor.implied_type_use(a, &qi, iu.name().clone())?;
+                        }
+                        for iu in &uses.constants {
+                            let e = iu.as_expr();
+                            visitor.implied_constant_use(a, &e, iu.name().clone())?;
+                        }
+                    }
+                    self.super_.visit(visitor, a, node)
+                }
                 _ => ControlFlow::Continue(()),
             },
             _ => self.super_.visit(visitor, a, node),
