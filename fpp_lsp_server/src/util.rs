@@ -2,7 +2,7 @@ use crate::diagnostics::LspDiagnosticsEmitter;
 use crate::global_state::GlobalState;
 use fpp_analysis::semantics::state_machine::{StateMachine, StateMachineSymbol};
 use fpp_analysis::semantics::{
-    Direction, NameGroup, PortInstance, PortInstanceType, PortInterface, Scope, Symbol,
+    Component, Direction, NameGroup, PortInstance, PortInstanceType, PortInterface, Scope, Symbol,
     SymbolInterface, Type,
 };
 use fpp_ast::{AstNode, FormalParam, FormalParamKind, MoveWalkable, Name, Node, Visitor};
@@ -791,6 +791,74 @@ pub fn hover_for_port_instance(state: &GlobalState, hover_node: Node, pi: &PortI
         }),
         range: Some(node_to_range(state, hover_node.id())),
     }
+}
+
+/// Resolve a port-match specifier's port name at `position` to its underlying
+/// [`PortInstance`].
+///
+/// Port match specifiers (`match portA with portB`) name their two ports with
+/// bare [`fpp_ast::Ident`]s (raw string + span), not symbol references, so they
+/// are absent from `use_def_map` and are not handled by the generic hover/goto
+/// paths. Resolution mirrors `construct_port_matching` in `fpp_analysis`: look
+/// the name up in the enclosing component's `port_interface.port_map`.
+///
+/// Returns the port name's AST node (for locating/ranging the hover) together
+/// with the resolved port instance. Returns `None` if the cursor is not on one
+/// of the two port names, or the component/port does not resolve.
+pub(crate) fn port_match_at_position<'a>(
+    state: &'a GlobalState,
+    document: &Uri,
+    position: BytePos,
+) -> Option<(Node<'a>, PortInstance)> {
+    let nodes = nodes_at_offset(state, document, position)?;
+
+    // Find the enclosing port-match specifier and confirm the cursor is on one
+    // of its two port names.
+    let spec = nodes.iter().find_map(|n| match n {
+        Node::SpecPortMatching(spec) => Some(*spec),
+        _ => None,
+    })?;
+
+    let on_name = |name: &fpp_ast::Ident| -> bool {
+        let span = state
+            .context
+            .span_get(&state.context.node_get_span(&name.id()));
+        position >= span.start && position <= span.start + span.length
+    };
+    let name = if on_name(&spec.port1) {
+        &spec.port1
+    } else if on_name(&spec.port2) {
+        &spec.port2
+    } else {
+        return None;
+    };
+
+    // Resolve the enclosing component and look the port up by name, reusing the
+    // same lookup `construct_port_matching` performs. This is usable here
+    // because the request runs under `fpp_core::run_ref` (the compiler context
+    // is set on this thread).
+    let component = enclosing_component(state, &nodes)?;
+    let port_instance = component.port_interface.port_map.get(&name.data)?.clone();
+
+    // Look up the port name node among the resolved nodes for ranging.
+    let name_node = nodes
+        .iter()
+        .find(|n| n.id() == name.id())
+        .copied()
+        .unwrap_or(Node::SpecPortMatching(spec));
+
+    Some((name_node, port_instance))
+}
+
+/// The resolved component enclosing the cursor, if any, given the AST nodes
+/// covering the cursor position (innermost first).
+fn enclosing_component<'a>(state: &'a GlobalState, nodes: &[Node<'_>]) -> Option<&'a Component> {
+    let component_node = nodes.iter().find_map(|n| match n {
+        Node::DefComponent(def) => Some(*def),
+        _ => None,
+    })?;
+    let symbol = state.analysis.symbol_map.get(&component_node.node_id)?;
+    state.analysis.component_map.get(symbol)
 }
 
 /// Resolve a use inside a state machine at `position` to its state machine

@@ -8,7 +8,7 @@ use fpp_analysis::semantics::Symbol;
 use fpp_analysis::semantics::state_machine::StateMachineSymbol;
 use fpp_ast::{
     DefStateMachine, Expr, ExprKind, Ident, MoveWalkable, Node, PortInstanceIdentifier,
-    TlmChannelIdentifier, Visitor, Walkable,
+    SpecPortMatching, TlmChannelIdentifier, Visitor, Walkable,
 };
 use fpp_core::{LineCol, LineIndex, SourceFile, SourceFileData};
 use fpp_lsp_parser::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
@@ -419,6 +419,19 @@ impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
         // Port instance is not a use, we need to mark it manually
         self.mark_node(a, node.port_name.node_id, SemanticTokenKind::PortInstance);
         node.interface_instance.walk(a, self)
+    }
+
+    fn visit_spec_port_matching(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecPortMatching,
+    ) -> ControlFlow<Self::Break> {
+        // The two port names in a match specifier (`match a with b`) are bare
+        // identifiers, not uses in the use-def map, so mark them manually as
+        // port instances (matching how connection port names are colored).
+        self.mark_node(a, node.port1.node_id, SemanticTokenKind::PortInstance);
+        self.mark_node(a, node.port2.node_id, SemanticTokenKind::PortInstance);
+        ControlFlow::Continue(())
     }
 
     fn visit_def_state_machine(
