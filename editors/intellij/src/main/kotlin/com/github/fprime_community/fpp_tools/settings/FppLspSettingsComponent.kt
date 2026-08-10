@@ -142,13 +142,19 @@ class FppLspSettingsComponent(
     private val lspPathComponent = TextFieldWithBrowseButton().apply {
         addBrowseFolderListener(TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()))
         onExistingFileChanged {
+            if (it == null) {
+                setManualLspVersion("Invalid binary specified")
+                return@onExistingFileChanged
+            }
             // I guess this will launch in the project scope, so the coroutine will finish even if I close the settings.
             // Not sure if I should about it or not.
             coroutineScope.launch(Dispatchers.IO) {
                 setManualLspVersion(
                     LspCli(
                         project, LspConfiguration.ForSettings(project, it, true)
-                    ).queryVersion().toString()
+                    ).queryVersion()
+                        .map { v -> v.toString() }
+                        .getOrElse { e -> "Unable to query version: ${e.message}" }
                 )
             }
         }
@@ -360,14 +366,16 @@ class FppLspSettingsComponent(
     }
 }
 
-private fun TextFieldWithBrowseButton.onExistingFileChanged(action: (Path) -> Unit) {
+private fun TextFieldWithBrowseButton.onExistingFileChanged(action: (Path?) -> Unit) {
     addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(event: javax.swing.event.DocumentEvent) {
             if (text.isEmpty()) {
+                action(null)
                 return
             }
             val maybePath = text.toNioPathOrNull()
             if (maybePath == null || !maybePath.exists()) {
+                action(null)
                 return
             }
             action(maybePath)

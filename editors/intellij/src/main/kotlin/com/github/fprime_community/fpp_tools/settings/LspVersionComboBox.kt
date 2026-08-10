@@ -31,7 +31,7 @@ class LspVersionComboBox(
         isSwingPopup = false // Use JBPopup instead of default SwingPopup
         model = MutableCollectionComboBoxModel()
 
-        renderer = listCellRenderer {
+        renderer = listCellRenderer("") {
             val isErrorValue =
                 missingVersion != null && (value as? Item.InstalledVersion)?.version == missingVersion
 
