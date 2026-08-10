@@ -861,6 +861,29 @@ fn enclosing_component<'a>(state: &'a GlobalState, nodes: &[Node<'_>]) -> Option
     state.analysis.component_map.get(symbol)
 }
 
+/// Completion items for a port name in a port-match specifier (`match a with b`).
+///
+/// Both names refer to general port instances of the enclosing component. Per
+/// the matched-numbering convention the first name is an output port and the
+/// second an input port, so we filter by `direction`. The enclosing component
+/// is resolved through the semantic AST (via [`enclosing_component`]), which is
+/// robust to the specifier being incomplete in the lossless parse.
+pub(crate) fn completion_items_for_port_match(
+    state: &GlobalState,
+    document: &Uri,
+    position: BytePos,
+    direction: Direction,
+) -> Option<Vec<CompletionItem>> {
+    let nodes = nodes_at_offset(state, document, position)?;
+    let component = enclosing_component(state, &nodes)?;
+    Some(completion_items_for_ports(
+        state,
+        &component.port_interface,
+        Some(direction),
+        true,
+    ))
+}
+
 /// Resolve a use inside a state machine at `position` to its state machine
 /// symbol (action, guard, signal, state, or choice).
 ///
@@ -1149,10 +1172,12 @@ fn completion_items_for_ports(
     state: &GlobalState,
     port_interface: &PortInterface,
     direction_filter: Option<Direction>,
+    general_only: bool,
 ) -> Vec<CompletionItem> {
     let mut items: Vec<CompletionItem> = port_interface
         .port_map
         .values()
+        .filter(|pi| !general_only || matches!(pi, PortInstance::General { .. }))
         .filter(|pi| match direction_filter {
             Some(want) => pi.get_direction() == Some(want),
             None => true,
@@ -1302,6 +1327,7 @@ pub fn completion_items_for_port_instance(
             state,
             port_interface,
             direction_filter,
+            false,
         ));
     }
 
