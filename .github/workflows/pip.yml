@@ -49,7 +49,13 @@ jobs:
           VERSION="${VERSION#v}"
           echo "Setting workspace version to $VERSION"
           VERSION="$VERSION" perl -pi -e 's/^version = ".*"/version = "$ENV{VERSION}"/' Cargo.toml
-          grep -n '^version = ' Cargo.toml
+          # Pin every internal path dependency (which carries a `version = "=0.0.0"`
+          # placeholder) to the exact released version. Without this, the workspace
+          # version bump above leaves crates depending on the nonexistent =0.0.0.
+          git ls-files '*Cargo.toml' | while IFS= read -r manifest; do
+            VERSION="$VERSION" perl -pi -e 's/version = "=0\.0\.0"/version = "=$ENV{VERSION}"/g' "$manifest"
+          done
+          grep -rn '^version = \|version = "=' Cargo.toml */Cargo.toml
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -88,7 +94,13 @@ jobs:
           VERSION="${VERSION#v}"
           echo "Setting workspace version to $VERSION"
           VERSION="$VERSION" perl -pi -e 's/^version = ".*"/version = "$ENV{VERSION}"/' Cargo.toml
-          grep -n '^version = ' Cargo.toml
+          # Pin every internal path dependency (which carries a `version = "=0.0.0"`
+          # placeholder) to the exact released version. Without this, the workspace
+          # version bump above leaves crates depending on the nonexistent =0.0.0.
+          git ls-files '*Cargo.toml' | while IFS= read -r manifest; do
+            VERSION="$VERSION" perl -pi -e 's/version = "=0\.0\.0"/version = "=$ENV{VERSION}"/g' "$manifest"
+          done
+          grep -rn '^version = \|version = "=' Cargo.toml */Cargo.toml
 
       - name: Build sdist
         uses: PyO3/maturin-action@v1
