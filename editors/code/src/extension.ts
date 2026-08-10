@@ -7,6 +7,7 @@ import {
 } from "vscode-languageclient/node";
 
 import * as Settings from "./settings";
+import { resolveServerPath } from "./serverPath";
 import { LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from "./locs";
 import { dumpSyntaxTree, reloadWorkspace } from "./lsp_ext";
 import * as Config from "./fppLspConfig";
@@ -48,6 +49,9 @@ class FppExtension implements vscode.Disposable {
             Settings.onLspServerPathChanged(() => {
                 this.initializeClient();
             }),
+            Settings.onPythonVenvChanged(() => {
+                this.initializeClient();
+            }),
             this.projectStatus,
             configWatcher,
             this.outputChannel,
@@ -64,10 +68,11 @@ class FppExtension implements vscode.Disposable {
             vscode.window.showErrorMessage(`Failed to deactivate old language server: ${e}`);
         }
 
-        const serverPath = Settings.serverPath();
+        // Resolve the server executable: explicit setting, then the workspace venv
+        // (installing `fprime-fpp-lsp` on request), then PATH. Shows its own
+        // guidance if nothing is found.
+        const serverPath = await resolveServerPath();
         if (!serverPath) {
-            // TODO(tumbar) Add a button to open up settings
-            vscode.window.showErrorMessage("No FPP server path set");
             return;
         }
 

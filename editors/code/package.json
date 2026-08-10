@@ -191,7 +191,11 @@
             "properties": {
                 "fpp.serverPath": {
                     "type": "string",
-                    "markdownDescription": "Path to the FPP LSP server, use `<default>` for bundled binary"
+                    "markdownDescription": "Path to the `fpp_lsp_server` executable. Leave unset to auto-discover it from the workspace Python venv (installed via `pip install fprime-fpp-lsp`) or `PATH`."
+                },
+                "fpp.pythonVenv": {
+                    "type": "string",
+                    "markdownDescription": "Path to the Python virtual environment root used to locate `fpp_lsp_server`. Overrides venv auto-discovery. Ignored when `#fpp.serverPath#` is set."
                 },
                 "fpp.locsSearch": {
                     "type": "array",

@@ -6,7 +6,30 @@ VSCode extension for FPP Language Support.
 
 ## Get Started
 
-For the extension to work, it needs a valid F´ build cache.  
+The extension needs the `fpp_lsp_server` executable and a valid F´ build cache.
+
+### Language server
+
+Install the language server into your project's Python virtual environment:
+
+```bash
+pip install fprime-fpp-lsp
+```
+
+When you open a `.fpp` file, the extension locates `fpp_lsp_server` automatically:
+
+1. the `fpp.serverPath` setting, if you set it explicitly;
+2. the workspace Python venv — discovered via the [Python extension][py-ext] or by
+   scanning for a `.venv`/`venv`/`env` directory (override with `fpp.pythonVenv`);
+3. `fpp_lsp_server` on your `PATH`.
+
+If a venv is found but `fprime-fpp-lsp` is not installed, the extension offers to run
+`pip install fprime-fpp-lsp` for you and then starts the server.
+
+[py-ext]: https://marketplace.visualstudio.com/items?itemName=ms-python.python
+
+### Build cache
+
 1. Run `fprime-util generate`
 2. Open a `.fpp` file. The project should start indexing and references should resolve.
 

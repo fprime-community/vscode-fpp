@@ -4,6 +4,7 @@ const names = {
     locsSearch: "fpp.locsSearch",
     locsExclude: "fpp.locsExclude",
     serverPath: "fpp.serverPath",
+    pythonVenv: "fpp.pythonVenv",
     lspServerRunLogLevel: "fpp.lspServerRunLogLevel",
     lspServerDevLogLevel: "fpp.lspServerDevLogLevel"
 };
@@ -36,6 +37,19 @@ export function serverPath(): string | null {
 export function onLspServerPathChanged(callback: () => void): vscode.Disposable {
     return vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration(names.serverPath)) {
+            callback();
+        }
+    });
+}
+
+/** Explicit venv root override used when discovering the server executable. */
+export function pythonVenv(): string | null {
+    return vscode.workspace.getConfiguration().get<string | null>(names.pythonVenv) ?? null;
+}
+
+export function onPythonVenvChanged(callback: () => void): vscode.Disposable {
+    return vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration(names.pythonVenv)) {
             callback();
         }
     });
