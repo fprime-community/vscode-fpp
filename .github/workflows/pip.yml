@@ -146,6 +146,9 @@ jobs:
       - name: Attach distributions to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # This job does not check out the repo, so `gh` cannot infer the target
+          # repository from a local .git dir; point it at the repo explicitly.
+          GH_REPO: ${{ github.repository }}
         run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
 
       - name: Publish to TestPyPI (pre-release)
