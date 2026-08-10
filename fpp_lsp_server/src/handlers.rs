@@ -7,7 +7,8 @@ use crate::util::{
     completion_items_for_qual_ident, completion_items_for_sm, completion_items_for_sm_state,
     completion_items_in_name_group, hover_for_node, hover_for_port_instance, hover_for_sm_symbol,
     hover_for_symbol, node_to_location, nodes_at_offset, port_instance_at_position,
-    position_to_offset, sm_symbol_at_position, symbol_at_position, symbol_to_completion_item,
+    port_match_at_position, position_to_offset, sm_symbol_at_position, symbol_at_position,
+    symbol_to_completion_item,
 };
 use anyhow::Result;
 use fpp_analysis::semantics::{NameGroup, SymbolInterface};
@@ -522,6 +523,13 @@ pub fn handle_goto_definition(
             state,
             port_instance.get_node_id(),
         ))))
+    } else if let Some((_, port_instance)) = port_match_at_position(state, uri, offset) {
+        // Port names in a match specifier (`match a with b`) resolve to a port
+        // instance rather than a symbol; jump to its declaration.
+        Ok(Some(GotoDefinitionResponse::Scalar(node_to_location(
+            state,
+            port_instance.get_node_id(),
+        ))))
     } else if let Some((_, _, sm_symbol)) = sm_symbol_at_position(state, uri, offset) {
         // Uses inside a state machine resolve via the state machine's own
         // use-def map, not the global one; jump to the definition.
@@ -562,6 +570,21 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
     // (sub)topology. `port_instance_at_position` only matches when the cursor is
     // on the port name, so it does not shadow the qualifier's own hover.
     if let Some((name_node, port_instance)) = port_instance_at_position(
+        state,
+        &request.text_document_position_params.text_document.uri,
+        offset,
+    ) {
+        return Ok(Some(hover_for_port_instance(
+            state,
+            name_node,
+            &port_instance,
+        )));
+    }
+
+    // Port names in a match specifier (`match a with b`) are bare identifiers,
+    // not symbols, so they are absent from use_def_map. Resolve them against the
+    // enclosing component's port map.
+    if let Some((name_node, port_instance)) = port_match_at_position(
         state,
         &request.text_document_position_params.text_document.uri,
         offset,
