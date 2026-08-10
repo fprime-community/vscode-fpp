@@ -3,12 +3,12 @@ use crate::lsp;
 use crate::lsp::utils::semantic_token_delta;
 use crate::lsp_ext::UriRequest;
 use crate::util::{
-    completion_items_for_port_instance, completion_items_for_postfix_expr,
-    completion_items_for_qual_ident, completion_items_for_sm, completion_items_for_sm_state,
-    completion_items_in_name_group, hover_for_node, hover_for_port_instance, hover_for_sm_symbol,
-    hover_for_symbol, node_to_location, nodes_at_offset, port_instance_at_position,
-    port_match_at_position, position_to_offset, sm_symbol_at_position, symbol_at_position,
-    symbol_to_completion_item,
+    completion_items_for_port_instance, completion_items_for_port_match,
+    completion_items_for_postfix_expr, completion_items_for_qual_ident, completion_items_for_sm,
+    completion_items_for_sm_state, completion_items_in_name_group, hover_for_node,
+    hover_for_port_instance, hover_for_sm_symbol, hover_for_symbol, node_to_location,
+    nodes_at_offset, port_instance_at_position, port_match_at_position, position_to_offset,
+    sm_symbol_at_position, symbol_at_position, symbol_to_completion_item,
 };
 use anyhow::Result;
 use fpp_analysis::semantics::{NameGroup, SymbolInterface};
@@ -1056,6 +1056,33 @@ pub fn handle_completion(
             &uri,
         )
         .map(CompletionResponse::Array))
+    } else if let Some(match_node) = left_token
+        .parent_ancestors()
+        .find(|s| s.kind() == SyntaxKind::MATCH_KW)
+    {
+        // Completion for a port-match specifier (`match a with b`). The node
+        // (kind `MATCH_KW`) holds two `NAME_REF` port names. Per the matched
+        // numbering convention the first is an output port and the second an
+        // input port. Decide which name the cursor is on: everything up to and
+        // including the `with` keyword is the first (output) name; after it is
+        // the second (input) name.
+        // Use `descendants_with_tokens` since an incomplete first name parks the
+        // `with` keyword inside an ERROR node rather than as a direct child.
+        let with_end = match_node
+            .descendants_with_tokens()
+            .filter_map(|c| c.into_token())
+            .find(|t| t.kind() == SyntaxKind::WITH_KW)
+            .map(|t| t.text_range().end());
+
+        let direction = match with_end {
+            Some(end) if cursor_pos >= end => fpp_analysis::semantics::Direction::Input,
+            _ => fpp_analysis::semantics::Direction::Output,
+        };
+
+        Ok(
+            completion_items_for_port_match(state, &uri, cursor_pos.into(), direction)
+                .map(CompletionResponse::Array),
+        )
     } else if let Some(sm_kind) = state_machine_completion_kind(&left_token, cursor_pos) {
         // Completion for state machine definitions: actions in `do { }`, guards
         // after `if`, signals after `on`, and states/choices after `enter`.
