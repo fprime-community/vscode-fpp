@@ -23,6 +23,8 @@ impl GlobalState {
             // Request handlers that must run on the main thread
             // because they mutate GlobalState:
             .on_run_task::<lsp_ext::ReloadWorkspace>(|_| Ok(Task::ReloadWorkspace))
+            .on::<lsp_ext::Diagram>(handlers::handle_diagram)
+            .on::<lsp_ext::DiagramElements>(handlers::handle_diagram_elements)
             // .on_sync::<lsp_request::SelectionRangeRequest>(handlers::handle_selection_range)
             .on::<lsp_request::Completion>(handlers::handle_completion)
             // .on::<lsp_request::ResolveCompletionItem>(handlers::handle_completion_resolve)

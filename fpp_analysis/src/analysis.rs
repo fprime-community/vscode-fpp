@@ -150,6 +150,23 @@ impl Analysis {
         expr.as_ref().and_then(|e| self.get_int_value(e.node_id))
     }
 
+    /// Gets an int value from an AST node, erroring if it is out of the i32
+    /// range. Mirrors Scala's `Analysis.getIntValue`, whose `phase`/id values
+    /// are `Int`-typed; an FPP `BigInt` that overflows `Int` is rejected with
+    /// "value out of range".
+    pub fn get_int_value_checked(&self, node: fpp_core::Node, loc: Span) -> SemanticResult<i128> {
+        let v = self.get_int_value(node).unwrap_or(0);
+        if v < i32::MIN as i128 || v > i32::MAX as i128 {
+            Err(SemanticError::InvalidIntValue {
+                loc,
+                v: Some(v),
+                msg: "value out of range".to_string(),
+            })
+        } else {
+            Ok(v)
+        }
+    }
+
     /// Get an array size (>= 1) for an AST node.
     pub fn get_array_size(
         &self,

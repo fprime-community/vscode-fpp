@@ -140,15 +140,18 @@ impl Type {
             Type::Integer => false,
             Type::AbsType(_) => false,
             Type::AliasType(alias) => alias.alias_type.is_displayable(),
+            // A named array is displayable iff its element type is; anonymous
+            // aggregates inherit the base `false` (Scala: AnonArray/AnonStruct do
+            // not override isDisplayable).
             Type::Array(arr) => arr.anon_array.elt_type.is_displayable(),
-            Type::AnonArray(arr) => arr.elt_type.is_displayable(),
+            Type::AnonArray(_) => false,
             Type::Enum(_) => true,
             Type::Struct(ty) => ty
                 .anon_struct
                 .members
                 .values()
                 .all(|member| member.is_displayable()),
-            Type::AnonStruct(ty) => ty.members.values().all(|member| member.is_displayable()),
+            Type::AnonStruct(_) => false,
         }
     }
 
@@ -433,8 +436,6 @@ impl Type {
             (Type::Float(k1), Type::Float(k2)) => k1 == k2,
             (Type::Integer, Type::Integer) => true,
             (Type::Boolean, Type::Boolean) => true,
-            (Type::String(None), Type::String(None)) => true,
-            (Type::String(Some(s1)), Type::String(Some(s2))) => s1 == s2,
             _ => match (t1.def_node_id(), t2.def_node_id()) {
                 (Some(n1), Some(n2)) => n1 == n2,
                 _ => false,
@@ -510,7 +511,7 @@ impl Type {
 
             // Strip off any enum wrappers over the representable type
             (Type::Enum(EnumType { rep_type, .. }), _) => {
-                Self::common_type(&Arc::new(Type::PrimitiveInt(*rep_type)), &t1)
+                Self::common_type(&Arc::new(Type::PrimitiveInt(*rep_type)), &t2)
             }
             (_, Type::Enum(EnumType { rep_type, .. })) => {
                 Self::common_type(&t1, &Arc::new(Type::PrimitiveInt(*rep_type)))
@@ -861,4 +862,92 @@ pub struct StructType {
 pub struct AnonStructType {
     /** The members */
     pub members: HashMap<String, Arc<Type>>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn string(size: Option<i128>) -> Arc<Type> {
+        Arc::new(Type::String(size))
+    }
+
+    fn anon_array(elt: Arc<Type>, size: Option<usize>) -> Arc<Type> {
+        Arc::new(Type::AnonArray(AnonArrayType {
+            elt_type: elt,
+            size,
+        }))
+    }
+
+    /// Regression for the `common_type` enum arm (fidelity bug #1): the enum
+    /// case must recurse on `(repType, t2)`, not `(repType, t1)`, so the *other*
+    /// operand is not dropped. `enum + F64` must widen to `F64`, matching Scala's
+    /// `commonType(repType, t2)`.
+    #[test]
+    fn common_type_enum_and_float() {
+        // Build a minimal enum type (needs a node span, hence a context).
+        let mut buf = vec![];
+        let mut ctx = fpp_core::CompilerContext::new(fpp_errors::WriteEmitter::new(&mut buf));
+        fpp_core::run(&mut ctx, || {
+            let src = fpp_core::SourceFile::new("test", "enum E { X }".to_string());
+            let span = fpp_core::Span::new(src, 0, 1, None);
+            let def_enum = fpp_ast::DefEnum {
+                name: fpp_ast::Name {
+                    data: "E".to_string(),
+                    node_id: fpp_core::Node::new(span),
+                },
+                type_name: None,
+                constants: vec![],
+                default: None,
+                is_dictionary_def: false,
+                node_id: fpp_core::Node::new(span),
+            };
+            let enum_ty = Arc::new(Type::Enum(EnumType {
+                node: def_enum,
+                rep_type: IntegerKind::I32,
+                default: None,
+            }));
+            let f64_ty = Arc::new(Type::Float(FloatKind::F64));
+
+            // enum + F64 -> F64 (widens through the rep type to the float)
+            let ct = Type::common_type(&enum_ty, &f64_ty).expect("common type");
+            assert!(ct.is_float(), "expected F64, got {ct}");
+            // symmetric
+            let ct = Type::common_type(&f64_ty, &enum_ty).expect("common type");
+            assert!(ct.is_float(), "expected F64, got {ct}");
+        });
+    }
+
+    /// Regression for `identical` (fidelity bug #6): two equal fixed-size strings
+    /// are NOT identical (Scala's `areIdentical` has no `String` case), so their
+    /// common type is the unsized `String(None)`.
+    #[test]
+    fn identical_strings_are_not_identical() {
+        assert!(!Type::identical(
+            &Type::String(Some(8)),
+            &Type::String(Some(8))
+        ));
+        let ct = Type::common_type(&string(Some(8)), &string(Some(8))).expect("common type");
+        assert!(
+            matches!(ct.deref(), Type::String(None)),
+            "expected String(None), got {ct}"
+        );
+    }
+
+    /// Regression for `is_displayable` (fidelity bug #7): anonymous aggregates
+    /// inherit the base `false` even when their elements are displayable (Scala's
+    /// `AnonArray`/`AnonStruct` do not override `isDisplayable`).
+    #[test]
+    fn anon_aggregates_are_not_displayable() {
+        assert!(
+            !anon_array(Arc::new(Type::Boolean), Some(3)).is_displayable(),
+            "anonymous array must not be displayable"
+        );
+        let mut members = HashMap::default();
+        members.insert("x".to_string(), Arc::new(Type::Boolean));
+        assert!(
+            !Type::AnonStruct(AnonStructType { members }).is_displayable(),
+            "anonymous struct must not be displayable"
+        );
+    }
 }

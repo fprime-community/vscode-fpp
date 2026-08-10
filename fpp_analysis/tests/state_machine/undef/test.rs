@@ -1,6 +1,28 @@
 use crate::run_test;
 
 #[test]
+fn qualified_target() {
+    run_test("state_machine/undef/qualified_target")
+}
+
+// Multiple undefined uses in a single state machine: with collect-and-continue
+// (no longer short-circuiting at the first error like Scala), every undefined
+// signal/action use in the same SM is reported, not just the first.
+#[test]
+fn multiple_uses() {
+    run_test("state_machine/undef/multiple_uses")
+}
+
+// Pathological input: an undefined initial-transition target plus undefined
+// uses inside states. Exercises the between-pass `had_error` guards — without
+// them, a hole left by failed use-resolution would reach a downstream `unwrap`
+// (transition graph / typed elements) and panic instead of emitting.
+#[test]
+fn stress_multi() {
+    run_test("state_machine/undef/stress_multi")
+}
+
+#[test]
 fn nested_action_error() {
     run_test("state_machine/undef/nested_action_error")
 }

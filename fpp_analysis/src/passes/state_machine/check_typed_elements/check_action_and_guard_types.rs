@@ -11,6 +11,7 @@ use fpp_ast::{
     SpecStateExit, SpecStateTransition, TransitionExpr, TransitionOrDo,
 };
 use fpp_core::Spanned;
+use std::ops::ControlFlow;
 use std::sync::Arc;
 
 /// Check action and guard types
@@ -29,7 +30,7 @@ impl<'a> CheckActionAndGuardTypes<'a> {
     /// Analyze a state machine definition
     pub fn def_state_machine(
         a: &'a Analysis,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &DefStateMachine,
     ) -> SmResult {
         StateMachineAnalysisVisitor::def_state_machine(&CheckActionAndGuardTypes { a }, sma, node)
@@ -38,7 +39,7 @@ impl<'a> CheckActionAndGuardTypes<'a> {
     // Check action types
     fn check_action_types(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
         actions: &[Ident],
     ) -> SmResult {
@@ -58,7 +59,7 @@ impl<'a> CheckActionAndGuardTypes<'a> {
     // Check guard types
     fn check_guard_type(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
         guard: &Ident,
     ) -> SmResult {
@@ -83,7 +84,7 @@ impl<'a> CheckActionAndGuardTypes<'a> {
 
     // Check call site types
     fn check_call_site_types(
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
         call_sites: &[Ident],
         site_kind: &str,
@@ -95,16 +96,17 @@ impl<'a> CheckActionAndGuardTypes<'a> {
             let loc = cs.span();
             let sym = sma.use_def_map.get(&cs.id()).unwrap().clone();
             let site_to = get_type_option(&sym);
-            sma.convert_type_options_at_call_site(loc, &te_kind, &te_to, site_kind, &site_to)?;
+            // Non-blocking: a mismatch is emitted in place and analysis continues.
+            sma.convert_type_options_at_call_site(loc, &te_kind, &te_to, site_kind, &site_to);
         }
-        Ok(sma)
+        ControlFlow::Continue(())
     }
 }
 
 impl SmTypedElementAnalyzer for CheckActionAndGuardTypes<'_> {
     fn initial_transition_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
     ) -> SmResult {
         let node = match te {
@@ -117,22 +119,22 @@ impl SmTypedElementAnalyzer for CheckActionAndGuardTypes<'_> {
 
     fn choice_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
     ) -> SmResult {
         let node = match te {
             StateMachineTypedElement::Choice(node) => node,
             _ => panic!("expected choice"),
         };
-        let sma = self.check_guard_type(sma, te, &node.guard)?;
-        let sma = self.check_action_types(sma, te, transition_actions(&node.if_transition))?;
-        let sma = self.check_action_types(sma, te, transition_actions(&node.else_transition))?;
-        Ok(sma)
+        self.check_guard_type(sma, te, &node.guard)?;
+        self.check_action_types(sma, te, transition_actions(&node.if_transition))?;
+        self.check_action_types(sma, te, transition_actions(&node.else_transition))?;
+        ControlFlow::Continue(())
     }
 
     fn state_entry_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
     ) -> SmResult {
         let node = match te {
@@ -144,7 +146,7 @@ impl SmTypedElementAnalyzer for CheckActionAndGuardTypes<'_> {
 
     fn state_exit_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
     ) -> SmResult {
         let node = match te {
@@ -156,43 +158,44 @@ impl SmTypedElementAnalyzer for CheckActionAndGuardTypes<'_> {
 
     fn state_transition_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
     ) -> SmResult {
         let node = match te {
             StateMachineTypedElement::StateTransition(node) => node,
             _ => panic!("expected state transition"),
         };
-        let sma = match &node.guard {
-            Some(guard) => self.check_guard_type(sma, te, guard)?,
-            None => sma,
-        };
-        let sma = match &node.transition_or_do {
+        if let Some(guard) = &node.guard {
+            self.check_guard_type(sma, te, guard)?;
+        }
+        match &node.transition_or_do {
             TransitionOrDo::Transition(transition) => {
-                self.check_action_types(sma, te, transition_actions(transition))?
+                self.check_action_types(sma, te, transition_actions(transition))?;
             }
-            TransitionOrDo::Do(actions) => self.check_action_types(sma, te, &actions.actions)?,
-        };
-        Ok(sma)
+            TransitionOrDo::Do(actions) => {
+                self.check_action_types(sma, te, &actions.actions)?;
+            }
+        }
+        ControlFlow::Continue(())
     }
 }
 
 impl StateMachineAnalysisVisitor for CheckActionAndGuardTypes<'_> {
-    fn def_choice(&self, sma: StateMachineAnalysis, node: &DefChoice) -> SmResult {
+    fn def_choice(&self, sma: &mut StateMachineAnalysis, node: &DefChoice) -> SmResult {
         self.def_choice_te(sma, node)
     }
 
-    fn spec_state_entry(&self, sma: StateMachineAnalysis, node: &SpecStateEntry) -> SmResult {
+    fn spec_state_entry(&self, sma: &mut StateMachineAnalysis, node: &SpecStateEntry) -> SmResult {
         self.spec_state_entry_te(sma, node)
     }
 
-    fn spec_state_exit(&self, sma: StateMachineAnalysis, node: &SpecStateExit) -> SmResult {
+    fn spec_state_exit(&self, sma: &mut StateMachineAnalysis, node: &SpecStateExit) -> SmResult {
         self.spec_state_exit_te(sma, node)
     }
 
     fn spec_initial_transition(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &SpecInitialTransition,
     ) -> SmResult {
         self.spec_initial_transition_te(sma, node)
@@ -200,13 +203,13 @@ impl StateMachineAnalysisVisitor for CheckActionAndGuardTypes<'_> {
 
     fn spec_state_transition(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &SpecStateTransition,
     ) -> SmResult {
         self.spec_state_transition_te(sma, node)
     }
 
-    fn def_state(&self, sma: StateMachineAnalysis, node: &DefState) -> SmResult {
+    fn def_state(&self, sma: &mut StateMachineAnalysis, node: &DefState) -> SmResult {
         self.state_analyzer_def_state(sma, node)
     }
 }

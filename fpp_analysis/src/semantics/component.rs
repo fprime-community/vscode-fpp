@@ -486,22 +486,28 @@ impl Component {
         &self.node.name.data
     }
 
+    /// Query whether the component has parameters
     pub fn has_parameters(&self) -> bool {
         !self.param_map.is_empty()
     }
+    /// Query whether the component has commands
     pub fn has_commands(&self) -> bool {
         !self.command_map.is_empty()
     }
+    /// Query whether the component has events
     pub fn has_events(&self) -> bool {
         !self.event_map.is_empty()
     }
+    /// Query whether the component has telemetry
     pub fn has_telemetry(&self) -> bool {
         !self.tlm_channel_map.is_empty()
     }
+    /// Query whether the component has data products
     pub fn has_data_products(&self) -> bool {
         !self.record_map.is_empty() || !self.container_map.is_empty()
     }
 
+    /// Gets the max identifier
     pub fn get_max_id(&self) -> i128 {
         fn max_in_map<T>(map: &HashMap<i128, T>) -> i128 {
             map.keys().copied().max().unwrap_or(-1)
@@ -518,6 +524,7 @@ impl Component {
         .unwrap_or(-1)
     }
 
+    /// Add a command
     pub fn add_command(
         &self,
         opcode_opt: Option<i128>,
@@ -537,6 +544,7 @@ impl Component {
         Ok(c)
     }
 
+    /// Add a state machine instance
     pub fn add_state_machine_instance(
         &self,
         instance: StateMachineInstance,
@@ -554,12 +562,13 @@ impl Component {
         Ok(c)
     }
 
+    /// Add a data product container
     pub fn add_container(
         &self,
         id_opt: Option<i128>,
         container: Container,
     ) -> SemanticResult<Component> {
-        let (map, next) = add_to_id_map(
+        let (map, next) = add_element_to_id_map(
             &self.container_map,
             id_opt.unwrap_or(self.default_container_id),
             container,
@@ -571,8 +580,9 @@ impl Component {
         Ok(c)
     }
 
+    /// Add an event
     pub fn add_event(&self, id_opt: Option<i128>, event: Event) -> SemanticResult<Component> {
-        let (map, next) = add_to_id_map(
+        let (map, next) = add_element_to_id_map(
             &self.event_map,
             id_opt.unwrap_or(self.default_event_id),
             event,
@@ -584,8 +594,9 @@ impl Component {
         Ok(c)
     }
 
+    /// Add a data product record
     pub fn add_record(&self, id_opt: Option<i128>, record: Record) -> SemanticResult<Component> {
-        let (map, next) = add_to_id_map(
+        let (map, next) = add_element_to_id_map(
             &self.record_map,
             id_opt.unwrap_or(self.default_record_id),
             record,
@@ -597,13 +608,14 @@ impl Component {
         Ok(c)
     }
 
+    /// Add a telemetry channel
     pub fn add_tlm_channel(
         &self,
         id_opt: Option<i128>,
         channel: TlmChannel,
     ) -> SemanticResult<Component> {
         let name = channel.name.clone();
-        let (map, next) = add_to_id_map(
+        let (map, next) = add_element_to_id_map(
             &self.tlm_channel_map,
             id_opt.unwrap_or(self.default_tlm_channel_id),
             channel.clone(),
@@ -616,8 +628,9 @@ impl Component {
         Ok(c)
     }
 
+    /// Add a parameter
     pub fn add_param(&self, id_opt: Option<i128>, param: Param) -> SemanticResult<Component> {
-        let (map, next) = add_to_id_map(
+        let (map, next) = add_element_to_id_map(
             &self.param_map,
             id_opt.unwrap_or(self.default_param_id),
             param.clone(),
@@ -642,6 +655,7 @@ impl Component {
         Ok(c)
     }
 
+    /// Add a port instance
     pub fn add_port_instance(&self, instance: PortInstance) -> SemanticResult<Component> {
         let pi = self.port_interface.add_port_instance(instance)?;
         let mut c = self.clone();
@@ -675,6 +689,7 @@ impl Component {
         Ok(self)
     }
 
+    /// Checks whether a component is valid
     fn check_validity(&self) -> SemanticResult {
         self.check_no_duplicate_names()?;
         match self.kind() {
@@ -686,6 +701,7 @@ impl Component {
         Ok(())
     }
 
+    /// Checks that there are no duplicate names in dictionaries
     fn check_no_duplicate_names(&self) -> SemanticResult {
         check_dictionary_names(&self.param_map, "parameter", |p| p.name.clone(), |p| p.loc)?;
         check_dictionary_names(&self.command_map, "command", |c| c.name.clone(), |c| c.loc)?;
@@ -706,6 +722,7 @@ impl Component {
         Ok(())
     }
 
+    /// Checks that component has at least one async input port or async command
     fn check_async_input(&self) -> SemanticResult {
         // Component must have at least one async input port, async command, or SM instance.
         if self.check_no_async_input().is_err() {
@@ -718,6 +735,7 @@ impl Component {
         }
     }
 
+    /// Checks that component has no async input ports
     fn check_no_async_input(&self) -> SemanticResult {
         for instance in self.port_interface.port_map.values() {
             if instance.is_async_input() {
@@ -747,6 +765,8 @@ impl Component {
             .contains_key(&special_kind_key(&kind))
     }
 
+    /// Check that component provides ports required by dictionary
+    /// and data product specifiers
     fn check_required_ports(&self) -> SemanticResult {
         use SpecialPortInstanceKind::*;
         let require = |condition: bool,
@@ -809,6 +829,8 @@ impl Component {
         Ok(())
     }
 
+    /// Check that if there are any data products, then there are both containers
+    /// and records
     fn check_data_products(&self) -> SemanticResult {
         match (self.record_map.len(), self.container_map.len()) {
             (0, 0) => Ok(()),
@@ -832,6 +854,7 @@ impl Component {
         }
     }
 
+    /// Construct the port matching list
     fn construct_port_matching_list(&self) -> SemanticResult<Vec<PortMatching>> {
         let mut list = Vec::new();
         for node in &self.spec_port_matching_list {
@@ -840,6 +863,7 @@ impl Component {
         Ok(list)
     }
 
+    /// Constructs a port matching from a specifier
     fn construct_port_matching(&self, node: &SpecPortMatching) -> SemanticResult<PortMatching> {
         let loc = node.span();
         let name1 = &node.port1.data;
@@ -885,7 +909,8 @@ impl Component {
     }
 }
 
-fn add_to_id_map<T: Clone>(
+/// Add an element to an id map, returning the updated map and the next default id
+fn add_element_to_id_map<T: Clone>(
     map: &HashMap<i128, T>,
     id: i128,
     element: T,

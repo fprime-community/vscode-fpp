@@ -466,7 +466,12 @@ impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
             a.add_text_range(range, kind);
         }
 
-        ControlFlow::Continue(())
+        // Walk the children so ordinary uses inside the state machine still get
+        // colored through the global use-def map — in particular the type names
+        // on action/guard/signal definitions (`action a: SomeType`). The state
+        // machine's own action/guard/signal/state uses are not in the global
+        // map, so this walk does not re-mark (or overlap) the ranges above.
+        node.walk(a, self)
     }
 }
 

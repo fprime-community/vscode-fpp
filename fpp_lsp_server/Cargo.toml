@@ -15,6 +15,7 @@ fpp_core = { path = "../fpp_core", version = "=0.0.0" }
 fpp_parser = { path = "../fpp_parser", version = "=0.0.0" }
 fpp_lsp_parser = { path = "../fpp_lsp_parser", version = "=0.0.0" }
 fpp_format = { path = "../fpp_format", version = "=0.0.0" }
+fpp_diagram = { path = "../fpp_diagram", version = "=0.0.0" }
 
 lsp-server = "=0.7.9"
 serde_json = "1.0.145"

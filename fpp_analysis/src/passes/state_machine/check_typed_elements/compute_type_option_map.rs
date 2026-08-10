@@ -10,6 +10,7 @@ use fpp_ast::{
     AstNode, DefChoice, DefState, DefStateMachine, SpecInitialTransition, SpecStateEntry,
     SpecStateExit, SpecStateTransition,
 };
+use std::ops::ControlFlow;
 
 /// Compute the type option map
 pub struct ComputeTypeOptionMap<'a> {
@@ -20,7 +21,7 @@ impl<'a> ComputeTypeOptionMap<'a> {
     /// Analyze a state machine definition
     pub fn def_state_machine(
         a: &'a Analysis,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &DefStateMachine,
     ) -> SmResult {
         StateMachineAnalysisVisitor::def_state_machine(&ComputeTypeOptionMap { a }, sma, node)
@@ -30,16 +31,16 @@ impl<'a> ComputeTypeOptionMap<'a> {
 impl SmTypedElementAnalyzer for ComputeTypeOptionMap<'_> {
     fn initial_transition_typed_element(
         &self,
-        mut sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
     ) -> SmResult {
         sma.type_option_map.insert(te.clone(), None);
-        Ok(sma)
+        ControlFlow::Continue(())
     }
 
     fn choice_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
     ) -> SmResult {
         let sym = match te {
@@ -58,51 +59,49 @@ impl SmTypedElementAnalyzer for ComputeTypeOptionMap<'_> {
             None => {
                 // Handle the case where no arc comes into J.
                 // This happens when J is the initial node in the transition graph.
-                let mut sma = sma;
                 sma.type_option_map.insert(te.clone(), None);
-                Ok(sma)
             }
             Some((head, tail)) => {
                 // Handle the case where at least one arc comes into J.
                 let te0 = head.get_typed_element();
-                let mut sma = self.visit_typed_element(sma, te0.clone())?;
+                self.visit_typed_element(sma, te0.clone())?;
                 let to0 = sma.type_option_map.get(&te0).cloned().unwrap();
                 let mut acc_te = te0;
                 let mut acc_to = to0;
                 for arc in tail {
                     let te2 = arc.get_typed_element();
-                    sma = self.visit_typed_element(sma, te2.clone())?;
-                    let to2 = sma.common_type_at_choice(te, &acc_te, &acc_to, &te2)?;
+                    self.visit_typed_element(sma, te2.clone())?;
+                    let to2 = sma.common_type_at_choice(te, &acc_te, &acc_to, &te2);
                     acc_te = te2;
                     acc_to = to2;
                 }
                 sma.type_option_map.insert(te.clone(), acc_to);
-                Ok(sma)
             }
         }
+        ControlFlow::Continue(())
     }
 
     fn state_entry_typed_element(
         &self,
-        mut sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
     ) -> SmResult {
         sma.type_option_map.insert(te.clone(), None);
-        Ok(sma)
+        ControlFlow::Continue(())
     }
 
     fn state_exit_typed_element(
         &self,
-        mut sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
     ) -> SmResult {
         sma.type_option_map.insert(te.clone(), None);
-        Ok(sma)
+        ControlFlow::Continue(())
     }
 
     fn state_transition_typed_element(
         &self,
-        mut sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: &StateMachineTypedElement,
     ) -> SmResult {
         let st = match te {
@@ -120,16 +119,16 @@ impl SmTypedElementAnalyzer for ComputeTypeOptionMap<'_> {
             .as_ref()
             .map(|node| self.a.type_map.get(&node.node_id).unwrap().clone());
         sma.type_option_map.insert(te.clone(), to);
-        Ok(sma)
+        ControlFlow::Continue(())
     }
 
     fn visit_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: StateMachineTypedElement,
     ) -> SmResult {
         if sma.type_option_map.contains_key(&te) {
-            Ok(sma)
+            ControlFlow::Continue(())
         } else {
             self.dispatch_typed_element(sma, te)
         }
@@ -137,21 +136,21 @@ impl SmTypedElementAnalyzer for ComputeTypeOptionMap<'_> {
 }
 
 impl StateMachineAnalysisVisitor for ComputeTypeOptionMap<'_> {
-    fn def_choice(&self, sma: StateMachineAnalysis, node: &DefChoice) -> SmResult {
+    fn def_choice(&self, sma: &mut StateMachineAnalysis, node: &DefChoice) -> SmResult {
         self.def_choice_te(sma, node)
     }
 
-    fn spec_state_entry(&self, sma: StateMachineAnalysis, node: &SpecStateEntry) -> SmResult {
+    fn spec_state_entry(&self, sma: &mut StateMachineAnalysis, node: &SpecStateEntry) -> SmResult {
         self.spec_state_entry_te(sma, node)
     }
 
-    fn spec_state_exit(&self, sma: StateMachineAnalysis, node: &SpecStateExit) -> SmResult {
+    fn spec_state_exit(&self, sma: &mut StateMachineAnalysis, node: &SpecStateExit) -> SmResult {
         self.spec_state_exit_te(sma, node)
     }
 
     fn spec_initial_transition(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &SpecInitialTransition,
     ) -> SmResult {
         self.spec_initial_transition_te(sma, node)
@@ -159,13 +158,13 @@ impl StateMachineAnalysisVisitor for ComputeTypeOptionMap<'_> {
 
     fn spec_state_transition(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &SpecStateTransition,
     ) -> SmResult {
         self.spec_state_transition_te(sma, node)
     }
 
-    fn def_state(&self, sma: StateMachineAnalysis, node: &DefState) -> SmResult {
+    fn def_state(&self, sma: &mut StateMachineAnalysis, node: &DefState) -> SmResult {
         self.state_analyzer_def_state(sma, node)
     }
 }

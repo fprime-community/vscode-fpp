@@ -6,13 +6,14 @@ use fpp_ast::{
 };
 use fpp_core::{Span, Spanned};
 use rustc_hash::FxHashSet as HashSet;
+use std::ops::ControlFlow;
 
 /// Check initial transitions
 pub struct CheckInitialTransitions;
 
 impl CheckInitialTransitions {
     /// Analyze a state machine definition
-    pub fn def_state_machine(sma: StateMachineAnalysis, node: &DefStateMachine) -> SmResult {
+    pub fn def_state_machine(sma: &mut StateMachineAnalysis, node: &DefStateMachine) -> SmResult {
         StateMachineAnalysisVisitor::def_state_machine(&CheckInitialTransitions, sma, node)
     }
 
@@ -100,9 +101,15 @@ impl CheckInitialTransitions {
 }
 
 impl StateMachineAnalysisVisitor for CheckInitialTransitions {
-    fn def_state_machine(&self, mut sma: StateMachineAnalysis, node: &DefStateMachine) -> SmResult {
+    fn def_state_machine(
+        &self,
+        sma: &mut StateMachineAnalysis,
+        node: &DefStateMachine,
+    ) -> SmResult {
         let members: &[StateMachineMember] = node.members.as_deref().unwrap_or(&[]);
-        // Check that there is exactly one initial transition specifier
+        // Check that there is exactly one initial transition specifier. This is
+        // blocking: reachability reads the transition graph's `initial_node`,
+        // which is only set when a well-formed initial transition exists.
         let initial_transitions = members
             .iter()
             .filter_map(|m| match m {
@@ -112,7 +119,14 @@ impl StateMachineAnalysisVisitor for CheckInitialTransitions {
                 _ => None,
             })
             .collect();
-        Self::check_one_initial_transition(initial_transitions, node.name.span(), "state machine")?;
+        if let Err(err) = Self::check_one_initial_transition(
+            initial_transitions,
+            node.name.span(),
+            "state machine",
+        ) {
+            err.emit();
+            sma.blocking_error = true;
+        }
         // Visit the members
         sma.parent_state = None;
         self.visit_sm_members(sma, members)
@@ -120,43 +134,47 @@ impl StateMachineAnalysisVisitor for CheckInitialTransitions {
 
     fn spec_initial_transition(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &SpecInitialTransition,
     ) -> SmResult {
         // Check that node leads to a state machine or choice
-        // with the same parent symbol as sma
+        // with the same parent symbol as sma.
+        //
+        // If use-resolution failed for this transition target there is no
+        // `use_def_map` entry (a blocking error already emitted), so skip.
         let dest_id = node.transition.target.id();
-        let dest_symbol = sma.use_def_map.get(&dest_id).unwrap().clone();
-        match Self::check_for_dest_outside_parent(
-            &sma,
+        let Some(dest_symbol) = sma.use_def_map.get(&dest_id).cloned() else {
+            return ControlFlow::Continue(());
+        };
+        if let Err(symbols) = Self::check_for_dest_outside_parent(
+            sma,
             dest_symbol,
             &sma.parent_state,
             Vec::new(),
             HashSet::default(),
         ) {
-            Err(symbols) => {
-                let loc = node.span();
-                let msg_head = match sma.parent_state {
-                    Some(_) => {
-                        "initial transition of state must go to state or choice defined in the same state"
-                    }
-                    None => {
-                        "initial transition of state machine may not go to a state or choice defined in a substate"
-                    }
-                };
-                let path: Vec<Span> = symbols.iter().rev().map(|s| s.get_span()).collect();
-                Err(SemanticError::InvalidInitialTransition {
-                    loc,
-                    msg: msg_head.to_string(),
-                    path,
-                    duplicate: Vec::new(),
-                })
+            let loc = node.span();
+            let msg_head = match sma.parent_state {
+                Some(_) => {
+                    "initial transition of state must go to state or choice defined in the same state"
+                }
+                None => {
+                    "initial transition of state machine may not go to a state or choice defined in a substate"
+                }
+            };
+            let path: Vec<Span> = symbols.iter().rev().map(|s| s.get_span()).collect();
+            SemanticError::InvalidInitialTransition {
+                loc,
+                msg: msg_head.to_string(),
+                path,
+                duplicate: Vec::new(),
             }
-            Ok(_) => Ok(sma),
+            .emit();
         }
+        ControlFlow::Continue(())
     }
 
-    fn def_state(&self, mut sma: StateMachineAnalysis, node: &DefState) -> SmResult {
+    fn def_state(&self, sma: &mut StateMachineAnalysis, node: &DefState) -> SmResult {
         let loc = node.name.span();
         let sub_states = node
             .members
@@ -177,22 +195,25 @@ impl StateMachineAnalysisVisitor for CheckInitialTransitions {
 
         match (sub_states, initial_transitions.len()) {
             // No substates, no initial transition: OK
-            (0, 0) => Ok(sma),
+            (0, 0) => ControlFlow::Continue(()),
             // Substates or initial transitions: Check semantics
             _ => {
-                // Check for exactly one initial transition
-                Self::check_one_initial_transition(
+                // Check for exactly one initial transition (blocking, as above)
+                if let Err(err) = Self::check_one_initial_transition(
                     initial_transitions,
                     loc,
                     "state with substates",
-                )?;
+                ) {
+                    err.emit();
+                    sma.blocking_error = true;
+                }
                 // Visit the members
                 let saved = sma.parent_state.clone();
                 sma.parent_state =
                     Some(StateMachineSymbol::State(std::sync::Arc::new(node.clone())));
-                let mut sma = self.state_analyzer_def_state(sma, node)?;
+                self.state_analyzer_def_state(sma, node)?;
                 sma.parent_state = saved;
-                Ok(sma)
+                ControlFlow::Continue(())
             }
         }
     }

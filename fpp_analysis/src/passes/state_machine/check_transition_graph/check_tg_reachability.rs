@@ -1,25 +1,27 @@
-use crate::errors::{SemanticError, SemanticResult};
+use crate::analyzers::state_machine::SmResult;
+use crate::errors::SemanticError;
 use crate::semantics::state_machine::StateMachineAnalysis;
 use crate::semantics::state_machine::transition_graph::Node as TgNode;
 use rustc_hash::FxHashSet as HashSet;
+use std::ops::ControlFlow;
 
 /// Check reachability in the transition graph
 pub struct CheckTGReachability;
 
 impl CheckTGReachability {
-    pub fn state_machine_analysis(sma: &StateMachineAnalysis) -> SemanticResult<()> {
+    pub fn state_machine_analysis(sma: &StateMachineAnalysis) -> SmResult {
         let nodes: Vec<TgNode> = sma.transition_graph.arc_map.keys().cloned().collect();
         let reachable_nodes = ReachableNodes::compute(sma);
         for node in nodes {
-            if reachable_nodes.contains(&node) {
-                // reachable: nothing to do
-            } else {
+            if !reachable_nodes.contains(&node) {
+                // Unreachable node is non-blocking: emit and keep checking the
+                // remaining nodes.
                 let loc = node.soc.get_symbol().get_span();
                 let name = node.soc.get_name();
-                return Err(SemanticError::UnreachableNode { name, loc });
+                SemanticError::UnreachableNode { name, loc }.emit();
             }
         }
-        Ok(())
+        ControlFlow::Continue(())
     }
 }
 

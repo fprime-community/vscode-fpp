@@ -330,6 +330,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "fpp_diagram"
+version = "0.0.0"
+dependencies = [
+ "clap",
+ "fpp_analysis",
+ "fpp_ast",
+ "fpp_core",
+ "fpp_errors",
+ "fpp_fs",
+ "fpp_parser",
+ "pretty_assertions",
+ "rustc-hash 2.1.1",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "fpp_errors"
 version = "0.0.0"
 dependencies = [
@@ -383,6 +400,7 @@ dependencies = [
  "fpp_analysis",
  "fpp_ast",
  "fpp_core",
+ "fpp_diagram",
  "fpp_errors",
  "fpp_format",
  "fpp_fs",

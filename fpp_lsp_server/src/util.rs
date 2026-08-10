@@ -808,12 +808,7 @@ pub(crate) fn sm_symbol_at_position<'a>(
     let nodes = nodes_at_offset(state, document, position)?;
 
     // Find the enclosing state machine definition and its analysis.
-    let sm_node = nodes.iter().find_map(|n| match n {
-        Node::DefStateMachine(def) => Some(*def),
-        _ => None,
-    })?;
-    let sm_symbol = state.analysis.symbol_map.get(&sm_node.node_id)?;
-    let state_machine = state.analysis.state_machine_map.get(sm_symbol)?;
+    let state_machine = enclosing_state_machine(state, &nodes)?;
 
     // Find the deepest node at the cursor that is a use in this state machine.
     nodes.iter().find_map(|n| {
@@ -823,6 +818,209 @@ pub(crate) fn sm_symbol_at_position<'a>(
             .get(&n.id())
             .map(|sym| (*n, state_machine, sym.clone()))
     })
+}
+
+/// The resolved state machine enclosing the cursor, if any, given the AST nodes
+/// covering the cursor position (innermost first).
+fn enclosing_state_machine<'a>(
+    state: &'a GlobalState,
+    nodes: &[Node<'_>],
+) -> Option<&'a StateMachine> {
+    let sm_node = nodes.iter().find_map(|n| match n {
+        Node::DefStateMachine(def) => Some(*def),
+        _ => None,
+    })?;
+    let sm_symbol = state.analysis.symbol_map.get(&sm_node.node_id)?;
+    state.analysis.state_machine_map.get(sm_symbol)
+}
+
+/// A state machine completion target, selecting which kind of definitions to
+/// offer at the cursor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum SmCompletionKind {
+    /// Action names, as in `do { <here> }`.
+    Action,
+    /// Guard names, as in `if <here>`.
+    Guard,
+    /// Signal names, as in `on <here>`.
+    Signal,
+    /// State and choice names, as in `enter <here>`.
+    StateOrChoice,
+}
+
+/// Build completion items for state machine definitions of the requested kind,
+/// resolved against the state machine enclosing `position`.
+///
+/// Actions, guards, and signals are top-level state machine definitions.
+/// States and choices may be nested; they are offered by their fully qualified
+/// dotted path (e.g. `S2.S3`), matching how `enter` targets are written.
+pub(crate) fn completion_items_for_sm(
+    state: &GlobalState,
+    document: &Uri,
+    position: BytePos,
+    kind: SmCompletionKind,
+) -> Option<Vec<CompletionItem>> {
+    let nodes = nodes_at_offset(state, document, position)?;
+    let sm = enclosing_state_machine(state, &nodes)?;
+
+    let items = match kind {
+        SmCompletionKind::Action => sm
+            .actions
+            .iter()
+            .map(|s| sm_symbol_to_completion_item(state, s))
+            .collect(),
+        SmCompletionKind::Guard => sm
+            .guards
+            .iter()
+            .map(|s| sm_symbol_to_completion_item(state, s))
+            .collect(),
+        SmCompletionKind::Signal => sm
+            .signals
+            .iter()
+            .map(|s| sm_symbol_to_completion_item(state, s))
+            .collect(),
+        SmCompletionKind::StateOrChoice => {
+            // Completed level-by-level (see `completion_items_for_sm_state`).
+            return completion_items_for_sm_state(state, document, position, &[]);
+        }
+    };
+    Some(items)
+}
+
+/// Complete state/choice names for an `enter` transition target.
+///
+/// `qualifier` is the sequence of state names already typed before the final
+/// dot. Two cases:
+///
+/// * **Empty qualifier** (first, unqualified segment): FPP resolves an
+///   unqualified target through the nested scope chain — the enclosing state,
+///   then each ancestor state, then the state machine root. We offer the direct
+///   states/choices at every level of that chain, so a target defined in a
+///   parent state (e.g. `enter PARENT_CHOICE` from within a substate) is
+///   included. Names shadowed by an inner scope are offered once (innermost
+///   wins), matching resolution.
+/// * **Non-empty qualifier** (after a dot, `enter A.B.`): explicit navigation,
+///   so we offer only the resolved qualifier state's direct children. The editor
+///   re-triggers on `.` to descend.
+pub(crate) fn completion_items_for_sm_state(
+    state: &GlobalState,
+    document: &Uri,
+    position: BytePos,
+    qualifier: &[String],
+) -> Option<Vec<CompletionItem>> {
+    use fpp_ast::{StateMachineMember, StateMember};
+    use std::sync::Arc;
+
+    let nodes = nodes_at_offset(state, document, position)?;
+    let sm = enclosing_state_machine(state, &nodes)?;
+
+    let state_item = |st: &fpp_ast::DefState| {
+        sm_symbol_to_completion_item(state, &StateMachineSymbol::State(Arc::new(st.clone())))
+    };
+    let choice_item = |ch: &fpp_ast::DefChoice| {
+        sm_symbol_to_completion_item(state, &StateMachineSymbol::Choice(Arc::new(ch.clone())))
+    };
+
+    let mut items = Vec::new();
+
+    if qualifier.is_empty() {
+        // Offer the direct states/choices of the enclosing scope chain:
+        // innermost enclosing state outward to each ancestor state, then the
+        // state machine root. `nodes_at_offset` yields the enclosing `DefState`s
+        // innermost-first, which is exactly the resolution order.
+        let mut seen = std::collections::HashSet::new();
+        let mut push_state_members = |members: &[StateMember], items: &mut Vec<CompletionItem>| {
+            for member in members {
+                match member {
+                    StateMember::DefState(st) if seen.insert(st.name.data.clone()) => {
+                        items.push(state_item(st))
+                    }
+                    StateMember::DefChoice(ch) if seen.insert(ch.name.data.clone()) => {
+                        items.push(choice_item(ch))
+                    }
+                    _ => {}
+                }
+            }
+        };
+        for node in &nodes {
+            if let Node::DefState(st) = node {
+                push_state_members(&st.members, &mut items);
+            }
+        }
+        // Finally the state machine root's own states/choices.
+        for member in sm.node.members.iter().flatten() {
+            match member {
+                StateMachineMember::DefState(st) if seen.insert(st.name.data.clone()) => {
+                    items.push(state_item(st))
+                }
+                StateMachineMember::DefChoice(ch) if seen.insert(ch.name.data.clone()) => {
+                    items.push(choice_item(ch))
+                }
+                _ => {}
+            }
+        }
+    } else {
+        // Resolve the qualifier path to the state whose direct children to offer.
+        let mut current: Option<&fpp_ast::DefState> = None;
+        for (i, seg) in qualifier.iter().enumerate() {
+            let next = if i == 0 {
+                sm.node.members.iter().flatten().find_map(|m| match m {
+                    StateMachineMember::DefState(st) if st.name.data == *seg => Some(st),
+                    _ => None,
+                })
+            } else {
+                current?.members.iter().find_map(|m| match m {
+                    StateMember::DefState(st) if st.name.data == *seg => Some(st),
+                    _ => None,
+                })
+            };
+            current = Some(next?);
+        }
+        for member in &current?.members {
+            match member {
+                StateMember::DefState(st) => items.push(state_item(st)),
+                StateMember::DefChoice(ch) => items.push(choice_item(ch)),
+                _ => {}
+            }
+        }
+    }
+
+    items.sort_by(|a, b| a.label.cmp(&b.label));
+    Some(items)
+}
+
+/// Build a completion item for a state machine symbol, labeled by its
+/// unqualified name. Nested states/choices are completed one level at a time, so
+/// no qualified path is needed on the label.
+fn sm_symbol_to_completion_item(
+    state: &GlobalState,
+    symbol: &StateMachineSymbol,
+) -> CompletionItem {
+    let (kind, detail) = match symbol {
+        StateMachineSymbol::Action(_) => (CompletionItemKind::FUNCTION, "action"),
+        StateMachineSymbol::Guard(_) => (CompletionItemKind::VARIABLE, "guard"),
+        StateMachineSymbol::Signal(_) => (CompletionItemKind::EVENT, "signal"),
+        StateMachineSymbol::State(_) => (CompletionItemKind::VARIABLE, "state"),
+        StateMachineSymbol::Choice(_) => (CompletionItemKind::VARIABLE, "choice"),
+    };
+
+    let node = state.context.node_get(&symbol.node());
+    let documentation = if node.pre_annotation.is_empty() {
+        None
+    } else {
+        Some(Documentation::MarkupContent(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: node.pre_annotation.join(" "),
+        }))
+    };
+
+    CompletionItem {
+        label: symbol.get_unqualified_name().to_string(),
+        kind: Some(kind),
+        detail: Some(detail.to_string()),
+        documentation,
+        ..Default::default()
+    }
 }
 
 /// Build hover information for a resolved state machine symbol, mirroring the

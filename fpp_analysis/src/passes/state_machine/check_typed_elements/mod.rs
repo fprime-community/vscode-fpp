@@ -15,10 +15,13 @@ pub struct CheckTypedElements;
 impl CheckTypedElements {
     pub fn def_state_machine(
         a: &Analysis,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &DefStateMachine,
     ) -> SmResult {
-        let sma = ComputeTypeOptionMap::def_state_machine(a, sma, node)?;
+        // ComputeTypeOptionMap produces `type_option_map`, which
+        // CheckActionAndGuardTypes then reads. Both emit their (non-blocking)
+        // type errors in place and continue.
+        ComputeTypeOptionMap::def_state_machine(a, sma, node)?;
         CheckActionAndGuardTypes::def_state_machine(a, sma, node)
     }
 }

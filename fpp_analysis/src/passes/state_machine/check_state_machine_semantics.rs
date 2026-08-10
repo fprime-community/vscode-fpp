@@ -7,6 +7,7 @@ use crate::passes::state_machine::{
 };
 use crate::semantics::state_machine::StateMachineAnalysis;
 use fpp_ast::DefStateMachine;
+use std::ops::ControlFlow;
 
 /// Check semantics for a state machine definition
 pub struct CheckStateMachineSemantics;
@@ -14,24 +15,40 @@ pub struct CheckStateMachineSemantics;
 impl CheckStateMachineSemantics {
     pub fn def_state_machine(
         a: &Analysis,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &DefStateMachine,
     ) -> SmResult {
         match node.members {
             // Internal state machine: check it
             Some(_) => {
-                let sma = EnterStateMachineSymbols::def_state_machine(sma, node)?;
-                let sma = CheckStateMachineUses::def_state_machine(sma, node)?;
-                let sma = CheckInitialTransitions::def_state_machine(sma, node)?;
-                let sma = CheckSignalUses::def_state_machine(sma, node)?;
-                let sma = CheckTransitionGraph::def_state_machine(sma, node)?;
-                let sma = CheckTypedElements::def_state_machine(a, sma, node)?;
-                let sma = ComputeFlattenedStateTransitionMap::def_state_machine(sma, node)?;
-                let sma = ComputeFlattenedChoiceTransitionMap::def_state_machine(sma, node)?;
-                Ok(sma)
+                // Run full passes and gate future passes when errors arise
+                EnterStateMachineSymbols::def_state_machine(sma, node)?;
+                CheckStateMachineUses::def_state_machine(sma, node)?;
+                // An unresolved use leaves no `use_def_map` entry; every pass
+                // below reads that map, so stop here if resolution failed.
+                if sma.blocking_error {
+                    return ControlFlow::Continue(());
+                }
+                CheckInitialTransitions::def_state_machine(sma, node)?;
+                CheckSignalUses::def_state_machine(sma, node)?;
+                // A malformed initial transition leaves no `initial_node`, which
+                // the reachability check reads; stop before the graph passes.
+                if sma.blocking_error {
+                    return ControlFlow::Continue(());
+                }
+                CheckTransitionGraph::def_state_machine(sma, node)?;
+                // A choice cycle makes the choice graph non-acyclic; the
+                // typed-element pass walks it recursively, so stop here.
+                if sma.blocking_error {
+                    return ControlFlow::Continue(());
+                }
+                CheckTypedElements::def_state_machine(a, sma, node)?;
+                ComputeFlattenedStateTransitionMap::def_state_machine(sma, node)?;
+                ComputeFlattenedChoiceTransitionMap::def_state_machine(sma, node)?;
+                ControlFlow::Continue(())
             }
             // External state machine: do nothing
-            None => Ok(sma),
+            None => ControlFlow::Continue(()),
         }
     }
 }

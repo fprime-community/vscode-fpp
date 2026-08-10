@@ -25,14 +25,22 @@ impl<'ast> Visitor<'ast> for CheckStateMachineDefs {
         node: &'ast DefStateMachine,
     ) -> ControlFlow<Self::Break> {
         let symbol = Symbol::StateMachine(Arc::new(node.clone()));
-        let sma = StateMachineAnalysis::new(symbol.clone());
-        match CheckStateMachineSemantics::def_state_machine(a, sma, node) {
-            Ok(sma) => {
-                let state_machine = StateMachine::new(Arc::new(node.clone()), sma);
-                a.state_machine_map.insert(symbol, state_machine);
-            }
-            Err(err) => err.emit(),
-        }
+        let mut sma = StateMachineAnalysis::new(symbol.clone());
+        // Errors are emitted in place during analysis. A blocking error stops
+        // the later graph/type passes, so the transition graph and flattened
+        // maps may be incomplete — but `EnterStateMachineSymbols` and
+        // `CheckStateMachineUses` always run first, so the symbol scopes and
+        // use-def map are populated regardless.
+        //
+        // We store the state machine either way: editor features (completion,
+        // hover, go-to-definition, semantic tokens) rely only on the always-
+        // populated symbol data, and they are needed most while the definition
+        // is mid-edit and therefore has a blocking error (e.g. an incomplete
+        // `enter <target>`). Consumers that need the full transition graph
+        // (diagram lowering) must check `sma.blocking_error` before use.
+        let _ = CheckStateMachineSemantics::def_state_machine(a, &mut sma, node);
+        let state_machine = StateMachine::new(Arc::new(node.clone()), sma);
+        a.state_machine_map.insert(symbol, state_machine);
         // Do not descend into the state machine members; they are handled by
         // the state machine semantics.
         ControlFlow::Continue(())

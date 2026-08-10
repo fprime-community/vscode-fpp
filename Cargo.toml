@@ -13,6 +13,7 @@ members = [
     "fpp_parser",
     "fpp_util",
     "fpp_format",
+    "fpp_diagram",
 ]
 
 # Exclude fpp_macros from test suite
@@ -27,6 +28,7 @@ default-members = [
     "fpp_parser",
     "fpp_lsp_parser",
     "fpp_util",
+    "fpp_diagram",
 ]
 
 resolver = "2"

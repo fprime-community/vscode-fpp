@@ -14,3 +14,8 @@ fn undef_phase() {
 fn duplicate_phase() {
     run_test("spec_init/duplicate_phase")
 }
+
+#[test]
+fn phase_out_of_range() {
+    run_test("spec_init/phase_out_of_range")
+}

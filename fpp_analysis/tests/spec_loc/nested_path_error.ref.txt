@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/spec_loc/nested_path_error.fpp:1:26
+  |
+1 | locate constant A.B.c at "wrong_path.fpp"
+  |                          ^^^^^^^^^^^^^^^^ incorrect location path [ local path prefix ]/spec_loc/wrong_path.fpp
+  |
+ ::: [ local path prefix ]/spec_loc/nested_path_error.fpp:4:5
+  |
+4 |     constant c = 0
+  |     -------------- actual location is here
+

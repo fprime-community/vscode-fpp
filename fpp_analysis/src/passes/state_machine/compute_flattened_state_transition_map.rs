@@ -4,6 +4,7 @@ use crate::semantics::state_machine::{
     GuardedTransition, StateMachineAnalysis, StateMachineSymbol, StateOrChoice, Transition,
 };
 use fpp_ast::{DefState, DefStateMachine, SpecStateTransition, StateMember, TransitionOrDo};
+use std::ops::ControlFlow;
 use std::sync::Arc;
 
 /// Compute the flattened state transition map
@@ -11,7 +12,7 @@ pub struct ComputeFlattenedStateTransitionMap;
 
 impl ComputeFlattenedStateTransitionMap {
     /// Analyze a state machine definition
-    pub fn def_state_machine(sma: StateMachineAnalysis, node: &DefStateMachine) -> SmResult {
+    pub fn def_state_machine(sma: &mut StateMachineAnalysis, node: &DefStateMachine) -> SmResult {
         StateMachineAnalysisVisitor::def_state_machine(
             &ComputeFlattenedStateTransitionMap,
             sma,
@@ -43,16 +44,20 @@ impl ComputeFlattenedStateTransitionMap {
 }
 
 impl StateMachineAnalysisVisitor for ComputeFlattenedStateTransitionMap {
-    fn def_state_machine(&self, mut sma: StateMachineAnalysis, node: &DefStateMachine) -> SmResult {
+    fn def_state_machine(
+        &self,
+        sma: &mut StateMachineAnalysis,
+        node: &DefStateMachine,
+    ) -> SmResult {
         sma.signal_transition_map = Default::default();
         sma.flattened_state_transition_map = Default::default();
         match &node.members {
             Some(members) => self.visit_sm_members(sma, members),
-            None => Ok(sma),
+            None => ControlFlow::Continue(()),
         }
     }
 
-    fn def_state(&self, mut sma: StateMachineAnalysis, node: &DefState) -> SmResult {
+    fn def_state(&self, sma: &mut StateMachineAnalysis, node: &DefState) -> SmResult {
         let state_transitions = Self::get_state_transition_specifiers(node);
         let saved_stm = sma.signal_transition_map.clone();
         let mut stm = sma.signal_transition_map.clone();
@@ -93,7 +98,7 @@ impl StateMachineAnalysisVisitor for ComputeFlattenedStateTransitionMap {
                 let mut fstm = sma.flattened_state_transition_map.clone();
                 for (s, gt) in &stm {
                     let soc = StateOrChoice::State(state.clone());
-                    let cft = ConstructFlattenedTransition::new(&sma, soc);
+                    let cft = ConstructFlattenedTransition::new(sma, soc);
                     let transition = cft.transition(gt.transition.clone());
                     let gt1 = GuardedTransition {
                         guard_opt: gt.guard_opt.clone(),
@@ -103,13 +108,13 @@ impl StateMachineAnalysisVisitor for ComputeFlattenedStateTransitionMap {
                     map.insert(state.clone(), gt1);
                 }
                 sma.flattened_state_transition_map = fstm;
-                Ok(sma)
+                ControlFlow::Continue(())
             }
             _ => {
                 sma.signal_transition_map = stm;
-                let mut sma = self.state_analyzer_def_state(sma, node)?;
+                self.state_analyzer_def_state(sma, node)?;
                 sma.signal_transition_map = saved_stm;
-                Ok(sma)
+                ControlFlow::Continue(())
             }
         }
     }

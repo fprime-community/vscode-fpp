@@ -74,6 +74,30 @@
                 "title": "FPP: Export Diagram",
                 "icon": "$(desktop-download)",
                 "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.toggle-unused-ports",
+                "title": "FPP: Toggle Unused Ports",
+                "icon": "$(eye)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.stateMachine.fit",
+                "title": "FPP: Fit State Machine Diagram",
+                "icon": "$(arrow-both)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.stateMachine.export",
+                "title": "FPP: Export State Machine Diagram",
+                "icon": "$(desktop-download)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.stateMachine.toggle-action-mode",
+                "title": "FPP: Toggle Transition Action Mode",
+                "icon": "$(list-flat)",
+                "category": "FPP Diagram"
             }
         ],
         "languages": [
@@ -130,6 +154,26 @@
                 {
                     "command": "fpp.diagram.export",
                     "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.toggle-unused-ports",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.stateMachine.fit",
+                    "when": "fppStateMachineDiagram-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.stateMachine.export",
+                    "when": "fppStateMachineDiagram-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.stateMachine.toggle-action-mode",
+                    "when": "fppStateMachineDiagram-focused == true",
                     "group": "navigation"
                 }
             ],
@@ -495,10 +539,20 @@
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
+        "@mermaid-js/layout-elk": "^0.2",
         "@types/js-yaml": "^4.0.9",
         "@types/node": "^22",
         "@types/vscode": "^1.81.0",
         "@vscode/vsce": "^3.2.1",
+        "css-loader": "^7.1.2",
+        "elkjs": "^0.10.0",
+        "mermaid": "^11",
+        "reflect-metadata": "^0.2.2",
+        "sprotty": "^1.2.0",
+        "sprotty-elk": "^1.4.0",
+        "sprotty-vscode": "^1.0.0",
+        "sprotty-vscode-webview": "^1.0.0",
+        "style-loader": "^3.3.3",
         "ts-loader": "^9.5.1",
         "typescript": "^5.4.5",
         "umd-compat-loader": "^2.1.2",

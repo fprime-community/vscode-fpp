@@ -3,13 +3,8 @@
 2 | type T = string size sizeof(T)
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ encountered symbol use-definition cycle
   |
- ::: [ local path prefix ]/cycles/sizeof_string_1.fpp:1:6
-  |
-1 | type FwSizeStoreType = U16
-  |      --------------- defined here
-  |
- ::: [ local path prefix ]/cycles/sizeof_string_1.fpp:2:29
+ ::: [ local path prefix ]/cycles/sizeof_string_1.fpp:2:6
   |
 2 | type T = string size sizeof(T)
-  |                             - used here
+  |      - defined here
 

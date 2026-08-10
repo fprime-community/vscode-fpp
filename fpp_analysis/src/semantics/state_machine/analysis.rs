@@ -21,7 +21,7 @@ pub type SignalStateTransitionMap = HashMap<StateMachineSymbol, StateTransitionM
 pub type TransitionExprMap = HashMap<Node, Transition>;
 
 /// The state machine analysis data structure
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StateMachineAnalysis {
     /// The state machine symbol
     pub symbol: Symbol,
@@ -49,6 +49,18 @@ pub struct StateMachineAnalysis {
     pub flattened_state_transition_map: SignalStateTransitionMap,
     /// The flattened choice transition map
     pub flattened_choice_transition_map: TransitionExprMap,
+    /// Whether a *blocking* error has been emitted for this state machine.
+    ///
+    /// The state-machine passes emit their diagnostics in place and keep going
+    /// (like the rest of the analysis), so most errors do not stop later passes.
+    /// A few errors are different: they leave a map entry unpopulated that a
+    /// later pass unconditionally reads — an undefined symbol (no `use_def_map`
+    /// entry) or a missing/duplicate initial transition (no `initial_node`).
+    /// Continuing past those would panic on the reading pass's `unwrap`, so the
+    /// producing pass sets this flag and `CheckStateMachineSemantics` gates the
+    /// dependent passes on it. Non-blocking errors (duplicate signal, type
+    /// mismatch, unreachable node, choice cycle) leave the flag clear.
+    pub blocking_error: bool,
 }
 
 impl StateMachineAnalysis {
@@ -67,6 +79,7 @@ impl StateMachineAnalysis {
             signal_transition_map: SignalTransitionMap::default(),
             flattened_state_transition_map: SignalStateTransitionMap::default(),
             flattened_choice_transition_map: TransitionExprMap::default(),
+            blocking_error: false,
         }
     }
 
@@ -134,28 +147,38 @@ impl StateMachineAnalysis {
         }
     }
 
-    /// Gets the common type of two typed elements at a choice
+    /// Gets the common type of two typed elements at a choice.
+    ///
+    /// A type mismatch here is non-blocking: the diagnostic is emitted in place
+    /// and `None` is returned as the fallback common type so analysis continues.
     pub fn common_type_at_choice(
         &self,
         te: &StateMachineTypedElement,
         te1: &StateMachineTypedElement,
         to1: &Option<Arc<Type>>,
         te2: &StateMachineTypedElement,
-    ) -> crate::errors::SemanticResult<Option<Arc<Type>>> {
+    ) -> Option<Arc<Type>> {
         let to2 = self.type_option_map.get(te2).cloned().unwrap();
         match crate::semantics::state_machine::TypeOption::common_type(to1, &to2) {
-            Some(to) => Ok(to),
-            None => Err(crate::errors::SemanticError::ChoiceTypeMismatch {
-                loc: te.get_span(),
-                loc1: te1.get_span(),
-                show1: crate::semantics::state_machine::TypeOption::show(to1),
-                loc2: te2.get_span(),
-                show2: crate::semantics::state_machine::TypeOption::show(&to2),
-            }),
+            Some(to) => to,
+            None => {
+                crate::errors::SemanticError::ChoiceTypeMismatch {
+                    loc: te.get_span(),
+                    loc1: te1.get_span(),
+                    show1: crate::semantics::state_machine::TypeOption::show(to1),
+                    loc2: te2.get_span(),
+                    show2: crate::semantics::state_machine::TypeOption::show(&to2),
+                }
+                .emit();
+                None
+            }
         }
     }
 
-    /// Convert one type option to another at a call site
+    /// Convert one type option to another at a call site.
+    ///
+    /// A mismatch here is non-blocking: the diagnostic is emitted in place and
+    /// the call-site type is returned as the fallback so analysis continues.
     pub fn convert_type_options_at_call_site(
         &self,
         loc: fpp_core::Span,
@@ -163,18 +186,18 @@ impl StateMachineAnalysis {
         te_to: &Option<Arc<Type>>,
         site_kind: &str,
         site_to: &Option<Arc<Type>>,
-    ) -> crate::errors::SemanticResult<Option<Arc<Type>>> {
-        if crate::semantics::state_machine::TypeOption::is_convertible_to(te_to, site_to) {
-            Ok(site_to.clone())
-        } else {
-            Err(crate::errors::SemanticError::CallSiteTypeMismatch {
+    ) -> Option<Arc<Type>> {
+        if !crate::semantics::state_machine::TypeOption::is_convertible_to(te_to, site_to) {
+            crate::errors::SemanticError::CallSiteTypeMismatch {
                 loc,
                 te_kind: te_kind.to_string(),
                 te_show: crate::semantics::state_machine::TypeOption::show(te_to),
                 site_kind: site_kind.to_string(),
                 site_show: crate::semantics::state_machine::TypeOption::show(site_to),
-            })
+            }
+            .emit();
         }
+        site_to.clone()
     }
 
     /// Get a state or choice from a qualified identifier node

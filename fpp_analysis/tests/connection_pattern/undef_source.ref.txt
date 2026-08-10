@@ -1,5 +1,5 @@
  --> [ local path prefix ]/connection_pattern/undef_source.fpp:2:31
   |
 2 |   health connections instance $health
-  |                               ^^^^^^^ cannot find port interface instance `health` in scope
+  |                               ^^^^^^^ cannot find component instance or topology `health` in scope
 

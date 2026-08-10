@@ -1,5 +1,5 @@
  --> [ local path prefix ]/top_import/undef_topology.fpp:3:10
   |
 3 |   import A
-  |          ^ cannot find port interface instance `A` in scope
+  |          ^ cannot find component instance or topology `A` in scope
 
