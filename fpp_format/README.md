@@ -16,6 +16,9 @@ fpp-format --check path/to/model.fpp
 
 # Format from stdin to stdout
 cat path/to/model.fpp | fpp-format --stdin
+
+# Override the indentation width and maximum line length
+fpp-format --indent 4 --line-length 100 path/to/model.fpp
 ```
 
 ## Options
@@ -25,8 +28,41 @@ cat path/to/model.fpp | fpp-format --stdin
 | `--check`              | Check formatting without writing; exit `1` if a file is unformatted. |
 | `--stdin`              | Read from stdin and write to stdout (default when no files given). |
 | `--recursive-includes` | Also follow `include` specifiers and format reachable `.fppi` fragments. |
+| `--indent <N>`         | Number of spaces per indentation level. Overrides `.fpp-format` (default: `2`). |
+| `--line-length <N>`    | Maximum line width before specs explode their clauses. Overrides `.fpp-format` (default: `80`). |
 | `--entry <RULE>`       | Select the parser entrypoint / grammar rule (see below).          |
 | `--help`               | Print usage.                                                       |
+
+## Configuration file (`.fpp-format`)
+
+The indentation width and maximum line length can be set project-wide in a
+`.fpp-format` file. Starting from each formatted file's directory, `fpp-format`
+searches upward through parent directories for the nearest `.fpp-format` file
+(the same discovery model as `.clang-format`). The same file is honored by
+`fprime-util format` and by the language server's format-on-save, so the editor
+and CI always agree.
+
+The file is a minimal `key = value` list; blank lines and `#` comments are
+ignored:
+
+```ini
+# .fpp-format
+indent = 2
+line-length = 80
+```
+
+Supported keys:
+
+| Key           | Description                              | Default |
+| ------------- | ---------------------------------------- | ------- |
+| `indent`      | Spaces per indentation level.            | `2`     |
+| `line-length` | Maximum line width before clauses break. | `80`    |
+
+Precedence, lowest to highest: built-in defaults → `.fpp-format` file →
+`--indent` / `--line-length` command-line flags. A malformed `.fpp-format` file
+is a hard error on the command line (to avoid formatting with the wrong profile
+and reporting false `--check` failures); the language server logs it and falls
+back to defaults so an editor save never fails.
 
 ## Entrypoint rule (`--entry`)
 

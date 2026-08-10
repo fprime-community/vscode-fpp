@@ -1,9 +1,9 @@
 use clap::Parser;
-use fpp_format::{FormatOptions, format_file_recursive, format_text};
+use fpp_format::{FormatOptions, PartialConfig, format_file_recursive, format_text, load_config};
 use fpp_lsp_parser::TopEntryPoint;
 use std::fs;
 use std::io::{self, Read};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process;
 
 /// A formatter (pretty-printer) for the F Prime Prime (FPP) modeling language.
@@ -11,6 +11,11 @@ use std::process;
 /// By default only the named files are formatted. Pass --recursive-includes to
 /// additionally follow `include` specifiers and format each `.fppi` fragment
 /// with the entrypoint derived from its include context.
+///
+/// The indentation width and maximum line length are read from the nearest
+/// `.fpp-format` file (searched upward from each file's directory), falling
+/// back to built-in defaults (2-space indent, 80-column width). The --indent
+/// and --line-length flags override whatever the file specifies.
 #[derive(Parser, Debug)]
 #[command(version, author, about, long_about)]
 struct Args {
@@ -30,6 +35,15 @@ struct Args {
     #[arg(long)]
     recursive_includes: bool,
 
+    /// Number of spaces per indentation level. Overrides any `.fpp-format` file.
+    #[arg(long, value_name = "N")]
+    indent: Option<usize>,
+
+    /// Maximum line width before specs explode their clauses and group-style
+    /// member lists break onto multiple lines. Overrides any `.fpp-format` file.
+    #[arg(long, value_name = "N")]
+    line_length: Option<usize>,
+
     /// Parser entrypoint / grammar rule for the input. One of: module (default),
     /// component, topology, tlm-packet, tlm-packet-set. Needed when formatting a
     /// bare `.fppi` fragment directly.
@@ -37,16 +51,45 @@ struct Args {
     entry: Option<TopEntryPoint>,
 }
 
+impl Args {
+    /// The formatting overrides supplied explicitly on the command line. These
+    /// take precedence over any discovered `.fpp-format` file.
+    fn cli_overrides(&self) -> PartialConfig {
+        PartialConfig {
+            indent_width: self.indent,
+            max_line_width: self.line_length,
+        }
+    }
+
+    /// Resolve the [`FormatOptions`] governing files in `dir` by layering the
+    /// CLI overrides on top of the nearest `.fpp-format` file (and defaults).
+    ///
+    /// A malformed `.fpp-format` file aborts the run — silently ignoring it
+    /// would format with the wrong profile and, under `--check`, report false
+    /// failures.
+    fn resolve_options(&self, dir: &Path) -> FormatOptions {
+        let file_config = load_config(dir).unwrap_or_else(|err| {
+            eprintln!("Error reading {}: {}", fpp_format::CONFIG_FILE_NAME, err);
+            process::exit(1);
+        });
+        file_config.merge(self.cli_overrides()).into_options()
+    }
+}
+
 /// Parse a `--entry` value into a [`TopEntryPoint`].
 fn parse_entry(s: &str) -> Result<TopEntryPoint, String> {
     TopEntryPoint::from_name(s).ok_or_else(|| format!("unknown entrypoint: {s}"))
 }
 
-fn format_stdin(check_only: bool, entry: TopEntryPoint) -> Result<(), Box<dyn std::error::Error>> {
+fn format_stdin(
+    check_only: bool,
+    entry: TopEntryPoint,
+    options: FormatOptions,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
 
-    let formatted = format_text(&input, entry, FormatOptions::default())?;
+    let formatted = format_text(&input, entry, options)?;
 
     if check_only {
         if input != formatted {
@@ -67,11 +110,12 @@ fn format_file_cmd(
     check_only: bool,
     entry: TopEntryPoint,
     recursive_includes: bool,
+    options: FormatOptions,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     if recursive_includes {
         // Format the file and every `.fppi` fragment reachable via `include`,
         // deriving each fragment's entrypoint from its include context.
-        let units = format_file_recursive(path, entry, FormatOptions::default())?;
+        let units = format_file_recursive(path, entry, options)?;
 
         let mut all_formatted = true;
         for unit in units {
@@ -82,7 +126,7 @@ fn format_file_cmd(
 
     // Default: format only the named file, ignoring `include` specifiers.
     let original = fs::read_to_string(path)?;
-    let formatted = format_text(&original, entry, FormatOptions::default())?;
+    let formatted = format_text(&original, entry, options)?;
     apply_unit(path, &original, &formatted, check_only)
 }
 
@@ -121,18 +165,26 @@ fn main() {
     let entry = args.entry.unwrap_or(TopEntryPoint::Module);
 
     // Read from stdin when explicitly requested or when no files are given.
+    // stdin has no path, so `.fpp-format` discovery starts at the current
+    // working directory.
     if args.stdin || args.files.is_empty() {
-        if let Err(err) = format_stdin(args.check, entry) {
+        let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        let options = args.resolve_options(&cwd);
+        if let Err(err) = format_stdin(args.check, entry, options) {
             eprintln!("Error formatting stdin: {}", err);
             process::exit(1);
         }
         return;
     }
 
-    // Format files
+    // Format files. Each file's profile is resolved from the nearest
+    // `.fpp-format` in its own directory tree, so a single invocation may span
+    // files governed by different configs.
     let mut all_formatted = true;
     for file in &args.files {
-        match format_file_cmd(file, args.check, entry, args.recursive_includes) {
+        let dir = file.parent().unwrap_or_else(|| Path::new("."));
+        let options = args.resolve_options(dir);
+        match format_file_cmd(file, args.check, entry, args.recursive_includes, options) {
             Ok(formatted) => {
                 if !formatted {
                     all_formatted = false;

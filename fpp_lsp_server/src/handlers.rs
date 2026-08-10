@@ -1206,6 +1206,29 @@ pub fn handle_completion(
     }
 }
 
+/// Resolve the [`fpp_format::FormatOptions`] for a document by discovering the
+/// nearest `.fpp-format` file, walking up from the document's own directory.
+///
+/// The language server never applies command-line overrides, so the profile is
+/// the discovered file layered over the built-in defaults. A missing config
+/// yields defaults; a malformed config is logged and defaults are used (a
+/// format-on-save must not fail the editor over a bad config file).
+fn resolve_format_options(uri: &lsp_types::Uri) -> fpp_format::FormatOptions {
+    let path = std::path::Path::new(uri.path().as_str());
+    let dir = path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    match fpp_format::load_config(dir) {
+        Ok(config) => config.into_options(),
+        Err(err) => {
+            tracing::warn!(
+                "ignoring malformed {}: {}",
+                fpp_format::CONFIG_FILE_NAME,
+                err
+            );
+            fpp_format::FormatOptions::default()
+        }
+    }
+}
+
 pub fn handle_formatting(
     state: &GlobalState,
     request: DocumentFormattingParams,
@@ -1220,7 +1243,8 @@ pub fn handle_formatting(
 
     // Format the entire document
     let syntax = parse.syntax_node();
-    let text = fpp_format::Formatter::new(fpp_format::FormatOptions::default()).format(&syntax);
+    let options = resolve_format_options(&request.text_document.uri);
+    let text = fpp_format::Formatter::new(options).format(&syntax);
 
     // Replace the range spanning the entire *original* document. The range must
     // be derived from the original length, not the formatted length, otherwise
@@ -1251,7 +1275,8 @@ pub fn handle_range_formatting(
 
     // Format the entire document
     let syntax = parse.syntax_node();
-    let text = fpp_format::Formatter::new(fpp_format::FormatOptions::default()).format(&syntax);
+    let options = resolve_format_options(&request.text_document.uri);
+    let text = fpp_format::Formatter::new(options).format(&syntax);
 
     // Replace the range spanning the entire *original* document. The range must
     // be derived from the original length, not the formatted length, otherwise
