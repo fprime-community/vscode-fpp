@@ -8,26 +8,6 @@
  6 | struct SSCycle {
    |        ------- defined here
    |
-  ::: [ local path prefix ]/cycles/alias.fpp:7:9
-   |
- 7 |     F1: string
-   |         ------ used here
-   |
-  ::: [ local path prefix ]/cycles/alias.fpp:1:6
-   |
- 1 | type FwSizeStoreType = U16
-   |      --------------- defined here
-   |
-  ::: [ local path prefix ]/cycles/alias.fpp:7:9
-   |
- 7 |     F1: string
-   |         ------ used here
-   |
-  ::: [ local path prefix ]/cycles/alias.fpp:2:10
-   |
- 2 | constant FW_FIXED_LENGTH_STRING_SIZE = 256
-   |          --------------------------- defined here
-   |
   ::: [ local path prefix ]/cycles/alias.fpp:10:9
    |
 10 |     F4: TStructCycle

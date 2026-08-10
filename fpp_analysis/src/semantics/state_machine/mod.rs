@@ -33,6 +33,7 @@ use fpp_ast::{
     DefAction, DefGuard, DefSignal, DefState, DefStateMachine, SpecInitialTransition,
     StateMachineMember, StateMember,
 };
+use fpp_core::Annotated;
 use std::sync::Arc;
 
 /// The kind of a state machine
@@ -157,7 +158,13 @@ impl StateMachine {
             .collect()
     }
 
-    /// Gets the set of leaf states of a state machine
+    /// Gets the set of leaf states of a state machine.
+    ///
+    /// Scala's `getLeafStates` returns a `Set` of annotated `DefState` nodes, so
+    /// identical leaf states collapse into one. We reproduce that by
+    /// deduplicating on `(pre-annotation, name, post-annotation)` — the same key
+    /// `AddStateEnums` uses when it synthesizes the `State` enum — so callers
+    /// (e.g. a future state-machine C++ codegen port) never double-count a leaf.
     pub fn get_leaf_states(sm: &DefStateMachine) -> Vec<Arc<DefState>> {
         let mut states = Vec::new();
         for member in sm.members.as_deref().unwrap_or(&[]) {
@@ -165,6 +172,10 @@ impl StateMachine {
                 Self::collect_leaf_states(node, &mut states);
             }
         }
+        let mut seen = std::collections::HashSet::new();
+        states.retain(|s| {
+            seen.insert((s.pre_annotation(), s.name.data.clone(), s.post_annotation()))
+        });
         states
     }
 

@@ -5,11 +5,11 @@
 //!
 //! 1. Resolve the directly declared instances.
 //! 2. Resolve the topology port interface.
-//! 3. Check that the topology implements its declared interfaces.
-//! 4. Resolve the partially numbered topology (imports, patterns,
+//! 3. Resolve the partially numbered topology (imports, patterns,
 //!    interface-to-component resolution).
-//! 5. Resolve the port numbers.
-//! 6. Resolve the unconnected ports.
+//! 4. Resolve the port numbers.
+//! 5. Resolve the unconnected ports.
+//! 6. Check that the topology implements its declared interfaces.
 
 mod check_topology_interface;
 mod general_port_numbering;
@@ -63,9 +63,11 @@ pub(crate) fn for_each_port(
 pub fn resolve(a: &Analysis, t: &mut Topology) -> SemanticResult {
     resolve_topology_instances::resolve(a, t);
     resolve_topology_port_interface::resolve(a, t)?;
-    check_topology_interface::check(a, t)?;
     resolve_partially_numbered::resolve(a, t)?;
     resolve_port_numbers::resolve(a, t)?;
     resolve_unconnected_ports::resolve(a, t);
+
+    // Check the topologies interface against the `implements` clause
+    check_topology_interface::check(a, t)?;
     Ok(())
 }

@@ -1,5 +1,5 @@
   --> [ local path prefix ]/connection_pattern/undef_target.fpp:10:5
    |
 10 |     c
-   |     ^ cannot find port interface instance `c` in scope
+   |     ^ cannot find component instance or topology `c` in scope
 

@@ -1,10 +1,10 @@
  --> [ local path prefix ]/connection_direct/undef_instance.fpp:3:5
   |
 3 |     c.out -> c.in
-  |     ^ cannot find port interface instance `c` in scope
+  |     ^ cannot find component instance or topology `c` in scope
 
  --> [ local path prefix ]/connection_direct/undef_instance.fpp:3:14
   |
 3 |     c.out -> c.in
-  |              ^ cannot find port interface instance `c` in scope
+  |              ^ cannot find component instance or topology `c` in scope
 

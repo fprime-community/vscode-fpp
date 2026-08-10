@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../out/sm-webview",
+    "lib": [
+      "ES2022",
+      "dom"
+    ],
+    "declaration": false,
+    "declarationMap": false,
+    "types": [] // Disable automatic @types/* inclusion (avoids @types/node vs DOM conflicts).
+  },
+  "include": [
+    "src"
+  ]
+}

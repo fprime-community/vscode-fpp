@@ -1,6 +1,11 @@
 use crate::run_test;
 
 #[test]
+fn cycle_and_types() {
+    run_test("state_machine/transition_graph/cycle_and_types")
+}
+
+#[test]
 fn unreachable_state() {
     run_test("state_machine/transition_graph/unreachable_state")
 }

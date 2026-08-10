@@ -1,0 +1,25 @@
+ --> [ local path prefix ]/state_machine/undef/stress_multi.fpp:3:8
+  |
+3 |     on sig1 enter Bogus
+  |        ^^^^ cannot find signal `sig1` in scope
+
+ --> [ local path prefix ]/state_machine/undef/stress_multi.fpp:3:19
+  |
+3 |     on sig1 enter Bogus
+  |                   ^^^^^ cannot find state `Bogus` in scope
+
+ --> [ local path prefix ]/state_machine/undef/stress_multi.fpp:4:8
+  |
+4 |     on sig2 do { badAction } enter S
+  |        ^^^^ cannot find signal `sig2` in scope
+
+ --> [ local path prefix ]/state_machine/undef/stress_multi.fpp:4:18
+  |
+4 |     on sig2 do { badAction } enter S
+  |                  ^^^^^^^^^ cannot find action `badAction` in scope
+
+ --> [ local path prefix ]/state_machine/undef/stress_multi.fpp:6:17
+  |
+6 |   initial enter Nowhere
+  |                 ^^^^^^^ cannot find state `Nowhere` in scope
+

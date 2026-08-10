@@ -5,6 +5,19 @@ fn abs_type_ok() {
     run_test("spec_loc/abs_type_ok")
 }
 
+// Deeply-nested (2+ module) located definitions: confirm the path-lookup key
+// (`get_qualified_name`) matches the located-symbol key for definitions nested
+// more than one module deep (fidelity open question, agent 6).
+#[test]
+fn nested_ok() {
+    run_test("spec_loc/nested_ok")
+}
+
+#[test]
+fn nested_path_error() {
+    run_test("spec_loc/nested_path_error")
+}
+
 #[test]
 fn abs_type_path_error() {
     run_test("spec_loc/abs_type_path_error")

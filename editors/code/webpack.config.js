@@ -70,13 +70,35 @@ const diagramWebviewConfig = {
         filename: 'webview.js',
         devtoolModuleFilenameTemplate: "../[resource-path]",
     },
+    // The webview runs under a Content Security Policy that forbids `unsafe-eval`.
+    // Webpack's development default (`devtool: 'eval'`) wraps every module in
+    // `eval()`, which the CSP rejects. Use a real source map (no eval) instead.
+    devtool: 'nosources-source-map',
     resolve: {
         extensions: ['.ts', '.js', '.tsx']
     },
     ...commonConfig,
 };
 
+/**@type {import('webpack').Configuration}*/
+const stateMachineWebviewConfig = {
+    target: 'web',
+    entry: './webview-sm/src/main.ts',
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'sm-webview.js',
+        devtoolModuleFilenameTemplate: "../[resource-path]",
+    },
+    // Same CSP constraint as the sprotty webview: no `eval` devtool.
+    devtool: 'nosources-source-map',
+    resolve: {
+        extensions: ['.ts', '.js']
+    },
+    ...commonConfig,
+};
+
 module.exports = [
     extensionConfig,
-    // diagramWebviewConfig
+    diagramWebviewConfig,
+    stateMachineWebviewConfig
 ];

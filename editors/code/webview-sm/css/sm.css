@@ -1,0 +1,38 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#container {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    /* Never select diagram text while panning/zooming. */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#container svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+}
+
+#container svg.panning {
+    cursor: grabbing;
+}
+
+.sm-empty {
+    color: var(--vscode-descriptionForeground);
+    font-family: var(--vscode-font-family);
+}
+
+.sm-error {
+    color: var(--vscode-errorForeground);
+    font-family: var(--vscode-editor-font-family, monospace);
+    white-space: pre-wrap;
+    padding: 12px;
+}

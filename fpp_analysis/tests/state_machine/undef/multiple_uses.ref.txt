@@ -1,0 +1,20 @@
+ --> [ local path prefix ]/state_machine/undef/multiple_uses.fpp:3:8
+  |
+3 |     on sig1 do { act1 }
+  |        ^^^^ cannot find signal `sig1` in scope
+
+ --> [ local path prefix ]/state_machine/undef/multiple_uses.fpp:3:18
+  |
+3 |     on sig1 do { act1 }
+  |                  ^^^^ cannot find action `act1` in scope
+
+ --> [ local path prefix ]/state_machine/undef/multiple_uses.fpp:4:8
+  |
+4 |     on sig2 do { act2 }
+  |        ^^^^ cannot find signal `sig2` in scope
+
+ --> [ local path prefix ]/state_machine/undef/multiple_uses.fpp:4:18
+  |
+4 |     on sig2 do { act2 }
+  |                  ^^^^ cannot find action `act2` in scope
+

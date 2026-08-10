@@ -13,9 +13,10 @@ pub struct InitSpecifier {
 }
 
 impl InitSpecifier {
+    /// Creates an init specifier from an AST node
     pub fn from_node(a: &Analysis, node: &SpecInit) -> SemanticResult<InitSpecifier> {
         let loc = node.span();
-        let phase = a.get_int_value(node.phase.node_id).unwrap_or(0);
+        let phase = a.get_int_value_checked(node.phase.node_id, node.phase.span())?;
         Ok(InitSpecifier { loc, phase })
     }
 }
@@ -34,6 +35,7 @@ pub struct ComponentInstance {
 }
 
 impl ComponentInstance {
+    /// Adds an init specifier
     pub fn add_init_specifier(&self, spec: InitSpecifier) -> SemanticResult<ComponentInstance> {
         if let Some(prev) = self.init_specifier_map.get(&spec.phase) {
             return Err(SemanticError::DuplicateInitSpecifier {
@@ -103,6 +105,7 @@ fn get_component(a: &Analysis, node: &DefComponentInstance) -> Option<Component>
     }
 }
 
+/// Construct an invalid instance error
 fn invalid(name: &str, loc: Span, msg: String) -> SemanticError {
     SemanticError::InvalidDefComponentInstance {
         name: name.to_string(),
@@ -111,6 +114,7 @@ fn invalid(name: &str, loc: Span, msg: String) -> SemanticError {
     }
 }
 
+/// Gets the queue size
 fn get_queue_size(
     a: &Analysis,
     name: &str,
@@ -137,6 +141,7 @@ fn get_queue_size(
     }
 }
 
+/// Get an attribute for an active component
 fn get_active_attribute(
     a: &Analysis,
     name: &str,

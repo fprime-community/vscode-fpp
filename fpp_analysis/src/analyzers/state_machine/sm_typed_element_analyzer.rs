@@ -3,6 +3,7 @@ use crate::semantics::state_machine::{StateMachineAnalysis, StateMachineTypedEle
 use fpp_ast::{
     DefChoice, SpecInitialTransition, SpecStateEntry, SpecStateExit, SpecStateTransition,
 };
+use std::ops::ControlFlow;
 use std::sync::Arc;
 
 /// State machine typed element analyzer
@@ -15,42 +16,47 @@ pub trait SmTypedElementAnalyzer {
 
     fn initial_transition_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         _te: &StateMachineTypedElement,
     ) -> SmResult {
-        Ok(sma)
+        let _ = sma;
+        ControlFlow::Continue(())
     }
 
     fn choice_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         _te: &StateMachineTypedElement,
     ) -> SmResult {
-        Ok(sma)
+        let _ = sma;
+        ControlFlow::Continue(())
     }
 
     fn state_entry_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         _te: &StateMachineTypedElement,
     ) -> SmResult {
-        Ok(sma)
+        let _ = sma;
+        ControlFlow::Continue(())
     }
 
     fn state_exit_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         _te: &StateMachineTypedElement,
     ) -> SmResult {
-        Ok(sma)
+        let _ = sma;
+        ControlFlow::Continue(())
     }
 
     fn state_transition_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         _te: &StateMachineTypedElement,
     ) -> SmResult {
-        Ok(sma)
+        let _ = sma;
+        ControlFlow::Continue(())
     }
 
     // ----------------------------------------------------------------------
@@ -59,7 +65,7 @@ pub trait SmTypedElementAnalyzer {
 
     fn visit_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: StateMachineTypedElement,
     ) -> SmResult {
         self.dispatch_typed_element(sma, te)
@@ -67,7 +73,7 @@ pub trait SmTypedElementAnalyzer {
 
     fn dispatch_typed_element(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         te: StateMachineTypedElement,
     ) -> SmResult {
         match &te {
@@ -83,21 +89,25 @@ pub trait SmTypedElementAnalyzer {
         }
     }
 
-    fn def_choice_te(&self, sma: StateMachineAnalysis, node: &DefChoice) -> SmResult {
+    fn def_choice_te(&self, sma: &mut StateMachineAnalysis, node: &DefChoice) -> SmResult {
         self.visit_typed_element(
             sma,
             StateMachineTypedElement::Choice(Arc::new(node.clone())),
         )
     }
 
-    fn spec_state_entry_te(&self, sma: StateMachineAnalysis, node: &SpecStateEntry) -> SmResult {
+    fn spec_state_entry_te(
+        &self,
+        sma: &mut StateMachineAnalysis,
+        node: &SpecStateEntry,
+    ) -> SmResult {
         self.visit_typed_element(
             sma,
             StateMachineTypedElement::StateEntry(Arc::new(node.clone())),
         )
     }
 
-    fn spec_state_exit_te(&self, sma: StateMachineAnalysis, node: &SpecStateExit) -> SmResult {
+    fn spec_state_exit_te(&self, sma: &mut StateMachineAnalysis, node: &SpecStateExit) -> SmResult {
         self.visit_typed_element(
             sma,
             StateMachineTypedElement::StateExit(Arc::new(node.clone())),
@@ -106,7 +116,7 @@ pub trait SmTypedElementAnalyzer {
 
     fn spec_initial_transition_te(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &SpecInitialTransition,
     ) -> SmResult {
         self.visit_typed_element(
@@ -117,7 +127,7 @@ pub trait SmTypedElementAnalyzer {
 
     fn spec_state_transition_te(
         &self,
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &SpecStateTransition,
     ) -> SmResult {
         self.visit_typed_element(

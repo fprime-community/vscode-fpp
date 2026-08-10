@@ -1,7 +1,9 @@
+use crate::analyzers::state_machine::SmResult;
 use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::state_machine::transition_graph::{Arc as TgArc, Node as TgNode};
 use crate::semantics::state_machine::{StateMachineAnalysis, StateMachineSymbol, StateOrChoice};
 use rustc_hash::FxHashSet as HashSet;
+use std::ops::ControlFlow;
 
 /// Checks for choice cycles
 pub struct CheckChoiceCycles;
@@ -25,15 +27,26 @@ impl State {
 }
 
 impl CheckChoiceCycles {
-    pub fn state_machine_analysis(sma: &StateMachineAnalysis) -> SemanticResult<()> {
+    pub fn state_machine_analysis(sma: &mut StateMachineAnalysis) -> SmResult {
         let nodes: Vec<TgNode> = sma.transition_graph.arc_map.keys().cloned().collect();
         let mut s = State::default();
         for node in nodes {
             if let StateOrChoice::Choice(c) = node.soc {
-                s = Self::visit(sma, s.clear_path(), c)?;
+                // Emit each choice cycle and keep scanning the remaining choice
+                // nodes (the DFS state carries over so visited nodes are not
+                // re-reported). A cycle is *blocking*, though: the typed-element
+                // pass walks the choice graph assuming it is acyclic and would
+                // otherwise recurse forever, so mark it so the gate stops there.
+                match Self::visit(sma, s.clear_path(), c) {
+                    Ok(next) => s = next,
+                    Err(err) => {
+                        err.emit();
+                        sma.blocking_error = true;
+                    }
+                }
             }
         }
-        Ok(())
+        ControlFlow::Continue(())
     }
 
     fn visit(sma: &StateMachineAnalysis, s: State, c: StateMachineSymbol) -> SemanticResult<State> {

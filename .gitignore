@@ -27,3 +27,6 @@ Thumbs.db
 
 # Ignore any AI files
 CLAUDE.md
+
+# Ignore any workspace working docs
+notes/

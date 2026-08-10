@@ -8,3 +8,13 @@
 3 |     state T
   |     ------- previous definition is here
 
+ --> [ local path prefix ]/state_machine/redef/nested_state.fpp:1:15
+  |
+1 | state machine M {
+  |               ^ state machine must have initial transition
+
+ --> [ local path prefix ]/state_machine/redef/nested_state.fpp:2:9
+  |
+2 |   state S {
+  |         ^ state with substates must have initial transition
+

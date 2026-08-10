@@ -64,8 +64,8 @@ impl<'ast> CheckExprTypes<'ast> {
         }
     }
 
-    /// For shift operations, require the operand to be an integer or enum type.
-    fn check_int_or_enum(&self, a: &Analysis, expr: &'ast Expr) {
+    /// For shifting operations make sure value is integer or enum
+    fn check_integer_or_enum_type(&self, a: &Analysis, expr: &'ast Expr) {
         if let Some(ty) = a.type_map.get(&expr.node_id) {
             let ok = ty.is_int() || matches!(Type::underlying_type(ty).deref(), Type::Enum(_));
             if !ok {
@@ -265,8 +265,9 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                 }
             }
             ExprKind::ArraySubscript { e1, e2 } => {
-                self.check_type_is_numerical(a, e2);
-
+                // Resolve the element type of e1 (and report "not an array type"
+                // on e1) before checking that e2 is numeric, matching Scala's
+                // for-comprehension ordering in exprArraySubscriptNode.
                 let arr_ty = match a.type_map.get(&e1.node_id) {
                     None => return ControlFlow::Continue(()),
                     Some(arr_ty) => Type::underlying_type(arr_ty),
@@ -286,14 +287,16 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                     }
                 };
 
+                self.check_type_is_numerical(a, e2);
+
                 a.type_map.insert(node.node_id, elt_ty);
             }
             ExprKind::Binop { left, right, op } => match op {
                 fpp_ast::Binop::LShift | fpp_ast::Binop::RShift => {
-                    // Shift operations independently require both operands to be
-                    // an integer or enum type; the result is an integer.
-                    self.check_int_or_enum(a, left);
-                    self.check_int_or_enum(a, right);
+                    // Shift operation is special, for this we independently check
+                    // for both operands to be integer
+                    self.check_integer_or_enum_type(a, left);
+                    self.check_integer_or_enum_type(a, right);
                     a.type_map.insert(node.node_id, Arc::new(Type::Integer));
                 }
                 _ => {
@@ -340,8 +343,18 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                             }
                         }
                         _ => {
-                            self.check_type_is_numerical(a, left);
-                            self.check_type_is_numerical(a, right);
+                            // The other operations check the common type once at
+                            // the binop node (Scala's convertToNumeric): the type
+                            // is fine if it is numeric or convertible to Integer.
+                            let numeric = ty.is_numeric()
+                                || Type::convert(&ty, &Arc::new(Type::Integer)).is_ok();
+                            if !numeric {
+                                SemanticError::InvalidType {
+                                    loc: node.span(),
+                                    msg: format!("cannot convert {} to a numeric type", ty),
+                                }
+                                .emit();
+                            }
                         }
                     }
                     a.type_map.insert(node.node_id, ty);

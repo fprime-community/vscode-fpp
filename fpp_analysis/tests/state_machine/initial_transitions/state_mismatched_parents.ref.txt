@@ -11,3 +11,8 @@
 6 | |   }
   | |___- transition path goes here
 
+ --> [ local path prefix ]/state_machine/initial_transitions/state_mismatched_parents.fpp:5:5
+  |
+5 |     state T
+  |     ^^^^^^^ state T is unreachable
+

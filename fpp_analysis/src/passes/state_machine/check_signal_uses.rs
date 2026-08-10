@@ -11,7 +11,7 @@ pub struct CheckSignalUses;
 impl CheckSignalUses {
     /// Analyze a state machine definition
     pub fn def_state_machine(
-        sma: StateMachineAnalysis,
+        sma: &mut StateMachineAnalysis,
         node: &fpp_ast::DefStateMachine,
     ) -> SmResult {
         StateMachineAnalysisVisitor::def_state_machine(&CheckSignalUses, sma, node)
@@ -19,19 +19,20 @@ impl CheckSignalUses {
 }
 
 impl StateMachineAnalysisVisitor for CheckSignalUses {
-    fn def_state(&self, sma: StateMachineAnalysis, node: &DefState) -> SmResult {
+    fn def_state(&self, sma: &mut StateMachineAnalysis, node: &DefState) -> SmResult {
         let mut initial_map: HashMap<StateMachineSymbol, &SpecStateTransition> = HashMap::default();
         for member in &node.members {
             if let StateMember::SpecStateTransition(st) = member {
                 let sym = sma.use_def_map.get(&st.signal.id()).unwrap().clone();
                 match initial_map.get(&sym) {
                     Some(prev_st) => {
-                        return Err(SemanticError::DuplicateSignal {
+                        SemanticError::DuplicateSignal {
                             name: sym.get_unqualified_name().to_string(),
                             state_name: node.name.data.clone(),
                             loc: st.signal.span(),
                             prev_loc: prev_st.signal.span(),
-                        });
+                        }
+                        .emit();
                     }
                     None => {
                         initial_map.insert(sym, st);
@@ -40,7 +41,6 @@ impl StateMachineAnalysisVisitor for CheckSignalUses {
             }
         }
         // Visit members
-        let sma = self.state_analyzer_def_state(sma, node)?;
-        Ok(sma)
+        self.state_analyzer_def_state(sma, node)
     }
 }

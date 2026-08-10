@@ -1,0 +1,31 @@
+[package]
+name = "fpp_diagram"
+description = "Lowering of FPP semantic analysis into diagram intermediate representation and sprotty models"
+
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+fpp_ast = { path = "../fpp_ast", version = "=0.0.0" }
+fpp_core = { path = "../fpp_core", version = "=0.0.0" }
+fpp_analysis = { path = "../fpp_analysis", version = "=0.0.0" }
+rustc-hash = "2.1.1"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+
+# Used by the `fpp-diagram` binary (parsing/analysis of an input file, CLI args,
+# diagnostic output). The library itself does not depend on these.
+fpp_parser = { path = "../fpp_parser", version = "=0.0.0" }
+fpp_fs = { path = "../fpp_fs", version = "=0.0.0" }
+fpp_errors = { path = "../fpp_errors", version = "=0.0.0" }
+clap = { version = "4.5.60", features = ["derive"] }
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"
+
+[[bin]]
+name = "fpp-diagram"
+path = "src/bin/fpp-diagram.rs"

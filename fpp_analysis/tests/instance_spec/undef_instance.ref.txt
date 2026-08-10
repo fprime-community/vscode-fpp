@@ -1,5 +1,5 @@
  --> [ local path prefix ]/instance_spec/undef_instance.fpp:3:12
   |
 3 |   instance c
-  |            ^ cannot find port interface instance `c` in scope
+  |            ^ cannot find component instance or topology `c` in scope
 

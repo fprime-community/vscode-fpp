@@ -1,0 +1,133 @@
+svg:focus {
+    outline: none;
+    border: none;
+}
+
+.sprotty-node {
+    fill: var(--vscode-button-background)
+}
+
+.sprotty-node.selected {
+    stroke-width: 2;
+    fill: var(--vscode-list-focusHighlightForeground);
+    /* fill: var(--vscode-editor-selectionHighlightBackground); A very nice muted color. */
+}
+
+.sprotty-label {
+    fill: var(--vscode-foreground);
+}
+
+.sprotty-port {
+    fill: var(--vscode-foreground);
+    stroke: #7b337d;
+    stroke-width: 1;
+}
+
+.sprotty-edge .sprotty-label {
+    fill: var(--vscode-editorActiveLineNumber-foreground);
+}
+
+tspan {
+    stroke-width: 1px;
+}
+
+.sprotty-edge {
+    fill: none;
+    stroke: var(--vscode-editorActiveLineNumber-foreground);
+}
+
+.sprotty-edge-arrow {
+    fill: var(--vscode-editorActiveLineNumber-foreground);
+    stroke-width: 0;
+}
+
+.sprotty-edge>.sprotty-routing-handle {
+    fill: var(--vscode-editor-selectionBackground);
+    stroke: none;
+    z-index: 1000;
+}
+
+.sprotty-edge>.sprotty-routing-handle[data-kind='line'] {
+    opacity: 0.35;
+}
+
+.sprotty-edge.selected {
+    stroke: orange;
+}
+
+.sprotty-edge.mouseover {
+    stroke: orange;
+}
+
+.sprotty-hidden {
+    width: 0px;
+    height: 0px;
+}
+
+.component-active {
+    /* Green expresses the notion of "go". */
+    stroke: #3FB984;
+}
+
+.component-queued {
+    /* Queued components do not have special borders. */
+}
+
+.component-passive {
+    /* Red expresses the notion of "caution", because the component is synchronous. */
+    stroke: #fe92a8;
+}
+
+.port-sync {
+    /* Red expresses the notion of "caution", because the component is synchronous. */
+    fill: #fe92a8;
+}
+
+.port-async {
+    /* Async ports do not have special borders. */
+}
+
+.port-guarded {
+    fill: #FDD35C;
+    /* Yellow expresses the notion of "wait", because the port is guarded. */
+}
+
+/* --- state machine diagrams --- */
+
+.sm-state {
+    fill: var(--vscode-button-background);
+    stroke: #4a90d9;
+}
+
+.sm-state.selected {
+    stroke-width: 3px;
+    fill: var(--vscode-list-focusHighlightForeground);
+}
+
+.sm-choice {
+    fill: #FDD35C;
+    /* Yellow diamond, matching the "guarded decision" notion. */
+    stroke: #7b337d;
+}
+
+.sm-initial {
+    fill: var(--vscode-foreground);
+    stroke: none;
+}
+
+/* All diagram labels: force a light, readable sans-serif. The webview otherwise
+   inherits VS Code's (often monospace/bold) editor font, which renders the small
+   state-machine labels unreadable. `!important` beats the inline styles sprotty
+   emits on the <text> elements. */
+.sprotty-label,
+text.sprotty-label,
+.sprotty-label tspan {
+    font-weight: normal !important;
+    font-size: 11px !important;
+    fill: var(--vscode-foreground);
+}
+
+.choice tspan {
+    color: #000;
+    fill: #000;
+}

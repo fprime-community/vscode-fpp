@@ -99,3 +99,13 @@ fn string_concat_error() {
 fn string_concat_ok() {
     run_test("expr/string_concat_ok")
 }
+
+#[test]
+fn binop_numeric_error() {
+    run_test("expr/binop_numeric_error")
+}
+
+#[test]
+fn subscript_order_error() {
+    run_test("expr/subscript_order_error")
+}

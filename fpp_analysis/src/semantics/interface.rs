@@ -458,6 +458,7 @@ impl PortInterface {
         }
     }
 
+    /// Add a port instance
     pub fn add_port_instance(&self, instance: PortInstance) -> SemanticResult<PortInterface> {
         let mut result = self.update_port_map(instance.clone())?;
         if let Some(kind) = instance.get_special_kind() {
@@ -504,6 +505,7 @@ impl PortInterface {
         Ok(result)
     }
 
+    /// Add a port instance to the port map
     fn update_port_map(&self, instance: PortInstance) -> SemanticResult<PortInterface> {
         let name = instance.get_unqualified_name().to_string();
         match self.port_map.get(&name) {
@@ -558,6 +560,7 @@ impl PortInterface {
         Ok(())
     }
 
+    /// Add a port instance to the special port map
     fn update_special_port_map(
         &self,
         kind: &SpecialPortInstanceKind,

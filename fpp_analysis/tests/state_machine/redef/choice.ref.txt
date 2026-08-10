@@ -8,3 +8,8 @@
 4 |   choice C { if g enter S else enter S }
   |   -------------------------------------- previous definition is here
 
+ --> [ local path prefix ]/state_machine/redef/choice.fpp:1:15
+  |
+1 | state machine M {
+  |               ^ state machine must have initial transition
+

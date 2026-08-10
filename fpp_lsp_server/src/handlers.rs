@@ -4,10 +4,10 @@ use crate::lsp::utils::semantic_token_delta;
 use crate::lsp_ext::UriRequest;
 use crate::util::{
     completion_items_for_port_instance, completion_items_for_postfix_expr,
-    completion_items_for_qual_ident, completion_items_in_name_group, hover_for_node,
-    hover_for_port_instance, hover_for_sm_symbol, hover_for_symbol, node_to_location,
-    nodes_at_offset, port_instance_at_position, position_to_offset, sm_symbol_at_position,
-    symbol_at_position, symbol_to_completion_item,
+    completion_items_for_qual_ident, completion_items_for_sm, completion_items_for_sm_state,
+    completion_items_in_name_group, hover_for_node, hover_for_port_instance, hover_for_sm_symbol,
+    hover_for_symbol, node_to_location, nodes_at_offset, port_instance_at_position,
+    position_to_offset, sm_symbol_at_position, symbol_at_position, symbol_to_completion_item,
 };
 use anyhow::Result;
 use fpp_analysis::semantics::{NameGroup, SymbolInterface};
@@ -106,6 +106,115 @@ pub fn handle_did_change_watched_file(
     }
 
     Ok(())
+}
+
+pub fn handle_diagram(
+    state: &GlobalState,
+    params: crate::lsp_ext::DiagramParams,
+) -> Result<serde_json::Value> {
+    // State machines render via Mermaid, not sprotty: return the Mermaid
+    // `stateDiagram-v2` source as a JSON string. All other kinds return a
+    // sprotty `SModel` JSON object. The client dispatches on the diagram kind.
+    if params.kind == crate::lsp_ext::DiagramKind::StateMachine {
+        return fpp_diagram::lower_state_machine_to_mermaid(
+            &state.analysis,
+            &params.name,
+            params.transition_action_mode.into(),
+        )
+        .map(serde_json::Value::String)
+        .map_err(|e| anyhow::anyhow!("{e}"));
+    }
+    fpp_diagram::lower_to_smodel(
+        &state.analysis,
+        params.kind.into(),
+        &params.name,
+        params.hide_unused_ports,
+        params.transition_action_mode.into(),
+    )
+    .map_err(|e| anyhow::anyhow!("{e}"))
+}
+
+pub fn handle_diagram_elements(
+    state: &GlobalState,
+    param: UriRequest,
+) -> Result<Vec<crate::lsp_ext::DiagramElement>> {
+    use crate::lsp_ext::{DiagramElement, DiagramKind};
+    use fpp_analysis::semantics::SymbolInterface;
+
+    let uri_str = param.uri.as_str();
+    let mut elements: Vec<DiagramElement> = Vec::new();
+
+    // A definition is diagrammable from this document if its defining name node
+    // lives in this file. `node_to_location` resolves the node's span to a URI +
+    // range, so we filter on that URI.
+    let mut push_if_in_doc = |kind: DiagramKind, name: String, display_name: String, name_id| {
+        let loc = node_to_location(state, name_id);
+        if loc.uri.as_str() == uri_str {
+            elements.push(DiagramElement {
+                kind,
+                name,
+                display_name,
+                range: loc.range,
+            });
+        }
+    };
+
+    for topology in state.analysis.topology_map.values() {
+        push_if_in_doc(
+            DiagramKind::Topology,
+            topology.name.clone(),
+            topology.symbol.name().data.clone(),
+            topology.symbol.name().id(),
+        );
+
+        // Each named connection group is independently diagrammable. Anchor its
+        // lens at the group's own `connections <name>` location rather than the
+        // topology name, so the lenses do not all stack on the topology.
+        for graph in &topology.raw_direct_graphs {
+            push_if_in_doc(
+                DiagramKind::ConnectionGroup,
+                format!("{}.{}", topology.name, graph.name.data),
+                graph.name.data.clone(),
+                graph.name.id(),
+            );
+        }
+    }
+
+    for component in state.analysis.component_map.values() {
+        let qualified_name = state.analysis.get_qualified_name(&component.symbol);
+        push_if_in_doc(
+            DiagramKind::Component,
+            qualified_name,
+            component.symbol.name().data.clone(),
+            component.symbol.name().id(),
+        );
+    }
+
+    for sm in state.analysis.state_machine_map.values() {
+        // Only internal (defined) state machines have a body to diagram.
+        if matches!(
+            sm.get_kind(),
+            fpp_analysis::semantics::state_machine::Kind::External
+        ) {
+            continue;
+        }
+        // A state machine with a blocking analysis error has an incomplete
+        // transition graph; skip it so the diagram is not built from partial
+        // data. (It is still stored for editor features like completion.)
+        if sm.sma.blocking_error {
+            continue;
+        }
+        let symbol = sm.get_symbol();
+        let qualified_name = state.analysis.get_qualified_name(&symbol);
+        push_if_in_doc(
+            DiagramKind::StateMachine,
+            qualified_name,
+            sm.node.name.data.clone(),
+            sm.node.name.id(),
+        );
+    }
+
+    Ok(elements)
 }
 
 pub fn handle_dump_syntax_tree(state: &mut GlobalState, param: UriRequest) -> Result<()> {
@@ -577,6 +686,93 @@ fn connection_endpoint_direction(pii: &SyntaxNode) -> Option<fpp_analysis::seman
     })
 }
 
+/// Classify a state machine completion context from the token to the left of
+/// the cursor.
+///
+/// State machine transitions reference four kinds of definitions in distinct
+/// syntactic positions:
+///   * actions in `do { <here> }`
+///   * a guard after `if <here>`
+///   * a signal after `on <here>`
+///   * a state or choice after `enter <here>`
+///
+/// The context is recognized either from the keyword just typed (`do`/`if`/
+/// `on`/`enter`, when nothing follows yet) or from the enclosing grammar rule
+/// (when a partial name is being typed). `enter` targets are checked before the
+/// dot-qualified `QUAL_IDENT` handling elsewhere, since that path returns early
+/// for `TRANSITION_EXPR`.
+fn state_machine_completion_kind(
+    left_token: &SyntaxToken,
+    cursor_pos: fpp_lsp_parser::TextSize,
+) -> Option<crate::util::SmCompletionKind> {
+    use crate::util::SmCompletionKind;
+
+    // A `do { ... }` action list: the cursor is within the do-expression, and
+    // any preceding `enter` (which would make this a transition target) is not
+    // an ancestor of a do-expression member.
+    let in_do_expr = left_token
+        .parent_ancestors()
+        .take_while(|s| s.kind() != SyntaxKind::TRANSITION_EXPR)
+        .any(|s| s.kind() == SyntaxKind::DO_EXPR);
+    if in_do_expr {
+        return Some(SmCompletionKind::Action);
+    }
+
+    // Directly after one of the introducing keywords, before a name is typed.
+    match left_token.kind() {
+        SyntaxKind::DO_KW => return Some(SmCompletionKind::Action),
+        SyntaxKind::IF_KW => return Some(SmCompletionKind::Guard),
+        SyntaxKind::ON_KW => return Some(SmCompletionKind::Signal),
+        SyntaxKind::ENTER_KW => return Some(SmCompletionKind::StateOrChoice),
+        _ => {}
+    }
+
+    // A state/choice transition target: `enter <qual ident>`.
+    if left_token
+        .parent_ancestors()
+        .any(|s| s.kind() == SyntaxKind::TRANSITION_EXPR)
+    {
+        return Some(SmCompletionKind::StateOrChoice);
+    }
+
+    // Within a state transition (`on <signal> [if <guard>] ...`): a `NAME_REF`
+    // is the guard; the bare signal identifier sits directly under the spec.
+    if let Some(spec) = left_token
+        .parent_ancestors()
+        .find(|s| s.kind() == SyntaxKind::SPEC_STATE_TRANSITION)
+    {
+        if left_token
+            .parent_ancestors()
+            .any(|s| s.kind() == SyntaxKind::NAME_REF)
+        {
+            return Some(SmCompletionKind::Guard);
+        }
+        // The signal is the first identifier of the spec; only treat the cursor
+        // as the signal position while it is at or before that identifier.
+        if let Some(signal_ident) = spec
+            .children_with_tokens()
+            .filter_map(|c| c.into_token())
+            .find(|t| t.kind() == SyntaxKind::IDENT)
+            && cursor_pos <= signal_ident.text_range().end()
+        {
+            return Some(SmCompletionKind::Signal);
+        }
+    }
+
+    // The guard of a choice definition: `choice C { if <here> ... }`.
+    if left_token
+        .parent_ancestors()
+        .any(|s| s.kind() == SyntaxKind::NAME_REF)
+        && left_token
+            .parent_ancestors()
+            .any(|s| s.kind() == SyntaxKind::DEF_CHOICE)
+    {
+        return Some(SmCompletionKind::Guard);
+    }
+
+    None
+}
+
 pub fn handle_completion(
     state: &GlobalState,
     request: CompletionParams,
@@ -686,6 +882,40 @@ pub fn handle_completion(
         TokenAtOffset::Between(l, _) => non_white_space_left(&root, l.clone()),
     };
 
+    // State/choice transition targets (`enter A.B.C`) descend one nesting level
+    // at a time. This is handled before the generic qualified-identifier branch
+    // and independently of whether the cursor follows a dot, so it covers the
+    // first segment (`enter A`), a partial child (`enter A.B`), and just after a
+    // dot (`enter A.`). The qualifier is every identifier before the final dot;
+    // the (possibly partial) segment at the cursor is excluded.
+    if let Some(qual_ident) = left_token
+        .parent_ancestors()
+        .find(|s| s.kind() == SyntaxKind::QUAL_IDENT)
+        && qual_ident.parent().map(|p| p.kind()) == Some(SyntaxKind::TRANSITION_EXPR)
+    {
+        let last_dot_end = qual_ident
+            .descendants_with_tokens()
+            .filter_map(|s| s.as_token().cloned())
+            .filter(|t| t.kind() == SyntaxKind::DOT && t.text_range().end() <= cursor_pos)
+            .map(|t| t.text_range().end())
+            .max();
+
+        let qualifier: Vec<String> = qual_ident
+            .descendants_with_tokens()
+            .filter_map(|s| s.as_token().cloned())
+            .filter(|t| {
+                t.kind() == SyntaxKind::IDENT
+                    && last_dot_end.is_some_and(|dot_end| t.text_range().end() < dot_end)
+            })
+            .map(|t| t.text().to_string())
+            .collect();
+
+        return Ok(
+            completion_items_for_sm_state(state, &uri, cursor_pos.into(), &qualifier)
+                .map(CompletionResponse::Array),
+        );
+    }
+
     if left_token.kind() == SyntaxKind::DOT
         && let Some(qual_ident) = left_token
             .parent_ancestors()
@@ -708,7 +938,6 @@ pub fn handle_completion(
             SyntaxKind::SPEC_LOC => return Ok(None),
             SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => NameGroup::Port,
             SyntaxKind::SPEC_STATE_MACHINE_INSTANCE => NameGroup::StateMachine,
-            SyntaxKind::TRANSITION_EXPR => return Ok(None),
             SyntaxKind::TYPE_NAME => NameGroup::Type,
             _ => return Ok(None),
         };
@@ -804,6 +1033,13 @@ pub fn handle_completion(
             &uri,
         )
         .map(CompletionResponse::Array))
+    } else if let Some(sm_kind) = state_machine_completion_kind(&left_token, cursor_pos) {
+        // Completion for state machine definitions: actions in `do { }`, guards
+        // after `if`, signals after `on`, and states/choices after `enter`.
+        Ok(
+            completion_items_for_sm(state, &uri, cursor_pos.into(), sm_kind)
+                .map(CompletionResponse::Array),
+        )
     } else {
         // Check for parsing errors to extract the next expected token
         Ok(Some(CompletionResponse::Array(
