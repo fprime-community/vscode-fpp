@@ -79,8 +79,22 @@ jobs:
             fpp_format
             fpp_analysis
             fpp
+            fpp_diagram
             fpp_lsp_server
           )
+
+          # Drift guard: fail fast if a publishable workspace member is missing
+          # from (or stale in) the ordered list above. Without this, a newly
+          # added crate surfaces only as an unresolvable dependency mid-publish.
+          expected=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.publish != []) | .name' | sort)
+          listed=$(printf '%s\n' "${crates[@]}" | sort)
+          if [ "$expected" != "$listed" ]; then
+            echo "::error::release.yml crate list is out of sync with the workspace."
+            echo "Only in workspace: $(comm -23 <(echo "$expected") <(echo "$listed") | tr '\n' ' ')"
+            echo "Only in list:      $(comm -13 <(echo "$expected") <(echo "$listed") | tr '\n' ' ')"
+            exit 1
+          fi
 
           # True if $crate@$version already exists on the crates.io index.
           # Makes the loop idempotent so a re-run after a partial failure
@@ -100,26 +114,32 @@ jobs:
               echo "::endgroup::"
               continue
             fi
-            # Retry to ride out crates.io's new-crate rate limit (HTTP 429).
-            # crates.io allows a burst of 5 brand-new crate names, then refills
+            # Retry ONLY to ride out crates.io's new-crate rate limit (HTTP 429).
+            # crates.io allows a burst of ~5 brand-new crate names, then refills
             # one token roughly every 10 minutes; a fresh workspace publishing
-            # 13 new crates trips this. cargo exits non-zero on 429, so wait a
-            # bit longer than the refill interval and retry. This is only a
-            # concern on the very first release (new crate names); subsequent
-            # releases publish new versions of existing crates and aren't
-            # subject to this limit.
+            # many new crates trips this. Any other failure (e.g. an unresolved
+            # dependency) is permanent, so fail fast rather than retry for ~90min.
+            # This retry is only a concern on the very first release (new crate
+            # names); later releases publish new versions and aren't rate-limited.
             attempt=1
             max_attempts=8
-            until cargo publish -p "$crate" --allow-dirty; do
+            while true; do
+              if cargo publish -p "$crate" --allow-dirty 2>&1 | tee /tmp/publish.log; then
+                break
+              fi
               if already_published "$crate"; then
                 echo "$crate v$version appeared on crates.io after the attempt; continuing."
                 break
               fi
-              if [ "$attempt" -ge "$max_attempts" ]; then
-                echo "::error::Failed to publish $crate v$version after $max_attempts attempts."
+              if ! grep -qiE '429|too many requests|rate limit' /tmp/publish.log; then
+                echo "::error::publish of $crate v$version failed for a non-rate-limit reason (see log above); not retrying."
                 exit 1
               fi
-              echo "::warning::publish of $crate failed (attempt $attempt/$max_attempts); waiting 11min for the crates.io new-crate rate limit to refill before retry."
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Failed to publish $crate v$version after $max_attempts rate-limited attempts."
+                exit 1
+              fi
+              echo "::warning::$crate hit the crates.io new-crate rate limit (attempt $attempt/$max_attempts); waiting 11min for a token to refill before retry."
               sleep 660
               attempt=$((attempt + 1))
             done
