@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { execFile } from 'child_process';
-import * as https from 'https';
 
 import * as Settings from './settings';
 import { PIP_PACKAGE, pipInstall, ServerResolution } from './serverPath';
@@ -34,34 +33,44 @@ export function installedVersion(serverPath: string): Promise<string | undefined
     });
 }
 
-/** Fetch the latest released version of the package from PyPI. */
-function latestVersion(): Promise<string | undefined> {
-    return new Promise((resolve) => {
-        const req = https.get(
-            `https://pypi.org/pypi/${PIP_PACKAGE}/json`,
-            { headers: { 'Accept': 'application/json' }, timeout: 5000 },
-            (res) => {
-                if (res.statusCode !== 200) {
-                    res.resume();
-                    resolve(undefined);
-                    return;
-                }
-                let body = '';
-                res.setEncoding('utf8');
-                res.on('data', (chunk) => (body += chunk));
-                res.on('end', () => {
-                    try {
-                        const version = JSON.parse(body)?.info?.version;
-                        resolve(typeof version === 'string' ? version : undefined);
-                    } catch {
-                        resolve(undefined);
-                    }
-                });
-            }
-        );
-        req.on('timeout', () => req.destroy());
-        req.on('error', () => resolve(undefined));
-    });
+/** Result of a PyPI lookup: the version, or a human-readable failure reason. */
+interface LatestResult {
+    version?: string;
+    error?: string;
+}
+
+/**
+ * Fetch the latest released version of the package from PyPI.
+ *
+ * Uses the global `fetch` (undici, provided by VSCode's Node runtime) rather
+ * than the `https` module: VSCode's proxy agent monkey-patches `https` when
+ * `http.proxySupport` is `override` (the default), and its llhttp parser can
+ * fail on some responses with "Parse Error: JS Exception". `fetch` avoids that
+ * patched path while still honoring the user's proxy. On any failure we return a
+ * reason string so the caller can surface it.
+ */
+async function latestVersion(): Promise<LatestResult> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+        const res = await fetch(`https://pypi.org/pypi/${PIP_PACKAGE}/json`, {
+            headers: { 'Accept': 'application/json', 'User-Agent': 'fpp-vscode-extension' },
+            signal: controller.signal,
+        });
+        if (!res.ok) {
+            return { error: `PyPI returned HTTP ${res.status}` };
+        }
+        const data = await res.json() as { info?: { version?: unknown } };
+        const version = data?.info?.version;
+        return typeof version === 'string'
+            ? { version }
+            : { error: 'PyPI response missing info.version' };
+    } catch (e) {
+        const err = e as Error;
+        return { error: err.name === 'AbortError' ? 'request timed out' : err.message };
+    } finally {
+        clearTimeout(timeout);
+    }
 }
 
 /**
@@ -117,17 +126,20 @@ export async function checkForUpdate(
         }
     }
 
-    const latest = await latestVersion();
-    // Record the attempt regardless of outcome so we throttle network calls.
-    await context.globalState.update(LAST_CHECK_KEY, Date.now());
+    const { version: latest, error } = await latestVersion();
     if (!latest) {
+        // Don't advance the throttle on failure, so the next window reload retries
+        // rather than staying silent for a day on a transient network blip.
         if (force) {
             vscode.window.showWarningMessage(
-                `FPP: could not reach PyPI to check for ${PIP_PACKAGE} updates.`
+                `FPP: could not reach PyPI to check for ${PIP_PACKAGE} updates` +
+                    (error ? ` (${error}).` : '.')
             );
         }
         return false;
     }
+    // Successful fetch — record it so we don't re-poll for the interval.
+    await context.globalState.update(LAST_CHECK_KEY, Date.now());
 
     if (compareVersions(latest, installed) <= 0) {
         if (force) {
