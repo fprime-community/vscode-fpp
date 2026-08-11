@@ -32,6 +32,14 @@
                 "title": "FPP: Restart Language Server"
             },
             {
+                "command": "fpp.selectServer",
+                "title": "FPP: Select Language Server"
+            },
+            {
+                "command": "fpp.checkForServerUpdate",
+                "title": "FPP: Check for Language Server Update"
+            },
+            {
                 "command": "fpp.dumpActiveTextEditorSyntaxTree",
                 "title": "FPP (debug command): View CST"
             },
@@ -196,6 +204,11 @@
                 "fpp.pythonVenv": {
                     "type": "string",
                     "markdownDescription": "Path to the Python virtual environment root used to locate `fpp_lsp_server`. Overrides venv auto-discovery. Ignored when `#fpp.serverPath#` is set."
+                },
+                "fpp.checkForUpdates": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Periodically check PyPI for a newer `fprime-fpp-lsp` and prompt to update the language server in the workspace venv."
                 },
                 "fpp.locsSearch": {
                     "type": "array",

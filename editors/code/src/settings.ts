@@ -5,6 +5,7 @@ const names = {
     locsExclude: "fpp.locsExclude",
     serverPath: "fpp.serverPath",
     pythonVenv: "fpp.pythonVenv",
+    checkForUpdates: "fpp.checkForUpdates",
     lspServerRunLogLevel: "fpp.lspServerRunLogLevel",
     lspServerDevLogLevel: "fpp.lspServerDevLogLevel"
 };
@@ -53,6 +54,14 @@ export function onPythonVenvChanged(callback: () => void): vscode.Disposable {
             callback();
         }
     });
+}
+
+/**
+ * Whether to periodically poll PyPI for a newer `fprime-fpp-lsp` and prompt to
+ * update. Defaults to true.
+ */
+export function checkForUpdates(): boolean {
+    return vscode.workspace.getConfiguration().get<boolean>(names.checkForUpdates) ?? true;
 }
 
 type LogLevel = (
