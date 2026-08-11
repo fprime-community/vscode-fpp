@@ -374,6 +374,42 @@ module Outer {
     }
 
     #[test]
+    fn test_blank_line_with_trailing_whitespace_is_preserved() {
+        // A blank separator line that carries trailing spaces is lexed as two
+        // EOL tokens around a WHITESPACE token; the blank must still be seen as
+        // a single intentional separator and preserved.
+        let input = "module M {\n  constant a = 1\n   \n  constant b = 2\n}\n";
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
+        assert_eq!(
+            formatted, "module M {\n  constant a = 1\n\n  constant b = 2\n}\n",
+            "trailing-whitespace blank line not preserved:\n{}",
+            formatted
+        );
+        // Same content without the stray spaces must format identically.
+        let clean = "module M {\n  constant a = 1\n\n  constant b = 2\n}\n";
+        let clean_formatted =
+            format_text(clean, TopEntryPoint::Module, FormatOptions::default()).unwrap();
+        assert_eq!(formatted, clean_formatted);
+        assert_stable(&formatted);
+    }
+
+    #[test]
+    fn test_multiple_blank_lines_with_whitespace_collapse_to_one() {
+        // Several blank lines (some carrying whitespace) collapse to a single
+        // separator, just like clean blank lines do.
+        let input = "module M {\n  constant a = 1\n \n\n  \n  constant b = 2\n}\n";
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
+        assert_eq!(
+            formatted, "module M {\n  constant a = 1\n\n  constant b = 2\n}\n",
+            "blank run not collapsed to one:\n{}",
+            formatted
+        );
+        assert_stable(&formatted);
+    }
+
+    #[test]
     fn test_short_spec_stays_inline() {
         // A spec under the width limit keeps its clauses on one line.
         let input = "module M { active component C { \
