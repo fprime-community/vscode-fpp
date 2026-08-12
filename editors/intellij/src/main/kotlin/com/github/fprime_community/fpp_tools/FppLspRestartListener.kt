@@ -4,11 +4,17 @@ import com.github.fprime_community.fpp_tools.settings.FppSettings
 import com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerState
+import com.jetbrains.cidr.cpp.cmake.python.CMakePythonSdkService
+import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.sdk.PySdkListener
 
-class FppSettingsLspRestartListener(val project: Project) : FppSettingsConfigurable.SettingsChangeListener {
+class FppSettingsLspRestartListener(private val project: Project) : FppSettingsConfigurable.SettingsChangeListener {
     override fun settingsChanged(event: FppSettingsConfigurable.SettingsChangedEvent) {
         if (event.isChanged(FppSettings.State::lspPath)) {
             project.restartLspServerAsyncIfNeeded("Project settings changed")
@@ -16,6 +22,32 @@ class FppSettingsLspRestartListener(val project: Project) : FppSettingsConfigura
     }
 }
 
+@Suppress("UnstableApiUsage")
+class FppLspSdkChangeListener(private val project: Project) : PySdkListener {
+    override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
+        if (prevSdk != newSdk && module in ModuleManager.getInstance(project).modules) {
+            project.restartLspServerAsyncIfNeeded("Python interpreter changed")
+        }
+    }
+}
+
+// Sometimes, when switching python interpreter in CLion, this doesn't get called and cmake doesn't reload as well.
+class FppLspCMakeSdkChangeListener(private val project: Project) : CMakePythonSdkService.Companion.Listener {
+    override fun onChange() {
+        project.restartLspServerAsyncIfNeeded("CMake Python interpreter changed")
+    }
+}
+
+@Suppress("UnstableApiUsage")
+class FppLspPackageChangeListener(private val project: Project) : PythonPackageManagementListener {
+    override fun packagesChanged(sdk: Sdk) {
+        if (sdk == project.pythonSdk()) {
+            project.restartLspServerAsyncIfNeeded("Python packages changed")
+        }
+    }
+}
+
+// onlyIfRunning should be rarely needed, as stopAndRestartIfNeeded only starts the server if needed.
 private fun Project.restartLspServerAsyncIfNeeded(reason: String?, onlyIfRunning: Boolean = false) {
     ApplicationManager.getApplication().invokeLater({
         val server =

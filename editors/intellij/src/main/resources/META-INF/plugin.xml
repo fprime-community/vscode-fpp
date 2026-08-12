@@ -8,6 +8,7 @@
     <depends>com.intellij.modules.lsp</depends>
     <depends>org.jetbrains.plugins.textmate</depends>
     <depends>com.intellij.modules.python</depends>
+    <depends optional="true" config-file="fpp-tools-cmake.xml">com.intellij.cmake</depends>
 
     <resource-bundle>messages.FppBundle</resource-bundle>
 
@@ -64,5 +65,11 @@
         <listener
                 class="com.github.fprime_community.fpp_tools.FppSettingsLspRestartListener"
                 topic="com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable$SettingsChangeListener"/>
+        <listener
+                class="com.github.fprime_community.fpp_tools.FppLspSdkChangeListener"
+                topic="com.jetbrains.python.sdk.PySdkListener"/>
+        <listener
+                class="com.github.fprime_community.fpp_tools.FppLspPackageChangeListener"
+                topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
     </projectListeners>
 </idea-plugin>

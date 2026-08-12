@@ -2,19 +2,24 @@ package com.github.fprime_community.fpp_tools
 
 import com.github.fprime_community.fpp_tools.LspConfiguration.*
 import com.github.fprime_community.fpp_tools.settings.FppSettings
+import com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.getExecutablePath
+import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.exists
 
@@ -32,9 +37,19 @@ fun Project.getLspConfiguration(): LspConfiguration {
     }
 
     val sdk = pythonSdk() ?: run {
+        // TODO consider converting into a banner
         FppNotifications.pluginNotifications().createNotification(
             FppBundle.message("fpp.lsp.python.missing"), NotificationType.ERROR
-        ).notify(this)
+        ).addAction(object : NotificationAction(FppBundle.message("fpp.lsp.python.configure")) {
+            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                @Suppress("UnstableApiUsage")
+                ShowSettingsUtil.getInstance().showSettingsDialog(this@run, PyActiveSdkModuleConfigurable::class.java)
+            }
+        }).addAction(object : NotificationAction(FppBundle.message("fpp.settings.lsp.manual")) {
+            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                ShowSettingsUtil.getInstance().showSettingsDialog(this@run, FppSettingsConfigurable::class.java)
+            }
+        }).notify(this)
         return Disabled(FppBundle.message("fpp.lsp.python.missing"))
     }
 
@@ -48,7 +63,7 @@ fun Project.getLspConfiguration(): LspConfiguration {
     return Disabled()
 }
 
-private fun Project.pythonSdk(): Sdk? {
+internal fun Project.pythonSdk(): Sdk? {
     ProjectRootManager.getInstance(this).projectSdk?.takeIf { PythonSdkUtil.isPythonSdk(it) }?.let { return it }
     return ModuleManager.getInstance(this).modules.firstNotNullOfOrNull { PythonSdkUtil.findPythonSdk(it) }
 }
@@ -60,34 +75,20 @@ private fun resolveFppLsp(sdk: Sdk): Path? = sdk.getExecutablePath(LSP_EXECUTABL
  *
  * @return true if the package was installed.
  */
-private fun Project.promptAndInstallLsp(sdk: Sdk): Boolean {
-    var installed = false
-
-    // Confirmation and install model progress both require EDT
-    ApplicationManager.getApplication().invokeAndWait {
-        val choice = Messages.showYesNoDialog(
-            this,
-            FppBundle.message("fpp.lsp.python.download.question", sdk.name),
-            FppBundle.message("fpp.lsp.binary.missing.title"),
-            Messages.getQuestionIcon()
-        )
-        if (choice != Messages.YES) return@invokeAndWait
-
-        installed = try {
-            @Suppress("UnstableApiUsage")
-            PythonPackageManagerUI.forSdk(this, sdk)
-                .installPackagesWithModalProgressBlocking(LSP_PIP_PACKAGE)
-                ?.isNotEmpty()
-                ?: false
-        } catch (e: Exception) {
-            LOG.warn("Failed to install $LSP_PIP_PACKAGE into ${sdk.name}", e)
-            FppNotifications.pluginNotifications().createNotification(
-                FppBundle.message("fpp.notification.lsp.download.error"), NotificationType.ERROR
-            ).notify(this)
-            false
-        }
+private fun Project.promptAndInstallLsp(sdk: Sdk): Boolean = try {
+    runBlocking {
+        @Suppress("UnstableApiUsage")
+        PythonPackageManagerUI.forSdk(this@promptAndInstallLsp, sdk)
+            .installWithConfirmation(listOf(LSP_PIP_PACKAGE))
+            ?.isNotEmpty()
+            ?: false
     }
-    return installed
+} catch (e: Exception) {
+    LOG.warn("Failed to install $LSP_PIP_PACKAGE into ${sdk.name}", e)
+    FppNotifications.pluginNotifications().createNotification(
+        FppBundle.message("fpp.notification.lsp.download.error"), NotificationType.ERROR
+    ).notify(this)
+    false
 }
 
 sealed class LspConfiguration {
