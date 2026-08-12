@@ -1,6 +1,5 @@
 package com.github.fprime_community.fpp_tools.settings
 
-import com.github.fprime_community.fpp_tools.util.Version
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Service
@@ -8,16 +7,10 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 
-enum class LspConfigurationType {
-    Disabled, Auto, Manual,
-}
-
 @Service(Service.Level.PROJECT)
 @State(name = "FppSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class FppSettings(val project: Project) : PersistentStateComponent<FppSettings.State> {
     class State(
-        var lspVersion: String? = null,
-        var lspConfigurationType: LspConfigurationType = LspConfigurationType.Auto,
         var lspPath: String = "",
     )
 
@@ -27,18 +20,6 @@ class FppSettings(val project: Project) : PersistentStateComponent<FppSettings.S
         get() = internalState.lspPath
         set(value) {
             internalState.lspPath = value
-        }
-
-    var lspVersion: Version?
-        get() = internalState.lspVersion?.let { Version.parse(it) }
-        set(value) {
-            internalState.lspVersion = value?.toString()
-        }
-
-    var lspConfigurationType: LspConfigurationType
-        get() = internalState.lspConfigurationType
-        set(value) {
-            internalState.lspConfigurationType = value
         }
 
     override fun getState() = internalState

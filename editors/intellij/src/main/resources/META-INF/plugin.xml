@@ -7,6 +7,7 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lsp</depends>
     <depends>org.jetbrains.plugins.textmate</depends>
+    <depends>com.intellij.modules.python</depends>
 
     <resource-bundle>messages.FppBundle</resource-bundle>
 
@@ -60,9 +61,6 @@
                 displayName="FPP"/>
     </extensions>
     <projectListeners>
-        <listener
-                class="com.github.fprime_community.fpp_tools.FppLspManagerLspRestartListener"
-                topic="com.github.fprime_community.fpp_tools.FppLspManager$LspManagerChangeListener"/>
         <listener
                 class="com.github.fprime_community.fpp_tools.FppSettingsLspRestartListener"
                 topic="com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable$SettingsChangeListener"/>

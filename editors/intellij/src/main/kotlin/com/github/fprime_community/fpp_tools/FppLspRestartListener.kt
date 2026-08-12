@@ -2,43 +2,15 @@ package com.github.fprime_community.fpp_tools
 
 import com.github.fprime_community.fpp_tools.settings.FppSettings
 import com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable
-import com.github.fprime_community.fpp_tools.settings.LspConfigurationType
-import com.github.fprime_community.fpp_tools.util.Version
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerState
 
-class FppLspManagerLspRestartListener(val project: Project) : FppLspManager.LspManagerChangeListener {
-    override fun settingsChanged(event: FppLspManager.LspManagerChangedEvent) {
-        when (event) {
-            is FppLspManager.LspManagerChangedEvent.NewLspVersionDownloaded -> {
-                val settings = FppSettings.getInstance(project)
-                if (settings.lspConfigurationType != LspConfigurationType.Auto) {
-                    return
-                }
-                if (settings.lspVersion == Version.Latest) {
-                    val latest = FppLspManager.getLatestInstalledLspVersion()
-                    if (latest == null || event.version >= latest) {
-                        project.restartLspServerAsyncIfNeeded("LSP is updated to ${event.version}")
-                    }
-                    return
-                }
-                if (settings.lspVersion == event.version) {
-                    project.restartLspServerAsyncIfNeeded("LSP binary is downloaded")
-                }
-            }
-        }
-    }
-}
-
 class FppSettingsLspRestartListener(val project: Project) : FppSettingsConfigurable.SettingsChangeListener {
     override fun settingsChanged(event: FppSettingsConfigurable.SettingsChangedEvent) {
-        if (event.isChanged(FppSettings.State::lspPath)
-            || event.isChanged(FppSettings.State::lspVersion)
-            || event.isChanged(FppSettings.State::lspConfigurationType)
-        ) {
+        if (event.isChanged(FppSettings.State::lspPath)) {
             project.restartLspServerAsyncIfNeeded("Project settings changed")
         }
     }
