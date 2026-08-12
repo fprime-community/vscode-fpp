@@ -51,7 +51,7 @@ impl<'ast> FinalizeTypeDefs<'ast> {
         }
     }
 
-    pub(crate) fn ty(&self, a: &mut Analysis, node: &'ast TypeName) -> Option<Arc<Type>> {
+    pub(crate) fn ty(&self, a: &mut Analysis, node: &'ast TypeName) -> Arc<Type> {
         match &node.kind {
             TypeNameKind::QualIdent(q) => match a.use_def_map.get(&q.id()) {
                 None => {}
@@ -94,7 +94,8 @@ impl<'ast> FinalizeTypeDefs<'ast> {
             _ => {}
         }
 
-        a.type_map.get(&node.node_id).cloned()
+        // `CheckTypeUses` gives every type name an entry, so this is always set.
+        a.type_map.get(&node.node_id).cloned().unwrap()
     }
 }
 
@@ -131,18 +132,14 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         }
 
         a.visited_symbol_set.insert(symbol);
-        match self.ty(a, &node.type_name) {
-            None => {}
-            Some(ty) => {
-                a.type_map.insert(
-                    node.node_id,
-                    Arc::new(Type::AliasType(AliasType {
-                        node: node.clone(),
-                        alias_type: ty,
-                    })),
-                );
-            }
-        }
+        let ty = self.ty(a, &node.type_name);
+        a.type_map.insert(
+            node.node_id,
+            Arc::new(Type::AliasType(AliasType {
+                node: node.clone(),
+                alias_type: ty,
+            })),
+        );
 
         ControlFlow::Continue(())
     }
@@ -158,10 +155,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         }
 
         a.visited_symbol_set.insert(symbol);
-        let elt_type = match self.ty(a, &node.elt_type) {
-            None => return ControlFlow::Continue(()),
-            Some(elt_type) => elt_type,
-        };
+        let elt_type = self.ty(a, &node.elt_type);
 
         let size = match self.expr_as_integer(a, &node.size) {
             None => return ControlFlow::Continue(()),
@@ -234,12 +228,10 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         }
 
         a.visited_symbol_set.insert(symbol);
-        let mut enum_ty = match a.type_map.get(&node.node_id) {
-            None => return ControlFlow::Continue(()),
-            Some(ty) => match ty.deref() {
-                Type::Enum(ty) => ty.clone(),
-                _ => panic!("expected enum type"),
-            },
+        // `CheckTypeUses` always enters an enum type for the definition node.
+        let mut enum_ty = match a.type_map.get(&node.node_id).unwrap().deref() {
+            Type::Enum(ty) => ty.clone(),
+            _ => panic!("expected enum type"),
         };
 
         enum_ty.default = match &node.default {
@@ -283,14 +275,9 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
 
         for member in &node.members {
             let member_ty = self.ty(a, &member.type_name);
-            match &member_ty {
-                None => {}
-                Some(member_ty) => {
-                    ty.anon_struct
-                        .members
-                        .insert(member.name.data.clone(), member_ty.clone());
-                }
-            }
+            ty.anon_struct
+                .members
+                .insert(member.name.data.clone(), member_ty.clone());
 
             let size = self.expr_as_integer_opt(a, &member.size);
             match size {
@@ -317,10 +304,10 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
                 }
             }
 
-            if let (Some(format), Some(member_ty)) = (&member.format, &member_ty) {
+            if let Some(format) = &member.format {
                 ty.formats.insert(
                     member.name.data.clone(),
-                    Format::new(format, vec![(member_ty.clone(), member.type_name.span())]),
+                    Format::new(format, vec![(member_ty, member.type_name.span())]),
                 );
             }
         }

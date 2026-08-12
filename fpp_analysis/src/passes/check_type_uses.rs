@@ -70,18 +70,14 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
         // Make sure the type uses are mapped
         node.walk(a, self)?;
 
-        match a.type_map.get(&node.type_name.node_id) {
-            None => {}
-            Some(alias_type) => {
-                a.type_map.insert(
-                    node.node_id,
-                    Arc::new(Type::AliasType(AliasType {
-                        node: node.clone(),
-                        alias_type: alias_type.clone(),
-                    })),
-                );
-            }
-        }
+        let alias_type = a.type_map.get(&node.type_name.node_id).unwrap().clone();
+        a.type_map.insert(
+            node.node_id,
+            Arc::new(Type::AliasType(AliasType {
+                node: node.clone(),
+                alias_type,
+            })),
+        );
 
         ControlFlow::Continue(())
     }
@@ -96,10 +92,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
         }
 
         node.walk(a, self)?;
-        let elt_type = match a.type_map.get(&node.elt_type.node_id) {
-            None => return ControlFlow::Continue(()),
-            Some(ty) => ty,
-        };
+        let elt_type = a.type_map.get(&node.elt_type.node_id).unwrap().clone();
 
         a.type_map.insert(
             node.node_id,
@@ -107,7 +100,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
                 node: node.clone(),
                 anon_array: AnonArrayType {
                     size: None,
-                    elt_type: elt_type.clone(),
+                    elt_type,
                 },
                 default: None,
                 format: None,
@@ -134,9 +127,9 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
         let rep_type = {
             match &node.type_name {
                 None => IntegerKind::I32,
-                Some(type_name) => match a.type_map.get(&type_name.node_id) {
-                    None => return ControlFlow::Continue(()),
-                    Some(ty) => match Type::underlying_type(ty).deref() {
+                Some(type_name) => {
+                    let ty = a.type_map.get(&type_name.node_id).unwrap();
+                    match Type::underlying_type(ty).deref() {
                         Type::PrimitiveInt(kind) => *kind,
                         _ => {
                             SemanticError::InvalidType {
@@ -146,8 +139,8 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
                             .emit();
                             IntegerKind::I32
                         }
-                    },
-                },
+                    }
+                }
             }
         };
 
@@ -186,14 +179,10 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
 
         for member in &node.members {
             match member_locs.insert(member.name.data.clone(), member.span()) {
-                None => match a.type_map.get(&member.type_name.node_id) {
-                    None => {}
-                    Some(member_ty) => {
-                        anon_ty
-                            .members
-                            .insert(member.name.data.clone(), member_ty.clone());
-                    }
-                },
+                None => {
+                    let member_ty = a.type_map.get(&member.type_name.node_id).unwrap().clone();
+                    anon_ty.members.insert(member.name.data.clone(), member_ty);
+                }
                 Some(old) => {
                     SemanticError::DuplicateStructMember {
                         name: member.name.data.clone(),
@@ -238,12 +227,14 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
             TypeNameKind::Integer(kind) => Type::PrimitiveInt(*kind),
             TypeNameKind::QualIdent(qi) => {
                 self.super_visit(a, Node::TypeName(node))?;
-                match a.type_map.get(&qi.id()) {
-                    None => {}
-                    Some(qi_ty) => {
-                        a.type_map.insert(node.node_id, qi_ty.clone());
-                    }
-                }
+                let ty = match a.type_map.get(&qi.id()) {
+                    Some(qi_ty) => qi_ty.clone(),
+                    // The type use did not resolve. Map it to the shared
+                    // unknown type so every type name has an entry and later
+                    // passes can read a resolved type unconditionally.
+                    None => a.unknown_type(node.span()),
+                };
+                a.type_map.insert(node.node_id, ty);
                 return ControlFlow::Continue(());
             }
             TypeNameKind::String(_) => Type::String(None),

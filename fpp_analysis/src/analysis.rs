@@ -74,6 +74,12 @@ pub struct Analysis {
      *  Populated by `ConstructImpliedUseMap` and consumed by the use-analysis
      *  passes (`CheckUses`, `CheckUseDefCycles`). */
     pub implied_use_map: HashMap<fpp_core::Node, ImpliedUseSet>,
+
+    /** The shared "unknown" type standing in for a type use that failed to
+     *  resolve. Created lazily on first use so that `CheckTypeUses` can give
+     *  every type name an entry in `type_map`, letting later passes read a
+     *  resolved type without handling the unresolved case. */
+    unknown_type: Option<Arc<Type>>,
 }
 
 /// A recorded location specifier, keyed in `location_specifier_map`.
@@ -130,7 +136,36 @@ impl Analysis {
             state_machine_map: Default::default(),
             dictionary_symbol_set: Default::default(),
             implied_use_map: Default::default(),
+            unknown_type: None,
         }
+    }
+
+    /// The shared "unknown" type used when a type use fails to resolve.
+    ///
+    /// This is a synthetic abstract type whose name is not valid FPP syntax, so
+    /// it can never collide with a user-defined type. It is created once and
+    /// reused, so every unknown type is [`Type::identical`] to every other,
+    /// which keeps a single unresolved use from cascading into spurious type
+    /// mismatches downstream. The `span` seeds the synthetic definition node the
+    /// first time the type is created; it is never rendered (the type only ever
+    /// surfaces through its name), so any use-site span will do.
+    pub fn unknown_type(&mut self, span: Span) -> Arc<Type> {
+        if let Some(ty) = &self.unknown_type {
+            return ty.clone();
+        }
+        let node_id = fpp_core::Node::new(span);
+        let ty = Arc::new(Type::AbsType(crate::semantics::AbsType {
+            node: fpp_ast::DefAbsType {
+                node_id,
+                name: fpp_ast::Name {
+                    node_id,
+                    data: "<unknown>".to_string(),
+                },
+            },
+            default_value: None,
+        }));
+        self.unknown_type = Some(ty.clone());
+        ty
     }
 
     /// Get an integer value for an AST node from the value map, if present.
