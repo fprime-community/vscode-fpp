@@ -161,12 +161,8 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
         }
 
         self.super_visit(a, Node::DefAliasType(node))?;
-        match a.type_map.get(&node.type_name.node_id) {
-            None => {}
-            Some(ty) => {
-                a.type_map.insert(node.node_id, ty.clone());
-            }
-        }
+        let ty = a.type_map.get(&node.type_name.node_id).unwrap().clone();
+        a.type_map.insert(node.node_id, ty);
 
         ControlFlow::Continue(())
     }
@@ -361,9 +357,8 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                 }
             },
             ExprKind::SizeOf(type_name) => {
-                if let Some(ty) = a.type_map.get(&type_name.node_id)
-                    && !ty.is_displayable()
-                {
+                let ty = a.type_map.get(&type_name.node_id).unwrap();
+                if !ty.is_displayable() {
                     SemanticError::InvalidType {
                         loc: node.span(),
                         msg: format!("size of type {} is not known in the model", ty),

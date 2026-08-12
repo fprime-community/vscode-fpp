@@ -3,6 +3,11 @@
 2 |   enum E : T { X }
   |            ^ cannot find type `T` in scope
 
+ --> [ local path prefix ]/state_machine/types/enum_undef_type.fpp:2:12
+  |
+2 |   enum E : T { X }
+  |            ^ primitive integer type must be used
+
  --> [ local path prefix ]/state_machine/types/enum_undef_type.fpp:1:15
   |
 1 | state machine SM {
