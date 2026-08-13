@@ -269,6 +269,10 @@ pub struct StateMachineDiagram {
     pub name: String,
     pub nodes: Vec<SmNode>,
     pub edges: Vec<SmEdge>,
+    /// ELK layout options, parsed from the state machine's `diagram-layout`
+    /// source annotation (defaults when absent).
+    #[serde(default)]
+    pub layout: crate::layout::SmLayout,
 }
 
 impl SmNode {

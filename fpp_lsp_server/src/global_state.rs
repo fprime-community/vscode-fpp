@@ -9,10 +9,17 @@ use lsp_server::RequestId;
 use lsp_types::{ProgressToken, SemanticTokens, Uri, WorkspaceFolder};
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 pub(crate) type ReqHandler = fn(&mut GlobalState, lsp_server::Response);
 type ReqQueue = lsp_server::ReqQueue<(String, Instant), ReqHandler>;
+
+/// How long the main loop waits after the last edit-driven change before running
+/// semantic analysis. A burst of edits resets this window (every task/message
+/// resets it), so we run analysis once—when typing settles—instead of once per
+/// keystroke. Analysis re-checks every cached translation unit and is the
+/// dominant cost of an edit, so coalescing it keeps the server responsive.
+const ANALYSIS_DEBOUNCE: Duration = Duration::from_millis(150);
 
 #[derive(Debug)]
 pub struct TranslationUnitCache {
@@ -58,6 +65,14 @@ pub struct GlobalState {
     /// Computed compiler analysis
     pub(crate) analysis: Arc<Analysis>,
     pub(crate) analysis_diagnostics: FxHashSet<usize>,
+    /// Set when a cached translation unit has been reprocessed and the current
+    /// `analysis` snapshot is stale. The main loop coalesces these into a single
+    /// debounced `Task::Analysis` so a burst of edits triggers analysis only once.
+    pub(crate) analysis_dirty: bool,
+    /// URIs for which we last pushed a non-empty diagnostic set. Tracked so the next
+    /// push can send an empty set to any URI that has since become clean, clearing
+    /// stale diagnostics in the editor.
+    pub(crate) published_uris: FxHashSet<String>,
 
     pub(crate) capabilities: Arc<lsp::capabilities::ClientCapabilities>,
 
@@ -89,6 +104,8 @@ impl GlobalState {
             files: Default::default(),
             analysis: Arc::new(Analysis::new()),
             analysis_diagnostics: Default::default(),
+            analysis_dirty: false,
+            published_uris: Default::default(),
             capabilities: Arc::new(capabilities),
             semantic_tokens: Default::default(),
         }
@@ -121,7 +138,6 @@ impl GlobalState {
         self.send(request.into());
     }
 
-    #[allow(dead_code)]
     pub(crate) fn send_notification<N: lsp_types::notification::Notification>(
         &self,
         params: N::Params,
@@ -206,6 +222,15 @@ impl GlobalState {
 
     fn main_loop(&mut self, receiver: Receiver<lsp_server::Message>) {
         while !self.shutdown_requested {
+            // Arm the debounce timer only while analysis is pending. It is recreated
+            // on every iteration, so any task or incoming message resets the window;
+            // analysis fires once the server has been idle for `ANALYSIS_DEBOUNCE`.
+            let analysis_timer = if self.analysis_dirty {
+                crossbeam_channel::after(ANALYSIS_DEBOUNCE)
+            } else {
+                crossbeam_channel::never()
+            };
+
             crossbeam_channel::select_biased! {
                 recv(self.task_rx) -> msg => {
                     if let Ok(msg) = msg {
@@ -222,6 +247,11 @@ impl GlobalState {
                     if let Ok(msg) = msg {
                         self.on_message(Instant::now(), msg)
                     }
+                }
+                recv(analysis_timer) -> _ => {
+                    // Typing has settled: run the coalesced analysis exactly once.
+                    self.analysis_dirty = false;
+                    self.on_task(Task::Analysis);
                 }
             }
         }

@@ -90,15 +90,46 @@ impl GlobalState {
         })
     }
 
-    /// Ask the client to re-pull all document diagnostics.
+    /// Push the current diagnostic set to the client for every affected URI.
     ///
-    /// Diagnostics are pull-based, so after analysis updates the diagnostic store
-    /// asynchronously the client has no way of knowing the results are stale unless
-    /// we explicitly request a refresh.
-    fn refresh_diagnostics(&mut self) {
-        if self.capabilities.diagnostics_refresh() {
-            self.send_request::<lsp_types::request::WorkspaceDiagnosticRefresh>((), |_, _| {});
+    /// Diagnostics are push-based: rather than let the client pull (which could
+    /// race the debounced analysis and read a stale store), we send the
+    /// authoritative set ourselves once analysis finishes. Any URI that had
+    /// diagnostics on the previous push but is now clean receives an empty set so
+    /// the editor clears it.
+    fn publish_diagnostics(&mut self) {
+        let current = self.diagnostics.all();
+
+        // Clear any URI that had diagnostics last time but no longer does.
+        for uri in &self.published_uris {
+            if !current.contains_key(uri)
+                && let Ok(parsed) = Uri::from_str(uri)
+            {
+                self.send_notification::<lsp_types::notification::PublishDiagnostics>(
+                    lsp_types::PublishDiagnosticsParams {
+                        uri: parsed,
+                        diagnostics: Vec::new(),
+                        version: None,
+                    },
+                );
+            }
         }
+
+        let mut published = FxHashSet::default();
+        for (uri, diagnostics) in current {
+            if let Ok(parsed) = Uri::from_str(&uri) {
+                self.send_notification::<lsp_types::notification::PublishDiagnostics>(
+                    lsp_types::PublishDiagnosticsParams {
+                        uri: parsed,
+                        diagnostics,
+                        version: None,
+                    },
+                );
+                published.insert(uri);
+            }
+        }
+
+        self.published_uris = published;
     }
 
     pub fn parent_file(&self, file: SourceFile) -> SourceFile {
@@ -392,7 +423,11 @@ impl GlobalState {
 
                 let _ = mem::replace(&mut self.context, ctx);
                 self.cache.insert(new_cache.file, Arc::new(new_cache));
-                self.task(Task::Analysis);
+
+                // Don't run the expensive full-workspace analysis eagerly. Mark it
+                // dirty and let the main loop coalesce a burst of edits into a single
+                // debounced `Task::Analysis` once typing settles.
+                self.analysis_dirty = true;
             }
             Task::Analysis => {
                 // Clear all analysis diagnostics
@@ -450,9 +485,10 @@ impl GlobalState {
                 self.files = files;
                 self.analysis = Arc::new(analysis);
 
-                // The diagnostic store has been updated asynchronously; tell the client to
-                // re-pull diagnostics so it doesn't keep showing stale results.
-                self.refresh_diagnostics();
+                // Push the fresh diagnostic set to the client. Analysis is debounced,
+                // so a pull-based client could otherwise read the store mid-window and
+                // show stale results; pushing sends the authoritative set directly.
+                self.publish_diagnostics();
             }
         }
     }

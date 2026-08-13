@@ -7,6 +7,7 @@
 //! the flattened leaf-state view.
 
 use crate::ir::{SmEdge, SmNode, SmNodeKind, StateMachineDiagram, TransitionActionMode};
+use crate::layout::SmLayout;
 use crate::lower::LowerError;
 use fpp_analysis::Analysis;
 use fpp_analysis::semantics::state_machine::transition_graph::{Arc as TgArc, Node as TgNode};
@@ -14,7 +15,7 @@ use fpp_analysis::semantics::state_machine::{
     State, StateMachine, StateMachineAnalysis, StateMachineSymbol, StateOrChoice,
 };
 use fpp_ast::{DoExpr, TransitionExpr, TransitionOrDo};
-use fpp_core::{Span, Spanned};
+use fpp_core::{Annotated, Span, Spanned};
 
 /// A source-order sort key for a span: `(file, byte offset)`. Ordering diagram
 /// elements by this makes the layout follow the order things appear in the FPP
@@ -86,10 +87,15 @@ pub fn lower_state_machine(
         edges.push(edge);
     }
 
+    // Layout options are read from the state machine definition's pre-annotation
+    // (`@ diagram-layout ...`), so the configuration lives in the FPP source.
+    let layout = SmLayout::from_annotations(&sm.node.pre_annotation());
+
     Ok(StateMachineDiagram {
         name: a.get_qualified_name(&sm.get_symbol()),
         nodes,
         edges,
+        layout,
     })
 }
 

@@ -3,9 +3,11 @@
  * from the extension host into inline SVG, with pan/zoom and SVG export.
  *
  * The extension host owns the panel and posts messages:
- *   `{ type: 'render', text }` — render Mermaid source
- *   `{ type: 'fit' }`          — reset pan/zoom to fit
- *   `{ type: 'export' }`       — reply with `{ type: 'exportSvg', svg }`
+ *   `{ type: 'render', text, layout? }` — render Mermaid source (ELK layout is
+ *                                         embedded in the source frontmatter);
+ *                                         `layout` only syncs the gear dropdowns
+ *   `{ type: 'fit' }`                   — reset pan/zoom to fit
+ *   `{ type: 'export' }`                — reply with `{ type: 'exportSvg', svg }`
  *
  * Rendering is pure DOM manipulation (no `eval`), satisfying the webview CSP.
  */
@@ -33,6 +35,11 @@ function isDarkTheme(): boolean {
         || document.body.classList.contains('vscode-high-contrast');
 }
 
+// Initialize Mermaid once with the static options. The per-diagram layout
+// options (engine + ELK strategies) are applied separately, via `applyLayout`
+// before each render, because Mermaid's frontmatter sanitizer drops config keys
+// it does not recognize — so the FPP source stays the source of truth, but the
+// values reach Mermaid through its (un-sanitized, per-render) site config.
 mermaid.initialize({
     startOnLoad: false,
     // `strict` is the safest level and needs no HTML/eval; we only render text.
@@ -42,18 +49,297 @@ mermaid.initialize({
     // actions below) and keeps text crisp under the webview CSP.
     htmlLabels: false,
     theme: isDarkTheme() ? 'dark' : 'default',
-    // Use the ELK layout backend for hierarchical (composite) state layout.
+    // The layout engine defaults to ELK for hierarchical (composite) state
+    // layout; `applyLayout` overrides it per-render from the FPP source.
     layout: 'elk',
     elk: {
         // Draw containers around composite states and give edges room.
         mergeEdges: false,
-        nodePlacementStrategy: 'BRANDES_KOEPF',
     },
     state: {
         nodeSpacing: 60,
         rankSpacing: 60,
     },
 });
+
+// --- In-webview layout settings (gear popover) --------------------------------
+// A gear button opens a small panel of dropdowns reflecting the layout options
+// embedded in the FPP source. Changing one posts a `setLayoutOption` message;
+// the host writes it back into the `@ diagram-layout ...` source annotation (a
+// workspace edit) and re-renders — so the source stays the single source of
+// truth. Keys match the host's `LayoutOptions`.
+interface LayoutOptions {
+    /** The Mermaid layout backend: `elk` or `dagre`. */
+    engine: string;
+    /** Flow direction (both engines): `TB`, `BT`, `LR`, or `RL`. */
+    direction: string;
+    cycleBreaking: string;
+    considerModelOrder: string;
+    nodePlacement: string;
+    /** Node spacing in px, as a string (dagre only). */
+    nodeSpacing: string;
+    /** Rank spacing in px, as a string (dagre only). */
+    rankSpacing: string;
+}
+
+/** Defaults; must match `fpp_diagram`'s `SmLayout::default()`. */
+const DEFAULT_LAYOUT: LayoutOptions = {
+    engine: 'elk',
+    direction: 'TB',
+    cycleBreaking: 'MODEL_ORDER',
+    considerModelOrder: 'NODES_AND_EDGES',
+    nodePlacement: 'BRANDES_KOEPF',
+    nodeSpacing: '60',
+    rankSpacing: '60',
+};
+
+/**
+ * A control backed by one layout option. `key` matches `LayoutOptions`. A control
+ * is either a dropdown (`options` set) or a numeric input (`number` set).
+ */
+interface LayoutControl {
+    key: keyof LayoutOptions;
+    label: string;
+    /** Dropdown choices; mutually exclusive with `number`. */
+    options?: { value: string; label: string }[];
+    /** Numeric-input bounds (px); mutually exclusive with `options`. */
+    number?: { min: number; max: number; step: number };
+    /** Only meaningful for the ELK backend; hidden when the engine is `dagre`. */
+    elkOnly?: boolean;
+    /** Only meaningful for the dagre backend; hidden when the engine is `elk`. */
+    dagreOnly?: boolean;
+}
+
+const LAYOUT_CONTROLS: LayoutControl[] = [
+    {
+        key: 'engine',
+        label: 'Layout engine',
+        options: [
+            { value: 'elk', label: 'ELK (nested layout)' },
+            { value: 'dagre', label: 'Dagre (built-in)' },
+        ],
+    },
+    {
+        key: 'direction',
+        label: 'Direction',
+        options: [
+            { value: 'TB', label: 'Top to bottom' },
+            { value: 'BT', label: 'Bottom to top' },
+            { value: 'LR', label: 'Left to right' },
+            { value: 'RL', label: 'Right to left' },
+        ],
+    },
+    {
+        key: 'cycleBreaking',
+        label: 'Cycle breaking',
+        elkOnly: true,
+        options: [
+            { value: 'MODEL_ORDER', label: 'Source order (initial at top)' },
+            { value: 'GREEDY_MODEL_ORDER', label: 'Balanced (source order + compact)' },
+            { value: 'GREEDY', label: 'Compact (by topology)' },
+            { value: 'DEPTH_FIRST', label: 'Depth first' },
+        ],
+    },
+    {
+        key: 'considerModelOrder',
+        label: 'Follow source order',
+        elkOnly: true,
+        options: [
+            { value: 'NODES_AND_EDGES', label: 'Nodes and edges' },
+            { value: 'PREFER_EDGES', label: 'Prefer edges' },
+            { value: 'PREFER_NODES', label: 'Prefer nodes' },
+            { value: 'NONE', label: 'None (fewest crossings)' },
+        ],
+    },
+    {
+        key: 'nodePlacement',
+        label: 'Node placement',
+        elkOnly: true,
+        options: [
+            { value: 'BRANDES_KOEPF', label: 'Balanced (Brandes\u2013K\u00f6pf)' },
+            { value: 'NETWORK_SIMPLEX', label: 'Compact (network simplex)' },
+            { value: 'LINEAR_SEGMENTS', label: 'Straight chains' },
+            { value: 'SIMPLE', label: 'Simple' },
+        ],
+    },
+    {
+        key: 'nodeSpacing',
+        label: 'Node spacing (px)',
+        dagreOnly: true,
+        number: { min: 10, max: 300, step: 5 },
+    },
+    {
+        key: 'rankSpacing',
+        label: 'Rank spacing (px)',
+        dagreOnly: true,
+        number: { min: 10, max: 300, step: 5 },
+    },
+];
+
+/** The inputs (dropdowns/number fields), kept so `syncSettingsUi` can reflect the host's settings. */
+const settingsSelects = new Map<keyof LayoutOptions, HTMLSelectElement | HTMLInputElement>();
+
+/** Engine-specific fields, kept so they can be hidden for the other engine. */
+const elkOnlyFields: HTMLElement[] = [];
+const dagreOnlyFields: HTMLElement[] = [];
+
+/** Show/hide the engine-specific controls depending on the selected engine. */
+function updateControlVisibility(engine: string): void {
+    for (const field of elkOnlyFields) {
+        field.style.display = engine === 'elk' ? '' : 'none';
+    }
+    for (const field of dagreOnlyFields) {
+        field.style.display = engine === 'dagre' ? '' : 'none';
+    }
+}
+
+/** Build the gear button and settings popover and attach them to the page. */
+function buildSettingsUi(): void {
+    const gear = document.createElement('button');
+    gear.className = 'sm-gear';
+    gear.title = 'Diagram layout settings';
+    gear.setAttribute('aria-label', 'Diagram layout settings');
+    // Codicon-style gear glyph; falls back to a unicode gear.
+    gear.textContent = '\u2699';
+
+    const panel = document.createElement('div');
+    panel.className = 'sm-settings';
+
+    const title = document.createElement('div');
+    title.className = 'sm-settings-title';
+    title.textContent = 'Layout';
+    panel.appendChild(title);
+
+    for (const control of LAYOUT_CONTROLS) {
+        const field = document.createElement('label');
+        field.className = 'sm-field';
+
+        const name = document.createElement('span');
+        name.className = 'sm-field-label';
+        name.textContent = control.label;
+        field.appendChild(name);
+
+        // Post the changed value to the host, updating engine-driven visibility
+        // immediately for instant feedback (independent of the round-trip render).
+        const emit = (value: string) => {
+            if (control.key === 'engine') {
+                updateControlVisibility(value);
+            }
+            vscode.postMessage({ type: 'setLayoutOption', key: control.key, value });
+        };
+
+        let input: HTMLSelectElement | HTMLInputElement;
+        if (control.number) {
+            const num = document.createElement('input');
+            num.type = 'number';
+            num.className = 'sm-field-select';
+            num.min = String(control.number.min);
+            num.max = String(control.number.max);
+            num.step = String(control.number.step);
+            num.value = DEFAULT_LAYOUT[control.key];
+            // `change` fires on blur/Enter, not per keystroke, so we don't spam
+            // edits (and clamp to the allowed range before persisting).
+            num.addEventListener('change', () => {
+                const clamped = Math.min(
+                    control.number!.max,
+                    Math.max(control.number!.min, Number(num.value) || control.number!.min)
+                );
+                num.value = String(clamped);
+                emit(num.value);
+            });
+            input = num;
+        } else {
+            const select = document.createElement('select');
+            select.className = 'sm-field-select';
+            for (const opt of control.options ?? []) {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                select.appendChild(option);
+            }
+            select.value = DEFAULT_LAYOUT[control.key];
+            select.addEventListener('change', () => emit(select.value));
+            input = select;
+        }
+
+        settingsSelects.set(control.key, input);
+        if (control.elkOnly) {
+            elkOnlyFields.push(field);
+        }
+        if (control.dagreOnly) {
+            dagreOnlyFields.push(field);
+        }
+        field.appendChild(input);
+        panel.appendChild(field);
+    }
+
+    updateControlVisibility(DEFAULT_LAYOUT.engine);
+
+    gear.addEventListener('click', e => {
+        e.stopPropagation();
+        panel.classList.toggle('open');
+    });
+    // Close the panel when clicking outside it.
+    document.addEventListener('mousedown', e => {
+        const target = e.target as Node;
+        if (panel.classList.contains('open') && !panel.contains(target) && target !== gear) {
+            panel.classList.remove('open');
+        }
+    });
+
+    document.body.appendChild(gear);
+    document.body.appendChild(panel);
+}
+
+/** Reflect the current (host-provided) layout in the dropdowns. */
+function syncSettingsUi(layout: LayoutOptions): void {
+    for (const [key, select] of settingsSelects) {
+        select.value = layout[key];
+    }
+    updateControlVisibility(layout.engine);
+}
+
+/**
+ * Push the layout options into Mermaid's *site config* before rendering.
+ *
+ * We cannot rely on the YAML frontmatter embedded in the diagram text: Mermaid's
+ * frontmatter sanitizer silently drops config keys it does not recognize (e.g.
+ * `elk.cycleBreakingStrategy` is not in its config schema), so a frontmatter-only
+ * option never takes effect. Site config is not sanitized that way and is re-read
+ * fresh on every `mermaid.render()`, so applying it here makes every option —
+ * including the layout engine — update live without reopening the panel.
+ *
+ * The flow direction is NOT set here: for state diagrams Mermaid reads it from a
+ * `direction` statement in the diagram body, which is already present in the text
+ * we render (kept in sync by the host), so rendering the text applies it.
+ */
+function applyLayout(layout: LayoutOptions): void {
+    // Spacing is only honored by the dagre backend (ELK computes its own), and
+    // arrives as a string; coerce to a number, falling back to the default when
+    // it isn't a positive number.
+    const spacing = (value: string): number => {
+        const n = Number(value);
+        return Number.isFinite(n) && n > 0 ? n : Number(DEFAULT_LAYOUT.nodeSpacing);
+    };
+    // The values are validated/enumerated on the FPP side and by the dropdowns,
+    // but arrive here as plain strings; Mermaid's config types are string-literal
+    // unions, so cast the whole options object to the expected parameter type.
+    mermaid.mermaidAPI.updateSiteConfig({
+        layout: layout.engine,
+        elk: {
+            mergeEdges: false,
+            nodePlacementStrategy: layout.nodePlacement,
+            cycleBreakingStrategy: layout.cycleBreaking,
+            considerModelOrder: layout.considerModelOrder,
+        },
+        state: {
+            nodeSpacing: spacing(layout.nodeSpacing),
+            rankSpacing: spacing(layout.rankSpacing),
+        },
+    } as Parameters<typeof mermaid.mermaidAPI.updateSiteConfig>[0]);
+}
+
+buildSettingsUi();
 
 const container = document.getElementById('container')!;
 
@@ -196,6 +482,14 @@ window.addEventListener('message', (event: MessageEvent) => {
     switch (msg.type) {
         case 'render':
             if (typeof msg.text === 'string') {
+                // Drive the layout from the `layout` object (via Mermaid site
+                // config), not the text frontmatter: frontmatter config keys that
+                // Mermaid does not recognize are silently dropped, so applying the
+                // options here is what makes every option — including the engine —
+                // take effect live. Fall back to defaults when absent.
+                const layout: LayoutOptions = { ...DEFAULT_LAYOUT, ...(msg.layout ?? {}) };
+                syncSettingsUi(layout);
+                applyLayout(layout);
                 void render(msg.text);
             }
             break;

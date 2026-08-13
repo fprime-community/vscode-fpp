@@ -30,9 +30,11 @@ use std::fmt::Write;
 ///
 /// In [`TransitionActionMode::Uml`] each state's entry/exit actions are shown on
 /// the state itself: a leaf state uses inline description lines (`Id : entry /
-/// …`), and a composite (group) state uses a note (Mermaid rejects descriptions
-/// on group nodes). In [`TransitionActionMode::Flattened`] they are omitted from
-/// the nodes because they appear on the transition edges instead.
+/// …`), and a composite (group) state folds them into its label (Mermaid rejects
+/// descriptions on group nodes, and notes attached to a group node are hoisted
+/// out to the diagram's top level instead of staying nested). In
+/// [`TransitionActionMode::Flattened`] they are omitted from the nodes because
+/// they appear on the transition edges instead.
 pub fn state_machine_to_mermaid(
     diagram: &StateMachineDiagram,
     mode: TransitionActionMode,
@@ -49,7 +51,49 @@ pub fn state_machine_to_mermaid(
             .push(node);
     }
 
-    let mut out = String::from("stateDiagram-v2\n");
+    let mut out = String::new();
+
+    // Embed the layout options as Mermaid YAML frontmatter so the source is
+    // self-contained: any Mermaid 11+ renderer (with the ELK layout plugin)
+    // reproduces this diagram without external config. The options come from the
+    // FPP `diagram-layout` annotation via the IR.
+    let layout = &diagram.layout;
+    out.push_str("---\n");
+    out.push_str("config:\n");
+    let _ = writeln!(out, "  layout: {}", layout.engine.elk());
+    // The ELK options only apply to the ELK backend; `dagre` (Mermaid's built-in
+    // renderer) ignores them, so omit the block entirely for it. Conversely, the
+    // node/rank spacing (`state.*Spacing`) is honored only by `dagre` — ELK
+    // computes its own spacing — so emit that block only for `dagre`.
+    if layout.engine == crate::layout::LayoutEngine::Elk {
+        out.push_str("  elk:\n");
+        let _ = writeln!(
+            out,
+            "    nodePlacementStrategy: {}",
+            layout.node_placement.elk()
+        );
+        let _ = writeln!(
+            out,
+            "    cycleBreakingStrategy: {}",
+            layout.cycle_breaking.elk()
+        );
+        let _ = writeln!(
+            out,
+            "    considerModelOrder: {}",
+            layout.consider_model_order.elk()
+        );
+    } else {
+        out.push_str("  state:\n");
+        let _ = writeln!(out, "    nodeSpacing: {}", layout.node_spacing);
+        let _ = writeln!(out, "    rankSpacing: {}", layout.rank_spacing);
+    }
+    out.push_str("---\n");
+
+    out.push_str("stateDiagram-v2\n");
+
+    // The flow direction applies to both engines. For state diagrams Mermaid
+    // takes it from a `direction` statement in the body (not from config).
+    let _ = writeln!(out, "    direction {}", layout.direction.elk());
 
     // A style class so choices read as decision nodes but still show their name.
     // (A bare `<<choice>>` diamond renders without any visible label.)
@@ -137,17 +181,8 @@ fn emit_node(
             let kids = children_of.get(&Some(node.id.as_str()));
             let is_composite = kids.is_some_and(|k| !k.is_empty());
 
-            // Display the unqualified name regardless of the sanitized id.
-            let _ = writeln!(out, "{pad}state \"{}\" as {id}", escape_label(&node.label));
-
-            // In UML mode, show the state's entry/exit actions inside the state
-            // as description lines (`Id : entry / …`); in flattened mode these
-            // appear on the transition edges instead.
-            //
-            // Mermaid forbids a description line on a *composite* (group) state
-            // written outside its block ("Group nodes can only have label"), so
-            // for composite states the lines are emitted inside the `{ }` block
-            // below. Leaf states take their description lines here.
+            // In UML mode, show the state's entry/exit actions on the state; in
+            // flattened mode these appear on the transition edges instead.
             let action_descs: Vec<String> = if mode == TransitionActionMode::Uml {
                 let mut d = Vec::new();
                 if !node.entry_actions.is_empty() {
@@ -167,20 +202,28 @@ fn emit_node(
                 Vec::new()
             };
 
+            // Display label: the unqualified name. Mermaid forbids a description
+            // line on a *composite* (group) state ("Group nodes can only have
+            // label"), and a note attached to a group node is hoisted out of its
+            // parent to the diagram's top level (losing the nesting). So fold a
+            // composite state's entry/exit actions into its label instead — the
+            // label belongs to the (nested) box, so the actions stay in place.
+            // `<br/>` splits the label into stacked <tspan> lines (works under
+            // `securityLevel: strict` with `htmlLabels: false`).
+            let mut label = escape_label(&node.label);
+            if is_composite && !action_descs.is_empty() {
+                label.push_str("<br/>");
+                label.push_str(&action_descs.join("<br/>"));
+            }
+            let _ = writeln!(out, "{pad}state \"{label}\" as {id}");
+
             // A leaf state carries its entry/exit as inline description lines
-            // (`Id : entry / …`). A composite (group) state cannot have a
-            // description in Mermaid ("Group nodes can only have label"), so its
-            // actions are shown as a note attached to the state instead.
+            // (`Id : entry / …`). Composite states already carry them in the
+            // label above.
             if !is_composite {
                 for desc in &action_descs {
                     let _ = writeln!(out, "{pad}{id} : {desc}");
                 }
-            } else if !action_descs.is_empty() {
-                let _ = writeln!(out, "{pad}note right of {id}");
-                for desc in &action_descs {
-                    let _ = writeln!(out, "{pad}    {desc}");
-                }
-                let _ = writeln!(out, "{pad}end note");
             }
 
             if let Some(kids) = kids.filter(|k| !k.is_empty()) {

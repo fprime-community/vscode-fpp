@@ -106,6 +106,12 @@
                 "title": "FPP: Toggle Transition Action Mode",
                 "icon": "$(list-flat)",
                 "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.stateMachine.view-source",
+                "title": "FPP: View Diagram Mermaid Source",
+                "icon": "$(code)",
+                "category": "FPP Diagram"
             }
         ],
         "languages": [
@@ -151,37 +157,42 @@
                 },
                 {
                     "command": "fpp.diagram.fit",
-                    "when": "fppDiagrams-focused == true",
+                    "when": "activeWebviewPanelId == 'fppDiagrams'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.diagram.center",
-                    "when": "fppDiagrams-focused == true",
+                    "when": "activeWebviewPanelId == 'fppDiagrams'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.diagram.export",
-                    "when": "fppDiagrams-focused == true",
+                    "when": "activeWebviewPanelId == 'fppDiagrams'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.diagram.toggle-unused-ports",
-                    "when": "fppDiagrams-focused == true",
+                    "when": "activeWebviewPanelId == 'fppDiagrams'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.stateMachine.fit",
-                    "when": "fppStateMachineDiagram-focused == true",
+                    "when": "activeWebviewPanelId == 'fppStateMachineDiagram'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.stateMachine.export",
-                    "when": "fppStateMachineDiagram-focused == true",
+                    "when": "activeWebviewPanelId == 'fppStateMachineDiagram'",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.stateMachine.view-source",
+                    "when": "activeWebviewPanelId == 'fppStateMachineDiagram'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.stateMachine.toggle-action-mode",
-                    "when": "fppStateMachineDiagram-focused == true",
+                    "when": "activeWebviewPanelId == 'fppStateMachineDiagram'",
                     "group": "navigation"
                 }
             ],
