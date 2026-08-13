@@ -122,4 +122,6 @@ jobs:
       - name: Attach VSIX to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ github.event.release.tag_name }}" editors/code/fpp.vsix --clobber
+        # This job's working-directory is editors/code (see defaults above), and
+        # the VSIX is written there, so reference it relative to that dir.
+        run: gh release upload "${{ github.event.release.tag_name }}" fpp.vsix --clobber

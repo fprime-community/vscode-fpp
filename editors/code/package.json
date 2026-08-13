@@ -32,6 +32,14 @@
                 "title": "FPP: Restart Language Server"
             },
             {
+                "command": "fpp.selectServer",
+                "title": "FPP: Select Language Server"
+            },
+            {
+                "command": "fpp.checkForServerUpdate",
+                "title": "FPP: Check for Language Server Update"
+            },
+            {
                 "command": "fpp.dumpActiveTextEditorSyntaxTree",
                 "title": "FPP (debug command): View CST"
             },
@@ -98,6 +106,12 @@
                 "title": "FPP: Toggle Transition Action Mode",
                 "icon": "$(list-flat)",
                 "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.stateMachine.view-source",
+                "title": "FPP: View Diagram Mermaid Source",
+                "icon": "$(code)",
+                "category": "FPP Diagram"
             }
         ],
         "languages": [
@@ -143,37 +157,42 @@
                 },
                 {
                     "command": "fpp.diagram.fit",
-                    "when": "fppDiagrams-focused == true",
+                    "when": "activeWebviewPanelId == 'fppDiagrams'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.diagram.center",
-                    "when": "fppDiagrams-focused == true",
+                    "when": "activeWebviewPanelId == 'fppDiagrams'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.diagram.export",
-                    "when": "fppDiagrams-focused == true",
+                    "when": "activeWebviewPanelId == 'fppDiagrams'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.diagram.toggle-unused-ports",
-                    "when": "fppDiagrams-focused == true",
+                    "when": "activeWebviewPanelId == 'fppDiagrams'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.stateMachine.fit",
-                    "when": "fppStateMachineDiagram-focused == true",
+                    "when": "activeWebviewPanelId == 'fppStateMachineDiagram'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.stateMachine.export",
-                    "when": "fppStateMachineDiagram-focused == true",
+                    "when": "activeWebviewPanelId == 'fppStateMachineDiagram'",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.stateMachine.view-source",
+                    "when": "activeWebviewPanelId == 'fppStateMachineDiagram'",
                     "group": "navigation"
                 },
                 {
                     "command": "fpp.stateMachine.toggle-action-mode",
-                    "when": "fppStateMachineDiagram-focused == true",
+                    "when": "activeWebviewPanelId == 'fppStateMachineDiagram'",
                     "group": "navigation"
                 }
             ],
@@ -191,7 +210,16 @@
             "properties": {
                 "fpp.serverPath": {
                     "type": "string",
-                    "markdownDescription": "Path to the FPP LSP server, use `<default>` for bundled binary"
+                    "markdownDescription": "Path to the `fpp_lsp_server` executable. Leave unset to auto-discover it from the workspace Python venv (installed via `pip install fprime-fpp-lsp`) or `PATH`."
+                },
+                "fpp.pythonVenv": {
+                    "type": "string",
+                    "markdownDescription": "Path to the Python virtual environment root used to locate `fpp_lsp_server`. Overrides venv auto-discovery. Ignored when `#fpp.serverPath#` is set."
+                },
+                "fpp.checkForUpdates": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Periodically check PyPI for a newer `fprime-fpp-lsp` and prompt to update the language server in the workspace venv."
                 },
                 "fpp.locsSearch": {
                     "type": "array",

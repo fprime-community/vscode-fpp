@@ -94,14 +94,12 @@ pub fn server_capabilities(caps: &ClientCapabilities) -> ServerCapabilities {
             }
             .into(),
         ),
-        diagnostic_provider: Some(lsp_types::DiagnosticServerCapabilities::Options(
-            lsp_types::DiagnosticOptions {
-                identifier: Some("fpp".to_owned()),
-                inter_file_dependencies: true,
-                workspace_diagnostics: false,
-                work_done_progress_options: Default::default(),
-            },
-        )),
+        // Diagnostics are pushed (textDocument/publishDiagnostics) rather than pulled.
+        // Analysis is debounced, so a pull-based client could read the diagnostic
+        // store mid-debounce and show stale results; pushing lets the server send the
+        // authoritative set once analysis settles. Leaving `diagnostic_provider` unset
+        // makes vscode-languageclient fall back to push mode.
+        diagnostic_provider: None,
         definition_provider: Some(OneOf::Left(true)),
         hover_provider: Some(lsp_types::HoverProviderCapability::Simple(true)),
         references_provider: Some(OneOf::Left(true)),
@@ -438,17 +436,19 @@ impl ClientCapabilities {
     //     .unwrap_or_default()
     // }
 
-    pub fn diagnostics_refresh(&self) -> bool {
-        (|| -> _ {
-            self.0
-                .workspace
-                .as_ref()?
-                .diagnostic
-                .as_ref()?
-                .refresh_support
-        })()
-        .unwrap_or_default()
-    }
+    // Diagnostics are now pushed, not pulled, so the client's pull-refresh support
+    // is no longer consulted. Kept for reference in case pull mode returns.
+    // pub fn diagnostics_refresh(&self) -> bool {
+    //     (|| -> _ {
+    //         self.0
+    //             .workspace
+    //             .as_ref()?
+    //             .diagnostic
+    //             .as_ref()?
+    //             .refresh_support
+    //     })()
+    //     .unwrap_or_default()
+    // }
 
     // pub fn inlay_hint_resolve_support_properties(&self) -> FxHashSet<&str> {
     //     self.0

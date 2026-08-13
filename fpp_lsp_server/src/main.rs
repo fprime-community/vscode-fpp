@@ -7,6 +7,7 @@ mod handlers;
 mod lsp_ext;
 mod notification;
 mod request;
+mod uri;
 mod util;
 
 mod lsp;

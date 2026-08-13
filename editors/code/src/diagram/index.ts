@@ -98,7 +98,7 @@ export function registerDiagramSupport(
             "fpp.displayDiagram",
             (diagramType: DiagramType, name: string, uri?: vscode.Uri) => {
                 if (diagramType === DiagramType.stateMachine) {
-                    return mermaidPanel.show(name);
+                    return mermaidPanel.show(name, uri);
                 }
                 return webviewPanelManager.displayDiagram(diagramType, name, uri);
             }
@@ -110,6 +110,7 @@ export function registerDiagramSupport(
         }),
         vscode.commands.registerCommand("fpp.stateMachine.fit", () => mermaidPanel.fit()),
         vscode.commands.registerCommand("fpp.stateMachine.export", () => mermaidPanel.export()),
+        vscode.commands.registerCommand("fpp.stateMachine.view-source", () => mermaidPanel.viewSource()),
         vscode.commands.registerCommand("fpp.stateMachine.toggle-action-mode", () => mermaidPanel.toggleActionMode()),
         vscode.languages.registerCodeLensProvider({ language: "fpp" }, codeLensProvider),
         // Re-render the open diagram(s) (and refresh lenses) when an FPP file is saved.

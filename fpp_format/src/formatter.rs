@@ -42,13 +42,21 @@ impl Formatter {
         let mut saw_eol = false;
         let mut blank = false;
         let mut started = false;
+        // Newlines seen in the current run of trivia since the last real item.
+        // The lexer splits a blank line that carries trailing whitespace into
+        // separate EOL tokens (`"\n"` WHITESPACE `"\n"`), so a blank line must
+        // be detected by accumulating newlines across EOL tokens rather than
+        // looking for two newlines in a single token. WHITESPACE / COMMA / SEMI
+        // are transparent and do not reset the run.
+        let mut newlines = 0usize;
 
         for child in node.children_with_tokens() {
             if let Some(t) = child.as_token() {
                 match t.kind() {
                     WHITESPACE | COMMA | SEMI => {}
                     EOL => {
-                        if started && t.text().matches('\n').count() >= 2 {
+                        newlines += t.text().matches('\n').count();
+                        if started && newlines >= 2 {
                             blank = true;
                         }
                         saw_eol = true;
@@ -63,12 +71,14 @@ impl Formatter {
                         }
                         saw_eol = false;
                         blank = false;
+                        newlines = 0;
                         started = true;
                     }
                     PRE_ANNOTATION => {
                         items.push(Item::line_swallowing(Doc::text(t.text()), blank));
                         saw_eol = false;
                         blank = false;
+                        newlines = 0;
                         started = true;
                     }
                     POST_ANNOTATION => {
@@ -82,12 +92,14 @@ impl Formatter {
                         }
                         saw_eol = false;
                         blank = false;
+                        newlines = 0;
                         started = true;
                     }
                     _ => {
                         items.push(Item::new(Doc::text(t.text()), blank));
                         saw_eol = false;
                         blank = false;
+                        newlines = 0;
                         started = true;
                     }
                 }
@@ -95,6 +107,7 @@ impl Formatter {
                 items.push(Item::new(self.lower(n), blank));
                 saw_eol = false;
                 blank = false;
+                newlines = 0;
                 started = true;
             }
         }

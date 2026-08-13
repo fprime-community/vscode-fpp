@@ -7,6 +7,8 @@ import {
 } from "vscode-languageclient/node";
 
 import * as Settings from "./settings";
+import { resolveServerPath, selectServer, ServerResolution } from "./serverPath";
+import { checkForUpdate, installedVersion } from "./serverVersion";
 import { LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from "./locs";
 import { dumpSyntaxTree, reloadWorkspace } from "./lsp_ext";
 import * as Config from "./fppLspConfig";
@@ -20,6 +22,11 @@ class FppExtension implements vscode.Disposable {
     private traceOutputChannel: vscode.OutputChannel;
 
     private projectStatus: vscode.LanguageStatusItem;
+    private serverStatus: vscode.LanguageStatusItem;
+
+    /** The most recent server resolution + detected version, for the update command. */
+    private resolved?: ServerResolution;
+    private installedVersion?: string;
 
     client?: LanguageClient;
 
@@ -35,6 +42,13 @@ class FppExtension implements vscode.Disposable {
         this.projectStatus.name = "FPP Project";
         this.projectStatus.command = { title: "Select", command: "fpp.select" };
 
+        this.serverStatus = vscode.languages.createLanguageStatusItem(
+            'fpp.server', { language: "fpp" }
+        );
+        this.serverStatus.name = "FPP Language Server";
+        this.serverStatus.command = { title: "Change", command: "fpp.selectServer" };
+        this.refreshServerStatus(undefined);
+
         // The `.fpp-lsp` file is the source of truth for project config. Watch it so
         // the status reflects external edits (the server also reloads on change via
         // the client's synchronized file events).
@@ -48,7 +62,11 @@ class FppExtension implements vscode.Disposable {
             Settings.onLspServerPathChanged(() => {
                 this.initializeClient();
             }),
+            Settings.onPythonVenvChanged(() => {
+                this.initializeClient();
+            }),
             this.projectStatus,
+            this.serverStatus,
             configWatcher,
             this.outputChannel,
             this.traceOutputChannel,
@@ -64,12 +82,19 @@ class FppExtension implements vscode.Disposable {
             vscode.window.showErrorMessage(`Failed to deactivate old language server: ${e}`);
         }
 
-        const serverPath = Settings.serverPath();
-        if (!serverPath) {
-            // TODO(tumbar) Add a button to open up settings
-            vscode.window.showErrorMessage("No FPP server path set");
+        // Resolve the server executable: explicit setting, then the workspace venv
+        // (installing `fprime-fpp-lsp` on request), then PATH. Shows its own
+        // guidance if nothing is found.
+        const resolved = await resolveServerPath();
+        this.resolved = resolved;
+        this.installedVersion = resolved
+            ? await installedVersion(resolved.path)
+            : undefined;
+        this.refreshServerStatus(resolved, this.installedVersion);
+        if (!resolved) {
             return;
         }
+        const serverPath = resolved.path;
 
         const serverOptions: ServerOptions = {
             run: {
@@ -115,6 +140,28 @@ class FppExtension implements vscode.Disposable {
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to start language server: ${e}`);
         }
+
+        // Poll PyPI for a newer server in the background (throttled + opt-out).
+        void this.checkForUpdate(false);
+    }
+
+    /**
+     * Check PyPI for a newer server and, if the user accepts an upgrade, restart
+     * the client. `force` bypasses the interval throttle (used by the command).
+     */
+    async checkForUpdate(force: boolean) {
+        if (!this.resolved) {
+            return;
+        }
+        const updated = await checkForUpdate(
+            this.context,
+            this.resolved,
+            this.installedVersion,
+            force
+        );
+        if (updated) {
+            await this.initializeClient();
+        }
     }
 
     /** Update the language-status item to reflect the current `.fpp-lsp` config. */
@@ -130,6 +177,31 @@ class FppExtension implements vscode.Disposable {
             this.projectStatus.text = `FPP: ${cfg.locs ?? cfg.buildCache}`;
             this.projectStatus.severity = vscode.LanguageStatusSeverity.Information;
         }
+    }
+
+    /** Update the language-status item that shows the detected server binary. */
+    private refreshServerStatus(resolved: ServerResolution | undefined, version?: string) {
+        if (!resolved) {
+            this.serverStatus.text = "No FPP language server found";
+            this.serverStatus.detail = undefined;
+            this.serverStatus.severity = vscode.LanguageStatusSeverity.Error;
+            return;
+        }
+
+        const origin: Record<ServerResolution["source"], string> = {
+            setting: "from fpp.serverPath",
+            venv: "from workspace venv",
+            installed: "installed into venv",
+            path: "found on PATH",
+        };
+        // Show a workspace-relative path when the binary lives inside a folder;
+        // asRelativePath leaves absolute paths and bare PATH commands unchanged.
+        const label = vscode.workspace.asRelativePath(resolved.path);
+        this.serverStatus.text = version
+            ? `FPP server ${version}: ${label}`
+            : `FPP server: ${label}`;
+        this.serverStatus.detail = origin[resolved.source];
+        this.serverStatus.severity = vscode.LanguageStatusSeverity.Information;
     }
 
     /** Ask the server to re-run project discovery and re-index. */
@@ -221,6 +293,14 @@ export async function activate(context: vscode.ExtensionContext) {
         extension,
         vscode.commands.registerCommand("fpp.restartLsp", async () => {
             await extension.initializeClient();
+        }),
+        vscode.commands.registerCommand("fpp.selectServer", async () => {
+            // A changed selection updates `fpp.serverPath`, and the
+            // onLspServerPathChanged listener restarts the client with the new path.
+            await selectServer();
+        }),
+        vscode.commands.registerCommand("fpp.checkForServerUpdate", async () => {
+            await extension.checkForUpdate(true);
         }),
         vscode.commands.registerCommand('fpp.reload', extension.reload.bind(extension)),
         vscode.commands.registerCommand('fpp.load', (file?: vscode.Uri) => {

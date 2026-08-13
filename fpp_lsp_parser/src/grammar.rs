@@ -197,9 +197,8 @@ fn formal_param(p: &mut Parser) {
 }
 
 fn format_(p: &mut Parser) {
-    assert!(p.at(FORMAT_KW));
     let m = p.start();
-    p.bump(FORMAT_KW);
+    p.expect(FORMAT_KW);
     p.expect(LITERAL_STRING);
     m.complete(p, FORMAT);
 }

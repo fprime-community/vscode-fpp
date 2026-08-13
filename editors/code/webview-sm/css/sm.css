@@ -36,3 +36,97 @@ html, body {
     white-space: pre-wrap;
     padding: 12px;
 }
+
+/* Gear button that toggles the layout settings popover. */
+.sm-gear {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    border: 1px solid var(--vscode-widget-border, transparent);
+    border-radius: 4px;
+    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+    background: var(--vscode-button-secondaryBackground, var(--vscode-editorWidget-background));
+    opacity: 0.75;
+}
+
+.sm-gear:hover {
+    opacity: 1;
+    background: var(--vscode-toolbar-hoverBackground, var(--vscode-button-secondaryHoverBackground));
+}
+
+/* Layout settings popover. Hidden until `.open` is toggled by the gear. */
+.sm-settings {
+    position: fixed;
+    top: 44px;
+    right: 10px;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    width: 260px;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--vscode-widget-border, var(--vscode-editorWidget-border, transparent));
+    border-radius: 6px;
+    background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+    color: var(--vscode-foreground);
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size, 13px);
+}
+
+.sm-settings.open {
+    display: flex;
+}
+
+.sm-settings-title {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--vscode-descriptionForeground);
+}
+
+.sm-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sm-field-label {
+    color: var(--vscode-foreground);
+}
+
+.sm-field-select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 3px 6px;
+    color: var(--vscode-settings-dropdownForeground, var(--vscode-dropdown-foreground));
+    background: var(--vscode-settings-dropdownBackground, var(--vscode-dropdown-background));
+    border: 1px solid var(--vscode-settings-dropdownBorder, var(--vscode-dropdown-border, transparent));
+    border-radius: 4px;
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size, 13px);
+}
+
+.sm-field-select:focus {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
+}
+
+/* Numeric inputs (node/rank spacing) prefer the text-input theme colors. */
+input.sm-field-select {
+    color: var(--vscode-settings-numberInputForeground, var(--vscode-input-foreground));
+    background: var(--vscode-settings-numberInputBackground, var(--vscode-input-background));
+    border-color: var(--vscode-settings-numberInputBorder, var(--vscode-input-border, transparent));
+}

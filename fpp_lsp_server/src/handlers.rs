@@ -8,7 +8,7 @@ use crate::util::{
     completion_items_for_sm_state, completion_items_in_name_group, hover_for_node,
     hover_for_port_instance, hover_for_sm_symbol, hover_for_symbol, node_to_location,
     nodes_at_offset, port_instance_at_position, port_match_at_position, position_to_offset,
-    sm_symbol_at_position, symbol_at_position, symbol_to_completion_item,
+    sm_def_at_position, sm_symbol_at_position, symbol_at_position, symbol_to_completion_item,
 };
 use anyhow::Result;
 use fpp_analysis::semantics::{NameGroup, SymbolInterface};
@@ -599,6 +599,24 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
     // Uses inside a state machine resolve via the state machine's own use-def
     // map, not the global one; resolve them before the generic lookup.
     if let Some((node, state_machine, sm_symbol)) = sm_symbol_at_position(
+        state,
+        &request.text_document_position_params.text_document.uri,
+        offset,
+    ) {
+        return Ok(Some(hover_for_sm_symbol(
+            state,
+            node,
+            state_machine,
+            &sm_symbol,
+        )));
+    }
+
+    // State machine member *definitions* (actions, guards, signals, states,
+    // choices) are absent from the global symbol_map — they live only in their
+    // state machine's analysis. Resolve a hover on such a definition name here
+    // so it shows the member's own info; otherwise it would fall through to the
+    // enclosing state machine below and show the parent state machine instead.
+    if let Some((node, state_machine, sm_symbol)) = sm_def_at_position(
         state,
         &request.text_document_position_params.text_document.uri,
         offset,
@@ -1206,6 +1224,29 @@ pub fn handle_completion(
     }
 }
 
+/// Resolve the [`fpp_format::FormatOptions`] for a document by discovering the
+/// nearest `.fpp-format` file, walking up from the document's own directory.
+///
+/// The language server never applies command-line overrides, so the profile is
+/// the discovered file layered over the built-in defaults. A missing config
+/// yields defaults; a malformed config is logged and defaults are used (a
+/// format-on-save must not fail the editor over a bad config file).
+fn resolve_format_options(uri: &lsp_types::Uri) -> fpp_format::FormatOptions {
+    let path = std::path::Path::new(uri.path().as_str());
+    let dir = path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    match fpp_format::load_config(dir) {
+        Ok(config) => config.into_options(),
+        Err(err) => {
+            tracing::warn!(
+                "ignoring malformed {}: {}",
+                fpp_format::CONFIG_FILE_NAME,
+                err
+            );
+            fpp_format::FormatOptions::default()
+        }
+    }
+}
+
 pub fn handle_formatting(
     state: &GlobalState,
     request: DocumentFormattingParams,
@@ -1220,7 +1261,8 @@ pub fn handle_formatting(
 
     // Format the entire document
     let syntax = parse.syntax_node();
-    let text = fpp_format::Formatter::new(fpp_format::FormatOptions::default()).format(&syntax);
+    let options = resolve_format_options(&request.text_document.uri);
+    let text = fpp_format::Formatter::new(options).format(&syntax);
 
     // Replace the range spanning the entire *original* document. The range must
     // be derived from the original length, not the formatted length, otherwise
@@ -1251,7 +1293,8 @@ pub fn handle_range_formatting(
 
     // Format the entire document
     let syntax = parse.syntax_node();
-    let text = fpp_format::Formatter::new(fpp_format::FormatOptions::default()).format(&syntax);
+    let options = resolve_format_options(&request.text_document.uri);
+    let text = fpp_format::Formatter::new(options).format(&syntax);
 
     // Replace the range spanning the entire *original* document. The range must
     // be derived from the original length, not the formatted length, otherwise
@@ -1264,4 +1307,128 @@ pub fn handle_range_formatting(
         range,
         new_text: text,
     }]))
+}
+
+#[cfg(test)]
+mod hover_tests {
+    use super::*;
+    use crate::global_state::GlobalState;
+    use lsp_types::{
+        HoverContents, MarkupContent, TextDocumentIdentifier, TextDocumentPositionParams,
+        WorkDoneProgressParams, WorkspaceFolder,
+    };
+    use std::path::{Path, PathBuf};
+
+    /// A unique temp dir per test (no `tempfile` dependency), mirroring the
+    /// helper used in `config::tests`.
+    fn temp_dir(tag: &str) -> PathBuf {
+        let dir =
+            std::env::temp_dir().join(format!("fpp-lsp-hover-test-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    /// The `(line, character)` position (0-based) of the first occurrence of
+    /// `needle` in `src`.
+    fn position_of(src: &str, needle: &str) -> Position {
+        let byte = src.find(needle).expect("needle present in source");
+        let prefix = &src[..byte];
+        let line = prefix.matches('\n').count() as u32;
+        let col = prefix.len() as u32 - prefix.rfind('\n').map_or(0, |i| i as u32 + 1);
+        Position {
+            line,
+            character: col,
+        }
+    }
+
+    /// Build a workspace-indexed `GlobalState` for `src` written to `<dir>/m.fpp`,
+    /// returning the state and the file URI. The full workspace-scan pipeline runs
+    /// so the state machine analysis is populated exactly as at runtime.
+    fn state_for(dir: &Path, src: &str) -> (GlobalState, Uri) {
+        std::fs::write(dir.join(".fpp-lsp"), "scanWorkspace: true\n").unwrap();
+        std::fs::write(dir.join("m.fpp"), src).unwrap();
+
+        let root_uri = Uri::from_str(&crate::uri::from_file_path(dir).unwrap()).unwrap();
+        let file_uri =
+            Uri::from_str(&crate::uri::from_file_path(dir.join("m.fpp")).unwrap()).unwrap();
+
+        let (sender, _receiver) = crossbeam_channel::unbounded();
+        let workspace_folders = Some(vec![WorkspaceFolder {
+            uri: root_uri,
+            name: "test".to_string(),
+        }]);
+        let mut state = GlobalState::new(workspace_folders, sender, Default::default());
+
+        // Drive the real indexing pipeline: discover the config, scan+parse the
+        // workspace, then run semantic analysis.
+        state.on_task(Task::ReloadWorkspace);
+        state.on_task(Task::LoadFullWorkspace);
+        state.on_task(Task::Analysis);
+
+        (state, file_uri)
+    }
+
+    fn hover_at(state: &GlobalState, uri: &Uri, position: Position) -> String {
+        let hover = handle_hover(
+            state,
+            HoverParams {
+                text_document_position_params: TextDocumentPositionParams {
+                    text_document: TextDocumentIdentifier { uri: uri.clone() },
+                    position,
+                },
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            },
+        )
+        .expect("hover ok")
+        .expect("hover present");
+        match hover.contents {
+            HoverContents::Markup(MarkupContent { value, .. }) => value,
+            other => panic!("expected markup hover, got {other:?}"),
+        }
+    }
+
+    const SM_SRC: &str = "\
+module M {
+  state machine SM {
+    action myAction
+    guard myGuard
+    signal mySignal
+    initial enter Top
+    state Top {
+      choice Pick { if myGuard enter Top else enter Top }
+    }
+  }
+}
+";
+
+    /// Hovering the name of a state machine member *definition* shows that
+    /// member's own info (qualified under the state machine), not the enclosing
+    /// state machine's. Regression test for the definition-name hover falling
+    /// through to the parent `DefStateMachine`.
+    #[test]
+    fn hover_on_sm_member_definitions() {
+        let dir = temp_dir("member-defs");
+        let (state, uri) = state_for(&dir, SM_SRC);
+
+        for (needle, expected) in [
+            ("myAction", "(Action) SM.myAction"),
+            ("myGuard", "(Guard) SM.myGuard"),
+            ("mySignal", "(Signal) SM.mySignal"),
+            ("Top", "(State) SM.Top"),
+            ("Pick", "(Choice) SM.Top.Pick"),
+        ] {
+            let value = hover_at(&state, &uri, position_of(SM_SRC, needle));
+            assert!(
+                value.contains(expected),
+                "hover on `{needle}` should contain `{expected}`, got:\n{value}"
+            );
+            assert!(
+                !value.contains("(State Machine)"),
+                "hover on `{needle}` should not show the parent state machine, got:\n{value}"
+            );
+        }
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

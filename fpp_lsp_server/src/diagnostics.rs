@@ -50,6 +50,22 @@ impl LspDiagnosticsEmitter {
         self.0.lock().unwrap().get(uri)
     }
 
+    /// Snapshot of every URI's diagnostics. Used to push diagnostics to the client
+    /// after analysis so it never has to pull (and never sees a stale window).
+    pub fn all(&self) -> FxHashMap<String, Vec<Diagnostic>> {
+        let state = self.0.lock().unwrap();
+        state
+            .diagnostics
+            .iter()
+            .map(|(uri, diagnostics)| {
+                (
+                    uri.clone(),
+                    diagnostics.iter().map(|d| d.diagnostic.clone()).collect(),
+                )
+            })
+            .collect()
+    }
+
     /// Start tracking all diagnostics
     pub fn start_garbage_collection(&self) {
         let mut state = self.0.lock().unwrap();

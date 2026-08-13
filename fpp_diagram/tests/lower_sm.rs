@@ -206,10 +206,11 @@ fn uml_mode_keeps_entry_exit_in_states() {
 }
 
 /// A *composite* state cannot carry a description in Mermaid ("Group nodes can
-/// only have label"), so its entry/exit actions must be shown as a note, not as
-/// an `Id : entry / …` description line, in UML mode.
+/// only have label"), and a note attached to a group node is hoisted out to the
+/// diagram's top level (losing the nesting). So its entry/exit actions are folded
+/// into the composite state's label instead, in UML mode.
 #[test]
-fn uml_mode_composite_state_uses_note_not_description() {
+fn uml_mode_composite_state_folds_actions_into_label() {
     const SM_COMPOSITE: &str = r#"
 state machine M {
     signal s
@@ -228,14 +229,21 @@ state machine M {
             fpp_diagram::lower_state_machine_to_mermaid(a, "M", TransitionActionMode::Uml)
                 .expect("mermaid");
 
-        // The composite state LOADING carries its entry action as a note.
-        assert!(mermaid.contains("note right of LOADING"), "\n{mermaid}");
-        assert!(mermaid.contains("entry / loadStart"), "\n{mermaid}");
+        // The composite state LOADING carries its entry action in its label,
+        // stacked under the name via `<br/>`, so it stays inside the box.
+        assert!(
+            mermaid.contains("state \"LOADING<br/>entry / loadStart\" as LOADING"),
+            "\n{mermaid}"
+        );
 
-        // It must NOT emit a `LOADING : …` description line (a statement whose
-        // left side is the state id), which Mermaid rejects for a group node.
-        // (Edges like `IDLE --> LOADING : s` are fine — they are not
+        // It must NOT use a note (Mermaid hoists group-node notes to the top
+        // level) or a `LOADING : …` description line (rejected for a group
+        // node). (Edges like `IDLE --> LOADING : s` are fine — they are not
         // descriptions of the LOADING node.)
+        assert!(
+            !mermaid.contains("note right of LOADING"),
+            "composite state must not use a note:\n{mermaid}"
+        );
         assert!(
             !mermaid
                 .lines()
@@ -323,6 +331,76 @@ state machine M {
     });
 }
 
+/// An internal transition (`on signal [guard] do { ... }`) reacts to a signal
+/// without changing state. It has no target arc, so it never appears as a
+/// transition edge; instead it is carried on the state (in `internal_transitions`
+/// and the hover `detail`) and rendered inside the state box by Mermaid — in
+/// both action modes, since there is no edge to fold it into.
+#[test]
+fn internal_transitions_render_inside_state() {
+    const SM_INTERNAL: &str = r#"
+state machine M {
+    guard g
+    signal s
+    signal t
+    action a1
+    action a2
+    initial enter IDLE
+    state IDLE {
+        on s do { a1 }
+        on t if g do { a1, a2 }
+        on s enter RUN
+    }
+    state RUN
+}
+"#;
+    for mode in [TransitionActionMode::Uml, TransitionActionMode::Flattened] {
+        with_analysis(SM_INTERNAL, |a| {
+            let sm = fpp_diagram::lower_state_machine(a, "M", mode)
+                .expect("state machine M should lower");
+            let idle = sm
+                .nodes
+                .iter()
+                .find(|n| n.id == "IDLE")
+                .expect("state IDLE");
+
+            // Both internal transitions are captured, formatted `sig [guard] / a…`.
+            assert_eq!(
+                idle.internal_transitions,
+                vec!["s / a1".to_string(), "t [g] / a1 a2".to_string()],
+                "mode {mode:?}"
+            );
+            // The hover detail lists them under the state name.
+            assert!(idle.detail.contains("s / a1"), "{}", idle.detail);
+            assert!(idle.detail.contains("t [g] / a1 a2"), "{}", idle.detail);
+
+            // The `on s enter RUN` external transition is still an edge; the two
+            // internal transitions are NOT edges.
+            assert!(
+                sm.edges.iter().any(|e| e.from == "IDLE" && e.to == "RUN"),
+                "external transition remains an edge"
+            );
+            assert!(
+                !sm.edges.iter().any(|e| e.from == "IDLE" && e.to == "IDLE"),
+                "internal transitions must not become self-edges"
+            );
+
+            // Mermaid renders them as inline description lines on the leaf state,
+            // in both action modes.
+            let mermaid =
+                fpp_diagram::lower_state_machine_to_mermaid(a, "M", mode).expect("mermaid");
+            assert!(
+                mermaid.contains("IDLE : s / a1"),
+                "mode {mode:?}:\n{mermaid}"
+            );
+            assert!(
+                mermaid.contains("IDLE : t [g] / a1 a2"),
+                "mode {mode:?}:\n{mermaid}"
+            );
+        });
+    }
+}
+
 /// A state's entry/exit actions go into `detail`, not the visible label.
 #[test]
 fn state_entry_actions_go_to_detail() {
@@ -408,6 +486,111 @@ fn missing_state_machine_is_an_error() {
     });
 }
 
+/// The `@ diagram-layout ...` annotation on a state machine drives the ELK
+/// options embedded in the Mermaid frontmatter, so configuration lives in the
+/// FPP source.
+#[test]
+fn layout_annotation_drives_mermaid_frontmatter() {
+    const SM_WITH_LAYOUT: &str = r#"
+@ diagram-layout cycleBreaking=GREEDY nodePlacement=NETWORK_SIMPLEX
+state machine M {
+    signal s
+    initial enter A
+    state A { on s enter B }
+    state B
+}
+"#;
+    with_analysis(SM_WITH_LAYOUT, |a| {
+        let sm =
+            fpp_diagram::lower_state_machine(a, "M", TransitionActionMode::Uml).expect("lowers");
+        assert_eq!(
+            sm.layout.cycle_breaking,
+            fpp_diagram::layout::CycleBreaking::Greedy
+        );
+
+        let mermaid =
+            fpp_diagram::lower_state_machine_to_mermaid(a, "M", TransitionActionMode::Uml)
+                .expect("mermaid");
+        assert!(
+            mermaid.contains("cycleBreakingStrategy: GREEDY"),
+            "\n{mermaid}"
+        );
+        assert!(
+            mermaid.contains("nodePlacementStrategy: NETWORK_SIMPLEX"),
+            "\n{mermaid}"
+        );
+        // Unspecified option keeps its default.
+        assert!(
+            mermaid.contains("considerModelOrder: NODES_AND_EDGES"),
+            "\n{mermaid}"
+        );
+        // Engine defaults to ELK.
+        assert!(mermaid.contains("layout: elk"), "\n{mermaid}");
+    });
+}
+
+/// Selecting the `dagre` engine changes the Mermaid `layout`, drops the ELK-only
+/// options (which `dagre` ignores), and emits the node/rank spacing block (which
+/// only `dagre` honors).
+#[test]
+fn dagre_engine_omits_elk_options() {
+    const SM_WITH_DAGRE: &str = r#"
+@ diagram-layout engine=dagre nodeSpacing=80 rankSpacing=100
+state machine M {
+    signal s
+    initial enter A
+    state A { on s enter B }
+    state B
+}
+"#;
+    with_analysis(SM_WITH_DAGRE, |a| {
+        let sm =
+            fpp_diagram::lower_state_machine(a, "M", TransitionActionMode::Uml).expect("lowers");
+        assert_eq!(sm.layout.engine, fpp_diagram::layout::LayoutEngine::Dagre);
+
+        let mermaid =
+            fpp_diagram::lower_state_machine_to_mermaid(a, "M", TransitionActionMode::Uml)
+                .expect("mermaid");
+        assert!(mermaid.contains("layout: dagre"), "\n{mermaid}");
+        // The ELK option block is omitted for the dagre backend.
+        assert!(!mermaid.contains("elk:"), "\n{mermaid}");
+        assert!(!mermaid.contains("cycleBreakingStrategy"), "\n{mermaid}");
+        // The spacing block is emitted for the dagre backend.
+        assert!(mermaid.contains("nodeSpacing: 80"), "\n{mermaid}");
+        assert!(mermaid.contains("rankSpacing: 100"), "\n{mermaid}");
+    });
+}
+
+/// The flow direction applies to both engines and is emitted as a `direction`
+/// statement in the diagram body. The spacing block is ELK-suppressed.
+#[test]
+fn direction_is_emitted_for_both_engines() {
+    const SM_LR: &str = r#"
+@ diagram-layout direction=LR
+state machine M {
+    signal s
+    initial enter A
+    state A { on s enter B }
+    state B
+}
+"#;
+    with_analysis(SM_LR, |a| {
+        let sm =
+            fpp_diagram::lower_state_machine(a, "M", TransitionActionMode::Uml).expect("lowers");
+        assert_eq!(
+            sm.layout.direction,
+            fpp_diagram::layout::Direction::LeftRight
+        );
+
+        let mermaid =
+            fpp_diagram::lower_state_machine_to_mermaid(a, "M", TransitionActionMode::Uml)
+                .expect("mermaid");
+        assert!(mermaid.contains("direction LR"), "\n{mermaid}");
+        // Default engine is ELK, so the dagre-only spacing block is absent.
+        assert!(!mermaid.contains("nodeSpacing:"), "\n{mermaid}");
+    });
+}
+
 #[test]
 fn generates_mermaid_state_diagram() {
     with_analysis(SM, |a| {
@@ -415,8 +598,14 @@ fn generates_mermaid_state_diagram() {
             fpp_diagram::lower_state_machine_to_mermaid(a, "M", TransitionActionMode::Uml)
                 .expect("state machine M should generate mermaid");
 
-        // Diagram header.
-        assert!(mermaid.starts_with("stateDiagram-v2\n"), "\n{mermaid}");
+        // YAML frontmatter embeds the layout config, then the diagram header.
+        assert!(mermaid.starts_with("---\n"), "\n{mermaid}");
+        assert!(mermaid.contains("layout: elk"), "\n{mermaid}");
+        assert!(
+            mermaid.contains("cycleBreakingStrategy: MODEL_ORDER"),
+            "\n{mermaid}"
+        );
+        assert!(mermaid.contains("\nstateDiagram-v2\n"), "\n{mermaid}");
 
         // The SM-level initial transition into S.
         assert!(mermaid.contains("[*] --> S"), "\n{mermaid}");
@@ -435,8 +624,13 @@ fn generates_mermaid_state_diagram() {
         assert!(mermaid.contains("S_C --> S1 : [g]"), "\n{mermaid}");
         assert!(mermaid.contains("S_C --> S2 : [!g]"), "\n{mermaid}");
 
-        // Display label for a state preserves its unqualified name.
-        assert!(mermaid.contains("state \"S\" as S"), "\n{mermaid}");
+        // Display label for a state preserves its unqualified name. S is a
+        // composite state with an entry action, so its actions are folded into
+        // the label (stacked under the name via `<br/>`).
+        assert!(
+            mermaid.contains("state \"S<br/>entry / onEnterS\" as S"),
+            "\n{mermaid}"
+        );
     });
 }
 

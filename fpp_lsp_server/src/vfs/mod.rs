@@ -8,7 +8,6 @@ use lsp_types::{
 use rustc_hash::FxHashMap;
 use std::str::FromStr;
 use std::sync::{Arc, RwLock};
-use url::Url;
 
 use crate::lsp::capabilities::PositionEncoding;
 
@@ -220,11 +219,11 @@ impl Vfs {
                     )
                     .into()),
                     Some(file_path) => {
-                        let uri = Url::from_file_path(file_path).map_err(|_| {
+                        let uri = crate::uri::from_file_path(file_path).map_err(|()| {
                             Error::from(format!("Failed to convert path to URI: {}", file_path))
                         })?;
 
-                        Ok(uri.as_str().to_string())
+                        Ok(uri)
                     }
                 }
             }

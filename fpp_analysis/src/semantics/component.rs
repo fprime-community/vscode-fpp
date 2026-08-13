@@ -119,9 +119,9 @@ pub struct TlmChannel {
 impl TlmChannel {
     pub fn from_spec(a: &Analysis, node: &SpecTlmChannel) -> SemanticResult<TlmChannel> {
         let loc = node.span();
-        let channel_type = a.type_map.get(&node.type_name.node_id).cloned();
-        if let (Some(format), Some(ty)) = (&node.format, &channel_type) {
-            Format::new(format, vec![(ty.clone(), node.type_name.span())]);
+        let channel_type = a.type_map.get(&node.type_name.node_id).unwrap().clone();
+        if let Some(format) = &node.format {
+            Format::new(format, vec![(channel_type, node.type_name.span())]);
         }
         compute_limits(a, &node.low)?;
         compute_limits(a, &node.high)?;

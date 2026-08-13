@@ -234,6 +234,13 @@ pub struct SmNode {
     pub entry_actions: Vec<String>,
     /// Exit actions (`exit do { ... }`), by name; empty if none.
     pub exit_actions: Vec<String>,
+    /// Internal transitions (`on signal [guard] do { ... }`), each pre-formatted
+    /// as `signal [guard] / a1 a2`. These react to a signal without changing
+    /// state, so — like entry/exit actions — they are shown *inside* the state
+    /// box rather than as a transition arrow (an arrow would wrongly imply the
+    /// state's exit/entry actions run). Empty if the state has none.
+    #[serde(default)]
+    pub internal_transitions: Vec<String>,
     /// Hover text with the full detail (entry/exit actions), or empty if none.
     /// Kept off the visible label to avoid a wide, noisy diagram.
     pub detail: String,
@@ -269,6 +276,10 @@ pub struct StateMachineDiagram {
     pub name: String,
     pub nodes: Vec<SmNode>,
     pub edges: Vec<SmEdge>,
+    /// ELK layout options, parsed from the state machine's `diagram-layout`
+    /// source annotation (defaults when absent).
+    #[serde(default)]
+    pub layout: crate::layout::SmLayout,
 }
 
 impl SmNode {

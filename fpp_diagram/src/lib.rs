@@ -13,12 +13,14 @@
 //! pass.
 
 pub mod ir;
+pub mod layout;
 pub mod lower;
 pub mod lower_sm;
 pub mod mermaid;
 pub mod sprotty;
 
 pub use ir::{Diagram, DiagramKind, StateMachineDiagram, TransitionActionMode};
+pub use layout::SmLayout;
 pub use lower::LowerError;
 
 use fpp_analysis::Analysis;

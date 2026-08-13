@@ -1,3 +1,4 @@
+mod config;
 #[doc(hidden)]
 pub mod doc;
 mod formatter;
@@ -9,24 +10,32 @@ use std::{fs, io};
 pub use fpp_lsp_parser::SyntaxError;
 use fpp_lsp_parser::{TopEntryPoint, parse};
 
+pub use crate::config::{
+    CONFIG_FILE_NAME, ConfigError, PartialConfig, find_config_file, load_config, parse_config,
+};
 pub use crate::formatter::Formatter;
 pub use crate::include::{FormattedUnit, format_file_recursive};
 
 /// Configuration options for the formatter
 #[derive(Debug, Clone)]
 pub struct FormatOptions {
-    /// Number of spaces per indentation level (default: 4)
+    /// Number of spaces per indentation level (default: 2)
     pub indent_width: usize,
     /// Maximum line width; specs wider than this explode their clauses and
     /// group-style member lists break onto multiple lines (default: 80)
     pub max_line_width: usize,
 }
 
+/// Default number of spaces per indentation level.
+pub const DEFAULT_INDENT_WIDTH: usize = 2;
+/// Default maximum line width.
+pub const DEFAULT_MAX_LINE_WIDTH: usize = 80;
+
 impl Default for FormatOptions {
     fn default() -> Self {
         Self {
-            indent_width: 4,
-            max_line_width: 80,
+            indent_width: DEFAULT_INDENT_WIDTH,
+            max_line_width: DEFAULT_MAX_LINE_WIDTH,
         }
     }
 }
@@ -117,6 +126,82 @@ pub fn format_file(path: &Path, entry: TopEntryPoint) -> Result<String, FormatEr
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_default_options() {
+        // The default formatting profile is 2-space indent, 80-column width.
+        let options = FormatOptions::default();
+        assert_eq!(options.indent_width, 2);
+        assert_eq!(options.max_line_width, 80);
+        assert_eq!(options.indent_width, DEFAULT_INDENT_WIDTH);
+        assert_eq!(options.max_line_width, DEFAULT_MAX_LINE_WIDTH);
+    }
+
+    #[test]
+    fn test_indent_width_is_honored() {
+        let input = "module F { constant a = 1 }";
+        let two = format_text(
+            input,
+            TopEntryPoint::Module,
+            FormatOptions {
+                indent_width: 2,
+                max_line_width: 80,
+            },
+        )
+        .unwrap();
+        let four = format_text(
+            input,
+            TopEntryPoint::Module,
+            FormatOptions {
+                indent_width: 4,
+                max_line_width: 80,
+            },
+        )
+        .unwrap();
+        assert!(two.contains("\n  constant a = 1"), "two-space:\n{}", two);
+        assert!(
+            four.contains("\n    constant a = 1"),
+            "four-space:\n{}",
+            four
+        );
+    }
+
+    #[test]
+    fn test_max_line_width_is_honored() {
+        // A spec that fits within a wide limit but not a narrow one explodes
+        // its clauses only under the narrow width.
+        let input = "module M { active component C { \
+            async command StartTest(testId: U32, timeout: F32) \
+            opcode 0x10 priority 5 assert } }";
+        let wide = format_text(
+            input,
+            TopEntryPoint::Module,
+            FormatOptions {
+                indent_width: 2,
+                max_line_width: 200,
+            },
+        )
+        .unwrap();
+        let narrow = format_text(
+            input,
+            TopEntryPoint::Module,
+            FormatOptions {
+                indent_width: 2,
+                max_line_width: 40,
+            },
+        )
+        .unwrap();
+        assert!(
+            !wide.contains("\\\n"),
+            "wide width should not explode:\n{}",
+            wide
+        );
+        assert!(
+            narrow.contains("\\\n"),
+            "narrow width should explode:\n{}",
+            narrow
+        );
+    }
 
     #[test]
     fn test_format_simple_module() {
@@ -283,6 +368,42 @@ module Outer {
         assert!(
             formatted.contains("priority 5 \\\n"),
             "clauses:\n{}",
+            formatted
+        );
+        assert_stable(&formatted);
+    }
+
+    #[test]
+    fn test_blank_line_with_trailing_whitespace_is_preserved() {
+        // A blank separator line that carries trailing spaces is lexed as two
+        // EOL tokens around a WHITESPACE token; the blank must still be seen as
+        // a single intentional separator and preserved.
+        let input = "module M {\n  constant a = 1\n   \n  constant b = 2\n}\n";
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
+        assert_eq!(
+            formatted, "module M {\n  constant a = 1\n\n  constant b = 2\n}\n",
+            "trailing-whitespace blank line not preserved:\n{}",
+            formatted
+        );
+        // Same content without the stray spaces must format identically.
+        let clean = "module M {\n  constant a = 1\n\n  constant b = 2\n}\n";
+        let clean_formatted =
+            format_text(clean, TopEntryPoint::Module, FormatOptions::default()).unwrap();
+        assert_eq!(formatted, clean_formatted);
+        assert_stable(&formatted);
+    }
+
+    #[test]
+    fn test_multiple_blank_lines_with_whitespace_collapse_to_one() {
+        // Several blank lines (some carrying whitespace) collapse to a single
+        // separator, just like clean blank lines do.
+        let input = "module M {\n  constant a = 1\n \n\n  \n  constant b = 2\n}\n";
+        let formatted =
+            format_text(input, TopEntryPoint::Module, FormatOptions::default()).unwrap();
+        assert_eq!(
+            formatted, "module M {\n  constant a = 1\n\n  constant b = 2\n}\n",
+            "blank run not collapsed to one:\n{}",
             formatted
         );
         assert_stable(&formatted);
