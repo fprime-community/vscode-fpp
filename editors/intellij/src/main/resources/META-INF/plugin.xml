@@ -53,8 +53,6 @@
 
         <platform.lsp.serverSupportProvider
                 implementation="com.github.fprime_community.fpp_tools.FppLspServerSupportProvider"/>
-        <postStartupActivity
-                implementation="com.github.fprime_community.fpp_tools.FppLspUpdateChecker"/>
         <applicationService
                 serviceImplementation="com.github.fprime_community.fpp_tools.settings.FppSettings"/>
         <projectConfigurable

@@ -5,7 +5,6 @@ import com.github.fprime_community.fpp_tools.settings.FppSettings
 import com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
@@ -14,7 +13,6 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
@@ -29,7 +27,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.exists
-import kotlin.time.Duration.Companion.hours
 
 private val LOG = logger<LspConfiguration>()
 private const val LSP_EXECUTABLE = "fpp_lsp_server"
@@ -99,41 +96,25 @@ private fun Project.installLspWithConfirmation(sdk: Sdk): Boolean = try {
     false
 }
 
-// How often to poll PyPI for a newer LSP, at most, regardless of restarts.
-private val LSP_UPDATE_CHECK_INTERVAL_MS = 24.hours.inWholeMilliseconds
-private const val LSP_LAST_UPDATE_CHECK_KEY = "com.github.fprime_community.fpp_tools.lastLspUpdateCheck"
-
-internal fun Project.updateLspWithConfirmationAsync(force: Boolean = false) =
-    FppCliService.getInstance(this).coroutineScope.launch(Dispatchers.IO) { updateLspWithConfirmation(force) }
+internal fun Project.updateLspWithConfirmationAsync() =
+    FppCliService.getInstance(this).coroutineScope.launch(Dispatchers.IO) { updateLspWithConfirmation() }
 
 /**
  * Checks whether a newer `fprime-fpp-lsp` is available for the project's interpreter
  * and, if so, prompts to install it.
  *
  * The running LSP server should be restarted by [FppLspPackageChangeListener] when updated.
- *
- * @param force Ignore `checkForUpdates` and the 24-hour throttle.
  */
-private suspend fun Project.updateLspWithConfirmation(force: Boolean = false) {
+private suspend fun Project.updateLspWithConfirmation() {
     val settings = FppSettings.getInstance(this)
-    if (settings.lspPath.isNotEmpty()) return
-    if (!force && !settings.checkForUpdates) return
-
-    val properties = PropertiesComponent.getInstance()
-    if (!force) {
-        val last = properties.getLong(LSP_LAST_UPDATE_CHECK_KEY, 0L)
-        if (last + LSP_UPDATE_CHECK_INTERVAL_MS > System.currentTimeMillis()) return
-    }
+    if (settings.lspPath.isNotEmpty() || !settings.checkForUpdates) return
 
     val sdk = pythonSdk() ?: return
     if (resolveLsp(sdk) == null) return
 
     try {
         @Suppress("UnstableApiUsage")
-        val outdated = PythonPackageManager.forSdk(this, sdk).listOutdatedPackages()[LSP_PIP_PACKAGE]
-        properties.setValue(LSP_LAST_UPDATE_CHECK_KEY, System.currentTimeMillis().toString())
-        @Suppress("UnstableApiUsage")
-        if (outdated == null) return
+        val outdated = PythonPackageManager.forSdk(this, sdk).listOutdatedPackages()[LSP_PIP_PACKAGE] ?: return
 
         FppNotifications.pluginNotifications().createNotification(
             FppBundle.message("fpp.lsp.update.available.title", outdated.latestVersion),
@@ -167,11 +148,6 @@ private suspend fun Project.updateLsp(sdk: Sdk, version: String) = try {
     FppNotifications.pluginNotifications().createNotification(
         FppBundle.message("fpp.notification.lsp.download.error"), NotificationType.ERROR
     ).notify(this)
-}
-
-// FIXME too early, outdated packages null
-class FppLspUpdateChecker : ProjectActivity {
-    override suspend fun execute(project: Project) = project.updateLspWithConfirmation()
 }
 
 sealed class LspConfiguration {
