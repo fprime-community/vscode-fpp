@@ -15,6 +15,7 @@ use lsp_types::{
 use serde::de::DeserializeOwned;
 use std::ops::{ControlFlow, Deref};
 use std::str::FromStr;
+use std::sync::Arc;
 
 pub fn from_json<T: DeserializeOwned>(
     what: &'static str,
@@ -911,6 +912,49 @@ pub(crate) fn sm_symbol_at_position<'a>(
     })
 }
 
+/// Resolve a state machine member *definition* at `position` to its state
+/// machine symbol (action, guard, signal, state, or choice).
+///
+/// State machine members (actions, guards, signals, states, choices) are not
+/// entered into the global `symbol_map`; they live only in their state
+/// machine's own analysis. So hovering the name of such a definition would
+/// otherwise fall through to the enclosing `DefStateMachine`, showing the
+/// parent state machine's hover instead of the member's. This resolves the
+/// member definition node the cursor is on to a [`StateMachineSymbol`] built
+/// from that node, mirroring how uses resolve via [`sm_symbol_at_position`].
+///
+/// The returned node is the member definition's own node, used for the hover
+/// range.
+pub(crate) fn sm_def_at_position<'a>(
+    state: &'a GlobalState,
+    document: &Uri,
+    position: BytePos,
+) -> Option<(Node<'a>, &'a StateMachine, StateMachineSymbol)> {
+    let nodes = nodes_at_offset(state, document, position)?;
+
+    // A definition-name hover only applies when the cursor is on the name.
+    if !matches!(nodes.first(), Some(Node::Name(_))) {
+        return None;
+    }
+
+    // Find the enclosing state machine definition and its analysis.
+    let state_machine = enclosing_state_machine(state, &nodes)?;
+
+    // Find the deepest state machine member definition node at the cursor and
+    // build its symbol.
+    nodes.iter().find_map(|n| {
+        let symbol = match n {
+            Node::DefAction(def) => StateMachineSymbol::Action(Arc::new((*def).clone())),
+            Node::DefGuard(def) => StateMachineSymbol::Guard(Arc::new((*def).clone())),
+            Node::DefSignal(def) => StateMachineSymbol::Signal(Arc::new((*def).clone())),
+            Node::DefState(def) => StateMachineSymbol::State(Arc::new((*def).clone())),
+            Node::DefChoice(def) => StateMachineSymbol::Choice(Arc::new((*def).clone())),
+            _ => return None,
+        };
+        Some((*n, state_machine, symbol))
+    })
+}
+
 /// The resolved state machine enclosing the cursor, if any, given the AST nodes
 /// covering the cursor position (innermost first).
 fn enclosing_state_machine<'a>(
@@ -1000,7 +1044,6 @@ pub(crate) fn completion_items_for_sm_state(
     qualifier: &[String],
 ) -> Option<Vec<CompletionItem>> {
     use fpp_ast::{StateMachineMember, StateMember};
-    use std::sync::Arc;
 
     let nodes = nodes_at_offset(state, document, position)?;
     let sm = enclosing_state_machine(state, &nodes)?;
