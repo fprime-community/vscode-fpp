@@ -53,6 +53,8 @@
 
         <platform.lsp.serverSupportProvider
                 implementation="com.github.fprime_community.fpp_tools.FppLspServerSupportProvider"/>
+        <editorNotificationProvider
+                implementation="com.github.fprime_community.fpp_tools.FppEditorNotificationProvider"/>
         <applicationService
                 serviceImplementation="com.github.fprime_community.fpp_tools.settings.FppSettings"/>
         <projectConfigurable

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerState
+import com.intellij.ui.EditorNotifications
 import com.jetbrains.cidr.cpp.cmake.python.CMakePythonSdkService
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.sdk.PySdkListener
@@ -18,6 +19,7 @@ class FppSettingsLspRestartListener(private val project: Project) : FppSettingsC
     override fun settingsChanged(event: FppSettingsConfigurable.SettingsChangedEvent) {
         if (event.isChanged(FppSettings.State::lspPath)) {
             project.restartLspServerAsyncIfNeeded("Project settings changed")
+            EditorNotifications.getInstance(project).updateAllNotifications()
         }
     }
 }
@@ -27,6 +29,7 @@ class FppLspSdkChangeListener(private val project: Project) : PySdkListener {
     override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
         if (prevSdk != newSdk && module in ModuleManager.getInstance(project).modules) {
             project.restartLspServerAsyncIfNeeded("Python interpreter changed")
+            EditorNotifications.getInstance(project).updateAllNotifications()
         }
     }
 }
@@ -35,6 +38,7 @@ class FppLspSdkChangeListener(private val project: Project) : PySdkListener {
 class FppLspCMakeSdkChangeListener(private val project: Project) : CMakePythonSdkService.Companion.Listener {
     override fun onChange() {
         project.restartLspServerAsyncIfNeeded("CMake Python interpreter changed")
+        EditorNotifications.getInstance(project).updateAllNotifications()
     }
 }
 

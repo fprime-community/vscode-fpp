@@ -2,20 +2,17 @@ package com.github.fprime_community.fpp_tools
 
 import com.github.fprime_community.fpp_tools.LspConfiguration.*
 import com.github.fprime_community.fpp_tools.settings.FppSettings
-import com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
@@ -41,22 +38,8 @@ fun Project.getLspConfiguration(): LspConfiguration {
         return Manual(this)
     }
 
-    val sdk = pythonSdk() ?: run {
-        // TODO (08/2026) consider converting into a banner
-        FppNotifications.pluginNotifications().createNotification(
-            FppBundle.message("fpp.lsp.python.missing"), NotificationType.ERROR
-        ).addAction(object : NotificationAction(FppBundle.message("fpp.lsp.python.configure")) {
-            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                @Suppress("UnstableApiUsage")
-                ShowSettingsUtil.getInstance().showSettingsDialog(this@run, PyActiveSdkModuleConfigurable::class.java)
-            }
-        }).addAction(object : NotificationAction(FppBundle.message("fpp.settings.lsp.manual")) {
-            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                ShowSettingsUtil.getInstance().showSettingsDialog(this@run, FppSettingsConfigurable::class.java)
-            }
-        }).notify(this)
-        return Disabled(FppBundle.message("fpp.lsp.python.missing"))
-    }
+    // User notification handled by FppLspEditorNotificationProvider.
+    val sdk = pythonSdk() ?: return Disabled(FppBundle.message("fpp.lsp.python.missing"))
 
     resolveLsp(sdk)?.let { return FromPython(this, it) }
 
@@ -103,7 +86,7 @@ internal fun Project.updateLspWithConfirmationAsync() =
  * Checks whether a newer `fprime-fpp-lsp` is available for the project's interpreter
  * and, if so, prompts to install it.
  *
- * The running LSP server should be restarted by [FppLspPackageChangeListener] when updated.
+ * The running LSP server should be restarted by [FppLspPackageChangeListener.packagesChanged] when the LSP package is updated.
  */
 private suspend fun Project.updateLspWithConfirmation() {
     val settings = FppSettings.getInstance(this)
