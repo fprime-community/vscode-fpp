@@ -7,14 +7,15 @@
 //! the flattened leaf-state view.
 
 use crate::ir::{SmEdge, SmNode, SmNodeKind, StateMachineDiagram, TransitionActionMode};
+use crate::layout::SmLayout;
 use crate::lower::LowerError;
 use fpp_analysis::Analysis;
 use fpp_analysis::semantics::state_machine::transition_graph::{Arc as TgArc, Node as TgNode};
 use fpp_analysis::semantics::state_machine::{
     State, StateMachine, StateMachineAnalysis, StateMachineSymbol, StateOrChoice,
 };
-use fpp_ast::{DoExpr, TransitionExpr, TransitionOrDo};
-use fpp_core::{Span, Spanned};
+use fpp_ast::{DefState, DoExpr, StateMember, TransitionExpr, TransitionOrDo};
+use fpp_core::{Annotated, Span, Spanned};
 
 /// A source-order sort key for a span: `(file, byte offset)`. Ordering diagram
 /// elements by this makes the layout follow the order things appear in the FPP
@@ -52,6 +53,7 @@ pub fn lower_state_machine(
             depth: 0,
             entry_actions: vec![],
             exit_actions: vec![],
+            internal_transitions: vec![],
             detail: String::new(),
         });
         edges.push(SmEdge {
@@ -86,10 +88,15 @@ pub fn lower_state_machine(
         edges.push(edge);
     }
 
+    // Layout options are read from the state machine definition's pre-annotation
+    // (`@ diagram-layout ...`), so the configuration lives in the FPP source.
+    let layout = SmLayout::from_annotations(&sm.node.pre_annotation());
+
     Ok(StateMachineDiagram {
         name: a.get_qualified_name(&sm.get_symbol()),
         nodes,
         edges,
+        layout,
     })
 }
 
@@ -135,7 +142,8 @@ fn soc_node(sma: &StateMachineAnalysis, soc: &StateOrChoice) -> SmNode {
                 .iter()
                 .map(|i| i.data.clone())
                 .collect();
-            let detail = state_detail(&label, &entry_actions, &exit_actions);
+            let internal_transitions = internal_transitions_of(def);
+            let detail = state_detail(&label, &entry_actions, &exit_actions, &internal_transitions);
             SmNode {
                 id,
                 label,
@@ -144,6 +152,7 @@ fn soc_node(sma: &StateMachineAnalysis, soc: &StateOrChoice) -> SmNode {
                 depth,
                 entry_actions,
                 exit_actions,
+                internal_transitions,
                 detail,
             }
         }
@@ -155,6 +164,7 @@ fn soc_node(sma: &StateMachineAnalysis, soc: &StateOrChoice) -> SmNode {
             depth,
             entry_actions: vec![],
             exit_actions: vec![],
+            internal_transitions: vec![],
             detail: String::new(),
         },
         // A `State` variant should always wrap a `State` symbol; fall back
@@ -167,6 +177,7 @@ fn soc_node(sma: &StateMachineAnalysis, soc: &StateOrChoice) -> SmNode {
             depth,
             entry_actions: vec![],
             exit_actions: vec![],
+            internal_transitions: vec![],
             detail: String::new(),
         },
     }
@@ -184,9 +195,10 @@ fn node_depth(sma: &StateMachineAnalysis, symbol: &StateMachineSymbol) -> u32 {
 }
 
 /// Build the hover-detail text for a state: its name plus any entry/exit action
-/// lists. Empty when the state has no actions (nothing extra to reveal).
-fn state_detail(name: &str, entry: &[String], exit: &[String]) -> String {
-    if entry.is_empty() && exit.is_empty() {
+/// lists and internal transitions. Empty when the state has nothing extra to
+/// reveal.
+fn state_detail(name: &str, entry: &[String], exit: &[String], internal: &[String]) -> String {
+    if entry.is_empty() && exit.is_empty() && internal.is_empty() {
         return String::new();
     }
     let mut lines = vec![name.to_string()];
@@ -196,7 +208,45 @@ fn state_detail(name: &str, entry: &[String], exit: &[String]) -> String {
     if !exit.is_empty() {
         lines.push(format!("exit / {}", exit.join(" ")));
     }
+    // Internal transitions (`on sig [guard] do { ... }`) react to a signal
+    // without leaving the state; each is already formatted `sig [guard] / a…`.
+    lines.extend(internal.iter().cloned());
     lines.join("\n")
+}
+
+/// Collect a state's internal transitions — `on signal [guard] do { ... }`
+/// specifiers, i.e. `SpecStateTransition`s whose body is a `do` block with no
+/// target state. Each is pre-formatted as `signal [guard] / a1 a2` (the guard
+/// and action clauses omitted when absent). These never enter the transition
+/// graph (they have no target arc), so they must be read directly from the
+/// state's AST members here.
+fn internal_transitions_of(def: &DefState) -> Vec<String> {
+    def.members
+        .iter()
+        .filter_map(|m| match m {
+            StateMember::SpecStateTransition(st) => match &st.transition_or_do {
+                TransitionOrDo::Do(d) => Some(format_internal_transition(st, d)),
+                // A `... enter Target` transition changes state; it is an arc in
+                // the transition graph and rendered as an edge, not here.
+                TransitionOrDo::Transition(_) => None,
+            },
+            _ => None,
+        })
+        .collect()
+}
+
+/// Format an internal transition as `signal [guard] / a1 a2`, dropping the
+/// `[guard]` and `/ actions` clauses when they are absent.
+fn format_internal_transition(st: &fpp_ast::SpecStateTransition, d: &DoExpr) -> String {
+    let mut s = st.signal.data.clone();
+    if let Some(guard) = &st.guard {
+        s.push_str(&format!(" [{}]", guard.data));
+    }
+    let actions = action_names(d);
+    if !actions.is_empty() {
+        s.push_str(&format!(" / {}", actions.join(" ")));
+    }
+    s
 }
 
 /// The source span of a transition-graph arc — the location of the `initial`,
