@@ -19,7 +19,6 @@ use lsp_types::{Uri, WorkspaceFolder};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use url::Url;
 
 /// Name of the project configuration file, searched for at each workspace root.
 pub const CONFIG_FILE_NAME: &str = ".fpp-lsp";
@@ -188,8 +187,8 @@ fn default_build_cache(dir: &Path) -> String {
 /// Build a file `Uri` for a locs path relative to `base_dir`.
 fn locs_uri(base_dir: &Path, relative: impl AsRef<Path>) -> Option<Uri> {
     let path = base_dir.join(relative);
-    let url = Url::from_file_path(&path).ok()?;
-    Uri::from_str(url.as_str()).ok()
+    let uri = crate::uri::from_file_path(&path).ok()?;
+    Uri::from_str(&uri).ok()
 }
 
 /// Search the given workspace folders for a `.fpp-lsp` file and resolve it into a
@@ -224,9 +223,7 @@ pub fn discover(workspace_folders: Option<&[WorkspaceFolder]>) -> Workspace {
 
 /// Convert a workspace folder `Uri` into a filesystem path.
 fn folder_path(folder: &WorkspaceFolder) -> Option<PathBuf> {
-    Url::from_str(folder.uri.as_str())
-        .ok()
-        .and_then(|url| url.to_file_path().ok())
+    crate::uri::to_file_path(folder.uri.as_str())
 }
 
 #[cfg(test)]

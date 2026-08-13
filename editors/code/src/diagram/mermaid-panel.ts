@@ -89,14 +89,28 @@ function parseLayoutFromMermaid(text: string): LayoutOptions {
  * language-server round-trip.
  */
 function applyLayoutToMermaid(text: string, layout: LayoutOptions): string {
-    return text
+    let out = text
         .replace(/(^\s*layout:\s*)\S+/m, `$1${layout.engine}`)
-        .replace(/(^\s*direction\s+)\S+/m, `$1${layout.direction}`)
         .replace(/(nodePlacementStrategy:\s*)\S+/, `$1${layout.nodePlacement}`)
         .replace(/(cycleBreakingStrategy:\s*)\S+/, `$1${layout.cycleBreaking}`)
         .replace(/(considerModelOrder:\s*)\S+/, `$1${layout.considerModelOrder}`)
         .replace(/(nodeSpacing:\s*)\S+/, `$1${layout.nodeSpacing}`)
         .replace(/(rankSpacing:\s*)\S+/, `$1${layout.rankSpacing}`);
+
+    // Direction is applied by Mermaid from a `direction` statement in the diagram
+    // *body* (not from config), so the rendered text must carry it. Replace an
+    // existing statement, or insert one right after the `stateDiagram-v2` header
+    // if absent — the latter keeps the live view correct even against a language
+    // server that predates the `direction` annotation and so emits no such line.
+    if (/^\s*direction\s+\S+/m.test(out)) {
+        out = out.replace(/(^\s*direction\s+)\S+/m, `$1${layout.direction}`);
+    } else {
+        out = out.replace(
+            /^(\s*)(stateDiagram-v2.*)$/m,
+            `$1$2\n$1    direction ${layout.direction}`
+        );
+    }
+    return out;
 }
 
 /** The `diagram-layout` annotation *body* (without the `@ ` marker) for `layout`. */
@@ -120,6 +134,18 @@ export class MermaidStateMachinePanel {
     private sourceUri: vscode.Uri | undefined;
     /** The Mermaid source most recently rendered, for the "view source" action. */
     private currentText: string | undefined;
+    /**
+     * The authoritative current layout selection. Seeded from the server-generated
+     * source on each refresh, then mutated in place as the user changes options.
+     *
+     * This is the source of truth for the live view — NOT re-parsed out of
+     * `currentText` on each change. The server's Mermaid text only contains the
+     * frontmatter blocks relevant to its chosen engine (e.g. no `state:` spacing
+     * block under ELK), so parsing options back out of it would drop any option
+     * whose block is currently absent (notably spacing right after switching to
+     * dagre). Keeping the full selection here makes every option round-trip.
+     */
+    private currentLayout: LayoutOptions = { ...DEFAULT_LAYOUT };
     /** Whether the webview has signalled it is ready to receive diagrams. */
     private ready = false;
     /** Text awaiting a not-yet-ready webview. */
@@ -170,6 +196,11 @@ export class MermaidStateMachinePanel {
             return;
         }
         this.currentText = text;
+        // Seed the authoritative layout from the freshly generated source (which
+        // reflects what's persisted in the FPP annotation). Options whose block is
+        // absent for the current engine fall back to defaults here — that's fine,
+        // because the source is the persisted truth after a full round-trip.
+        this.currentLayout = parseLayoutFromMermaid(text);
         this.post(text);
     }
 
@@ -261,9 +292,10 @@ export class MermaidStateMachinePanel {
             void this.panel.webview.postMessage({
                 type: "render",
                 text,
-                // The gear popover reflects the options embedded in the source
-                // (surfaced here via the Mermaid frontmatter).
-                layout: parseLayoutFromMermaid(text),
+                // The gear popover reflects the authoritative current selection
+                // (not a re-parse of the text, which may omit engine-irrelevant
+                // blocks like spacing under ELK).
+                layout: this.currentLayout,
             });
         } else {
             // Buffer until the webview signals ready.
@@ -288,10 +320,14 @@ export class MermaidStateMachinePanel {
         ) {
             return;
         }
-        const layout = parseLayoutFromMermaid(this.currentText);
-        layout[key as keyof LayoutOptions] = value;
+        // Mutate the authoritative selection, not a re-parse of the text.
+        this.currentLayout = { ...this.currentLayout, [key]: value };
+        const layout = this.currentLayout;
 
-        // 1. Optimistic re-render from the rewritten frontmatter.
+        // 1. Optimistic re-render. `applyLayoutToMermaid` only rewrites blocks that
+        //    are present in the current text; the webview applies the full layout
+        //    (which we pass in `post`) via Mermaid site config regardless, so the
+        //    render reflects the change even if the block isn't in the text yet.
         this.currentText = applyLayoutToMermaid(this.currentText, layout);
         this.post(this.currentText);
 
@@ -390,7 +426,7 @@ export class MermaidStateMachinePanel {
                     void panel.webview.postMessage({
                         type: "render",
                         text: this.pending,
-                        layout: parseLayoutFromMermaid(this.pending),
+                        layout: this.currentLayout,
                     });
                     this.pending = undefined;
                 }

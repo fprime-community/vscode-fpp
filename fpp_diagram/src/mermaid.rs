@@ -35,6 +35,10 @@ use std::fmt::Write;
 /// out to the diagram's top level instead of staying nested). In
 /// [`TransitionActionMode::Flattened`] they are omitted from the nodes because
 /// they appear on the transition edges instead.
+///
+/// Internal transitions (`on signal [guard] do { … }`, which fire actions
+/// without leaving the state) are shown inside the state in *both* modes: they
+/// have no target arc, so there is no edge for flattened mode to fold them into.
 pub fn state_machine_to_mermaid(
     diagram: &StateMachineDiagram,
     mode: TransitionActionMode,
@@ -183,7 +187,7 @@ fn emit_node(
 
             // In UML mode, show the state's entry/exit actions on the state; in
             // flattened mode these appear on the transition edges instead.
-            let action_descs: Vec<String> = if mode == TransitionActionMode::Uml {
+            let mut action_descs: Vec<String> = if mode == TransitionActionMode::Uml {
                 let mut d = Vec::new();
                 if !node.entry_actions.is_empty() {
                     d.push(escape_label(&format!(
@@ -201,6 +205,13 @@ fn emit_node(
             } else {
                 Vec::new()
             };
+
+            // Internal transitions (`on signal [guard] do { ... }`) react to a
+            // signal without changing state, so — like entry/exit actions — they
+            // belong inside the state box, never as an arrow. They are shown in
+            // *both* action modes: there is no transition edge to fold them into,
+            // so flattened mode cannot move them elsewhere.
+            action_descs.extend(node.internal_transitions.iter().map(|t| escape_label(t)));
 
             // Display label: the unqualified name. Mermaid forbids a description
             // line on a *composite* (group) state ("Group nodes can only have

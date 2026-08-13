@@ -13,7 +13,6 @@ use std::fmt::{Display, Formatter};
 use std::mem;
 use std::str::FromStr;
 use std::time::Instant;
-use url::Url;
 
 #[derive(Debug)]
 pub enum Task {
@@ -265,7 +264,6 @@ impl GlobalState {
                     now.elapsed().as_secs_f64()
                 );
                 self.task(Task::Analysis);
-                self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});
                 progress.finish(None);
             }
             Task::LoadFullWorkspace => {
@@ -296,17 +294,17 @@ impl GlobalState {
                                 if path.is_file()
                                     && path.extension().is_some_and(|ext| OsStr::new("fpp") == ext)
                                 {
-                                    match Url::from_file_path(path) {
-                                        Ok(url) => match Uri::from_str(url.as_str()) {
+                                    match crate::uri::from_file_path(path) {
+                                        Ok(uri_str) => match Uri::from_str(&uri_str) {
                                             Ok(uri) => {
                                                 files.push(uri);
                                             }
                                             Err(err) => {
-                                                tracing::warn!(context = "load full workspace", err = ?err, "failed to convert Url to Uri");
+                                                tracing::warn!(context = "load full workspace", err = ?err, "failed to convert file URI into Uri");
                                             }
                                         },
-                                        Err(err) => {
-                                            tracing::warn!(context = "load full workspace", err = ?err, "convert file path into url");
+                                        Err(()) => {
+                                            tracing::warn!(context = "load full workspace", path = ?path, "convert file path into URI");
                                         }
                                     }
                                 }
@@ -360,7 +358,6 @@ impl GlobalState {
 
                 self.cache = cache;
                 self.task(Task::Analysis);
-                self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});
             }
             Task::Response(response) => self.respond(response),
             Task::Update(uri) => {
@@ -489,6 +486,14 @@ impl GlobalState {
                 // so a pull-based client could otherwise read the store mid-window and
                 // show stale results; pushing sends the authoritative set directly.
                 self.publish_diagnostics();
+
+                // Semantic highlights are pull-based and resolve colors against
+                // `self.analysis`. Edits refresh that snapshot only here, after the
+                // debounce, so the tokens the client pulled mid-edit were computed
+                // against the stale pre-edit analysis. Ask the client to re-pull now
+                // that the authoritative snapshot is in place, otherwise stale
+                // highlights persist until an unrelated event triggers another pull.
+                self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});
             }
         }
     }

@@ -331,6 +331,76 @@ state machine M {
     });
 }
 
+/// An internal transition (`on signal [guard] do { ... }`) reacts to a signal
+/// without changing state. It has no target arc, so it never appears as a
+/// transition edge; instead it is carried on the state (in `internal_transitions`
+/// and the hover `detail`) and rendered inside the state box by Mermaid — in
+/// both action modes, since there is no edge to fold it into.
+#[test]
+fn internal_transitions_render_inside_state() {
+    const SM_INTERNAL: &str = r#"
+state machine M {
+    guard g
+    signal s
+    signal t
+    action a1
+    action a2
+    initial enter IDLE
+    state IDLE {
+        on s do { a1 }
+        on t if g do { a1, a2 }
+        on s enter RUN
+    }
+    state RUN
+}
+"#;
+    for mode in [TransitionActionMode::Uml, TransitionActionMode::Flattened] {
+        with_analysis(SM_INTERNAL, |a| {
+            let sm = fpp_diagram::lower_state_machine(a, "M", mode)
+                .expect("state machine M should lower");
+            let idle = sm
+                .nodes
+                .iter()
+                .find(|n| n.id == "IDLE")
+                .expect("state IDLE");
+
+            // Both internal transitions are captured, formatted `sig [guard] / a…`.
+            assert_eq!(
+                idle.internal_transitions,
+                vec!["s / a1".to_string(), "t [g] / a1 a2".to_string()],
+                "mode {mode:?}"
+            );
+            // The hover detail lists them under the state name.
+            assert!(idle.detail.contains("s / a1"), "{}", idle.detail);
+            assert!(idle.detail.contains("t [g] / a1 a2"), "{}", idle.detail);
+
+            // The `on s enter RUN` external transition is still an edge; the two
+            // internal transitions are NOT edges.
+            assert!(
+                sm.edges.iter().any(|e| e.from == "IDLE" && e.to == "RUN"),
+                "external transition remains an edge"
+            );
+            assert!(
+                !sm.edges.iter().any(|e| e.from == "IDLE" && e.to == "IDLE"),
+                "internal transitions must not become self-edges"
+            );
+
+            // Mermaid renders them as inline description lines on the leaf state,
+            // in both action modes.
+            let mermaid =
+                fpp_diagram::lower_state_machine_to_mermaid(a, "M", mode).expect("mermaid");
+            assert!(
+                mermaid.contains("IDLE : s / a1"),
+                "mode {mode:?}:\n{mermaid}"
+            );
+            assert!(
+                mermaid.contains("IDLE : t [g] / a1 a2"),
+                "mode {mode:?}:\n{mermaid}"
+            );
+        });
+    }
+}
+
 /// A state's entry/exit actions go into `detail`, not the visible label.
 #[test]
 fn state_entry_actions_go_to_detail() {
