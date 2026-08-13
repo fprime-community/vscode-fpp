@@ -27,6 +27,7 @@ class FppLspSdkChangeListener(private val project: Project) : PySdkListener {
     override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
         if (prevSdk != newSdk && module in ModuleManager.getInstance(project).modules) {
             project.restartLspServerAsyncIfNeeded("Python interpreter changed")
+            project.updateLspWithConfirmationAsync()
         }
     }
 }
@@ -35,6 +36,7 @@ class FppLspSdkChangeListener(private val project: Project) : PySdkListener {
 class FppLspCMakeSdkChangeListener(private val project: Project) : CMakePythonSdkService.Companion.Listener {
     override fun onChange() {
         project.restartLspServerAsyncIfNeeded("CMake Python interpreter changed")
+        project.updateLspWithConfirmationAsync()
     }
 }
 

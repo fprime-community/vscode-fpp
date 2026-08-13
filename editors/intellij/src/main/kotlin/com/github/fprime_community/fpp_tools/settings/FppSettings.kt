@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 class FppSettings(val project: Project) : PersistentStateComponent<FppSettings.State> {
     class State(
         var lspPath: String = "",
+        var checkForUpdates: Boolean = true,
     )
 
     private var internalState: State = State()
@@ -20,6 +21,12 @@ class FppSettings(val project: Project) : PersistentStateComponent<FppSettings.S
         get() = internalState.lspPath
         set(value) {
             internalState.lspPath = value
+        }
+
+    var checkForUpdates: Boolean
+        get() = internalState.checkForUpdates
+        set(value) {
+            internalState.checkForUpdates = value
         }
 
     override fun getState() = internalState

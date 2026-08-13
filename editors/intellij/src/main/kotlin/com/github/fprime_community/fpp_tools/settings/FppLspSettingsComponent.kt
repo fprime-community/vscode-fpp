@@ -74,6 +74,11 @@ class FppLspSettingsComponent(
                 row("Detected version:") {
                     cell(lspVersionLabelComponent).align(AlignX.FILL).resizableColumn()
                 }
+                separator()
+                row {
+                    checkBox("Automatically check for language server updates")
+                        .bindSelected(settings::checkForUpdates)
+                }
             }
         }
     }
