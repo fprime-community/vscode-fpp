@@ -246,6 +246,18 @@ pub struct SmNode {
     pub detail: String,
 }
 
+/// Which branch of a choice a transition edge represents. The `then` branch is
+/// taken when the choice's guard holds; the `else` branch when it does not.
+/// Renderers use this to color the two branches distinctly (e.g. green/red).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ChoiceBranch {
+    /// The guard-holds branch (`if g enter …`).
+    Then,
+    /// The guard-fails branch (`else enter …`).
+    Else,
+}
+
 /// A transition edge in a state machine diagram.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -266,6 +278,12 @@ pub struct SmEdge {
     /// Hover text with the full transition including actions (e.g.
     /// `s [g] / a1 a2`), or empty if the label already says everything.
     pub detail: String,
+    /// For a choice's outgoing branch, which branch it is (`then`/`else`);
+    /// `None` for ordinary transitions and initial edges. Determined by node
+    /// identity during lowering (not by parsing the label), so a guard like
+    /// `!x` never confuses the two.
+    #[serde(default)]
+    pub choice_branch: Option<ChoiceBranch>,
 }
 
 /// A complete state machine diagram in intermediate form.

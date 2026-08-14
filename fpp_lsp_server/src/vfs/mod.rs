@@ -196,38 +196,23 @@ impl Vfs {
         };
     }
 
+    /// Resolve an `include`/`locs` `relative` specifier against `base_file`'s
+    /// URI, returning the target's `file://` URI.
+    ///
+    /// This is a purely lexical URI operation — it never touches the filesystem.
+    /// Resolving through the filesystem (canonicalizing) would resolve symlinks
+    /// and path aliases, moving the resulting URI into a different identity space
+    /// than the one the editor uses to key documents. Because those URIs are the
+    /// keys for the VFS and the analysis caches, that divergence silently breaks
+    /// cross-file symbol resolution (e.g. semantic highlighting of symbol uses).
+    /// See [`crate::uri::join_relative`].
     pub fn resolve_uri_relative_path(
         &self,
         base_file: &str,
         relative: &str,
     ) -> Result<String, Error> {
-        let uri = match Uri::from_str(base_file) {
-            Ok(it) => it,
-            Err(err) => return Err(err.to_string().into()),
-        };
-        let fs_path = uri.path().to_string();
-
-        let parent_file_path = std::path::Path::new(&fs_path).canonicalize()?;
-        match parent_file_path.parent() {
-            None => Err(format!("Cannot resolve parent directory of {}", fs_path).into()),
-            Some(parent_dir) => {
-                let final_path = parent_dir.join(relative).canonicalize()?;
-                match final_path.as_path().to_str() {
-                    None => Err(format!(
-                        "Failed to resolve path {} relative to {:?}",
-                        relative, parent_dir
-                    )
-                    .into()),
-                    Some(file_path) => {
-                        let uri = crate::uri::from_file_path(file_path).map_err(|()| {
-                            Error::from(format!("Failed to convert path to URI: {}", file_path))
-                        })?;
-
-                        Ok(uri)
-                    }
-                }
-            }
-        }
+        crate::uri::join_relative(base_file, relative)
+            .ok_or_else(|| format!("Failed to resolve `{relative}` relative to {base_file}").into())
     }
 }
 

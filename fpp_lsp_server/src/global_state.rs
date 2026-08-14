@@ -268,3 +268,22 @@ impl GlobalState {
         state.main_loop(connection.receiver);
     }
 }
+#[cfg(test)]
+impl GlobalState {
+    /// Drain and run every queued task synchronously (test harness only).
+    pub(crate) fn run_pending_tasks(&mut self) {
+        while let Ok(msg) = self.task_rx.try_recv() {
+            self.on_task(msg.task);
+        }
+    }
+
+    /// The top-level source file registered under `uri`, if any (test only).
+    pub(crate) fn source_file_for_uri(&self, uri: &str) -> Option<SourceFile> {
+        self.files.get(uri).and_then(|v| v.first().copied())
+    }
+
+    /// Number of resolved symbol uses in the current analysis (test only).
+    pub(crate) fn use_def_count(&self) -> usize {
+        self.analysis.use_def_map.len()
+    }
+}

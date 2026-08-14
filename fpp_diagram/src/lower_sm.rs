@@ -63,6 +63,7 @@ pub fn lower_state_machine(
             label: String::new(),
             actions: vec![],
             detail: String::new(),
+            choice_branch: None,
         });
     }
 
@@ -282,7 +283,35 @@ fn arc_edge(sma: &StateMachineAnalysis, arc: &TgArc, mode: TransitionActionMode)
         label,
         actions,
         detail,
+        choice_branch: arc_choice_branch(arc),
     }
+}
+
+/// The choice branch an arc represents, or `None` if it does not leave a choice.
+/// Determined by node identity (the same test `choice_trigger_and_actions` uses),
+/// so it never depends on parsing the `[guard]` / `[!guard]` label.
+fn arc_choice_branch(arc: &TgArc) -> Option<crate::ir::ChoiceBranch> {
+    let TgArc::Choice {
+        start_choice,
+        a_node,
+        ..
+    } = arc
+    else {
+        return None;
+    };
+    let StateMachineSymbol::Choice(def) = start_choice else {
+        return None;
+    };
+    // Coerce the arc's transition to `&TransitionExpr` (as `choice_trigger_and_actions`
+    // does) so `ptr::eq` compares the two by the same identity test.
+    let branch: &TransitionExpr = a_node;
+    let is_if =
+        std::ptr::eq(&def.if_transition, branch) || def.if_transition.node_id == branch.node_id;
+    Some(if is_if {
+        crate::ir::ChoiceBranch::Then
+    } else {
+        crate::ir::ChoiceBranch::Else
+    })
 }
 
 /// The flattened action names that execute when an arc is taken, per the FPP

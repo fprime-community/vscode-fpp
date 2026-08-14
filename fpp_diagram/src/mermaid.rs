@@ -134,6 +134,21 @@ pub fn state_machine_to_mermaid(
                 let _ = writeln!(out, "    {from} --> {to}");
             }
         }
+        // Mermaid `stateDiagram-v2` has no syntax to style an individual
+        // transition, so tag choice branches with a `%%` metadata comment (which
+        // Mermaid ignores) that the webview reads to color the branch green
+        // (then) / red (else) after rendering. Mermaid numbers edges in the order
+        // their `-->` lines appear, so the webview recovers each branch's edge
+        // index by counting `-->` lines up to this marker (placed right after the
+        // branch's own edge line). The `<from> <to>` ids are informational (for
+        // "view source" readers); the webview keys on position, not the ids.
+        if let Some(branch) = edge.choice_branch {
+            let kind = match branch {
+                crate::ir::ChoiceBranch::Then => "then",
+                crate::ir::ChoiceBranch::Else => "else",
+            };
+            let _ = writeln!(out, "    %% fpp-choice-edge {from} {to} {kind}");
+        }
     }
 
     out
