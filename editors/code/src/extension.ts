@@ -13,6 +13,7 @@ import { LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from "./locs"
 import { dumpSyntaxTree, reloadWorkspace } from "./lsp_ext";
 import * as Config from "./fppLspConfig";
 import { registerDiagramSupport } from "./diagram";
+import { registerPhaseHighlighting } from "./phaseHighlight";
 
 let extension: FppExtension;
 
@@ -289,6 +290,7 @@ class FppExtension implements vscode.Disposable {
 export async function activate(context: vscode.ExtensionContext) {
     extension = new FppExtension(context);
     registerDiagramSupport(context, () => extension.client);
+    registerPhaseHighlighting(context);
     context.subscriptions.push(
         extension,
         vscode.commands.registerCommand("fpp.restartLsp", async () => {
