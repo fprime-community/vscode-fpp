@@ -51,6 +51,15 @@
 
         <platform.lsp.serverSupportProvider
                 implementation="com.github.fprime_community.fpp_tools.FppLspServerSupportProvider"/>
+
+        <!-- "Go to Declaration or Usages" (Ctrl+Click) shows usages on an FPP definition name.
+             See FppUsages.kt for why this is needed for a PSI-less LSP language. -->
+        <psi.declarationProvider
+                implementation="com.github.fprime_community.fpp_tools.navigation.FppSymbolDeclarationProvider"/>
+        <searcher
+                forClass="com.intellij.find.usages.api.UsageSearchParameters"
+                implementationClass="com.github.fprime_community.fpp_tools.navigation.FppUsageSearcher"/>
+
         <applicationService
                 serviceImplementation="com.github.fprime_community.fpp_tools.settings.FppSettings"/>
         <projectConfigurable
