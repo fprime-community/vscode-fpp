@@ -1,0 +1,7 @@
+<idea-plugin>
+    <projectListeners>
+        <listener
+                class="com.github.fprime_community.fpp_tools.FppLspCMakeSdkChangeListener"
+                topic="com.jetbrains.cidr.cpp.cmake.python.CMakePythonSdkService$Companion$Listener"/>
+    </projectListeners>
+</idea-plugin>

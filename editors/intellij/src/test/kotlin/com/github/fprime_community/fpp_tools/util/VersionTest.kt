@@ -25,6 +25,20 @@ class VersionTest {
     }
 
     @Test
+    fun parsesPrefixedSemanticVersion() {
+        val v = Version.Semantic.parse("v1.2.3")
+        assertEquals(Version.Semantic(1, 2, 3), v)
+        assertEquals("1.2.3", v.toString())
+    }
+
+    @Test
+    fun parsesPrefixedAlphaVersion() {
+        val v = Version.Semantic.parse("v0.1.0-a5")
+        assertEquals(Version.Semantic(0, 1, 0, 5), v)
+        assertEquals("0.1.0-a5", v.toString())
+    }
+
+    @Test
     fun parsesLatestSentinel() {
         assertEquals(Version.Latest, Version.parse("Latest"))
     }
@@ -38,7 +52,7 @@ class VersionTest {
 
     @Test
     fun rejectsMalformedVersions() {
-        for (bad in listOf("", "1", "1.2", "1.2.x", "v1.2.3", "1.2.3.4")) {
+        for (bad in listOf("", "1", "1.2", "1.2.x", "1.2.3.4")) {
             assertThrows(MalformedSemanticVersionException::class.java) {
                 Version.Semantic.parse(bad)
             }
