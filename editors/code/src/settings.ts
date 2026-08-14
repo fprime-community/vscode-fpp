@@ -7,8 +7,7 @@ const names = {
     pythonVenv: "fpp.pythonVenv",
     checkForUpdates: "fpp.checkForUpdates",
     lspServerRunLogLevel: "fpp.lspServerRunLogLevel",
-    lspServerDevLogLevel: "fpp.lspServerDevLogLevel",
-    highlightPhaseBlocks: "fpp.highlightPhaseBlocks"
+    lspServerDevLogLevel: "fpp.lspServerDevLogLevel"
 };
 
 export function locsSearch(): string[] {
@@ -86,21 +85,6 @@ export function onLspServerLogLevelChanged(callback: () => void): vscode.Disposa
         if (e.affectsConfiguration(names.lspServerRunLogLevel)
             || e.affectsConfiguration(names.lspServerDevLogLevel)
         ) {
-            callback();
-        }
-    });
-}
-
-/**
- * Whether to shade the C++ body of `phase` init specifiers. Defaults to true.
- */
-export function highlightPhaseBlocks(): boolean {
-    return vscode.workspace.getConfiguration().get<boolean>(names.highlightPhaseBlocks) ?? true;
-}
-
-export function onHighlightPhaseBlocksChanged(callback: () => void): vscode.Disposable {
-    return vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration(names.highlightPhaseBlocks)) {
             callback();
         }
     });

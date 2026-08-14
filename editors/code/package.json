@@ -266,26 +266,9 @@
                         "error",
                         "off"
                     ]
-                },
-                "fpp.highlightPhaseBlocks": {
-                    "type": "boolean",
-                    "default": true,
-                    "markdownDescription": "Draw a divider above and below the C++ body of `phase` init specifiers so it reads as a separate region from the surrounding FPP. Recolor the divider with the `fpp.phaseBlockBorder` entry in `#workbench.colorCustomizations#`."
                 }
             }
         },
-        "colors": [
-            {
-                "id": "fpp.phaseBlockBorder",
-                "description": "Divider drawn above and below the embedded C++ body of a `phase` init specifier.",
-                "defaults": {
-                    "dark": "#ffffff33",
-                    "light": "#00000026",
-                    "highContrast": "#ffffff59",
-                    "highContrastLight": "#00000040"
-                }
-            }
-        ],
         "semanticTokenTypes": [
             {
                 "id": "module",
@@ -580,8 +563,7 @@
         "compile": "tsc -p ./src --noEmit",
         "test:smoke": "node ./test/smoke.js",
         "test:grammar": "node ./test/grammar.js",
-        "test:unit": "node ./test/phaseBlocks.js",
-        "test": "yarn compile && yarn build && yarn test:smoke && yarn test:grammar && yarn test:unit",
+        "test": "yarn compile && yarn build && yarn test:smoke && yarn test:grammar",
         "vsix": "vsce package"
     },
     "dependencies": {
