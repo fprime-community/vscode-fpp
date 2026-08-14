@@ -907,6 +907,24 @@ pub fn handle_completion(
 
     let root = parse.syntax_node();
     let cursor_token = root.token_at_offset(cursor_pos);
+
+    // Don't offer completions when the cursor sits inside a comment. Comments are
+    // trivia the generic branches below happily skip over (via
+    // `non_white_space_left`), so without this guard we'd complete against the
+    // preceding code token as if the comment weren't there. A comment spans
+    // `[start, end)`; treat the cursor as "inside" it anywhere past the leading
+    // `#` (`Single`), and at the trailing edge (`Between` with the comment on the
+    // left). The leading boundary itself (`Between` with the comment on the
+    // right) is still real code position, so completion is allowed there.
+    let in_comment = match &cursor_token {
+        TokenAtOffset::None => false,
+        TokenAtOffset::Single(tok) => tok.kind() == SyntaxKind::COMMENT,
+        TokenAtOffset::Between(l, _) => l.kind() == SyntaxKind::COMMENT,
+    };
+    if in_comment {
+        return Ok(None);
+    }
+
     let expected_error_range = match &cursor_token {
         TokenAtOffset::None => return Ok(None),
         TokenAtOffset::Single(tok) => non_white_space_left(&root, tok.clone())

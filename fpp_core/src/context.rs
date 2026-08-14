@@ -301,6 +301,15 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         self.nodes.get(node.handle)
     }
 
+    /// Fallible variant of [`CompilerContext::node_get`]. Returns `None` when
+    /// the node handle is no longer present in the context (for example, a
+    /// symbol held by a stale analysis snapshot whose translation unit has
+    /// already been garbage collected). Callers that may outlive the nodes they
+    /// reference should prefer this over `node_get`.
+    pub fn node_try_get(&self, node: &Node) -> Option<&NodeData> {
+        self.nodes.try_get(node.handle)
+    }
+
     pub(crate) fn node_get_mut(&mut self, node: &Node) -> &mut NodeData {
         self.nodes.get_mut(node.handle)
     }

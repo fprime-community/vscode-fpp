@@ -344,11 +344,14 @@ fn formal_param_to_string(state: &GlobalState, param: &FormalParam) -> String {
 pub fn symbol_to_completion_item(state: &GlobalState, symbol: &Symbol) -> CompletionItem {
     let symbol_kind = symbol_kind_name(symbol);
     let description = {
-        let node = state.context.node_get(&symbol.node());
-        if node.pre_annotation.is_empty() {
-            None
-        } else {
-            Some(node.pre_annotation.join(" "))
+        // The symbol may come from a stale analysis snapshot whose backing node
+        // was garbage collected by an intervening `Task::Reprocess` (analysis is
+        // debounced, so a completion request can race ahead of a fresh
+        // snapshot). Degrade to no documentation rather than panicking on a
+        // freed node handle.
+        match state.context.node_try_get(&symbol.node()) {
+            Some(node) if !node.pre_annotation.is_empty() => Some(node.pre_annotation.join(" ")),
+            _ => None,
         }
     };
 

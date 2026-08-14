@@ -277,6 +277,23 @@ impl GlobalState {
         }
     }
 
+    /// Drain and run every queued task except the debounced `Task::Analysis`,
+    /// leaving `self.analysis` stale (test only). Reproduces the window between
+    /// an edit-driven reprocess and the coalesced analysis in the real loop.
+    pub(crate) fn run_pending_tasks_except_analysis(&mut self) {
+        while let Ok(msg) = self.task_rx.try_recv() {
+            if matches!(msg.task, Task::Analysis) {
+                continue;
+            }
+            self.on_task(msg.task);
+        }
+    }
+
+    /// The current analysis snapshot (test only).
+    pub(crate) fn snapshot_analysis(&self) -> Arc<Analysis> {
+        self.analysis.clone()
+    }
+
     /// The top-level source file registered under `uri`, if any (test only).
     pub(crate) fn source_file_for_uri(&self, uri: &str) -> Option<SourceFile> {
         self.files.get(uri).and_then(|v| v.first().copied())

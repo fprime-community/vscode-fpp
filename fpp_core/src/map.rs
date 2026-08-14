@@ -70,6 +70,14 @@ impl<V> IdMap<V> {
         self.store.get(&key).unwrap()
     }
 
+    /// Fallible variant of [`IdMap::get`] that returns `None` when the key is
+    /// absent instead of panicking. Used by callers that may hold a stale key
+    /// (e.g. the LSP querying an analysis snapshot whose backing nodes have
+    /// since been garbage collected).
+    pub fn try_get(&self, key: usize) -> Option<&V> {
+        self.store.get(&key)
+    }
+
     pub fn get_mut(&mut self, key: usize) -> &mut V {
         self.store.get_mut(&key).unwrap()
     }
