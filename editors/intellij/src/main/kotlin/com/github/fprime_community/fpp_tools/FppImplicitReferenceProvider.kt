@@ -62,10 +62,9 @@ internal class FppImplicitReferenceProvider : ImplicitReferenceProvider {
             try {
                 return block()
             } finally {
-                if (getter.invoke(service) != actionClass) {
-                    log.error("CPP-51642 workaround: CurrentActionHolder.currentActionClass was changed during block execution")
+                if (getter.invoke(service) == actionClass) {
+                    setter.invoke(service, previous)
                 }
-                setter.invoke(service, previous)
             }
         }
     }
