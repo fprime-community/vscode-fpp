@@ -55,6 +55,11 @@
                 implementation="com.github.fprime_community.fpp_tools.FppLspServerSupportProvider"/>
         <editorNotificationProvider
                 implementation="com.github.fprime_community.fpp_tools.FppEditorNotificationProvider"/>
+
+        <!-- Workaround CLion go to definition bug. See FppImplicitReferenceProvider. -->
+        <psi.implicitReferenceProvider
+                implementation="com.github.fprime_community.fpp_tools.FppImplicitReferenceProvider"/>
+
         <applicationService
                 serviceImplementation="com.github.fprime_community.fpp_tools.settings.FppSettings"/>
         <projectConfigurable
