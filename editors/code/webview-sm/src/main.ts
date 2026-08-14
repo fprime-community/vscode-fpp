@@ -431,6 +431,128 @@ function attachPanZoom(svg: SVGSVGElement): void {
     });
 }
 
+// --- Choice branch coloring -------------------------------------------------
+// Mermaid `stateDiagram-v2` has no syntax to style an individual transition
+// (`linkStyle` and `style edgeN` are both ignored for state diagrams), and the
+// rendered edge `<path>` elements carry no source identity — only a class of
+// `transition` and a sequential id `<renderId>-edge<N>`. So we cannot match an
+// edge by its endpoints.
+//
+// What IS reliable: Mermaid numbers edges in the exact order the `-->`
+// statements appear in the diagram text, and emits the `path.transition`
+// elements in that same order. The language server tags each choice branch with
+// a `%% fpp-choice-edge <from> <to> then|else` comment placed immediately after
+// the branch's `-->` line (Mermaid ignores `%%` comments, so they don't shift
+// numbering). We therefore count `-->` lines to recover each tagged branch's
+// edge index, then color the Nth `path.transition`: green for `then` (guard
+// holds), red for `else`. The colors carry semantics, so this is always on.
+
+interface ChoiceEdge {
+    /** Zero-based index of this edge among all `-->` transitions, in source order. */
+    index: number;
+    branch: 'then' | 'else';
+}
+
+/** Theme-aware branch colors (readable on both the light and dark Mermaid themes). */
+function branchColor(branch: 'then' | 'else'): string {
+    const dark = isDarkTheme();
+    if (branch === 'then') {
+        return dark ? '#4ec26b' : '#1a7f37'; // green
+    }
+    return dark ? '#f4736b' : '#cf222e'; // red
+}
+
+/**
+ * Recover the edge index of each `%% fpp-choice-edge … then|else` marker by
+ * counting the `-->` transition lines that precede it (the marker sits right
+ * after its own branch's `-->` line, so the running count identifies that edge).
+ */
+function parseChoiceEdges(text: string): ChoiceEdge[] {
+    const edges: ChoiceEdge[] = [];
+    let edgeIndex = -1;
+    for (const line of text.split('\n')) {
+        if (line.includes('-->')) {
+            edgeIndex++;
+        }
+        const m = /%%\s*fpp-choice-edge\s+\S+\s+\S+\s+(then|else)\b/.exec(line);
+        if (m && edgeIndex >= 0) {
+            edges.push({ index: edgeIndex, branch: m[1] as 'then' | 'else' });
+        }
+    }
+    return edges;
+}
+
+/**
+ * Color the choice-branch edges in the freshly rendered SVG by their index among
+ * the `path.transition` elements (which are in source order). For each we set an
+ * inline stroke on the path and recolor its arrowhead by cloning the shared end
+ * marker into a per-edge marker tinted to match (the shared marker is referenced
+ * by every edge, so it must not be restyled in place). Inline attributes also
+ * survive SVG export.
+ */
+function colorChoiceEdges(svg: SVGSVGElement, choiceEdges: ChoiceEdge[]): void {
+    if (choiceEdges.length === 0) {
+        return;
+    }
+    const paths = svg.querySelectorAll<SVGPathElement>('path.transition');
+    const defs = svg.querySelector('defs') ?? svg.insertBefore(
+        document.createElementNS('http://www.w3.org/2000/svg', 'defs'),
+        svg.firstChild
+    );
+    let markerSeq = 0;
+
+    for (const edge of choiceEdges) {
+        const path = paths[edge.index];
+        if (!path) {
+            continue;
+        }
+        const color = branchColor(edge.branch);
+        path.style.stroke = color;
+        recolorArrowhead(svg, defs, path, color, () => markerSeq++);
+    }
+}
+
+/** Escape a string for use inside a CSS id selector. */
+function cssEscape(s: string): string {
+    if (typeof (window as unknown as { CSS?: { escape?: (s: string) => string } }).CSS?.escape
+        === 'function') {
+        return CSS.escape(s);
+    }
+    return s.replace(/[^\w-]/g, '\\$&');
+}
+
+/**
+ * Tint an edge's end arrowhead to `color` by cloning the shared marker it points
+ * at into a per-edge marker. Leaves the edge untouched if it has no `marker-end`.
+ */
+function recolorArrowhead(
+    svg: SVGSVGElement,
+    defs: Element,
+    path: SVGPathElement,
+    color: string,
+    nextSeq: () => number
+): void {
+    const markerEnd = path.getAttribute('marker-end');
+    const refMatch = markerEnd && /url\(["']?#([^"')]+)["']?\)/.exec(markerEnd);
+    if (!refMatch) {
+        return;
+    }
+    const original = svg.querySelector(`#${cssEscape(refMatch[1])}`);
+    if (!(original instanceof SVGMarkerElement)) {
+        return;
+    }
+    const clone = original.cloneNode(true) as SVGMarkerElement;
+    const newId = `fpp-choice-marker-${nextSeq()}`;
+    clone.setAttribute('id', newId);
+    // Tint the marker's shape (Mermaid fills the arrowhead via the marker path).
+    clone.querySelectorAll<SVGElement>('path, polygon, circle').forEach(shape => {
+        shape.style.fill = color;
+        shape.style.stroke = color;
+    });
+    defs.appendChild(clone);
+    path.setAttribute('marker-end', `url(#${newId})`);
+}
+
 async function render(text: string): Promise<void> {
     if (!text.trim()) {
         container.innerHTML = '<p class="sm-empty">No diagram to display.</p>';
@@ -438,11 +560,13 @@ async function render(text: string): Promise<void> {
         return;
     }
     const id = `sm-diagram-${renderSeq++}`;
+    const choiceEdges = parseChoiceEdges(text);
     try {
         const { svg } = await mermaid.render(id, text);
         container.innerHTML = svg;
         currentSvg = container.querySelector('svg') ?? undefined;
         if (currentSvg) {
+            colorChoiceEdges(currentSvg, choiceEdges);
             attachPanZoom(currentSvg);
             fit();
         }

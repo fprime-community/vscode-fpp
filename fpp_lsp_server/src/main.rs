@@ -145,3 +145,6 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod workspace_tests;

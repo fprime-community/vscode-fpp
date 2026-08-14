@@ -3,7 +3,7 @@
 use fpp_analysis::{Analysis, add_state_enums, check_semantics};
 use fpp_core::SourceFile;
 use fpp_diagram::TransitionActionMode;
-use fpp_diagram::ir::{DiagramKind, SmNode, SmNodeKind};
+use fpp_diagram::ir::{ChoiceBranch, DiagramKind, SmNode, SmNodeKind};
 
 fn with_analysis<R>(src: &str, f: impl FnOnce(&Analysis) -> R) -> R {
     let mut sink = Vec::new();
@@ -102,12 +102,50 @@ fn lowers_transitions_with_labels() {
             .find(|e| e.from == "S.C" && e.to == "S1")
             .expect("choice if branch");
         assert_eq!(if_branch.label, "[g]");
+        assert_eq!(if_branch.choice_branch, Some(ChoiceBranch::Then));
         let else_branch = sm
             .edges
             .iter()
             .find(|e| e.from == "S.C" && e.to == "S2")
             .expect("choice else branch");
         assert_eq!(else_branch.label, "[!g]");
+        assert_eq!(else_branch.choice_branch, Some(ChoiceBranch::Else));
+
+        // Ordinary transitions and the initial edge carry no branch polarity.
+        assert!(s_to_c.choice_branch.is_none());
+        let initial_edge = sm
+            .edges
+            .iter()
+            .find(|e| e.from == SmNode::INITIAL_ID)
+            .expect("initial edge");
+        assert!(initial_edge.choice_branch.is_none());
+    });
+}
+
+/// The Mermaid output tags each choice branch with a `%% fpp-choice-edge`
+/// metadata comment (using the sanitized node ids) so the webview can color the
+/// then/else branches green/red. Mermaid ignores `%%` comments, so the source
+/// stays valid.
+#[test]
+fn mermaid_tags_choice_branches() {
+    with_analysis(SM, |a| {
+        let mermaid =
+            fpp_diagram::lower_state_machine_to_mermaid(a, "M", TransitionActionMode::Uml).unwrap();
+        // `S.C` sanitizes to `S_C`, matching the edge's `LS_S_C LE_S1` SVG classes.
+        assert!(
+            mermaid.contains("%% fpp-choice-edge S_C S1 then"),
+            "then branch not tagged:\n{mermaid}"
+        );
+        assert!(
+            mermaid.contains("%% fpp-choice-edge S_C S2 else"),
+            "else branch not tagged:\n{mermaid}"
+        );
+        // Ordinary transitions must not be tagged.
+        assert_eq!(
+            mermaid.matches("fpp-choice-edge").count(),
+            2,
+            "only the two choice branches should be tagged:\n{mermaid}"
+        );
     });
 }
 
