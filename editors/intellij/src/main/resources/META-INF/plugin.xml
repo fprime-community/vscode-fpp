@@ -56,8 +56,7 @@
         <editorNotificationProvider
                 implementation="com.github.fprime_community.fpp_tools.FppEditorNotificationProvider"/>
 
-        <!-- "Go to Declaration or Usages" (Ctrl+Click) shows usages on an FPP definition name.
-             See FppUsages.kt for why this is needed for a PSI-less LSP language. -->
+        <!-- Workaround default GTDU behavior. See FppUsages.kt. -->
         <psi.declarationProvider
                 implementation="com.github.fprime_community.fpp_tools.navigation.FppSymbolDeclarationProvider"/>
         <searcher
