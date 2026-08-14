@@ -24,14 +24,25 @@ class LspCli(private val project: Project, private val lspConfiguration: LspConf
         }
     }
 
-    fun queryVersion(): Version {
-        val versionString = CapturingProcessHandler(GeneralCommandLine().apply {
+    fun queryVersion(): Result<Version> {
+        val processOutput = CapturingProcessHandler(GeneralCommandLine().apply {
             withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
             withCharset(Charsets.UTF_8)
             withWorkDirectory(project.basePath)
             withExePath(lspConfiguration.executablePath.toString())
             addParameter("--version")
-        }).runProcess().stdoutLines.first().split(" ")[1]
-        return Version.parse(versionString)
+        }).runProcess(1000)
+
+        if (processOutput.isTimeout) {
+            return Result.failure(IllegalStateException("Version query timed out"))
+        }
+        if (processOutput.exitCode != 0) {
+            return Result.failure(IllegalStateException("Process exited with code ${processOutput.exitCode}"))
+        }
+        if (processOutput.stdoutLines.isEmpty()) {
+            return Result.failure(IllegalStateException("No output from version query"))
+        }
+
+        return Result.runCatching { Version.parse(processOutput.stdoutLines.first().split(" ")[1]) }
     }
 }

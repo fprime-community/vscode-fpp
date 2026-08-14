@@ -1,6 +1,6 @@
 package com.github.fprime_community.fpp_tools.util
 
-private val versionRegex = Regex("""(\d+)\.(\d+)\.(\d+)(?:-a(\d+))?""")
+private val versionRegex = Regex("""v?(\d+)\.(\d+)\.(\d+)(?:-a(\d+))?""")
 
 sealed class Version : Comparable<Version> {
     data class Semantic(

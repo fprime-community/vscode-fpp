@@ -65,8 +65,11 @@ private class FppLspServerDescriptor(project: Project) : ProjectWideLspServerDes
     override fun isSupportedFile(file: VirtualFile) = file.extension == "fpp" || file.extension == "fppi"
     override fun createCommandLine(): GeneralCommandLine {
         val lspConfiguration = project.getLspConfiguration()
+        if (lspConfiguration is LspConfiguration.Disabled) {
+            throw IllegalStateException(lspConfiguration.message)
+        }
         if (lspConfiguration !is LspConfiguration.Enabled) {
-            throw IllegalStateException("Tried to created a Luau LSP with disabled configuration")
+            throw IllegalStateException("Tried to created a FPP LSP with disabled configuration")
         }
         return LspCli(project, lspConfiguration).createLspCli()
     }
