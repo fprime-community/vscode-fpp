@@ -10,6 +10,12 @@
         "strict": true, /* enable all strict type-checking options */
         "resolveJsonModule": true,
         "esModuleInterop": true,
+        // This package lives inside a larger repo. Without pinning typeRoots,
+        // TypeScript walks up to any parent `node_modules/@types` and pulls
+        // those in as implicit global type libraries.
+        "typeRoots": [
+            "./node_modules/@types"
+        ],
         /* Additional Checks */
         // "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
         // "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */

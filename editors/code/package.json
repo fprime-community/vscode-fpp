@@ -132,7 +132,10 @@
             {
                 "language": "fpp",
                 "scopeName": "source.fpp",
-                "path": "./syntax/fpp.tmLanguage.json"
+                "path": "./syntax/fpp.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.block.cpp": "cpp"
+                }
             }
         ],
         "menus": {
@@ -559,7 +562,8 @@
         "watch": "webpack --mode development --watch",
         "compile": "tsc -p ./src --noEmit",
         "test:smoke": "node ./test/smoke.js",
-        "test": "yarn compile && yarn build && yarn test:smoke",
+        "test:grammar": "node ./test/grammar.js",
+        "test": "yarn compile && yarn build && yarn test:smoke && yarn test:grammar",
         "vsix": "vsce package"
     },
     "dependencies": {
@@ -584,6 +588,8 @@
         "ts-loader": "^9.5.1",
         "typescript": "^5.4.5",
         "umd-compat-loader": "^2.1.2",
+        "vscode-oniguruma": "^2.0.1",
+        "vscode-textmate": "^9.1.0",
         "webpack": "^5.100.2",
         "webpack-cli": "^6.0.1"
     }

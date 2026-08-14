@@ -51,6 +51,9 @@ jobs:
       - name: Smoke test
         run: yarn test:smoke
 
+      - name: Grammar test
+        run: yarn test:grammar
+
       - name: Package VSIX
         run: yarn vsix --out fpp.vsix
 
