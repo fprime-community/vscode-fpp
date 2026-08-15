@@ -3,10 +3,12 @@ package com.github.fprime_community.fpp_tools.diagram
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.JBColor
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefJSQuery
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandlerAdapter
@@ -65,7 +67,11 @@ class FppWebviewBrowser(
         browser.loadURL(buildShell(bundleResource))
     }
 
-    /** Intercept the webview's initial `ready` before forwarding to the consumer. */
+    /**
+     * Intercept the webview's initial `ready` before forwarding to the consumer.
+     * Invoked on the JCEF IO thread by the [JBCefJSQuery] handler.
+     */
+    @RequiresBackgroundThread
     private fun handleIncoming(msg: String) {
         if (!ready && msg.contains("\"ready\"")) {
             ready = true
@@ -74,7 +80,12 @@ class FppWebviewBrowser(
         onMessage?.invoke(msg)
     }
 
-    /** Post a message to the webview (delivered as a `window` `message` event). */
+    /**
+     * Post a message to the webview (delivered as a `window` `message` event).
+     * Called on the EDT from the panel; [JBCefBrowser.getCefBrowser]'s
+     * `executeJavaScript` is itself thread-safe.
+     */
+    @RequiresEdt
     fun postMessage(json: String) {
         if (!ready) {
             pending.addLast(json)
@@ -96,7 +107,7 @@ class FppWebviewBrowser(
 
     /** Mirror the IDE's light/dark theme onto the body class the bundles inspect. */
     private fun applyTheme() {
-        val cls = if (UIUtil.isUnderDarcula()) "vscode-dark" else "vscode-light"
+        val cls = if (JBColor.isBright()) "vscode-light" else "vscode-dark"
         browser.cefBrowser.executeJavaScript(
             "document.body.classList.add('$cls');",
             browser.cefBrowser.url, 0,
@@ -121,9 +132,19 @@ class FppWebviewBrowser(
         val postToHost = jsQuery.inject("payload")
         val html = """
             <!DOCTYPE html>
-            <html>
-            <head><meta charset="utf-8"></head>
+            <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, height=device-height">
+              <style>
+                html, body { margin: 0; height: 100%; width: 100%; overflow: hidden; }
+                #container { height: 100vh; width: 100vw; }
+              </style>
+            </head>
             <body>
+              <!-- The shared sm-webview bundle renders into #container; it must
+                   exist before the bundle script runs (it resolves it eagerly). -->
+              <div id="container"></div>
               <script>
                 (function () {
                   const api = {

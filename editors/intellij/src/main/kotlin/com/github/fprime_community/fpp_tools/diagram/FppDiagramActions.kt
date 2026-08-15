@@ -2,13 +2,15 @@ package com.github.fprime_community.fpp_tools.diagram
 
 import com.github.fprime_community.fpp_tools.FppLanguage
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 /**
  * "FPP: Open Diagram" — lists the diagrammable elements in the current file and,
@@ -34,6 +36,7 @@ class FppOpenDiagramAction : AnAction("Open FPP Diagram", "Visualize an FPP elem
         }
     }
 
+    @RequiresEdt
     private fun offerChoices(service: FppDiagramService, elements: List<DiagramElement>) {
         if (elements.isEmpty()) return
         // Only state machines are supported for now; other kinds are pending the
@@ -47,7 +50,7 @@ class FppOpenDiagramAction : AnAction("Open FPP Diagram", "Visualize an FPP elem
         JBPopupFactory.getInstance()
             .createPopupChooserBuilder(diagrammable)
             .setTitle("Open FPP Diagram")
-            .setRenderer(com.intellij.ui.SimpleListCellRenderer.create("") { it.displayName })
+            .setRenderer(textListCellRenderer("") { it.displayName })
             .setItemChosenCallback { service.showStateMachine(it.name) }
             .createPopup()
             .showInFocusCenter()
@@ -62,6 +65,7 @@ abstract class FppStateMachineToolbarAction(
 ) : AnAction(text, description, icon), DumbAware {
     override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
+    @RequiresEdt
     protected fun panel(e: AnActionEvent): FppStateMachinePanel? =
         e.project?.let { FppDiagramService.getInstance(it).panel }
 

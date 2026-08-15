@@ -145,6 +145,7 @@ kover {
 }
 
 tasks {
+    // TODO do this automatically
     // Re-vendor the shared webview bundle(s) built by the `code` (VSCode)
     // project into plugin resources. The bundle is committed under
     // `resources/webview/` so a normal build needs no Node toolchain; run this

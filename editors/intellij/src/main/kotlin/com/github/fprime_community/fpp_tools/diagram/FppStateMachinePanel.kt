@@ -9,7 +9,8 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.vfs.VfsUtil
-import java.awt.BorderLayout
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import javax.swing.JLabel
 
 /**
@@ -28,7 +29,7 @@ class FppStateMachinePanel(
         private set
 
     /** The transition action display mode currently applied. */
-    var actionMode: TransitionActionMode = TransitionActionMode.UML
+    var actionMode: String = TransitionActionMode.UML
         private set
 
     /** Latest SVG the webview reported for export, or null if none/unavailable. */
@@ -48,6 +49,7 @@ class FppStateMachinePanel(
         }
     }
 
+    @RequiresEdt
     private fun buildToolbar(): com.intellij.openapi.actionSystem.ActionToolbar {
         val group = ActionManager.getInstance().getAction("Fpp.StateMachine.Toolbar") as DefaultActionGroup
         val bar = ActionManager.getInstance().createActionToolbar("FppStateMachine", group, true)
@@ -56,7 +58,8 @@ class FppStateMachinePanel(
     }
 
     /** Render Mermaid [mermaid] for state machine [name]. */
-    fun render(name: String, mermaid: String, mode: TransitionActionMode) {
+    @RequiresEdt
+    fun render(name: String, mermaid: String, mode: String) {
         currentName = name
         actionMode = mode
         val msg = JsonObject().apply {
@@ -67,20 +70,25 @@ class FppStateMachinePanel(
     }
 
     /** Ask the webview to reset pan/zoom to fit. */
+    @RequiresEdt
     fun fit() = webview?.postMessage("""{"type":"fit"}""")
 
     /** Toggle UML vs flattened transition-action mode and re-render. */
+    @RequiresEdt
     fun toggleActionMode() {
         actionMode = if (actionMode == TransitionActionMode.UML) TransitionActionMode.FLATTENED else TransitionActionMode.UML
+        // actionMode is now the toggled value; refreshCurrent re-requests with it.
         FppDiagramService.getInstance(project).refreshCurrent()
     }
 
     /** Request the current diagram as SVG and prompt to save it. */
+    @RequiresEdt
     fun export() {
         exportPending = { saveExport() }
         webview?.postMessage("""{"type":"export"}""")
     }
 
+    @RequiresEdt
     private fun saveExport() {
         val svg = lastExportSvg ?: return
         val name = (currentName ?: "state-machine").substringAfterLast('.')
@@ -93,7 +101,8 @@ class FppStateMachinePanel(
         VfsUtil.saveText(wrapper.getVirtualFile(true) ?: return, svg)
     }
 
-    /** Handle a message posted from the webview (JCEF IO thread). */
+    /** Handle a message posted from the webview. Invoked on the JCEF IO thread. */
+    @RequiresBackgroundThread
     private fun handleMessage(json: String) {
         val obj = runCatching { com.google.gson.JsonParser.parseString(json).asJsonObject }.getOrNull() ?: return
         when ((obj.get("type") as? JsonPrimitive)?.asString) {

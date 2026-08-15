@@ -64,8 +64,6 @@
                 displayName="FPP"/>
 
         <!-- State machine diagram (JCEF + shared Mermaid webview bundle) -->
-        <projectService
-                serviceImplementation="com.github.fprime_community.fpp_tools.diagram.FppDiagramService"/>
         <toolWindow
                 id="FPP State Machine"
                 anchor="right"
