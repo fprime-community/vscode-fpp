@@ -132,7 +132,10 @@
             {
                 "language": "fpp",
                 "scopeName": "source.fpp",
-                "path": "./syntax/fpp.tmLanguage.json"
+                "path": "./syntax/fpp.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.block.cpp": "cpp"
+                }
             }
         ],
         "menus": {
