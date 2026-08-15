@@ -27,6 +27,7 @@ tracing = "0.1.41"
 anyhow = "1.0.100"
 crossbeam-channel = "0.5.15"
 tracing-subscriber = { version =  "0.3.22", features = ["chrono", "env-filter"] }
+url = "2"
 percent-encoding = "2"
 ignore = "0.4"
 clap = { version = "4.5.60", features = ["derive"] }
