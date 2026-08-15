@@ -145,6 +145,17 @@ kover {
 }
 
 tasks {
+    // Re-vendor the shared webview bundle(s) built by the `code` (VSCode)
+    // project into plugin resources. The bundle is committed under
+    // `resources/webview/` so a normal build needs no Node toolchain; run this
+    // task after rebuilding `../code` (yarn build) to refresh it.
+    register<Copy>("vendorWebview") {
+        from(layout.projectDirectory.dir("../code/dist")) {
+            include("sm-webview.js")
+        }
+        into(layout.projectDirectory.dir("src/main/resources/webview"))
+    }
+
     prepareSandbox {
         from(layout.projectDirectory.dir("textmate/package.json")) {
             into(pluginName.map { "$it/textmate/" })

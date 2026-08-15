@@ -88,6 +88,15 @@ const stateMachineWebviewConfig = {
         path: path.resolve(__dirname, 'dist'),
         filename: 'sm-webview.js',
         devtoolModuleFilenameTemplate: "../[resource-path]",
+        // Inline all of Mermaid's dynamically-imported diagram chunks into the
+        // single `sm-webview.js`. VSCode can resolve split chunks via
+        // `localResourceRoots`, but the IntelliJ JCEF host loads the bundle as a
+        // lone script with no base directory to resolve sibling chunks against.
+        asyncChunks: false,
+    },
+    optimization: {
+        // Keep everything (including vendor code) in the one output file.
+        splitChunks: false,
     },
     // Same CSP constraint as the sprotty webview: no `eval` devtool.
     devtool: 'nosources-source-map',

@@ -1,7 +1,11 @@
 package com.github.fprime_community.fpp_tools
 
+import com.github.fprime_community.fpp_tools.diagram.DiagramElement
+import com.github.fprime_community.fpp_tools.diagram.DiagramElementsParams
+import com.github.fprime_community.fpp_tools.diagram.DiagramParams
 import com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable
 import com.github.fprime_community.fpp_tools.util.LspCli
+import com.google.gson.JsonElement
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
@@ -132,6 +136,18 @@ private class FppLspServerDescriptor(project: Project) : ProjectWideLspServerDes
 interface FppLsp4jServer : LanguageServer {
     @JsonRequest("fpp/reloadWorkspace")
     fun reloadWorkspace(params: Void?): CompletableFuture<Void>
+
+    /**
+     * Lower an element to a diagram. For a state machine the result is a JSON
+     * string holding Mermaid `stateDiagram-v2` source; for other kinds it is the
+     * sprotty `SModel` object. The caller dispatches on the requested kind.
+     */
+    @JsonRequest("fpp/diagram")
+    fun diagram(params: DiagramParams): CompletableFuture<JsonElement>
+
+    /** List the diagrammable elements defined in a document. */
+    @JsonRequest("fpp/diagramElements")
+    fun diagramElements(params: DiagramElementsParams): CompletableFuture<List<DiagramElement>>
 }
 
 /**
