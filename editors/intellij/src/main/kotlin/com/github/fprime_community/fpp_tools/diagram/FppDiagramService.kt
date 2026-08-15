@@ -39,11 +39,13 @@ class FppDiagramService(
 
     /** List the diagrammable elements in [uri] (for the "Open Diagram" chooser). */
     @RequiresEdt
-    fun requestElements(uri: String, onResult: (List<DiagramElement>) -> Unit) {
+    fun requestElements(uri: String, @RequiresEdt onResult: (List<DiagramElement>) -> Unit) {
         val server = lspServer() ?: return onResult(emptyList())
         scope.launch {
             val elements = server.sendRequest { (it as FppLsp4jServer).diagramElements(DiagramElementsParams(uri)) }
-            onResult(elements ?: emptyList())
+            withContext(Dispatchers.EDT) {
+                onResult(elements ?: emptyList())
+            }
         }
     }
 

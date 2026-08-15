@@ -138,9 +138,8 @@ interface FppLsp4jServer : LanguageServer {
     fun reloadWorkspace(params: Void?): CompletableFuture<Void>
 
     /**
-     * Lower an element to a diagram. For a state machine the result is a JSON
-     * string holding Mermaid `stateDiagram-v2` source; for other kinds it is the
-     * sprotty `SModel` object. The caller dispatches on the requested kind.
+     * For a state machine the result is a JSON string holding Mermaid `stateDiagram-v2` source.
+     * For other kinds it is the sprotty `SModel` object. The caller dispatches on the requested kind.
      */
     @JsonRequest("fpp/diagram")
     fun diagram(params: DiagramParams): CompletableFuture<JsonElement>

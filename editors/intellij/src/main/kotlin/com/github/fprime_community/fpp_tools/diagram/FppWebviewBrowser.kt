@@ -95,6 +95,7 @@ class FppWebviewBrowser(
     }
 
     private fun flushPending() {
+        // TODO fix threading for `pending`
         while (pending.isNotEmpty()) {
             dispatch(pending.removeFirst())
         }

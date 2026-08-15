@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
+// TODO action presentations instantiated in the constructor
 /**
  * "FPP: Open Diagram" — lists the diagrammable elements in the current file and,
  * on selection, opens the appropriate diagram. State machines render in the
@@ -29,11 +30,7 @@ class FppOpenDiagramAction : AnAction("Open FPP Diagram", "Visualize an FPP elem
         val project = e.project ?: return
         val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
         val service = FppDiagramService.getInstance(project)
-        service.requestElements(file.url) { elements ->
-            com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
-                offerChoices(service, elements)
-            }
-        }
+        service.requestElements(file.url) { offerChoices(service, it) }
     }
 
     @RequiresEdt
