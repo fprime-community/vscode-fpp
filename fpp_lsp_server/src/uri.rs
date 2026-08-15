@@ -1,19 +1,16 @@
-//! Minimal `file://` URI conversions.
+//! `file://` URI conversions.
 //!
-//! The server only ever needs to translate between absolute local filesystem
-//! paths and `file://` URI strings (which are then parsed into [`lsp_types::Uri`]
-//! or fed to path-based APIs). That is a tiny slice of what the `url` crate
-//! offers, so instead of depending on `url` (and its `idna` /
-//! `form_urlencoded` transitive tree) we implement just those two operations on
-//! top of `percent-encoding`, which is already in the tree via `lsp-types`.
-//!
-//! Behavior mirrors `url::Url::{from_file_path, to_file_path}` for the local,
-//! absolute paths the server deals with: percent-encoding of path bytes,
-//! forward-slash separators, and (on Windows) a `file:///C:/...` drive-letter
-//! layout.
+//! Path <-> `file://` URI conversion is delegated to the `url` crate, whose
+//! [`Url::from_file_path`]/[`Url::to_file_path`] correctly handle the platform
+//! edge cases a hand-rolled string mangler misses — notably Windows drive
+//! letters, UNC paths (`\\server\share`, as seen under WSL/network mounts) and
+//! verbatim (`\\?\`) prefixes. Only the purely lexical [`join_relative`] (which
+//! resolves `include`/`locs` specifiers against a base URI without touching the
+//! filesystem) is implemented locally on top of `percent-encoding`.
 
-use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, percent_decode_str, percent_encode};
+use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, percent_encode};
 use std::path::{Path, PathBuf};
+use url::Url;
 
 /// Characters left unencoded in a URI path. This is the RFC 3986 `pchar` set
 /// (`unreserved` + `sub-delims` + `:` + `@`) plus `/` as the segment separator.
@@ -46,58 +43,17 @@ const PATH_SET: &AsciiSet = &NON_ALPHANUMERIC
 /// Serialize an absolute filesystem path into a `file://` URI string.
 ///
 /// Returns `Err(())` if the path is not absolute, mirroring
-/// `url::Url::from_file_path`'s contract.
+/// [`Url::from_file_path`]'s contract (which this delegates to).
 pub fn from_file_path(path: impl AsRef<Path>) -> Result<String, ()> {
-    let path = path.as_ref();
-    if !path.is_absolute() {
-        return Err(());
-    }
-
-    let mut out = String::from("file://");
-
-    #[cfg(not(windows))]
-    {
-        use std::os::unix::ffi::OsStrExt;
-        // Unix paths already begin with `/`, so the empty authority is followed
-        // directly by the encoded path bytes (e.g. `file:///home/a%20b.fpp`).
-        out.extend(percent_encode(path.as_os_str().as_bytes(), PATH_SET));
-    }
-
-    #[cfg(windows)]
-    {
-        // Produce `file:///C:/dir/file`. Windows paths are not raw byte paths,
-        // so require valid Unicode and normalize separators to `/`.
-        let s = path.to_str().ok_or(())?;
-        out.push('/');
-        let normalized = s.replace('\\', "/");
-        out.extend(percent_encode(normalized.as_bytes(), PATH_SET));
-    }
-
-    Ok(out)
+    Url::from_file_path(path).map(|url| url.as_str().to_string())
 }
 
 /// Parse a `file://` URI string into a filesystem path.
 ///
-/// Returns `None` if the string is not a `file://` URI or does not decode to
-/// valid UTF-8. Mirrors the local-path handling of `url::Url::to_file_path`.
+/// Returns `None` if the string is not a valid `file://` URI or does not map to
+/// a local path. Delegates to [`Url::to_file_path`].
 pub fn to_file_path(uri: &str) -> Option<PathBuf> {
-    // `file://` + (empty authority) + path. For local files the authority is
-    // empty, so what follows is the path starting with `/`.
-    let rest = uri.strip_prefix("file://")?;
-    let decoded = percent_decode_str(rest).decode_utf8().ok()?;
-
-    #[cfg(not(windows))]
-    {
-        Some(PathBuf::from(decoded.into_owned()))
-    }
-
-    #[cfg(windows)]
-    {
-        // `/C:/dir/file` -> `C:\dir\file`.
-        let decoded = decoded.into_owned();
-        let trimmed = decoded.strip_prefix('/').unwrap_or(&decoded);
-        Some(PathBuf::from(trimmed.replace('/', "\\")))
-    }
+    Url::parse(uri).ok()?.to_file_path().ok()
 }
 
 /// Resolve a `relative` path (as written in an `include`/`locs` specifier)
