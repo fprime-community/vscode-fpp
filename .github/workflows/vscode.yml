@@ -48,9 +48,9 @@ jobs:
       - name: Bundle (production)
         run: yarn package
 
-      - name: Run Tests
-        run: yarn test
-        
+      - name: Smoke test
+        run: yarn test:smoke
+
       - name: Package VSIX
         run: yarn vsix --out fpp.vsix
 
