@@ -56,6 +56,14 @@
                 implementation="com.github.fprime_community.fpp_tools.FppLspServerSupportProvider"/>
         <editorNotificationProvider
                 implementation="com.github.fprime_community.fpp_tools.FppEditorNotificationProvider"/>
+
+        <!-- Workaround default GTDU behavior. See FppUsages.kt. -->
+        <psi.declarationProvider
+                implementation="com.github.fprime_community.fpp_tools.navigation.FppSymbolDeclarationProvider"/>
+        <searcher
+                forClass="com.intellij.find.usages.api.UsageSearchParameters"
+                implementationClass="com.github.fprime_community.fpp_tools.navigation.FppUsageSearcher"/>
+
         <applicationService
                 serviceImplementation="com.github.fprime_community.fpp_tools.settings.FppSettings"/>
         <projectConfigurable

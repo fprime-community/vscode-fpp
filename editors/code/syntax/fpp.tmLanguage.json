@@ -3,6 +3,9 @@
     "name": "fpp",
     "patterns": [
         {
+            "include": "#specInitPhase"
+        },
+        {
             "include": "#keywords"
         },
         {
@@ -43,6 +46,60 @@
         }
     ],
     "repository": {
+        "specInitPhase": {
+            "name": "meta.spec-init.fpp",
+            "begin": "\\b(?<![$])(phase)\\b",
+            "beginCaptures": {
+                "1": {
+                    "name": "storage.type.class.fpp"
+                }
+            },
+            "end": "(?<=\")|(?=\\})",
+            "patterns": [
+                {
+                    "include": "#cppTripleString"
+                },
+                {
+                    "include": "#strings"
+                },
+                {
+                    "include": "#line-continuation"
+                },
+                {
+                    "include": "#annotations"
+                },
+                {
+                    "include": "#numeric-literal"
+                },
+                {
+                    "include": "#punctuation-accessor"
+                }
+            ]
+        },
+        "cppTripleString": {
+            "begin": "\"\"\"",
+            "beginCaptures": {
+                "0": {
+                    "name": "string.quoted.triple.fpp punctuation.definition.string.begin.fpp"
+                }
+            },
+            "end": "\"\"\"",
+            "endCaptures": {
+                "0": {
+                    "name": "string.quoted.triple.fpp punctuation.definition.string.end.fpp"
+                }
+            },
+            "contentName": "meta.embedded.block.cpp",
+            "patterns": [
+                {
+                    "include": "source.cpp"
+                }
+            ]
+        },
+        "line-continuation": {
+            "name": "punctuation.separator.continuation.fpp",
+            "match": "\\\\\\s*$"
+        },
         "keywords": {
             "patterns": [
                 {
