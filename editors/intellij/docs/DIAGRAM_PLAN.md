@@ -35,22 +35,8 @@ Implemented:
 - Threading annotations (`@RequiresEdt` / `@RequiresBackgroundThread`).
 
 ### Phase 1 — remaining
-- [ ] **User TODOs**
-- [ ] **`export` save on EDT / VFS write** — `saveExport` writes via
-      `VfsUtil.saveText` on the EDT; wrap the write in a write action
-      (`WriteAction`/`runWriteAction`) to satisfy the platform's write-lock
-      contract, or write via `java.nio.file` off-EDT.
-- [ ] **Theme change listener** — `applyTheme` runs once on load. Subscribe to
-      LAF changes (`LafManagerListener`) and re-post the body class so the diagram
-      follows IDE theme switches live.
-- [ ] **Error surfacing** — the webview posts `{type:'error', message}` on a
-      Mermaid failure; `handleMessage` currently ignores it. Surface via a
-      notification or an inline panel state.
-- [ ] **`ready` handshake robustness** — if the bundle never posts `ready`
-      (load failure), queued messages never flush. Add a timeout/fallback or a
-      load-error path (`onLoadError`).
 - [ ] **Toolbar icon for toggle-action-mode** — reuse a clearer icon; current
-      `ToggleVisibility` is a placeholder.
+      `ToggleVisibility` is a placeholder. (deferred)
 
 ---
 

@@ -1,6 +1,8 @@
 package com.github.fprime_community.fpp_tools.diagram
 
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
@@ -8,14 +10,17 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
+import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
 import java.io.File
 import java.net.JarURLConnection
 import java.nio.file.Files
+import java.util.concurrent.TimeUnit
 
 /**
  * Hosts one of the shared VSCode webview bundles (e.g. `sm-webview.js`) inside a
@@ -44,16 +49,23 @@ class FppWebviewBrowser(
     /** Invoked (on the JCEF IO thread) with each JSON message string from the webview. */
     var onMessage: ((String) -> Unit)? = null
 
+    /**
+     * Invoked (on the EDT) if the bundle fails to load or never signals readiness.
+     * Lets the host surface a fallback state instead of silently queueing forever.
+     */
+    var onLoadError: ((String) -> Unit)? = null
+
     val browser: JBCefBrowser = JBCefBrowser.createBuilder()
         .setEnableOpenDevToolsMenuItem(true)
         .build()
 
     private val jsQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
 
-    /** Lock for [pending] and [ready]. */
+    /** Lock for [pending], [ready], and [failed]. */
     private val lock = Any()
     private val pending = ArrayDeque<String>()
     private var ready = false
+    private var failed = false
 
     init {
         Disposer.register(parent, this)
@@ -69,9 +81,46 @@ class FppWebviewBrowser(
             override fun onLoadEnd(cefBrowser: CefBrowser?, frame: CefFrame?, httpStatusCode: Int) {
                 applyTheme()
             }
+
+            override fun onLoadError(
+                cefBrowser: CefBrowser?,
+                frame: CefFrame?,
+                errorCode: CefLoadHandler.ErrorCode?,
+                errorText: String?,
+                failedUrl: String?,
+            ) {
+                // Ignore sub-resource aborts; only the main frame failing is fatal.
+                if (frame?.isMain != true) return
+                fail("Failed to load diagram view: ${errorText ?: errorCode}")
+            }
         }, browser.cefBrowser)
 
+        // Follow live IDE theme switches: re-apply the body class on LAF change.
+        ApplicationManager.getApplication().messageBus.connect(this)
+            .subscribe(LafManagerListener.TOPIC, LafManagerListener { applyTheme() })
+
+        // If the bundle never posts `ready` (e.g. a script error before its
+        // listener installs), queued messages would hang forever. Time out and
+        // report so the host can fall back.
+        AppExecutorUtil.getAppScheduledExecutorService().schedule({
+            val stuck = synchronized(lock) { !ready && !failed }
+            if (stuck) fail("Diagram view did not initialize in time")
+        }, READY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+
         browser.loadURL(buildShell(bundleResource))
+    }
+
+    /** Mark the view as failed, drop any queued messages, and notify the host once. */
+    private fun fail(message: String) {
+        val firstFailure = synchronized(lock) {
+            if (ready || failed) return
+            failed = true
+            pending.clear()
+            true
+        }
+        if (firstFailure) {
+            ApplicationManager.getApplication().invokeLater { onLoadError?.invoke(message) }
+        }
     }
 
     /**
@@ -115,9 +164,10 @@ class FppWebviewBrowser(
 
     /** Mirror the IDE's light/dark theme onto the body class the bundles inspect. */
     private fun applyTheme() {
-        val cls = if (JBColor.isBright()) "vscode-light" else "vscode-dark"
+        val bright = JBColor.isBright()
         browser.cefBrowser.executeJavaScript(
-            "document.body.classList.add('$cls');",
+            "document.body.classList.toggle('vscode-light', $bright);" +
+                    "document.body.classList.toggle('vscode-dark', ${!bright});",
             browser.cefBrowser.url, 0,
         )
     }
@@ -222,6 +272,9 @@ class FppWebviewBrowser(
     override fun dispose() {}
 
     companion object {
+        /** How long to wait for the bundle's `ready` before declaring load failure. */
+        private const val READY_TIMEOUT_SECONDS = 15L
+
         /** JCEF is unavailable on some JBR configurations; callers must check. */
         fun isSupported(): Boolean = JBCefApp.isSupported()
 

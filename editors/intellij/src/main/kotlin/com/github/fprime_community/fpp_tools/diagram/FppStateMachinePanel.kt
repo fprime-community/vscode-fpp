@@ -1,8 +1,11 @@
 package com.github.fprime_community.fpp_tools.diagram
 
+import com.github.fprime_community.fpp_tools.FppNotifications
+import com.github.fprime_community.fpp_tools.showProjectNotification
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -49,6 +52,7 @@ class FppStateMachinePanel(
             setContent(JLabel("JCEF is not available in this IDE runtime; state machine diagrams are disabled.", JLabel.CENTER))
         } else {
             webview.onMessage = ::handleMessage
+            webview.onLoadError = ::showLoadError
             setContent(webview.browser.component)
             toolbar = buildToolbar().component
         }
@@ -120,9 +124,24 @@ class FppStateMachinePanel(
                     exportPending = null
                 }
             }
-            // "ready" / "error" / "setLayoutOption" are handled by the browser shell
-            // or are no-ops for this initial state machine feature.
+            "error" -> {
+                val message = (obj.get("message") as? JsonPrimitive)?.asString ?: "Unknown error"
+                ApplicationManager.getApplication().invokeLater {
+                    FppNotifications.pluginNotifications().showProjectNotification(
+                        "Failed to render state machine diagram", message, NotificationType.ERROR, project,
+                    )
+                }
+            }
+            // "ready" / "setLayoutOption" are handled by the browser shell or are
+            // no-ops for this initial state machine feature.
         }
+    }
+
+    /** Surface a webview load/init failure as an error notification. */
+    @RequiresEdt
+    private fun showLoadError(message: String) {
+        FppNotifications.pluginNotifications()
+            .showProjectNotification(message, NotificationType.ERROR, project)
     }
 
     override fun dispose() {}
