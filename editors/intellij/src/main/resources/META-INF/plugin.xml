@@ -9,6 +9,7 @@
     <depends>org.jetbrains.plugins.textmate</depends>
     <depends>com.intellij.modules.python</depends>
     <depends optional="true" config-file="fpp-tools-cmake.xml">com.intellij.cmake</depends>
+    <depends>com.intellij.diagram</depends>
 
     <resource-bundle>messages.FppBundle</resource-bundle>
 
@@ -78,7 +79,7 @@
                 text="Open FPP Diagram"
                 description="Visualize an FPP element as a diagram"
                 icon="AllIcons.Actions.Preview">
-            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="UML.EditorGroup" anchor="last"/>
         </action>
         <group id="Fpp.StateMachine.Toolbar">
             <action id="Fpp.StateMachine.Fit"
