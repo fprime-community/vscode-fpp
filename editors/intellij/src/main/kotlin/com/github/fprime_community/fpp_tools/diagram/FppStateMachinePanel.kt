@@ -1,16 +1,21 @@
 package com.github.fprime_community.fpp_tools.diagram
 
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.nio.file.Path
 import javax.swing.JLabel
 
 /**
@@ -50,7 +55,7 @@ class FppStateMachinePanel(
     }
 
     @RequiresEdt
-    private fun buildToolbar(): com.intellij.openapi.actionSystem.ActionToolbar {
+    private fun buildToolbar(): ActionToolbar {
         val group = ActionManager.getInstance().getAction("Fpp.StateMachine.Toolbar") as DefaultActionGroup
         val bar = ActionManager.getInstance().createActionToolbar("FppStateMachine", group, true)
         bar.targetComponent = this
@@ -94,21 +99,23 @@ class FppStateMachinePanel(
         val name = (currentName ?: "state-machine").substringAfterLast('.')
         val descriptor = FileChooserFactory.getInstance()
             .createSaveFileDialog(
-                com.intellij.openapi.fileChooser.FileSaverDescriptor("Export State Machine", "Save the diagram as SVG", "svg"),
+                FileSaverDescriptor("Export State Machine", "Save the diagram as SVG", "svg"),
                 project,
             )
-        val wrapper = descriptor.save(null as java.nio.file.Path?, "$name.svg") ?: return
-        VfsUtil.saveText(wrapper.getVirtualFile(true) ?: return, svg)
+        val wrapper = descriptor.save(null as Path?, "$name.svg") ?: return
+        ApplicationManager.getApplication().runWriteAction {
+            VfsUtil.saveText(wrapper.getVirtualFile(true) ?: return@runWriteAction, svg)
+        }
     }
 
     /** Handle a message posted from the webview. Invoked on the JCEF IO thread. */
     @RequiresBackgroundThread
     private fun handleMessage(json: String) {
-        val obj = runCatching { com.google.gson.JsonParser.parseString(json).asJsonObject }.getOrNull() ?: return
+        val obj = runCatching { JsonParser.parseString(json).asJsonObject }.getOrNull() ?: return
         when ((obj.get("type") as? JsonPrimitive)?.asString) {
             "exportSvg" -> {
                 lastExportSvg = (obj.get("svg") as? JsonPrimitive)?.asString
-                com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
+                ApplicationManager.getApplication().invokeLater {
                     exportPending?.invoke()
                     exportPending = null
                 }

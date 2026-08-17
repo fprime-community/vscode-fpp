@@ -76,16 +76,26 @@
                 id="Fpp.OpenDiagram"
                 class="com.github.fprime_community.fpp_tools.diagram.FppOpenDiagramAction"
                 text="Open FPP Diagram"
-                description="Visualize an FPP element as a diagram">
+                description="Visualize an FPP element as a diagram"
+                icon="AllIcons.Actions.Preview">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>
         <group id="Fpp.StateMachine.Toolbar">
             <action id="Fpp.StateMachine.Fit"
-                    class="com.github.fprime_community.fpp_tools.diagram.FppStateMachineFitAction"/>
+                    class="com.github.fprime_community.fpp_tools.diagram.FppStateMachineFitAction"
+                    text="Fit Diagram"
+                    description="Reset pan and zoom to fit"
+                    icon="AllIcons.General.FitContent"/>
             <action id="Fpp.StateMachine.Export"
-                    class="com.github.fprime_community.fpp_tools.diagram.FppStateMachineExportAction"/>
+                    class="com.github.fprime_community.fpp_tools.diagram.FppStateMachineExportAction"
+                    text="Export Diagram"
+                    description="Export the diagram as SVG"
+                    icon="AllIcons.ToolbarDecorator.Export"/>
             <action id="Fpp.StateMachine.ToggleActionMode"
-                    class="com.github.fprime_community.fpp_tools.diagram.FppStateMachineToggleActionModeAction"/>
+                    class="com.github.fprime_community.fpp_tools.diagram.FppStateMachineToggleActionModeAction"
+                    text="Toggle Transition Action Mode"
+                    description="Switch between UML and flattened transition action labels"
+                    icon="AllIcons.Actions.ToggleVisibility"/>
         </group>
     </actions>
     <projectListeners>

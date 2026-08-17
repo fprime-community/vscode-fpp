@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -44,7 +45,10 @@ class FppWebviewBrowser(
         .setEnableOpenDevToolsMenuItem(true)
         .build()
 
-    private val jsQuery = JBCefJSQuery.create(browser as com.intellij.ui.jcef.JBCefBrowserBase)
+    private val jsQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
+
+    /** Lock for [pending] and [ready]. */
+    private val lock = Any()
     private val pending = ArrayDeque<String>()
     private var ready = false
 
@@ -73,9 +77,14 @@ class FppWebviewBrowser(
      */
     @RequiresBackgroundThread
     private fun handleIncoming(msg: String) {
-        if (!ready && msg.contains("\"ready\"")) {
-            ready = true
-            flushPending()
+        if (msg.contains("\"ready\"")) {
+            val toFlush: List<String> = synchronized(lock) {
+                if (!ready) {
+                    ready = true
+                    ArrayList(pending).also { pending.clear() }
+                } else emptyList()
+            }
+            toFlush.forEach(::dispatch)
         }
         onMessage?.invoke(msg)
     }
@@ -87,18 +96,13 @@ class FppWebviewBrowser(
      */
     @RequiresEdt
     fun postMessage(json: String) {
-        if (!ready) {
-            pending.addLast(json)
-            return
+        synchronized(lock) {
+            if (!ready) {
+                pending.addLast(json)
+                return
+            }
         }
         dispatch(json)
-    }
-
-    private fun flushPending() {
-        // TODO fix threading for `pending`
-        while (pending.isNotEmpty()) {
-            dispatch(pending.removeFirst())
-        }
     }
 
     private fun dispatch(json: String) {
