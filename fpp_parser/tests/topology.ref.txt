@@ -70,6 +70,7 @@ TransUnit(
                     },
                 },
                 DefTopology {
+                    is_deployment: false,
                     name: Name {
                         data: "Ref",
                         node_id: Span {

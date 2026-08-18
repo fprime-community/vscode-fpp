@@ -4,9 +4,9 @@ mod errors;
 use crate::passes::{
     BuildSpecLocMap, CheckComponentDefs, CheckComponentInstanceDefs, CheckDictionaryDefs,
     CheckExprTypes, CheckFrameworkConstantValues, CheckFrameworkDefs, CheckInterfaceDefs,
-    CheckPortDefs, CheckSpecLocs, CheckStateMachineDefs, CheckTopologyDefs, CheckTopologyInstances,
-    CheckTypeUses, CheckUseDefCycles, CheckUses, ConstructImpliedUseMap, EnterSymbols,
-    EvalConstantExprs, EvalImpliedEnumConsts, FinalizeTypeDefs,
+    CheckPortDefs, CheckSpecLocs, CheckStateMachineDefs, CheckSystemDefs, CheckTopologyDefs,
+    CheckTopologyInstances, CheckTypeUses, CheckUseDefCycles, CheckUses, ConstructImpliedUseMap,
+    EnterSymbols, EvalConstantExprs, EvalImpliedEnumConsts, FinalizeTypeDefs,
 };
 pub use analysis::*;
 use fpp_ast::{MutVisitor, Visitor};
@@ -94,6 +94,9 @@ pub mod passes {
 
     mod build_spec_loc_map;
     pub use build_spec_loc_map::*;
+
+    mod check_system_defs;
+    pub use check_system_defs::*;
 }
 
 pub mod transform {
@@ -126,6 +129,9 @@ pub mod semantics {
 
     mod topology;
     pub use topology::*;
+
+    mod system;
+    pub use system::*;
 
     pub(crate) mod resolve_topology;
 
@@ -202,6 +208,7 @@ pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> Contr
     CheckSpecLocs.visit_trans_units(a, ast.iter().cloned())?; // tuList #24
     CheckDictionaryDefs.visit_trans_units(a, ast.iter().cloned())?; // tuList #25
     // tuList #26 ConstructDictionaryMap: codegen-support only, deferred
+    CheckSystemDefs.visit_trans_units(a, ast.iter().cloned())?; // tuList #27
 
     ControlFlow::Continue(())
 }

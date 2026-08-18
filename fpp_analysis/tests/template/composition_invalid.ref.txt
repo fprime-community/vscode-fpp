@@ -1,0 +1,8 @@
+ --> [ local path prefix ]/template/composition_invalid.fpp:1:8
+  |
+1 | module template T1(
+  |        ^^^^^^^^ syntax error: unexpected token
+  |
+  = note: expected {
+  = note: got identifier
+

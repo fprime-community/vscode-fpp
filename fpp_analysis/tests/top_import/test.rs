@@ -19,3 +19,8 @@ fn undef_topology() {
 fn basic() {
     run_test("top_import/basic")
 }
+
+#[test]
+fn deployment_topology() {
+    run_test("top_import/deployment_topology")
+}

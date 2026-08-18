@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/top_import/deployment_topology.fpp:2:15
+  |
+2 | topology T2 { instance T1 }
+  |               ^^^^^^^^^^^ invalid use of symbol T1: use of deployment topology is not allowed here
+  |
+ ::: [ local path prefix ]/top_import/deployment_topology.fpp:1:1
+  |
+1 | deployment topology T1 {}
+  | ------------------------- T1 defined here
+

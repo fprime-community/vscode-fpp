@@ -232,6 +232,17 @@ pub enum SemanticError {
         loc: Span,
         prev_loc: Span,
     },
+    /// A model has more than one system definition.
+    DuplicateSystemDefinition {
+        loc: Span,
+        prev_loc: Span,
+    },
+    /// A telemetry packet set specified in a non-deployment topology.
+    InvalidTlmPacketSet {
+        loc: Span,
+        name: String,
+        msg: String,
+    },
     InvalidInterfaceInstance {
         loc: Span,
         instance_name: String,
@@ -759,6 +770,17 @@ impl From<SemanticError> for Diagnostic {
                 prev_loc,
             } => Diagnostic::new(loc, Level::Error, format!("duplicate instance {}", name))
                 .span_note(prev_loc, "previous instance is here"),
+            SemanticError::DuplicateSystemDefinition { loc, prev_loc } => {
+                Diagnostic::new(loc, Level::Error, "duplicate system definition")
+                    .span_note(prev_loc, "previous definition is here")
+                    .note("each model may have at most one system definition")
+            }
+            SemanticError::InvalidTlmPacketSet { loc, name, msg } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!("invalid telemetry packet set {}", name),
+            )
+            .note(msg),
             SemanticError::InvalidInterfaceInstance {
                 loc,
                 instance_name,

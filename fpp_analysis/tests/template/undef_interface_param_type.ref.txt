@@ -1,0 +1,8 @@
+ --> [ local path prefix ]/template/undef_interface_param_type.fpp:1:8
+  |
+1 | module template T(interface i: S) {}
+  |        ^^^^^^^^ syntax error: unexpected token
+  |
+  = note: expected {
+  = note: got identifier
+

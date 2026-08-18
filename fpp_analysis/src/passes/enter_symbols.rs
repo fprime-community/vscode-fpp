@@ -286,6 +286,14 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
         ControlFlow::Continue(())
     }
 
+    fn visit_def_system(&self, a: &mut Analysis, def: &'ast DefSystem) -> ControlFlow<Self::Break> {
+        let symbol = Symbol::System(Arc::new(def.clone()));
+        a.symbol_map.insert(def.node_id, symbol.clone());
+        self.enter_symbol(a, symbol, NameGroup::System)
+            .unwrap_or_else(|err| err.emit());
+        ControlFlow::Continue(())
+    }
+
     fn visit_def_port(&self, a: &mut Self::State, def: &'ast DefPort) -> ControlFlow<Self::Break> {
         let symbol = Symbol::Port(Arc::new(def.clone()));
         a.symbol_map.insert(def.node_id, symbol.clone());

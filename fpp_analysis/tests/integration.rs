@@ -187,6 +187,10 @@ mod spec_loc {
     mod test;
 }
 
+mod system {
+    mod test;
+}
+
 mod top_import {
     mod test;
 }

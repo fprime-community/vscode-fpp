@@ -188,6 +188,7 @@ fn symbol_kind_name(symbol: &Symbol) -> &'static str {
         Symbol::Port(_) => "Port",
         Symbol::StateMachine(_) => "State Machine",
         Symbol::Struct(_) => "Struct",
+        Symbol::System(_) => "System",
         Symbol::Topology(_) => "Topology",
     }
 }
@@ -369,6 +370,7 @@ pub fn symbol_to_completion_item(state: &GlobalState, symbol: &Symbol) -> Comple
         Symbol::Port(_) => CompletionItemKind::CLASS,
         Symbol::StateMachine(_) => CompletionItemKind::CLASS,
         Symbol::Struct(_) => CompletionItemKind::STRUCT,
+        Symbol::System(_) => CompletionItemKind::CLASS,
         Symbol::Topology(_) => CompletionItemKind::CLASS,
     };
 
@@ -404,6 +406,7 @@ pub fn symbol_to_completion_item(state: &GlobalState, symbol: &Symbol) -> Comple
         Symbol::Interface(_) => None,
         Symbol::Module(_) => None,
         Symbol::StateMachine(_) => None,
+        Symbol::System(_) => None,
         Symbol::Topology(_) => None,
     };
 

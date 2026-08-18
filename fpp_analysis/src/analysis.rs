@@ -59,6 +59,8 @@ pub struct Analysis {
     pub partial_topology_map: HashMap<Symbol, crate::semantics::Topology>,
     /** The mapping from topology symbols to their fully resolved topologies. */
     pub topology_map: HashMap<Symbol, crate::semantics::Topology>,
+    /** The mapping from system symbols to their resolved systems. */
+    pub system_map: HashMap<Symbol, crate::semantics::FppSystem>,
     /** The mapping from (location specifier kind, qualified name) to the
      *  location specifier that named it. */
     pub location_specifier_map: HashMap<(fpp_ast::SpecLocKind, String), SpecLocEntry>,
@@ -131,6 +133,7 @@ impl Analysis {
             topology: None,
             partial_topology_map: Default::default(),
             topology_map: Default::default(),
+            system_map: Default::default(),
             location_specifier_map: Default::default(),
             scope_name_list: Vec::new(),
             state_machine_map: Default::default(),
@@ -348,6 +351,27 @@ impl Analysis {
 
     pub fn get_symbol<N: fpp_ast::AstNode>(&self, node: &N) -> Symbol {
         self.symbol_map.get(&node.id()).unwrap().clone()
+    }
+
+    /// Resolve a use (by node ID) to a topology symbol, mirroring Scala
+    /// `Analysis.getTopologySymbol`. Returns `Ok(None)` for an unresolved use
+    /// (already reported by `CheckUses`) and an error if the use resolves to a
+    /// non-topology symbol.
+    pub fn get_topology_symbol(&self, id: fpp_core::Node) -> SemanticResult<Option<Symbol>> {
+        match self.use_def_map.get(&id) {
+            Some(symbol @ Symbol::Topology(_)) => Ok(Some(symbol.clone())),
+            Some(symbol) => Err(SemanticError::InvalidSymbol {
+                symbol_name: symbol.name().data.clone(),
+                msg: format!(
+                    "invalid use of symbol {}: not a topology symbol",
+                    symbol.name().data
+                ),
+                loc: id.span(),
+                def_loc: symbol.node().span(),
+            }),
+            // Unresolved use: CheckUses already reported the error.
+            None => Ok(None),
+        }
     }
 
     pub fn get_scope(&self, symbol: &Option<Symbol>) -> &Scope {

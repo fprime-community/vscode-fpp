@@ -1,6 +1,7 @@
 TransUnit(
     [
         DefTopology {
+            is_deployment: false,
             name: Name {
                 data: "T",
                 node_id: Span {

@@ -159,6 +159,16 @@ fn struct_dictionary_error() {
 }
 
 #[test]
+fn system_ok() {
+    run_test("spec_loc/system_ok")
+}
+
+#[test]
+fn system_path_error() {
+    run_test("spec_loc/system_path_error")
+}
+
+#[test]
 fn topology_ok() {
     run_test("spec_loc/topology_ok")
 }

@@ -1,0 +1,13 @@
+ --> [ local path prefix ]/template/duplicate_def.fpp:1:8
+  |
+1 | module template T(constant p: U32) {
+  |        ^^^^^^^^ syntax error: unexpected token
+  |
+  = note: expected {
+  = note: got identifier
+
+ --> [ local path prefix ]/template/duplicate_def.fpp:3:22
+  |
+3 |     constant cOut2 = p + 2
+  |                      ^ cannot find constant `p` in scope
+

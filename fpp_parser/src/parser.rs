@@ -392,7 +392,10 @@ impl<'a> Parser<'a> {
             Keyword(Module) => Ok(ModuleMember::DefModule(self.def_module()?)),
             Keyword(Port) => Ok(ModuleMember::DefPort(self.def_port()?)),
             Keyword(State) => Ok(ModuleMember::DefStateMachine(self.def_state_machine()?)),
-            Keyword(Topology) => Ok(ModuleMember::DefTopology(self.def_topology()?)),
+            Keyword(System) => Ok(ModuleMember::DefSystem(self.def_system()?)),
+            Keyword(Deployment) | Keyword(Topology) => {
+                Ok(ModuleMember::DefTopology(self.def_topology()?))
+            }
             Keyword(Include) => Ok(ModuleMember::SpecInclude(self.spec_include()?)),
             Keyword(Locate) => Ok(ModuleMember::SpecLoc(self.spec_loc()?)),
             _ => Err(self.cursor.err_expected_one_of(
@@ -411,6 +414,8 @@ impl<'a> Parser<'a> {
                     Keyword(Module),
                     Keyword(Port),
                     Keyword(State),
+                    Keyword(System),
+                    Keyword(Deployment),
                     Keyword(Topology),
                     Keyword(Include),
                     Keyword(Locate),
@@ -473,6 +478,10 @@ impl<'a> Parser<'a> {
                 self.consume_keyword(Machine)?;
                 SpecLocKind::StateMachine
             }
+            Keyword(System) => {
+                self.next();
+                SpecLocKind::System
+            }
             Keyword(Type) => {
                 self.next();
                 SpecLocKind::Type
@@ -490,6 +499,7 @@ impl<'a> Parser<'a> {
                         Keyword(Instance),
                         Keyword(Port),
                         Keyword(State),
+                        Keyword(System),
                         Keyword(Type),
                         Keyword(Interface),
                     ],
@@ -510,7 +520,14 @@ impl<'a> Parser<'a> {
     }
 
     fn def_topology(&mut self) -> ParseResult<DefTopology> {
-        let first = self.consume_keyword(Topology)?;
+        let (is_deployment, first) = match self.peek(0) {
+            Keyword(Deployment) => {
+                let first = self.consume_keyword(Deployment)?;
+                self.consume_keyword(Topology)?;
+                (true, first)
+            }
+            _ => (false, self.consume_keyword(Topology)?),
+        };
         let name = self.name()?;
         let implements = match self.peek(0) {
             Keyword(Implements) => {
@@ -526,9 +543,23 @@ impl<'a> Parser<'a> {
 
         Ok(DefTopology {
             node_id: self.node(first.span()),
+            is_deployment,
             name,
             members,
             implements,
+        })
+    }
+
+    fn def_system(&mut self) -> ParseResult<DefSystem> {
+        let first = self.consume_keyword(System)?;
+        let name = self.name()?;
+        self.consume(Colon)?;
+        let topology = self.qual_ident()?;
+
+        Ok(DefSystem {
+            node_id: self.node(first.span()),
+            name,
+            topology,
         })
     }
 

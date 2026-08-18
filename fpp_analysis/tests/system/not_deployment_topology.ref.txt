@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/system/not_deployment_topology.fpp:2:1
+  |
+2 | system S: T
+  | ^^^^^^^^^^^ invalid use of symbol T: topology used here must be a deployment topology
+  |
+ ::: [ local path prefix ]/system/not_deployment_topology.fpp:1:1
+  |
+1 | topology T {}
+  | ------------- T defined here
+

@@ -1,8 +1,9 @@
 use crate::Analysis;
-use crate::semantics::{PendingTopPort, Topology};
+use crate::errors::SemanticError;
+use crate::semantics::{PendingTopPort, Symbol, Topology};
 use fpp_ast::{
     AstNode, DefModule, DefTopology, SpecDirectConnectionGraph, SpecInstance,
-    SpecPatternConnectionGraph, SpecTopPort, Visitor, Walkable,
+    SpecPatternConnectionGraph, SpecTlmPacketSet, SpecTopPort, Visitor, Walkable,
 };
 use fpp_core::Spanned;
 use std::ops::ControlFlow;
@@ -85,6 +86,26 @@ impl<'ast> Visitor<'ast> for CheckTopologyInstances {
     ) -> ControlFlow<Self::Break> {
         if let Some(top) = a.topology.as_mut() {
             top.raw_patterns.push(node.clone());
+        }
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_tlm_packet_set(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecTlmPacketSet,
+    ) -> ControlFlow<Self::Break> {
+        // Only a deployment topology may specify a telemetry packet set.
+        if let Some(top) = a.topology.as_ref()
+            && let Symbol::Topology(def) = &top.symbol
+            && !def.is_deployment
+        {
+            SemanticError::InvalidTlmPacketSet {
+                loc: node.span(),
+                name: node.name.data.clone(),
+                msg: "only a deployment topology may specify a telemetry packet set".to_string(),
+            }
+            .emit();
         }
         ControlFlow::Continue(())
     }

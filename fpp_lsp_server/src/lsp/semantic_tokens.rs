@@ -19,6 +19,7 @@ use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, Semanti
 pub enum SemanticTokenKind {
     Module,
     Topology,
+    System,
     Component,
     Interface,
     ComponentInstance,
@@ -62,9 +63,10 @@ pub enum SemanticTokenKind {
 }
 
 impl SemanticTokenKind {
-    pub const TOKEN_TYPES: [SemanticTokenType; 37] = [
+    pub const TOKEN_TYPES: [SemanticTokenType; 38] = [
         SemanticTokenType::new("module"),
         SemanticTokenType::new("topology"),
+        SemanticTokenType::new("system"),
         SemanticTokenType::new("component"),
         SemanticTokenType::new("interface"),
         SemanticTokenType::new("componentInstance"),
@@ -248,6 +250,7 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::DEF_CONSTANT => SemanticTokenKind::Constant,
                         SyntaxKind::DEF_INTERFACE => SemanticTokenKind::Interface,
                         SyntaxKind::DEF_TOPOLOGY => SemanticTokenKind::Topology,
+                        SyntaxKind::DEF_SYSTEM => SemanticTokenKind::System,
                         SyntaxKind::STRUCT_MEMBER => SemanticTokenKind::StructMember,
                         SyntaxKind::SPEC_CONNECTION_GRAPH_DIRECT => SemanticTokenKind::GraphGroup,
                         SyntaxKind::SPEC_TOP_PORT => SemanticTokenKind::PortInstance,
@@ -363,6 +366,7 @@ impl<'ast> SemanticUses<'ast> {
                 Symbol::Port(_) => SemanticTokenKind::Port,
                 Symbol::StateMachine(_) => SemanticTokenKind::StateMachine,
                 Symbol::Struct(_) => SemanticTokenKind::StructType,
+                Symbol::System(_) => SemanticTokenKind::System,
                 Symbol::Topology(_) => SemanticTokenKind::Topology,
             };
 
