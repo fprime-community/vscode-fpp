@@ -1,14 +1,12 @@
 package com.github.fprime_community.fpp_tools.diagram
 
 import com.github.fprime_community.fpp_tools.FppLsp4jServer
-import com.github.fprime_community.fpp_tools.FppLspServerSupportProvider
+import com.github.fprime_community.fpp_tools.fppLspClients
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.platform.lsp.api.LspServer
-import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,20 +29,16 @@ class FppDiagramService(
     /** Set by [FppStateMachineToolWindowFactory] once the tool window is created. */
     var panel: FppStateMachinePanel? = null
 
-    @RequiresEdt
-    private fun lspServer(): LspServer? =
-        LspServerManager.getInstance(project)
-            .getServersForProvider(FppLspServerSupportProvider::class.java)
-            .firstOrNull()
-
     /** List the diagrammable elements in [uri] (for the "Open Diagram" chooser). */
     @RequiresEdt
     fun requestElements(uri: String, @RequiresEdt onResult: (List<DiagramElement>) -> Unit) {
-        val server = lspServer() ?: return onResult(emptyList())
+        val clients = project.fppLspClients()
         scope.launch {
-            val elements = server.sendRequest { (it as FppLsp4jServer).diagramElements(DiagramElementsParams(uri)) }
+            val elements = clients.flatMap { client ->
+                client.sendRequest { (it as FppLsp4jServer).diagramElements(DiagramElementsParams(uri)) } ?: emptyList()
+            }
             withContext(Dispatchers.EDT) {
-                onResult(elements ?: emptyList())
+                onResult(elements)
             }
         }
     }
@@ -56,11 +50,15 @@ class FppDiagramService(
      */
     @RequiresEdt
     fun showStateMachine(name: String, mode: String = TransitionActionMode.UML) {
-        val server = lspServer() ?: return
+        val clients = project.fppLspClients()
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(FPP_SM_TOOL_WINDOW_ID) ?: return
         scope.launch {
-            val result = server.sendRequest {
-                (it as FppLsp4jServer).diagram(DiagramParams(DiagramKind.STATE_MACHINE, name, transitionActionMode = mode))
+            val result = clients.firstNotNullOfOrNull { client ->
+                client.sendRequest {
+                    (it as FppLsp4jServer).diagram(
+                        DiagramParams(DiagramKind.STATE_MACHINE, name, transitionActionMode = mode)
+                    )
+                }
             } ?: return@launch
             // State machine kind returns a JSON string of Mermaid source.
             if (!result.isJsonPrimitive) return@launch

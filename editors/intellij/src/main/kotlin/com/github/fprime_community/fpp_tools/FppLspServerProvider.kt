@@ -15,9 +15,7 @@ import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
-import com.intellij.platform.lsp.api.LspServerSupportProvider
-import com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
+import com.intellij.platform.lsp.api.*
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
 import com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
@@ -158,4 +156,10 @@ fun reloadWorkspace(lspServer: LspServer) {
     currentThreadCoroutineScope().launch {
         lspServer.sendRequest { (it as FppLsp4jServer).reloadWorkspace(null) }
     }
+}
+
+fun Project.fppLspClients(onlyIfRunning: Boolean = true): Collection<LspClient> {
+    return LspClientManager.getInstance(this)
+        .getClients(FppLspServerSupportProvider::class.java)
+        .filter { !onlyIfRunning || it.state == LspServerState.Running }
 }

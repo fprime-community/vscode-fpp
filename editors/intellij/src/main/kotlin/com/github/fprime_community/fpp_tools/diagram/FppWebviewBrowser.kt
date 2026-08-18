@@ -17,10 +17,12 @@ import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
-import java.io.File
-import java.net.JarURLConnection
+import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.*
 
 /**
  * Hosts one of the shared VSCode webview bundles (e.g. `sm-webview.js`) inside a
@@ -178,11 +180,11 @@ class FppWebviewBrowser(
      * URL of the shell.
      */
     private fun buildShell(bundleResource: String): String {
-        val dir = Files.createTempDirectory("fpp-webview").toFile()
-        dir.deleteOnExit()
+        val dir = Files.createTempDirectory("fpp-webview")
+        dir.toFile().deleteOnExit()
 
         extractWebviewResources(dir)
-        if (!File(dir, bundleResource).exists()) {
+        if (!(dir / bundleResource).exists()) {
             error("Webview bundle /webview/$bundleResource not found on classpath")
         }
 
@@ -222,9 +224,7 @@ class FppWebviewBrowser(
             </html>
         """.trimIndent()
 
-        val index = File(dir, "index.html")
-        index.writeText(html)
-        return index.toURI().toString()
+        return (dir / "index.html").apply { writeText(html) }.toUri().toString()
     }
 
     /**
@@ -232,35 +232,29 @@ class FppWebviewBrowser(
      * flattened (the directory holds no nested folders). Handles both the
      * jar-packaged plugin and the exploded on-disk layout used by `runIde`.
      */
-    private fun extractWebviewResources(dir: File) {
+    private fun extractWebviewResources(dir: Path) {
         val root = javaClass.getResource("/webview")
             ?: error("Webview resource directory /webview not found on classpath")
 
         when (root.protocol) {
             "jar" -> {
-                val conn = root.openConnection() as JarURLConnection
-                conn.jarFile.use { jar ->
-                    val entries = jar.entries()
-                    while (entries.hasMoreElements()) {
-                        val entry = entries.nextElement()
-                        if (entry.isDirectory) continue
-                        val name = entry.name
-                        if (!name.startsWith("webview/")) continue
-                        val fileName = name.substringAfterLast('/')
-                        if (fileName.isEmpty()) continue
-                        jar.getInputStream(entry).use { input ->
-                            File(dir, fileName).outputStream().use { input.copyTo(it) }
-                        }
+                val uri = root.toURI()
+                val jarFileSystem = try {
+                    FileSystems.getFileSystem(uri)
+                } catch (_: Exception) {
+                    FileSystems.newFileSystem(uri, emptyMap<String, Any>())
+                }
+                jarFileSystem.getPath("webview").listDirectoryEntries().forEach { file ->
+                    if (Files.isRegularFile(file)) {
+                        Files.copy(file, dir / file.name, StandardCopyOption.REPLACE_EXISTING)
                     }
                 }
             }
 
             "file" -> {
-                File(root.toURI()).listFiles()?.forEach { file ->
-                    if (file.isFile) {
-                        file.inputStream().use { input ->
-                            File(dir, file.name).outputStream().use { input.copyTo(it) }
-                        }
+                Path.of(root.toURI()).listDirectoryEntries().forEach { file ->
+                    if (Files.isRegularFile(file)) {
+                        Files.copy(file, dir / file.name, StandardCopyOption.REPLACE_EXISTING)
                     }
                 }
             }

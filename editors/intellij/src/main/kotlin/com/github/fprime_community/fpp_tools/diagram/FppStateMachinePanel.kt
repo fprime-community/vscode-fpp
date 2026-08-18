@@ -40,9 +40,8 @@ class FppStateMachinePanel(
     var actionMode: String = TransitionActionMode.UML
         private set
 
-    /** Latest SVG the webview reported for export, or null if none/unavailable. */
-    private var lastExportSvg: String? = null
-    private var exportPending: (() -> Unit)? = null
+    /** Callback when the webview completes the export. */
+    private var exportPending: ((svg: String) -> Unit)? = null
 
     private val webview: FppWebviewBrowser? =
         if (FppWebviewBrowser.isSupported()) FppWebviewBrowser(parent, "sm-webview.js") else null
@@ -61,9 +60,8 @@ class FppStateMachinePanel(
     @RequiresEdt
     private fun buildToolbar(): ActionToolbar {
         val group = ActionManager.getInstance().getAction("Fpp.StateMachine.Toolbar") as DefaultActionGroup
-        val bar = ActionManager.getInstance().createActionToolbar("FppStateMachine", group, true)
-        bar.targetComponent = this
-        return bar
+        return ActionManager.getInstance().createActionToolbar("FppStateMachine", group, true)
+            .also { it.targetComponent = this }
     }
 
     /** Render Mermaid [mermaid] for state machine [name]. */
@@ -93,13 +91,12 @@ class FppStateMachinePanel(
     /** Request the current diagram as SVG and prompt to save it. */
     @RequiresEdt
     fun export() {
-        exportPending = { saveExport() }
+        exportPending = ::saveExport
         webview?.postMessage("""{"type":"export"}""")
     }
 
     @RequiresEdt
-    private fun saveExport() {
-        val svg = lastExportSvg ?: return
+    private fun saveExport(svg: String) {
         val name = (currentName ?: "state-machine").substringAfterLast('.')
         val descriptor = FileChooserFactory.getInstance()
             .createSaveFileDialog(
@@ -117,10 +114,9 @@ class FppStateMachinePanel(
     private fun handleMessage(json: String) {
         val obj = runCatching { JsonParser.parseString(json).asJsonObject }.getOrNull() ?: return
         when ((obj.get("type") as? JsonPrimitive)?.asString) {
-            "exportSvg" -> {
-                lastExportSvg = (obj.get("svg") as? JsonPrimitive)?.asString
+            "exportSvg" -> (obj.get("svg") as? JsonPrimitive)?.asString?.also {
                 ApplicationManager.getApplication().invokeLater {
-                    exportPending?.invoke()
+                    exportPending?.invoke(it)
                     exportPending = null
                 }
             }

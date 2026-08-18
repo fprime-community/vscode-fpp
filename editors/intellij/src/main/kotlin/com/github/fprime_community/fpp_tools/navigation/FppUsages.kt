@@ -1,7 +1,7 @@
 package com.github.fprime_community.fpp_tools.navigation
 
 import com.github.fprime_community.fpp_tools.FppLanguage
-import com.github.fprime_community.fpp_tools.FppLspServerSupportProvider
+import com.github.fprime_community.fpp_tools.fppLspClients
 import com.intellij.codeInsight.editorActions.SelectWordUtil
 import com.intellij.find.usages.api.*
 import com.intellij.model.Pointer
@@ -15,9 +15,7 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.presentation.TargetPresentation
-import com.intellij.platform.lsp.api.LspServer
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.api.LspServerState
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspFindReferencesSupport
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import com.intellij.platform.lsp.util.getRangeInDocument
@@ -62,16 +60,14 @@ class FppSymbolDeclarationProvider : PsiSymbolDeclarationProvider {
             document.charsSequence, offsetInElement, SelectWordUtil.JAVA_IDENTIFIER_PART_CONDITION,
         ) ?: return emptyList()
 
-        val lspServers = LspServerManager.getInstance(element.project)
-            .getServersForProvider(FppLspServerSupportProvider::class.java)
+        val lspClients = element.project.fppLspClients()
             .filter { it.descriptor.lspCustomization.findReferencesCustomizer is LspFindReferencesSupport }
-            .filter { it.state == LspServerState.Running && it.descriptor.isSupportedFile(file) }
             .takeIf { it.isNotEmpty() }
             ?: return emptyList()
 
         // Send and check if `textDocument/definition` is empty for all lsp servers
         val position = getLsp4jPosition(document, wordRange.startOffset)
-        val definitions = lspServers.mapNotNull { lspServer ->
+        val definitions = lspClients.mapNotNull { lspServer ->
             lspServer.sendRequestSync {
                 it.textDocumentService.definition(DefinitionParams(lspServer.getDocumentIdentifier(file), position))
             }
@@ -81,7 +77,7 @@ class FppSymbolDeclarationProvider : PsiSymbolDeclarationProvider {
         }
         if (!isDefinitionName) return emptyList()
 
-        return listOf(FppSymbolDeclaration(element, wordRange, FppReferenceSymbol(lspServers, file, position)))
+        return listOf(FppSymbolDeclaration(element, wordRange, FppReferenceSymbol(lspClients, file, position)))
     }
 }
 
@@ -99,7 +95,7 @@ private class FppSymbolDeclaration(
  * The declared [Symbol] for an FPP definition, also usable as a Find/Show Usages [SearchTarget].
  * @see com.intellij.platform.lsp.impl.features.usages.LspSearchTarget
  */
-class FppReferenceSymbol(val lspServers: Collection<LspServer>, val file: VirtualFile, val position: Position) : Symbol, SearchTarget {
+class FppReferenceSymbol(val lspClients: Collection<LspClient>, val file: VirtualFile, val position: Position) : Symbol, SearchTarget {
     override fun createPointer(): Pointer<FppReferenceSymbol> = Pointer.hardPointer(this)
 
     private val label = "${file.name}:${position.line + 1}:${position.character + 1}"
@@ -133,20 +129,20 @@ class FppUsageSearcher : UsageSearcher {
  */
 private class FppReferencesQuery(private val target: FppReferenceSymbol) : AbstractQuery<Usage>() {
     override fun processResults(consumer: Processor<in Usage>): Boolean {
-        for (lspServer in target.lspServers) {
+        for (lspClient in target.lspClients) {
             val params = ReferenceParams(
-                lspServer.getDocumentIdentifier(target.file),
+                lspClient.getDocumentIdentifier(target.file),
                 target.position,
                 ReferenceContext(true)
             )
-            val locations = lspServer.sendRequestSync(60_000) {
+            val locations = lspClient.sendRequestSync(60_000) {
                 it.textDocumentService.references(params)
             } ?: return true
 
             runReadActionBlocking {
-                val psiManager = PsiManager.getInstance(lspServer.project)
+                val psiManager = PsiManager.getInstance(lspClient.project)
                 for (location in locations) {
-                    val resultFile = lspServer.descriptor.findFileByUri(location.uri) ?: continue
+                    val resultFile = lspClient.descriptor.findFileByUri(location.uri) ?: continue
                     val psiFile = psiManager.findFile(resultFile) ?: continue
                     val range = getRangeInDocument(psiFile.fileDocument, location.range) ?: continue
                     consumer.process(PsiUsage.textUsage(psiFile, range))

@@ -45,8 +45,7 @@ data class DiagramElementsParams(
 )
 
 /**
- * A diagrammable element discovered in a document, used to drive the
- * "Open in Diagram" affordances.
+ * A diagrammable element discovered in a document.
  */
 data class DiagramElement(
     val kind: String,
