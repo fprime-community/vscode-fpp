@@ -125,14 +125,14 @@
                     ".fpp",
                     ".fppi"
                 ],
-                "configuration": "./syntax/language-configuration.json"
+                "configuration": "./syntaxes/language-configuration.json"
             }
         ],
         "grammars": [
             {
                 "language": "fpp",
                 "scopeName": "source.fpp",
-                "path": "./syntax/fpp.tmLanguage.json",
+                "path": "./syntaxes/fpp.tmLanguage.json",
                 "embeddedLanguages": {
                     "meta.embedded.block.cpp": "cpp"
                 }

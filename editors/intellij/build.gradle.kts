@@ -149,7 +149,7 @@ tasks {
         from(layout.projectDirectory.dir("textmate/package.json")) {
             into(pluginName.map { "$it/textmate/" })
         }
-        from(layout.projectDirectory.dir("../code/syntax")) {
+        from(layout.projectDirectory.dir("../code/syntaxes")) {
             into(pluginName.map { "$it/textmate/syntax" })
         }
     }
