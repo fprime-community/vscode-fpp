@@ -145,16 +145,55 @@ kover {
 }
 
 tasks {
+    // Build webview bundle from VS Code.
+    val codeDir = layout.projectDirectory.dir("../code")
+    val webviewDist = codeDir.dir("dist")
+    val isWindows = System.getProperty("os.name").startsWith("Windows", ignoreCase = true)
+    // Resolve `yarn` on PATH (plus common install dirs) so the build works when
+    // Gradle is launched with a minimal PATH (e.g. from an IDE or Homebrew).
+    val yarnName = if (isWindows) "yarn.cmd" else "yarn"
+    val yarn = run {
+        val pathDirs = (System.getenv("PATH") ?: "").split(File.pathSeparator)
+        val extraDirs = listOf("/opt/homebrew/bin", "/usr/local/bin", "/usr/bin")
+        (pathDirs + extraDirs)
+            .map { File(it, yarnName) }
+            .firstOrNull { it.canExecute() }
+            ?.absolutePath
+            ?: yarnName
+    }
+
+    val installWebviewDeps = register<Exec>("installWebviewDeps") {
+        group = "build"
+        description = "Install VSCode webview project dependencies (yarn install)"
+
+        workingDir = codeDir.asFile
+        commandLine(yarn, "install", "--frozen-lockfile")
+        inputs.file(codeDir.file("package.json"))
+        inputs.file(codeDir.file("yarn.lock"))
+        outputs.dir(codeDir.dir("node_modules"))
+    }
+
+    val buildWebview = register<Exec>("buildWebview") {
+        group = "build"
+        description = "Build the VSCode state-machine webview bundle (yarn build)"
+
+        dependsOn(installWebviewDeps)
+        workingDir = codeDir.asFile
+        commandLine(yarn, "build")
+        inputs.dir(codeDir.dir("src"))
+        inputs.file(codeDir.file("webpack.config.js"))
+        inputs.file(codeDir.file("package.json"))
+        outputs.dir(webviewDist)
+    }
+
     // Vendor the state-machine webview bundle + its Mermaid chunk siblings
-    // (`*sm-webview.js`) from the VSCode build into plugin resources. Skips when
-    // `../code/dist` is absent (no-Node CI uses the committed copies). `Sync`
-    // drops stale chunks a rebuild no longer emits.
-    val webviewDist = layout.projectDirectory.dir("../code/dist")
+    // (`*sm-webview.js`) into plugin resources. `Sync` drops stale chunks a
+    // rebuild no longer emits.
     register<Sync>("vendorWebview") {
         group = "build"
         description = "Vendor the VSCode state-machine webview bundle into plugin resources"
 
-        onlyIf { webviewDist.asFile.exists() }
+        dependsOn(buildWebview)
         from(webviewDist) {
             include("*sm-webview.js")
             exclude("*.map")
