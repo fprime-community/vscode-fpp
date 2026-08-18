@@ -63,6 +63,10 @@
                 forClass="com.intellij.find.usages.api.UsageSearchParameters"
                 implementationClass="com.github.fprime_community.fpp_tools.navigation.FppUsageSearcher"/>
 
+        <!-- Workaround CLion go to definition bug. See FppImplicitReferenceProvider. -->
+        <psi.implicitReferenceProvider
+                implementation="com.github.fprime_community.fpp_tools.FppImplicitReferenceProvider"/>
+
         <applicationService
                 serviceImplementation="com.github.fprime_community.fpp_tools.settings.FppSettings"/>
         <projectConfigurable
