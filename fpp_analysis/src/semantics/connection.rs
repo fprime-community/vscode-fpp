@@ -9,7 +9,7 @@ use fpp_core::{Span, Spanned};
 use std::cmp::Ordering;
 
 /// Compare two spans deterministically by (file path, start byte position),
-/// mirroring Scala's `Location` ordering for connection sorting.
+/// used for connection sorting.
 pub fn cmp_span(a: &Span, b: &Span) -> Ordering {
     let fa = format!("{}", a.file());
     let fb = format!("{}", b.file());

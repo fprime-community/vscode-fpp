@@ -262,8 +262,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
             }
             ExprKind::ArraySubscript { e1, e2 } => {
                 // Resolve the element type of e1 (and report "not an array type"
-                // on e1) before checking that e2 is numeric, matching Scala's
-                // for-comprehension ordering in exprArraySubscriptNode.
+                // on e1) before checking that e2 is numeric.
                 let arr_ty = match a.type_map.get(&e1.node_id) {
                     None => return ControlFlow::Continue(()),
                     Some(arr_ty) => Type::underlying_type(arr_ty),
@@ -322,8 +321,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
 
                     match op {
                         // Addition allows numeric or string operands (string
-                        // concatenation). The check is on the common type,
-                        // matching the Scala compiler.
+                        // concatenation). The check is on the common type.
                         fpp_ast::Binop::Add => {
                             if !(ty.is_convertible_to_numeric()
                                 || matches!(ty.deref(), Type::String(_)))
@@ -340,8 +338,8 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                         }
                         _ => {
                             // The other operations check the common type once at
-                            // the binop node (Scala's convertToNumeric): the type
-                            // is fine if it is numeric or convertible to Integer.
+                            // the binop node: the type is fine if it is numeric
+                            // or convertible to Integer.
                             let numeric = ty.is_numeric()
                                 || Type::convert(&ty, &Arc::new(Type::Integer)).is_ok();
                             if !numeric {

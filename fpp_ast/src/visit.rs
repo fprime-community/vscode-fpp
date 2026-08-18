@@ -156,6 +156,7 @@ pub trait Visitor<'ast>: Sized {
         (DefState, visit_def_state),
         (DefStateMachine, visit_def_state_machine),
         (DefStruct, visit_def_struct),
+        (DefSystem, visit_def_system),
         (DefTopology, visit_def_topology),
         /* Specifiers */
         (SpecCommand, visit_spec_command),
@@ -260,6 +261,7 @@ pub trait MutVisitor: Sized {
         (DefState, visit_def_state),
         (DefStateMachine, visit_def_state_machine),
         (DefStruct, visit_def_struct),
+        (DefSystem, visit_def_system),
         (DefTopology, visit_def_topology),
         /* Specifiers */
         (SpecCommand, visit_spec_command),

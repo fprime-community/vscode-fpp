@@ -1,5 +1,10 @@
 @ Test topology
 module TestTopology {
+  @ Deployment topology
+  deployment    topology   DeploymentTopology   {
+    instance   compA
+  }
+
   topology    RefTopology   {
     @ Instance imports and definitions
 import    SubModule.SubTopology

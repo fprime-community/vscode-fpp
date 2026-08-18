@@ -41,7 +41,7 @@ pub enum PortInstanceType {
 }
 
 impl PortInstanceType {
-    /// Show a type option, matching Scala's `PortInstance.Type.show`.
+    /// Show a type option.
     pub fn show(ty: &Option<PortInstanceType>) -> String {
         match ty {
             Some(PortInstanceType::DefPort(symbol)) => symbol.name().data.clone(),

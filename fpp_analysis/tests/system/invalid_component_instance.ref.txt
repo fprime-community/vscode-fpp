@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/system/invalid_component_instance.fpp:3:11
+  |
+3 | system S: c
+  |           ^ invalid use of symbol c: not a topology symbol
+  |
+ ::: [ local path prefix ]/system/invalid_component_instance.fpp:2:1
+  |
+2 | instance c: C base id 0x100
+  | --------------------------- c defined here
+

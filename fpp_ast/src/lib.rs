@@ -319,6 +319,7 @@ pub enum ModuleMember {
     DefPort(DefPort),
     DefStateMachine(DefStateMachine),
     DefStruct(DefStruct),
+    DefSystem(DefSystem),
     DefTopology(DefTopology),
     SpecInclude(SpecInclude),
     SpecLoc(SpecLoc),
@@ -331,6 +332,7 @@ pub enum SpecLocKind {
     Constant,
     Port,
     StateMachine,
+    System,
     Type,
     Interface,
 }

@@ -6,8 +6,8 @@ fn qualified_target() {
 }
 
 // Multiple undefined uses in a single state machine: with collect-and-continue
-// (no longer short-circuiting at the first error like Scala), every undefined
-// signal/action use in the same SM is reported, not just the first.
+// (no short-circuiting at the first error), every undefined signal/action use
+// in the same SM is reported, not just the first.
 #[test]
 fn multiple_uses() {
     run_test("state_machine/undef/multiple_uses")

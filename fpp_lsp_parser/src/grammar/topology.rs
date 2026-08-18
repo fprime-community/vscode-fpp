@@ -1,8 +1,9 @@
 use super::*;
 
 pub(super) fn def_topology(p: &mut Parser) {
-    assert!(p.at(TOPOLOGY_KW));
+    assert!(p.at(TOPOLOGY_KW) || p.at(DEPLOYMENT_KW));
     let m = p.start();
+    p.eat(DEPLOYMENT_KW);
     p.bump(TOPOLOGY_KW);
     if !name(p) {
         m.abandon(p);
@@ -35,6 +36,21 @@ pub(super) fn def_topology(p: &mut Parser) {
     }
 
     m.complete(p, DEF_TOPOLOGY);
+}
+
+pub(super) fn def_system(p: &mut Parser) {
+    assert!(p.at(SYSTEM_KW));
+    let m = p.start();
+    p.bump(SYSTEM_KW);
+    if !name(p) {
+        m.abandon(p);
+        return;
+    }
+
+    p.expect(COLON);
+    qual_ident(p);
+
+    m.complete(p, DEF_SYSTEM);
 }
 
 pub(super) fn topology_member(p: &mut Parser) {

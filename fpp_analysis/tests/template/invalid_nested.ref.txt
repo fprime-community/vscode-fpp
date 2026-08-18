@@ -1,0 +1,8 @@
+ --> [ local path prefix ]/template/invalid_nested.fpp:1:8
+  |
+1 | module template Outer(constant c1: U32) {
+  |        ^^^^^^^^ syntax error: unexpected token
+  |
+  = note: expected {
+  = note: got identifier
+

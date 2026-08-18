@@ -29,6 +29,7 @@ pub enum Node<'a> {
     DefState(&'a DefState),
     DefStateMachine(&'a DefStateMachine),
     DefStruct(&'a DefStruct),
+    DefSystem(&'a DefSystem),
     DefTopology(&'a DefTopology),
     /* Specifiers */
     SpecCommand(&'a SpecCommand),

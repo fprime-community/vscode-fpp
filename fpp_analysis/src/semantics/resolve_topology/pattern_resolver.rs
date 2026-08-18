@@ -7,7 +7,7 @@ use crate::semantics::{
 use fpp_ast::{ConnectionPatternKind, SpecialPortInstanceKind};
 use fpp_core::Span;
 
-/// The human-readable name of a special port kind, matching Scala `toString`.
+/// The human-readable name of a special port kind.
 fn special_kind_str(kind: &SpecialPortInstanceKind) -> &'static str {
     match kind {
         SpecialPortInstanceKind::CommandRecv => "command recv",

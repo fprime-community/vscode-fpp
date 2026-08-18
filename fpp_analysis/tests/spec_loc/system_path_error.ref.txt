@@ -1,0 +1,10 @@
+ --> [ local path prefix ]/spec_loc/system_path_error.fpp:1:20
+  |
+1 | locate system S at "incorrect.fpp"
+  |                    ^^^^^^^^^^^^^^^ incorrect location path [ local path prefix ]/spec_loc/incorrect.fpp
+  |
+ ::: [ local path prefix ]/spec_loc/system_path_error.fpp:4:1
+  |
+4 | system S: T
+  | ----------- actual location is here
+

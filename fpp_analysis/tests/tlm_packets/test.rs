@@ -1,6 +1,11 @@
 use crate::run_test;
 
 #[test]
+fn not_deployment_topology() {
+    run_test("tlm_packets/not_deployment_topology")
+}
+
+#[test]
 fn instance_not_defined() {
     run_test("tlm_packets/instance_not_defined")
 }

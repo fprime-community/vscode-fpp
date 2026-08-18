@@ -39,6 +39,7 @@ pub enum SyntaxKind {
     CONTAINER_KW,
     CPU_KW,
     DEFAULT_KW,
+    DEPLOYMENT_KW,
     DIAGNOSTIC_KW,
     DICTIONARY_KW,
     DO_KW,
@@ -118,6 +119,7 @@ pub enum SyntaxKind {
     STRING_KW,
     STRUCT_KW,
     SYNC_KW,
+    SYSTEM_KW,
     TELEMETRY_KW,
     TEXT_KW,
     THROTTLE_KW,
@@ -177,6 +179,7 @@ pub enum SyntaxKind {
     DEF_MODULE,
     DEF_PORT,
     DEF_STRUCT,
+    DEF_SYSTEM,
     DEF_TOPOLOGY,
 
     DEF_ACTION,
@@ -413,6 +416,7 @@ impl SyntaxKind {
                 | CONTAINER_KW
                 | CPU_KW
                 | DEFAULT_KW
+                | DEPLOYMENT_KW
                 | DIAGNOSTIC_KW
                 | DICTIONARY_KW
                 | DO_KW
@@ -492,6 +496,7 @@ impl SyntaxKind {
                 | STRING_KW
                 | STRUCT_KW
                 | SYNC_KW
+                | SYSTEM_KW
                 | TELEMETRY_KW
                 | TEXT_KW
                 | THROTTLE_KW

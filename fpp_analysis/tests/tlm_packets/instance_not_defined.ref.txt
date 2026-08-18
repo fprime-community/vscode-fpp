@@ -1,5 +1,5 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_packets/instance_not_defined.fpp:6.7
-      u.T
-      ^
-error: undefined symbol u
+ --> [ local path prefix ]/tlm_packets/instance_not_defined.fpp:6:7
+  |
+6 |       u.T
+  |       ^ cannot find component instance or topology `u` in scope
+

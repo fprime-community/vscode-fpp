@@ -69,7 +69,7 @@ impl<'ast> FinalizeTypeDefs<'ast> {
             TypeNameKind::String(size) => match self.expr_as_integer_opt(a, size) {
                 None => {}
                 Some(size_v) => {
-                    // TODO(tumbar) Should we disallow 0 size strings to be inline with Scala FPP
+                    // TODO(tumbar) Should we disallow 0 size strings?
                     //    See https://github.com/nasa/fpp/issues/878
                     if size_v < 0 {
                         SemanticError::InvalidIntValue {

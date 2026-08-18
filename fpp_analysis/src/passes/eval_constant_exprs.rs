@@ -362,9 +362,7 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
             },
             ExprKind::SizeOf(type_name) => {
                 // Finalize the referenced type on demand, then compute its
-                // serialized size (mirrors Scala's exprSizeOfNode:
-                // FinalizeType.finalizeIfNeeded + getFinalizedType +
-                // Type.SerializedSize).
+                // serialized size.
                 FinalizeTypeDefs::new().ty(a, type_name);
                 if let Some(ty) = a.type_map.get(&type_name.node_id).cloned() {
                     let finalized = match ty.def_node_id() {

@@ -36,6 +36,7 @@ pub enum Symbol {
     Port(Arc<fpp_ast::DefPort>),
     StateMachine(Arc<fpp_ast::DefStateMachine>),
     Struct(Arc<fpp_ast::DefStruct>),
+    System(Arc<fpp_ast::DefSystem>),
     Topology(Arc<fpp_ast::DefTopology>),
 }
 
@@ -68,6 +69,7 @@ impl SymbolInterface for Symbol {
             Symbol::Module(node) => node.node_id,
             Symbol::StateMachine(node) => node.node_id,
             Symbol::Struct(node) => node.node_id,
+            Symbol::System(node) => node.node_id,
             Symbol::Topology(node) => node.node_id,
             Symbol::Port(node) => node.node_id,
         }
@@ -87,6 +89,7 @@ impl SymbolInterface for Symbol {
             Symbol::Module(def) => &def.name,
             Symbol::StateMachine(def) => &def.name,
             Symbol::Struct(def) => &def.name,
+            Symbol::System(def) => &def.name,
             Symbol::Topology(def) => &def.name,
             Symbol::Port(def) => &def.name,
         }

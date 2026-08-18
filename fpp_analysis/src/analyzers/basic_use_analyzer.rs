@@ -195,6 +195,10 @@ impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Analyzer<'ast, V>
 
                 t.walk(a, visitor)
             }
+            Node::DefSystem(s) => {
+                visitor.interface_instance_use(a, &s.topology, (&s.topology).into())?;
+                s.walk(a, visitor)
+            }
             Node::Expr(e) => match &e.kind {
                 ExprKind::Dot { e: e1, .. } => {
                     match self.expr_to_qualified_name(e) {

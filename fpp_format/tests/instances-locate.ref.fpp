@@ -26,4 +26,8 @@ module Deployment {
   locate type MyType at "types/MyType.fpp"
   locate interface MyInterface at "interfaces/MyInterface.fpp"
   locate state machine MySM at "sm/MySM.fpp"
+  locate system MySystem at "systems/MySystem.fpp"
+
+  @ System definition
+  system MySystem: NS.MyTopology
 }

@@ -4,9 +4,9 @@ mod errors;
 use crate::passes::{
     BuildSpecLocMap, CheckComponentDefs, CheckComponentInstanceDefs, CheckDictionaryDefs,
     CheckExprTypes, CheckFrameworkConstantValues, CheckFrameworkDefs, CheckInterfaceDefs,
-    CheckPortDefs, CheckSpecLocs, CheckStateMachineDefs, CheckTopologyDefs, CheckTopologyInstances,
-    CheckTypeUses, CheckUseDefCycles, CheckUses, ConstructImpliedUseMap, EnterSymbols,
-    EvalConstantExprs, EvalImpliedEnumConsts, FinalizeTypeDefs,
+    CheckPortDefs, CheckSpecLocs, CheckStateMachineDefs, CheckSystemDefs, CheckTopologyDefs,
+    CheckTopologyInstances, CheckTypeUses, CheckUseDefCycles, CheckUses, ConstructImpliedUseMap,
+    EnterSymbols, EvalConstantExprs, EvalImpliedEnumConsts, FinalizeTypeDefs,
 };
 pub use analysis::*;
 use fpp_ast::{MutVisitor, Visitor};
@@ -94,6 +94,9 @@ pub mod passes {
 
     mod build_spec_loc_map;
     pub use build_spec_loc_map::*;
+
+    mod check_system_defs;
+    pub use check_system_defs::*;
 }
 
 pub mod transform {
@@ -126,6 +129,9 @@ pub mod semantics {
 
     mod topology;
     pub use topology::*;
+
+    mod system;
+    pub use system::*;
 
     pub(crate) mod resolve_topology;
 
@@ -167,41 +173,37 @@ pub fn resolve_includes<Reader: FileReader>(
 
 /// Check the semantics of a list of translation units.
 ///
-/// Mirrors Scala `CheckSemantics.tuList`. The pass ORDER below matches Scala's
-/// `tuList` exactly for every pass that is present. The following Scala passes
-/// are intentionally absent (see docs/analysis-work-to-go.md):
-///   - `ResolveTemplates` (tuList #2): the template subsystem is not ported.
-///   - `FinalizeConstantExprs` (tuList #12): folded into `CheckExprTypes` /
-///     `EvalConstantExprs` in the Rust design.
-///   - `CheckTemplateInterfaceArgs` (tuList #22): template subsystem.
-///   - `ConstructDictionaryMap` (tuList #26): codegen-support only, deferred.
+/// The passes run in the order below. A few passes present in the reference
+/// compiler are intentionally absent (see docs/analysis-work-to-go.md):
+///   - template resolution and template interface-arg checking: the template
+///     subsystem is not ported.
+///   - constant-expr finalization: folded into `CheckExprTypes` /
+///     `EvalConstantExprs` in this design.
+///   - dictionary-map construction: codegen-support only, deferred.
 pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> ControlFlow<()> {
-    EnterSymbols.visit_trans_units(a, ast.iter().cloned())?; // tuList #1
-    // tuList #2 ResolveTemplates: not ported
-    ConstructImpliedUseMap.visit_trans_units(a, ast.iter().cloned())?; // tuList #3
-    CheckUses::new().visit_trans_units(a, ast.iter().cloned())?; // tuList #4
-    CheckUseDefCycles::new().visit_trans_units(a, ast.iter().cloned())?; // tuList #5
-    CheckTypeUses::new().visit_trans_units(a, ast.iter().cloned())?; // tuList #6
-    CheckExprTypes::new().visit_trans_units(a, ast.iter().cloned())?; // tuList #7
-    CheckFrameworkDefs.visit_trans_units(a, ast.iter().cloned())?; // tuList #8
-    EvalImpliedEnumConsts::new().visit_trans_units(a, ast.iter().cloned())?; // tuList #9
-    EvalConstantExprs::new().visit_trans_units(a, ast.iter().cloned())?; // tuList #10
-    FinalizeTypeDefs::new().visit_trans_units(a, ast.iter().cloned())?; // tuList #11
-    // tuList #12 FinalizeConstantExprs: folded into CheckExprTypes/EvalConstantExprs
-    CheckFrameworkConstantValues.check(a); // tuList #13
-    CheckPortDefs.visit_trans_units(a, ast.iter().cloned())?; // tuList #14
-    CheckInterfaceDefs.visit_trans_units(a, ast.iter().cloned())?; // tuList #15
-    CheckComponentDefs.visit_trans_units(a, ast.iter().cloned())?; // tuList #16
-    CheckComponentInstanceDefs.visit_trans_units(a, ast.iter().cloned())?; // tuList #17
-    CheckComponentInstanceDefs::check_id_ranges(a); // tuList #18
-    CheckStateMachineDefs.visit_trans_units(a, ast.iter().cloned())?; // tuList #19
-    CheckTopologyInstances.visit_trans_units(a, ast.iter().cloned())?; // tuList #20
-    CheckTopologyDefs.resolve_all(a); // tuList #21
-    // tuList #22 CheckTemplateInterfaceArgs: template subsystem, not ported
-    BuildSpecLocMap.visit_trans_units(a, ast.iter().cloned())?; // tuList #23
-    CheckSpecLocs.visit_trans_units(a, ast.iter().cloned())?; // tuList #24
-    CheckDictionaryDefs.visit_trans_units(a, ast.iter().cloned())?; // tuList #25
-    // tuList #26 ConstructDictionaryMap: codegen-support only, deferred
+    EnterSymbols.visit_trans_units(a, ast.iter().cloned())?;
+    ConstructImpliedUseMap.visit_trans_units(a, ast.iter().cloned())?;
+    CheckUses::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckUseDefCycles::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckTypeUses::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckExprTypes::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckFrameworkDefs.visit_trans_units(a, ast.iter().cloned())?;
+    EvalImpliedEnumConsts::new().visit_trans_units(a, ast.iter().cloned())?;
+    EvalConstantExprs::new().visit_trans_units(a, ast.iter().cloned())?;
+    FinalizeTypeDefs::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckFrameworkConstantValues.check(a);
+    CheckPortDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckInterfaceDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckComponentDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckComponentInstanceDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckComponentInstanceDefs::check_id_ranges(a);
+    CheckStateMachineDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckTopologyInstances.visit_trans_units(a, ast.iter().cloned())?;
+    CheckTopologyDefs.resolve_all(a);
+    BuildSpecLocMap.visit_trans_units(a, ast.iter().cloned())?;
+    CheckSpecLocs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckDictionaryDefs.visit_trans_units(a, ast.iter().cloned())?;
+    CheckSystemDefs.visit_trans_units(a, ast.iter().cloned())?;
 
     ControlFlow::Continue(())
 }

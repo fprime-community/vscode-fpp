@@ -1,9 +1,15 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_packets/duplicate_packet_name.fpp:11.5
-    packet P group 1 {
-    ^
-error: duplicate packet name P
-previous occurrence is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/tlm_packets/duplicate_packet_name.fpp:7.5
-    packet P group 0 {
-    ^
+ --> [ local path prefix ]/tlm_packets/duplicate_packet_name.fpp:3:12
+  |
+3 |   instance c1
+  |            ^^ cannot find component instance or topology `c1` in scope
+
+ --> [ local path prefix ]/tlm_packets/duplicate_packet_name.fpp:8:7
+  |
+8 |       c1.T
+  |       ^^ cannot find component instance or topology `c1` in scope
+
+  --> [ local path prefix ]/tlm_packets/duplicate_packet_name.fpp:12:7
+   |
+12 |       c1.T
+   |       ^^ cannot find component instance or topology `c1` in scope
+

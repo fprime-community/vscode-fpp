@@ -1,0 +1,5 @@
+ --> [ local path prefix ]/system/undefined.fpp:1:11
+  |
+1 | system S: T
+  |           ^ cannot find component instance or topology `T` in scope
+

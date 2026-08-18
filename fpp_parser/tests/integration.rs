@@ -164,6 +164,11 @@ fn syntax_kwd_names() {
 }
 
 #[test]
+fn system() {
+    run_test("system")
+}
+
+#[test]
 fn topology_ports() {
     run_test("topology-ports")
 }

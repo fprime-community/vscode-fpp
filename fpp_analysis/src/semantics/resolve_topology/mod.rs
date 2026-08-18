@@ -1,5 +1,4 @@
-//! Resolve a topology definition, mirroring the Scala compiler's
-//! `ResolveTopology` package.
+//! Resolve a topology definition.
 //!
 //! The resolution proceeds in the following stages:
 //!
