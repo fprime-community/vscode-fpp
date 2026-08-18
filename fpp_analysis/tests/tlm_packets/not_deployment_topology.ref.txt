@@ -1,0 +1,9 @@
+ --> [ local path prefix ]/tlm_packets/not_deployment_topology.fpp:2:3
+  |
+2 | /   telemetry packets P {
+3 | |
+4 | |   }
+  | |___^ invalid telemetry packet set P
+  |
+  = note: only a deployment topology may specify a telemetry packet set
+

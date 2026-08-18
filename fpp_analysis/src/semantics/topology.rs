@@ -4,7 +4,7 @@ use crate::semantics::{
     PortInterface, Symbol, SymbolInterface,
 };
 use fpp_ast::{self as ast, AstNode, ConnectionPatternKind, QualIdent};
-use fpp_core::{Node, Span};
+use fpp_core::{Node, Span, Spanned};
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -151,7 +151,21 @@ impl Topology {
     pub fn add_instance_symbol(&mut self, symbol: Symbol, loc: Span) -> SemanticResult {
         let map = match &symbol {
             Symbol::ComponentInstance(_) => &mut self.direct_component_instances,
-            Symbol::Topology(_) => &mut self.direct_topologies,
+            Symbol::Topology(def) => {
+                // A deployment topology may not be imported into another topology.
+                if def.is_deployment {
+                    return Err(SemanticError::InvalidSymbol {
+                        symbol_name: symbol.name().data.clone(),
+                        msg: format!(
+                            "invalid use of symbol {}: use of deployment topology is not allowed here",
+                            symbol.name().data
+                        ),
+                        loc,
+                        def_loc: symbol.node().span(),
+                    });
+                }
+                &mut self.direct_topologies
+            }
             // Other symbol kinds are rejected earlier during use resolution.
             _ => return Ok(()),
         };
@@ -189,7 +203,7 @@ impl Topology {
         Ok(())
     }
 
-    /// Resolve a top port into the port interface, mirroring Scala `addPort`.
+    /// Resolve a top port into the port interface.
     pub fn add_port(
         &mut self,
         name: &str,
@@ -378,7 +392,7 @@ impl Topology {
     }
 }
 
-/// The name of a connection pattern kind, matching Scala's `toString`.
+/// The name of a connection pattern kind.
 pub fn pattern_kind_str(kind: &ConnectionPatternKind) -> String {
     match kind {
         ConnectionPatternKind::Command => "command",

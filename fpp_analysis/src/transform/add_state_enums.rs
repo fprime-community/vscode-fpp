@@ -7,8 +7,8 @@ use fpp_core::{Annotated, Node, Spanned};
 
 /// Add state enums to state machines.
 ///
-/// This mirrors the Scala `transform.AddStateEnums` transform, which runs after
-/// include resolution and before semantic analysis. For each internal state
+/// This transform runs after include resolution and before semantic analysis.
+/// For each internal state
 /// machine it prepends a synthesized `enum State { __FPRIME_UNINITIALIZED, ... }`
 /// with one constant per leaf state (named by its qualified path) and an integer
 /// representation type sized to the number of constants.
@@ -70,10 +70,10 @@ fn add_enum_to_state_machine(sm: &mut DefStateMachine) {
             collect_leaf_states(state, &mut prefix, &mut collected);
         }
     }
-    // Deduplicate identical (annotation, name) constants, matching Scala's use
-    // of a Set. Two leaf states with the same qualified name collapse to a
-    // single enum constant, so a duplicate-state error is not masked by a
-    // spurious duplicate-enum-constant error.
+    // Deduplicate identical (annotation, name) constants. Two leaf states with
+    // the same qualified name collapse to a single enum constant, so a
+    // duplicate-state error is not masked by a spurious
+    // duplicate-enum-constant error.
     let mut leaf_states: Vec<LeafState> = Vec::new();
     for leaf in collected {
         if !leaf_states

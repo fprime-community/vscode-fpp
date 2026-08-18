@@ -44,7 +44,8 @@ pub(super) fn module_member(p: &mut Parser) {
         MODULE_KW => def_module(p),
         PORT_KW => def_port(p),
         STATE_KW => state_machine::def_state_machine(p),
-        TOPOLOGY_KW => topology::def_topology(p),
+        SYSTEM_KW => topology::def_system(p),
+        TOPOLOGY_KW | DEPLOYMENT_KW => topology::def_topology(p),
         INCLUDE_KW => spec_include(p),
         LOCATE_KW => spec_loc(p),
 
@@ -59,7 +60,7 @@ fn spec_loc(p: &mut Parser) {
     let m = p.start();
     p.bump(LOCATE_KW);
     match p.current() {
-        COMPONENT_KW | CONSTANT_KW | INSTANCE_KW | PORT_KW | TYPE_KW | INTERFACE_KW => {
+        COMPONENT_KW | CONSTANT_KW | INSTANCE_KW | PORT_KW | TYPE_KW | INTERFACE_KW | SYSTEM_KW => {
             p.bump_any();
         }
         STATE_KW => {

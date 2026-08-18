@@ -57,12 +57,11 @@ impl<'ast> CheckUseDefCycles<'ast> {
             symbol: symbol.clone(),
         };
 
-        // Scala threads the extended matching list (`m :: list`) into the visited
-        // subtree but yields the *original* `a`, so the entry is scoped to the
-        // current use-def path. With `&mut Analysis` we emulate that by pushing
-        // `m`, recursing, then truncating back to the saved length on the way
-        // out — otherwise the list accretes entries from every resolved use in
-        // the translation unit and pollutes the `UseDefCycle` diagnostic.
+        // The extended matching list must be scoped to the current use-def
+        // path: push `m`, recurse into the visited subtree, then truncate back
+        // to the saved length on the way out — otherwise the list accretes
+        // entries from every resolved use in the translation unit and pollutes
+        // the `UseDefCycle` diagnostic.
         let len = a.use_def_matching_list.len();
         a.use_def_matching_list.push(m);
         let result = self.visit_def_pre(a, symbol);

@@ -4,9 +4,19 @@ use crate::*;
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefTopology {
+    #[visitable(ignore)]
+    pub is_deployment: bool,
     pub name: Name,
     pub members: Vec<TopologyMember>,
     pub implements: Vec<QualIdent>,
+}
+
+/** System definition */
+#[ast]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
+pub struct DefSystem {
+    pub name: Name,
+    pub topology: QualIdent,
 }
 
 #[ast]

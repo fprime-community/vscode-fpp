@@ -59,6 +59,8 @@ pub struct Analysis {
     pub partial_topology_map: HashMap<Symbol, crate::semantics::Topology>,
     /** The mapping from topology symbols to their fully resolved topologies. */
     pub topology_map: HashMap<Symbol, crate::semantics::Topology>,
+    /** The mapping from system symbols to their resolved systems. */
+    pub system_map: HashMap<Symbol, crate::semantics::FppSystem>,
     /** The mapping from (location specifier kind, qualified name) to the
      *  location specifier that named it. */
     pub location_specifier_map: HashMap<(fpp_ast::SpecLocKind, String), SpecLocEntry>,
@@ -131,6 +133,7 @@ impl Analysis {
             topology: None,
             partial_topology_map: Default::default(),
             topology_map: Default::default(),
+            system_map: Default::default(),
             location_specifier_map: Default::default(),
             scope_name_list: Vec::new(),
             state_machine_map: Default::default(),
@@ -186,9 +189,8 @@ impl Analysis {
     }
 
     /// Gets an int value from an AST node, erroring if it is out of the i32
-    /// range. Mirrors Scala's `Analysis.getIntValue`, whose `phase`/id values
-    /// are `Int`-typed; an FPP `BigInt` that overflows `Int` is rejected with
-    /// "value out of range".
+    /// range. `phase`/id values are `Int`-typed; an FPP arbitrary-precision
+    /// integer that overflows `Int` is rejected with "value out of range".
     pub fn get_int_value_checked(&self, node: fpp_core::Node, loc: Span) -> SemanticResult<i128> {
         let v = self.get_int_value(node).unwrap_or(0);
         if v < i32::MIN as i128 || v > i32::MAX as i128 {
@@ -348,6 +350,26 @@ impl Analysis {
 
     pub fn get_symbol<N: fpp_ast::AstNode>(&self, node: &N) -> Symbol {
         self.symbol_map.get(&node.id()).unwrap().clone()
+    }
+
+    /// Resolve a use (by node ID) to a topology symbol. Returns `Ok(None)` for
+    /// an unresolved use (already reported by `CheckUses`) and an error if the
+    /// use resolves to a non-topology symbol.
+    pub fn get_topology_symbol(&self, id: fpp_core::Node) -> SemanticResult<Option<Symbol>> {
+        match self.use_def_map.get(&id) {
+            Some(symbol @ Symbol::Topology(_)) => Ok(Some(symbol.clone())),
+            Some(symbol) => Err(SemanticError::InvalidSymbol {
+                symbol_name: symbol.name().data.clone(),
+                msg: format!(
+                    "invalid use of symbol {}: not a topology symbol",
+                    symbol.name().data
+                ),
+                loc: id.span(),
+                def_loc: symbol.node().span(),
+            }),
+            // Unresolved use: CheckUses already reported the error.
+            None => Ok(None),
+        }
     }
 
     pub fn get_scope(&self, symbol: &Option<Symbol>) -> &Scope {

@@ -141,8 +141,7 @@ impl Type {
             Type::AbsType(_) => false,
             Type::AliasType(alias) => alias.alias_type.is_displayable(),
             // A named array is displayable iff its element type is; anonymous
-            // aggregates inherit the base `false` (Scala: AnonArray/AnonStruct do
-            // not override isDisplayable).
+            // aggregates (AnonArray/AnonStruct) inherit the base `false`.
             Type::Array(arr) => arr.anon_array.elt_type.is_displayable(),
             Type::AnonArray(_) => false,
             Type::Enum(_) => true,
@@ -187,8 +186,8 @@ impl Type {
         }
     }
 
-    /// Compute the serialized size of a type, mirroring Scala's
-    /// `Type.SerializedSize`. Unlike [`Type::primitive_serialized_size`], this
+    /// Compute the serialized size of a type. Unlike
+    /// [`Type::primitive_serialized_size`], this
     /// resolves string, array, and struct sizes using the F Prime framework
     /// definitions (`FwSizeStoreType`, `FW_FIXED_LENGTH_STRING_SIZE`) recorded by
     /// `CheckFrameworkDefs`. Requires the type to be finalized (array/string
@@ -880,9 +879,8 @@ mod tests {
     }
 
     /// Regression for the `common_type` enum arm (fidelity bug #1): the enum
-    /// case must recurse on `(repType, t2)`, not `(repType, t1)`, so the *other*
-    /// operand is not dropped. `enum + F64` must widen to `F64`, matching Scala's
-    /// `commonType(repType, t2)`.
+    /// case must recurse on `(rep_type, t2)`, not `(rep_type, t1)`, so the
+    /// *other* operand is not dropped. `enum + F64` must widen to `F64`.
     #[test]
     fn common_type_enum_and_float() {
         // Build a minimal enum type (needs a node span, hence a context).
@@ -919,8 +917,8 @@ mod tests {
     }
 
     /// Regression for `identical` (fidelity bug #6): two equal fixed-size strings
-    /// are NOT identical (Scala's `areIdentical` has no `String` case), so their
-    /// common type is the unsized `String(None)`.
+    /// are NOT identical (there is no `String` case in the identity check), so
+    /// their common type is the unsized `String(None)`.
     #[test]
     fn identical_strings_are_not_identical() {
         assert!(!Type::identical(
@@ -935,8 +933,8 @@ mod tests {
     }
 
     /// Regression for `is_displayable` (fidelity bug #7): anonymous aggregates
-    /// inherit the base `false` even when their elements are displayable (Scala's
-    /// `AnonArray`/`AnonStruct` do not override `isDisplayable`).
+    /// (`AnonArray`/`AnonStruct`) inherit the base `false` even when their
+    /// elements are displayable.
     #[test]
     fn anon_aggregates_are_not_displayable() {
         assert!(

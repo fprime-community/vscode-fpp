@@ -5,8 +5,8 @@ use std::ops::ControlFlow;
 
 /// Construct the implied use map.
 ///
-/// Mirrors Scala's `ConstructImpliedUseMap` (string case). A use of a string
-/// type implies a use of the framework definitions that back it:
+/// Handles the string case: a use of a string type implies a use of the
+/// framework definitions that back it:
 ///
 /// - Every string type implies a use of the type `FwSizeStoreType`.
 /// - A string type with default size additionally implies a use of the

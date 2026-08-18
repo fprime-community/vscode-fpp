@@ -1,0 +1,274 @@
+TransUnit(
+    [
+        DefModule {
+            name: Name {
+                data: "M",
+                node_id: Span {
+                    start: [ local path prefix ]/system.fpp:1:8,
+                    end: [ local path prefix ]/system.fpp:1:9,
+                },
+            },
+            members: [
+                DefModule {
+                    name: Name {
+                        data: "M1",
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:2:10,
+                            end: [ local path prefix ]/system.fpp:2:12,
+                        },
+                    },
+                    members: [
+                        DefModule {
+                            name: Name {
+                                data: "M2",
+                                node_id: Span {
+                                    start: [ local path prefix ]/system.fpp:3:12,
+                                    end: [ local path prefix ]/system.fpp:3:14,
+                                },
+                            },
+                            members: [
+                                DefTopology {
+                                    is_deployment: true,
+                                    name: Name {
+                                        data: "T",
+                                        node_id: Span {
+                                            start: [ local path prefix ]/system.fpp:4:27,
+                                            end: [ local path prefix ]/system.fpp:4:28,
+                                        },
+                                    },
+                                    members: [],
+                                    implements: [],
+                                    node_id: Span {
+                                        start: [ local path prefix ]/system.fpp:4:7,
+                                        end: [ local path prefix ]/system.fpp:4:31,
+                                    },
+                                },
+                            ],
+                            node_id: Span {
+                                start: [ local path prefix ]/system.fpp:3:5,
+                                end: [ local path prefix ]/system.fpp:5:6,
+                            },
+                        },
+                        DefTopology {
+                            is_deployment: true,
+                            name: Name {
+                                data: "T",
+                                node_id: Span {
+                                    start: [ local path prefix ]/system.fpp:6:25,
+                                    end: [ local path prefix ]/system.fpp:6:26,
+                                },
+                            },
+                            members: [],
+                            implements: [],
+                            node_id: Span {
+                                start: [ local path prefix ]/system.fpp:6:5,
+                                end: [ local path prefix ]/system.fpp:6:29,
+                            },
+                        },
+                    ],
+                    node_id: Span {
+                        start: [ local path prefix ]/system.fpp:2:3,
+                        end: [ local path prefix ]/system.fpp:7:4,
+                    },
+                },
+                DefTopology {
+                    is_deployment: true,
+                    name: Name {
+                        data: "T",
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:8:23,
+                            end: [ local path prefix ]/system.fpp:8:24,
+                        },
+                    },
+                    members: [],
+                    implements: [],
+                    node_id: Span {
+                        start: [ local path prefix ]/system.fpp:8:3,
+                        end: [ local path prefix ]/system.fpp:8:27,
+                    },
+                },
+                DefSystem {
+                    name: Name {
+                        data: "S1",
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:10:10,
+                            end: [ local path prefix ]/system.fpp:10:12,
+                        },
+                    },
+                    topology: Ident {
+                        data: "T",
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:10:14,
+                            end: [ local path prefix ]/system.fpp:10:15,
+                        },
+                    },
+                    node_id: Span {
+                        start: [ local path prefix ]/system.fpp:10:3,
+                        end: [ local path prefix ]/system.fpp:10:15,
+                    },
+                },
+                DefSystem {
+                    name: Name {
+                        data: "S2",
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:11:10,
+                            end: [ local path prefix ]/system.fpp:11:12,
+                        },
+                    },
+                    topology: Qualified {
+                        qualifier: Ident {
+                            data: "M1",
+                            node_id: Span {
+                                start: [ local path prefix ]/system.fpp:11:14,
+                                end: [ local path prefix ]/system.fpp:11:16,
+                            },
+                        },
+                        name: Ident {
+                            data: "T",
+                            node_id: Span {
+                                start: [ local path prefix ]/system.fpp:11:17,
+                                end: [ local path prefix ]/system.fpp:11:18,
+                            },
+                        },
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:11:14,
+                            end: [ local path prefix ]/system.fpp:11:18,
+                        },
+                    },
+                    node_id: Span {
+                        start: [ local path prefix ]/system.fpp:11:3,
+                        end: [ local path prefix ]/system.fpp:11:18,
+                    },
+                },
+                DefSystem {
+                    name: Name {
+                        data: "S3",
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:12:10,
+                            end: [ local path prefix ]/system.fpp:12:12,
+                        },
+                    },
+                    topology: Qualified {
+                        qualifier: Qualified {
+                            qualifier: Ident {
+                                data: "M1",
+                                node_id: Span {
+                                    start: [ local path prefix ]/system.fpp:12:14,
+                                    end: [ local path prefix ]/system.fpp:12:16,
+                                },
+                            },
+                            name: Ident {
+                                data: "M2",
+                                node_id: Span {
+                                    start: [ local path prefix ]/system.fpp:12:17,
+                                    end: [ local path prefix ]/system.fpp:12:19,
+                                },
+                            },
+                            node_id: Span {
+                                start: [ local path prefix ]/system.fpp:12:14,
+                                end: [ local path prefix ]/system.fpp:12:21,
+                            },
+                        },
+                        name: Ident {
+                            data: "T",
+                            node_id: Span {
+                                start: [ local path prefix ]/system.fpp:12:20,
+                                end: [ local path prefix ]/system.fpp:12:21,
+                            },
+                        },
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:12:14,
+                            end: [ local path prefix ]/system.fpp:12:21,
+                        },
+                    },
+                    node_id: Span {
+                        start: [ local path prefix ]/system.fpp:12:3,
+                        end: [ local path prefix ]/system.fpp:12:21,
+                    },
+                },
+                SpecLoc {
+                    kind: System,
+                    symbol: Qualified {
+                        qualifier: Ident {
+                            data: "a",
+                            node_id: Span {
+                                start: [ local path prefix ]/system.fpp:14:17,
+                                end: [ local path prefix ]/system.fpp:14:18,
+                            },
+                        },
+                        name: Ident {
+                            data: "b",
+                            node_id: Span {
+                                start: [ local path prefix ]/system.fpp:14:19,
+                                end: [ local path prefix ]/system.fpp:14:20,
+                            },
+                        },
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:14:17,
+                            end: [ local path prefix ]/system.fpp:14:20,
+                        },
+                    },
+                    file: LitString {
+                        data: "c.fpp",
+                        inner_span: Span {
+                            start: [ local path prefix ]/system.fpp:14:25,
+                            end: [ local path prefix ]/system.fpp:14:30,
+                        },
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:14:24,
+                            end: [ local path prefix ]/system.fpp:14:31,
+                        },
+                    },
+                    is_dictionary_def: false,
+                    node_id: Span {
+                        start: [ local path prefix ]/system.fpp:14:3,
+                        end: [ local path prefix ]/system.fpp:14:31,
+                    },
+                },
+                SpecLoc {
+                    kind: StateMachine,
+                    symbol: Qualified {
+                        qualifier: Ident {
+                            data: "a",
+                            node_id: Span {
+                                start: [ local path prefix ]/system.fpp:15:24,
+                                end: [ local path prefix ]/system.fpp:15:25,
+                            },
+                        },
+                        name: Ident {
+                            data: "b",
+                            node_id: Span {
+                                start: [ local path prefix ]/system.fpp:15:26,
+                                end: [ local path prefix ]/system.fpp:15:27,
+                            },
+                        },
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:15:24,
+                            end: [ local path prefix ]/system.fpp:15:27,
+                        },
+                    },
+                    file: LitString {
+                        data: "c.fpp",
+                        inner_span: Span {
+                            start: [ local path prefix ]/system.fpp:15:32,
+                            end: [ local path prefix ]/system.fpp:15:37,
+                        },
+                        node_id: Span {
+                            start: [ local path prefix ]/system.fpp:15:31,
+                            end: [ local path prefix ]/system.fpp:15:38,
+                        },
+                    },
+                    is_dictionary_def: false,
+                    node_id: Span {
+                        start: [ local path prefix ]/system.fpp:15:3,
+                        end: [ local path prefix ]/system.fpp:15:38,
+                    },
+                },
+            ],
+            node_id: Span {
+                start: [ local path prefix ]/system.fpp:1:1,
+                end: [ local path prefix ]/system.fpp:16:2,
+            },
+        },
+    ],
+)

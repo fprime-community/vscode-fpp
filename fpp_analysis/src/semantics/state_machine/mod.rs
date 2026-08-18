@@ -160,11 +160,10 @@ impl StateMachine {
 
     /// Gets the set of leaf states of a state machine.
     ///
-    /// Scala's `getLeafStates` returns a `Set` of annotated `DefState` nodes, so
-    /// identical leaf states collapse into one. We reproduce that by
-    /// deduplicating on `(pre-annotation, name, post-annotation)` — the same key
-    /// `AddStateEnums` uses when it synthesizes the `State` enum — so callers
-    /// (e.g. a future state-machine C++ codegen port) never double-count a leaf.
+    /// Identical leaf states collapse into one: we deduplicate on
+    /// `(pre-annotation, name, post-annotation)` — the same key `AddStateEnums`
+    /// uses when it synthesizes the `State` enum — so callers never
+    /// double-count a leaf.
     pub fn get_leaf_states(sm: &DefStateMachine) -> Vec<Arc<DefState>> {
         let mut states = Vec::new();
         for member in sm.members.as_deref().unwrap_or(&[]) {
