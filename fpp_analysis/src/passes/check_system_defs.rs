@@ -6,9 +6,7 @@ use fpp_core::Spanned;
 use std::ops::ControlFlow;
 use std::sync::Arc;
 
-/// Check system definitions.
-///
-/// Mirrors Scala `CheckSystemDefs`:
+/// Check system definitions:
 ///   - a model may have at most one system definition;
 ///   - the named topology must resolve to a topology symbol;
 ///   - that topology must be a deployment topology.

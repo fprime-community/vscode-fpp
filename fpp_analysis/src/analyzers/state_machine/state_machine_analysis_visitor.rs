@@ -10,9 +10,8 @@ pub type SmResult = ControlFlow<(), ()>;
 
 /// A generic analysis visitor for state machine semantics.
 ///
-/// This trait folds the behavior of the Scala `StateMachineAnalysisVisitor`
-/// and `StateAnalyzer` mixins: the default `def_state` pushes the state name
-/// onto the scope name list and visits the state members.
+/// The default `def_state` pushes the state name onto the scope name list and
+/// visits the state members.
 pub trait StateMachineAnalysisVisitor {
     /// The default action: return the analysis unchanged
     fn default(&self, sma: &mut StateMachineAnalysis) -> SmResult {

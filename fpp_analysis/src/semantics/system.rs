@@ -3,9 +3,9 @@ use fpp_core::Span;
 
 /// An FPP system.
 ///
-/// Mirrors Scala `analysis.FppSystem`. The Scala version also carries the
-/// resolved dictionary; dictionary/codegen support is not ported here, so this
-/// records just the system symbol and the deployment topology it names.
+/// Records the system symbol and the deployment topology it names. (Dictionary
+/// and codegen support are not part of this analyzer, so no dictionary is
+/// tracked here.)
 #[derive(Debug, Clone)]
 pub struct FppSystem {
     /// The system definition symbol.

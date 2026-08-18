@@ -96,7 +96,7 @@ impl<'ast> CheckUses<'ast> {
     }
 
     // Check that an implied use (a) is not a member of a def and (b) does not
-    // shadow the required def. Mirrors the check in `implied_port_use`.
+    // shadow the required def. Same check as in `implied_port_use`.
     fn implied_use_shadow_check(
         &self,
         a: &Analysis,

@@ -189,9 +189,8 @@ impl Analysis {
     }
 
     /// Gets an int value from an AST node, erroring if it is out of the i32
-    /// range. Mirrors Scala's `Analysis.getIntValue`, whose `phase`/id values
-    /// are `Int`-typed; an FPP `BigInt` that overflows `Int` is rejected with
-    /// "value out of range".
+    /// range. `phase`/id values are `Int`-typed; an FPP arbitrary-precision
+    /// integer that overflows `Int` is rejected with "value out of range".
     pub fn get_int_value_checked(&self, node: fpp_core::Node, loc: Span) -> SemanticResult<i128> {
         let v = self.get_int_value(node).unwrap_or(0);
         if v < i32::MIN as i128 || v > i32::MAX as i128 {
@@ -353,10 +352,9 @@ impl Analysis {
         self.symbol_map.get(&node.id()).unwrap().clone()
     }
 
-    /// Resolve a use (by node ID) to a topology symbol, mirroring Scala
-    /// `Analysis.getTopologySymbol`. Returns `Ok(None)` for an unresolved use
-    /// (already reported by `CheckUses`) and an error if the use resolves to a
-    /// non-topology symbol.
+    /// Resolve a use (by node ID) to a topology symbol. Returns `Ok(None)` for
+    /// an unresolved use (already reported by `CheckUses`) and an error if the
+    /// use resolves to a non-topology symbol.
     pub fn get_topology_symbol(&self, id: fpp_core::Node) -> SemanticResult<Option<Symbol>> {
         match self.use_def_map.get(&id) {
             Some(symbol @ Symbol::Topology(_)) => Ok(Some(symbol.clone())),

@@ -203,7 +203,7 @@ impl Topology {
         Ok(())
     }
 
-    /// Resolve a top port into the port interface, mirroring Scala `addPort`.
+    /// Resolve a top port into the port interface.
     pub fn add_port(
         &mut self,
         name: &str,
@@ -392,7 +392,7 @@ impl Topology {
     }
 }
 
-/// The name of a connection pattern kind, matching Scala's `toString`.
+/// The name of a connection pattern kind.
 pub fn pattern_kind_str(kind: &ConnectionPatternKind) -> String {
     match kind {
         ConnectionPatternKind::Command => "command",

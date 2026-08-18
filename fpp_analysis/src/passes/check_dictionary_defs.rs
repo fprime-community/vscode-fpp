@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 /// Check dictionary definitions.
 ///
-/// Mirrors Scala's `CheckDictionaryDefs`. For each definition marked as a
-/// dictionary definition (`dictionary` prefix), it validates:
+/// For each definition marked as a dictionary definition (`dictionary`
+/// prefix), it validates:
 ///
 /// - A dictionary constant must have a numeric, Boolean, string, or enum type.
 /// - A dictionary type definition must be displayable.
