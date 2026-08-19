@@ -3,6 +3,7 @@
 **/*
 
 !syntaxes/*
+!language-configuration.json
 !dist/*
 !fprime-logo.png
 !CHANGELOG.md

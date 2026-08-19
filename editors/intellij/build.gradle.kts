@@ -152,6 +152,9 @@ tasks {
         from(layout.projectDirectory.dir("../code/syntaxes")) {
             into(pluginName.map { "$it/textmate/syntax" })
         }
+        from(layout.projectDirectory.file("../code/language-configuration.json")) {
+            into(pluginName.map { "$it/textmate/syntax" })
+        }
     }
 
     wrapper {

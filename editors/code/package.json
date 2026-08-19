@@ -125,7 +125,7 @@
                     ".fpp",
                     ".fppi"
                 ],
-                "configuration": "./syntaxes/language-configuration.json"
+                "configuration": "./language-configuration.json"
             }
         ],
         "grammars": [
