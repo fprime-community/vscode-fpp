@@ -76,10 +76,7 @@ impl Value {
                             out_value.insert(name.clone(), self.clone().convert(member_ty)?);
                         }
 
-                        Some(Value::Struct(StructValue {
-                            anon_struct: AnonStructValue { members: out_value },
-                            ty: ty.clone(),
-                        }))
+                        Some(Value::AnonStruct(AnonStructValue { members: out_value }))
                     }
                     _ => None,
                 }
@@ -155,32 +152,25 @@ impl Value {
             }
 
             Value::AnonArray(anon_array) | Value::Array(ArrayValue { anon_array, .. }) => {
-                let elements = match ty.deref() {
+                let anon_array_ty = match ty.deref() {
                     Type::Array(ArrayType {
                         anon_array: anon_array_ty,
                         ..
                     })
-                    | Type::AnonArray(anon_array_ty) => {
-                        match (anon_array_ty.size, anon_array.elements.len()) {
-                            (Some(_), _) => Some(
-                                anon_array
-                                    .elements
-                                    .iter()
-                                    .filter_map(|e| e.convert(&anon_array_ty.elt_type))
-                                    .collect(),
-                            ),
-                            (None, value_size) => {
-                                let elements = std::iter::repeat_n(
-                                    self.convert(&anon_array_ty.elt_type)?,
-                                    value_size,
-                                )
-                                .collect();
-                                Some(elements)
-                            }
-                        }
-                    }
-                    _ => None,
-                }?;
+                    | Type::AnonArray(anon_array_ty) => anon_array_ty,
+                    _ => return None,
+                };
+
+                if let Some(n) = anon_array_ty.size
+                    && n != anon_array.elements.len()
+                {
+                    return None;
+                }
+
+                let mut elements = Vec::with_capacity(anon_array.elements.len());
+                for e in &anon_array.elements {
+                    elements.push(e.convert(&anon_array_ty.elt_type)?);
+                }
 
                 match ty.deref() {
                     Type::Array(_) => Some(Value::Array(ArrayValue {
@@ -456,7 +446,7 @@ pub struct ArrayValue {
 #[derive(Debug, Clone)]
 pub struct EnumConstantValue {
     pub value: (String, i128),
-    ty: Arc<Type>,
+    pub ty: Arc<Type>,
 }
 
 impl EnumConstantValue {
@@ -492,10 +482,10 @@ pub struct AnonStructValue {
 #[derive(Debug, Clone)]
 pub struct StructValue {
     pub anon_struct: AnonStructValue,
-    ty: Arc<Type>,
+    pub ty: Arc<Type>,
 }
 
 #[derive(Debug, Clone)]
 pub struct AbsTypeValue {
-    ty: Arc<Type>,
+    pub ty: Arc<Type>,
 }

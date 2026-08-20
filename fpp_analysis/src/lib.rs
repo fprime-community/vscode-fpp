@@ -161,6 +161,15 @@ pub mod semantics {
     mod generic_scope;
 
     pub mod state_machine;
+
+    #[cfg(test)]
+    mod format_spec;
+    #[cfg(test)]
+    pub(crate) mod test_helpers;
+    #[cfg(test)]
+    mod type_spec;
+    #[cfg(test)]
+    mod value_spec;
 }
 
 pub fn resolve_includes<Reader: FileReader>(

@@ -147,7 +147,7 @@ struct FormatParser<'a> {
     pos: BytePos,
     len_remaining: usize,
 
-    literal: Vec<u8>,
+    literal: String,
 
     /// Iterator over chars. Slightly faster than a &str.
     chars: Chars<'a>,
@@ -199,7 +199,7 @@ impl<'a> FormatParser<'a> {
             parent_span: span,
             pos: 0,
             len_remaining: content.len(),
-            literal: vec![],
+            literal: String::new(),
             chars,
         }
     }
@@ -210,7 +210,7 @@ impl<'a> FormatParser<'a> {
                 if self.literal.is_empty() {
                     LexerResult::Eof
                 } else {
-                    LexerResult::Literal(String::from_utf8(self.literal.clone()).unwrap())
+                    LexerResult::Literal(self.literal.clone())
                 }
             }
             '{' => {
@@ -218,7 +218,7 @@ impl<'a> FormatParser<'a> {
                 if self.second() == '{' {
                     self.bump();
                     self.bump();
-                    self.literal.push(b'{');
+                    self.literal.push('{');
                     LexerResult::KeepGoing
                 } else if self.literal.is_empty() && self.second() == '}' {
                     self.bump();
@@ -249,14 +249,14 @@ impl<'a> FormatParser<'a> {
                     }
                 } else {
                     // Flush out the literal on the left side of the token
-                    LexerResult::Literal(String::from_utf8(self.literal.clone()).unwrap())
+                    LexerResult::Literal(self.literal.clone())
                 }
             }
             '}' => {
                 if self.second() == '}' {
                     self.bump();
                     self.bump();
-                    self.literal.push(b'}');
+                    self.literal.push('}');
                 } else {
                     self.bump();
                     self.error("unmatched `}` in format string")
@@ -268,7 +268,7 @@ impl<'a> FormatParser<'a> {
             }
             c => {
                 self.bump();
-                self.literal.push(c as u8);
+                self.literal.push(c);
                 LexerResult::KeepGoing
             }
         }
