@@ -96,6 +96,11 @@ fn default_ok() {
 }
 
 #[test]
+fn nested_default_ok() {
+    run_test("array/nested_default_ok")
+}
+
+#[test]
 fn format_alias_int_not_rational() {
     run_test("array/format_alias_int_not_rational")
 }
@@ -138,4 +143,9 @@ fn dictionary_ok() {
 #[test]
 fn no_default_ok() {
     run_test("array/no_default_ok")
+}
+
+#[test]
+fn size_out_of_range() {
+    run_test("array/size_out_of_range")
 }

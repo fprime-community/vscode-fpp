@@ -3,7 +3,7 @@
 2 | array B = [3] A default [ 1, 2 ]
   |                         ^^^^^^^^ cannot convert value to array type due to mismatched sizes
   |
-  = note: value size `0`
+  = note: value size `2`
   |
  ::: [ local path prefix ]/array/default_error.fpp:2:12
   |

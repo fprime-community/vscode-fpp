@@ -3,8 +3,8 @@ use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::nested_analyzer::{NestedAnalyzer, NestedAnalyzerMode};
 use crate::errors::SemanticError;
 use crate::semantics::{
-    AliasType, AnonArrayType, AnonStructType, ArrayType, Format, IntegerValue, StructType, Symbol,
-    Type, Value,
+    AliasType, AnonArrayType, AnonStructType, ArrayType, ArrayValue, Format, IntegerValue,
+    StructType, Symbol, SymbolInterface, Type, Value,
 };
 use fpp_ast::{
     AstNode, DefAliasType, DefArray, DefEnum, DefStruct, Expr, Node, TransUnit, TypeName,
@@ -53,10 +53,10 @@ impl<'ast> FinalizeTypeDefs<'ast> {
 
     pub(crate) fn ty(&self, a: &mut Analysis, node: &'ast TypeName) -> Arc<Type> {
         match &node.kind {
-            TypeNameKind::QualIdent(q) => match a.use_def_map.get(&q.id()) {
+            TypeNameKind::QualIdent(q) => match a.use_def_map.get(&q.id()).cloned() {
                 None => {}
                 Some(symbol) => {
-                    let _ = match symbol.clone() {
+                    let _ = match &symbol {
                         Symbol::AbsType(ty) => self.visit_def_abs_type(a, ty.deref()),
                         Symbol::AliasType(ty) => self.visit_def_alias_type(a, ty.deref()),
                         Symbol::Array(ty) => self.visit_def_array(a, ty.deref()),
@@ -64,6 +64,10 @@ impl<'ast> FinalizeTypeDefs<'ast> {
                         Symbol::Struct(ty) => self.visit_def_struct(a, ty.deref()),
                         _ => ControlFlow::Continue(()),
                     };
+
+                    if let Some(def_ty) = a.type_map.get(&symbol.node()).cloned() {
+                        a.type_map.insert(node.node_id, def_ty);
+                    }
                 }
             },
             TypeNameKind::String(size) => match self.expr_as_integer_opt(a, size) {
@@ -162,6 +166,16 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
             Some(size) => size,
         };
 
+        if size < i32::MIN as i128 || size > i32::MAX as i128 {
+            SemanticError::InvalidIntValue {
+                loc: node.size.span(),
+                v: Some(size),
+                msg: "value out of range".to_string(),
+            }
+            .emit();
+            return ControlFlow::Continue(());
+        }
+
         if size <= 0 {
             SemanticError::InvalidIntValue {
                 loc: node.size.span(),
@@ -182,25 +196,23 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         // Compute the default value
         let default = match &node.default {
             None => anon_array_ty.default_value(),
-            Some(default) => match a.value_map.get(&default.node_id) {
+            Some(default) => match a.value_map.get(&default.node_id).cloned() {
                 None => None,
-                Some(default_v) => match default_v.convert(&Arc::new(anon_array_ty)) {
-                    None => None,
-                    Some(Value::AnonArray(v)) => {
-                        if v.elements.len() != size as usize {
-                            SemanticError::ArrayDefaultMismatchedSize {
-                                loc: default.span(),
-                                size_loc: node.size.span(),
-                                value_size: v.elements.len(),
-                                type_size: size,
-                            }
-                            .emit();
+                Some(default_v) => {
+                    if let Value::AnonArray(v) | Value::Array(ArrayValue { anon_array: v, .. }) =
+                        &default_v
+                        && v.elements.len() != size as usize
+                    {
+                        SemanticError::ArrayDefaultMismatchedSize {
+                            loc: default.span(),
+                            size_loc: node.size.span(),
+                            value_size: v.elements.len(),
+                            type_size: size,
                         }
-
-                        Some(Value::AnonArray(v))
+                        .emit();
                     }
-                    Some(_) => panic!("expected anon array"),
-                },
+                    default_v.convert(&Arc::new(anon_array_ty))
+                }
             },
         };
 

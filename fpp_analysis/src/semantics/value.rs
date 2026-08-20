@@ -1,5 +1,5 @@
-use crate::semantics::{ArrayType, EnumType, StructType, Type};
-use fpp_ast::FloatKind;
+use crate::semantics::{AnonArrayType, AnonStructType, ArrayType, EnumType, StructType, Type};
+use fpp_ast::{FloatKind, IntegerKind};
 use rustc_hash::FxHashMap as HashMap;
 use std::fmt;
 use std::fmt::Formatter;
@@ -76,10 +76,7 @@ impl Value {
                             out_value.insert(name.clone(), self.clone().convert(member_ty)?);
                         }
 
-                        Some(Value::Struct(StructValue {
-                            anon_struct: AnonStructValue { members: out_value },
-                            ty: ty.clone(),
-                        }))
+                        Some(Value::AnonStruct(AnonStructValue { members: out_value }))
                     }
                     _ => None,
                 }
@@ -155,32 +152,25 @@ impl Value {
             }
 
             Value::AnonArray(anon_array) | Value::Array(ArrayValue { anon_array, .. }) => {
-                let elements = match ty.deref() {
+                let anon_array_ty = match ty.deref() {
                     Type::Array(ArrayType {
                         anon_array: anon_array_ty,
                         ..
                     })
-                    | Type::AnonArray(anon_array_ty) => {
-                        match (anon_array_ty.size, anon_array.elements.len()) {
-                            (Some(_), _) => Some(
-                                anon_array
-                                    .elements
-                                    .iter()
-                                    .filter_map(|e| e.convert(&anon_array_ty.elt_type))
-                                    .collect(),
-                            ),
-                            (None, value_size) => {
-                                let elements = std::iter::repeat_n(
-                                    self.convert(&anon_array_ty.elt_type)?,
-                                    value_size,
-                                )
-                                .collect();
-                                Some(elements)
-                            }
-                        }
-                    }
-                    _ => None,
-                }?;
+                    | Type::AnonArray(anon_array_ty) => anon_array_ty,
+                    _ => return None,
+                };
+
+                if let Some(n) = anon_array_ty.size
+                    && n != anon_array.elements.len()
+                {
+                    return None;
+                }
+
+                let mut elements = Vec::with_capacity(anon_array.elements.len());
+                for e in &anon_array.elements {
+                    elements.push(e.convert(&anon_array_ty.elt_type)?);
+                }
 
                 match ty.deref() {
                     Type::Array(_) => Some(Value::Array(ArrayValue {
@@ -381,6 +371,181 @@ impl Value {
             _ => None,
         }
     }
+
+    /// Gets the type of this value.
+    pub fn get_type(&self) -> Arc<Type> {
+        match self {
+            Value::PrimitiveInteger(PrimitiveIntegerValue { kind, .. }) => {
+                Arc::new(Type::PrimitiveInt(*kind))
+            }
+            Value::Integer(_) => Arc::new(Type::Integer),
+            Value::Float(FloatValue { kind, .. }) => Arc::new(Type::Float(*kind)),
+            Value::Boolean(_) => Arc::new(Type::Boolean),
+            Value::String(_) => Arc::new(Type::String(None)),
+            Value::EnumConstant(v) => v.ty.clone(),
+            Value::AbsType(AbsTypeValue { ty }) => ty.clone(),
+            Value::Array(ArrayValue { ty, .. }) => ty.clone(),
+            Value::Struct(StructValue { ty, .. }) => ty.clone(),
+            Value::AnonArray(AnonArrayValue { elements }) => {
+                // Mirrors Scala `AnonArray.getType`, which reads the element type
+                // from the first element (an anon-array value is never empty in
+                // practice, since it is built from a non-empty literal).
+                let elt_type = elements
+                    .first()
+                    .map(|e| e.get_type())
+                    .unwrap_or_else(|| Arc::new(Type::Integer));
+                Arc::new(Type::AnonArray(AnonArrayType {
+                    size: Some(elements.len()),
+                    elt_type,
+                }))
+            }
+            Value::AnonStruct(AnonStructValue { members }) => {
+                let member_types = members
+                    .iter()
+                    .map(|(name, v)| (name.clone(), v.get_type()))
+                    .collect();
+                Arc::new(Type::AnonStruct(AnonStructType {
+                    members: member_types,
+                }))
+            }
+        }
+    }
+
+    /// Whether this value is zero, for purposes of division. Floats use an
+    /// epsilon comparison (Scala `Float.EPSILON`).
+    pub fn is_zero(&self) -> bool {
+        const EPSILON: f64 = 0.0000001;
+        match self {
+            Value::PrimitiveInteger(PrimitiveIntegerValue { value, .. })
+            | Value::Integer(IntegerValue(value)) => *value == 0,
+            Value::Float(FloatValue { value, .. }) => value.abs() < EPSILON,
+            Value::EnumConstant(EnumConstantValue { value: (_, v), .. }) => *v == 0,
+            _ => false,
+        }
+    }
+
+    /// Negates a value. Returns `None` for values that cannot be negated
+    /// (strings, booleans, aggregates). Enums negate through their integer
+    /// representation type.
+    pub fn negate(&self) -> Option<Value> {
+        match self {
+            Value::PrimitiveInteger(PrimitiveIntegerValue { value, kind }) => {
+                Some(Value::PrimitiveInteger(PrimitiveIntegerValue {
+                    value: -value,
+                    kind: *kind,
+                }))
+            }
+            Value::Integer(IntegerValue(value)) => Some(Value::Integer(IntegerValue(-value))),
+            Value::Float(FloatValue { value, kind }) => Some(Value::Float(FloatValue {
+                value: -value,
+                kind: *kind,
+            })),
+            Value::EnumConstant(v) => Value::PrimitiveInteger(PrimitiveIntegerValue {
+                value: v.value.1,
+                kind: v.ty().rep_type,
+            })
+            .negate(),
+            _ => None,
+        }
+    }
+
+    /// Left-shifts an integer value by another. Returns `None` unless both
+    /// operands are integers or enums (Scala `<<`).
+    pub fn shl(&self, other: &Value) -> Option<Value> {
+        self.int_shift_op(other, |v, s| v << s)
+    }
+
+    /// Right-shifts an integer value by another. Returns `None` unless both
+    /// operands are integers or enums (Scala `>>`).
+    pub fn shr(&self, other: &Value) -> Option<Value> {
+        self.int_shift_op(other, |v, s| v >> s)
+    }
+
+    /// Shared implementation for `<<`/`>>`. The left operand's kind is preserved
+    /// (a `PrimitiveInt` stays that kind, an `Integer` stays `Integer`); enums
+    /// are converted to their representation type first.
+    fn int_shift_op(&self, other: &Value, op: impl Fn(i128, u32) -> i128) -> Option<Value> {
+        let shift = u32::try_from(other.as_shift_int()?).ok()?;
+        match self {
+            Value::PrimitiveInteger(PrimitiveIntegerValue { value, kind }) => {
+                Some(Value::PrimitiveInteger(PrimitiveIntegerValue {
+                    value: op(*value, shift),
+                    kind: *kind,
+                }))
+            }
+            Value::Integer(IntegerValue(value)) => {
+                Some(Value::Integer(IntegerValue(op(*value, shift))))
+            }
+            Value::EnumConstant(v) => Value::PrimitiveInteger(PrimitiveIntegerValue {
+                value: v.value.1,
+                kind: v.ty().rep_type,
+            })
+            .int_shift_op(other, op),
+            _ => None,
+        }
+    }
+
+    /// Truncates a value based on the width of its type: primitive integers wrap
+    /// modulo their bit width, `F32` truncates to single precision, and
+    /// aggregates truncate elementwise. Other values are unchanged.
+    pub fn truncate(&self) -> Value {
+        match self {
+            Value::PrimitiveInteger(PrimitiveIntegerValue { value, kind }) => {
+                Value::PrimitiveInteger(PrimitiveIntegerValue {
+                    value: truncate_int(*value, *kind),
+                    kind: *kind,
+                })
+            }
+            Value::Float(FloatValue { value, kind }) => Value::Float(FloatValue {
+                value: match kind {
+                    FloatKind::F32 => *value as f32 as f64,
+                    FloatKind::F64 => *value,
+                },
+                kind: *kind,
+            }),
+            Value::AnonArray(AnonArrayValue { elements }) => Value::AnonArray(AnonArrayValue {
+                elements: elements.iter().map(|e| e.truncate()).collect(),
+            }),
+            Value::Array(ArrayValue { anon_array, ty }) => Value::Array(ArrayValue {
+                anon_array: AnonArrayValue {
+                    elements: anon_array.elements.iter().map(|e| e.truncate()).collect(),
+                },
+                ty: ty.clone(),
+            }),
+            Value::AnonStruct(AnonStructValue { members }) => Value::AnonStruct(AnonStructValue {
+                members: members
+                    .iter()
+                    .map(|(name, v)| (name.clone(), v.truncate()))
+                    .collect(),
+            }),
+            Value::Struct(StructValue { anon_struct, ty }) => Value::Struct(StructValue {
+                anon_struct: AnonStructValue {
+                    members: anon_struct
+                        .members
+                        .iter()
+                        .map(|(name, v)| (name.clone(), v.truncate()))
+                        .collect(),
+                },
+                ty: ty.clone(),
+            }),
+            _ => self.clone(),
+        }
+    }
+}
+
+/// Truncates an integer to the width and signedness of `kind`, wrapping modulo
+/// the type's range (mirrors Scala `PrimitiveInt.truncate`).
+fn truncate_int(value: i128, kind: IntegerKind) -> i128 {
+    match kind {
+        IntegerKind::I8 => value as i8 as i128,
+        IntegerKind::I16 => value as i16 as i128,
+        IntegerKind::I32 => value as i32 as i128,
+        IntegerKind::I64 => value as i64 as i128,
+        IntegerKind::U8 => value as u8 as i128,
+        IntegerKind::U16 => value as u16 as i128,
+        IntegerKind::U32 => value as u32 as i128,
+        IntegerKind::U64 => value as u64 as i128,
+    }
 }
 
 impl fmt::Display for Value {
@@ -456,7 +621,7 @@ pub struct ArrayValue {
 #[derive(Debug, Clone)]
 pub struct EnumConstantValue {
     pub value: (String, i128),
-    ty: Arc<Type>,
+    pub ty: Arc<Type>,
 }
 
 impl EnumConstantValue {
@@ -492,10 +657,10 @@ pub struct AnonStructValue {
 #[derive(Debug, Clone)]
 pub struct StructValue {
     pub anon_struct: AnonStructValue,
-    ty: Arc<Type>,
+    pub ty: Arc<Type>,
 }
 
 #[derive(Debug, Clone)]
 pub struct AbsTypeValue {
-    ty: Arc<Type>,
+    pub ty: Arc<Type>,
 }

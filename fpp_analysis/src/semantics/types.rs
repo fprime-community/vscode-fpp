@@ -453,15 +453,8 @@ impl Type {
             fn lca(a: &Arc<Type>, b: &Arc<Type>) -> Option<Arc<Type>> {
                 fn get_ancestors(t: &Arc<Type>, out: &mut Vec<Arc<Type>>) {
                     out.push(t.clone());
-                    match t.deref() {
-                        Type::AliasType(AliasType { alias_type, .. }) => {
-                            get_ancestors(alias_type, out)
-                        }
-                        _ => {
-                            // Reverse the ancestor list since `get_ancestors` returns
-                            // the ancestors with the oldest ancestor first.
-                            out.reverse();
-                        }
+                    if let Type::AliasType(AliasType { alias_type, .. }) = t.deref() {
+                        get_ancestors(alias_type, out)
                     }
                 }
 
@@ -471,15 +464,12 @@ impl Type {
                 let mut ancestors_of_b = vec![];
                 get_ancestors(b, &mut ancestors_of_b);
 
-                // Traverse the ancestry of 'b' until we find a common ancestor with 'a'
+                // Traverse the ancestry of 'b' from youngest to oldest until we find
+                // a common ancestor with 'a'. Youngest-first order yields the least
+                // common ancestor.
                 ancestors_of_b
                     .iter()
-                    .find(|b| {
-                        ancestors_of_a
-                            .iter()
-                            .find(|a| Type::identical(a, b))
-                            .is_some()
-                    })
+                    .find(|b| ancestors_of_a.iter().any(|a| Type::identical(a, b)))
                     .cloned()
             }
 

@@ -2161,9 +2161,16 @@ impl<'a> Parser<'a> {
             let post_annotation = self.post_annotation();
             fpp_core::Node::annotate(&data.id(), pre_annotation, post_annotation);
             ElementParsingResult::Terminated(data)
-        } else {
+        } else if punct_tok == *end {
             fpp_core::Node::annotate(&data.id(), pre_annotation, vec![]);
             ElementParsingResult::Unterminated(data)
+        } else {
+            fpp_core::Node::annotate(&data.id(), pre_annotation, vec![]);
+            ElementParsingResult::Err(self.cursor.err_expected_token(
+                "unexpected token",
+                *punct,
+                punct_tok,
+            ))
         }
     }
 
@@ -2241,8 +2248,14 @@ impl<'a> Parser<'a> {
             ElementParsingResult::Terminated(data)
         } else if self.peek(0) == PostAnnotation {
             ElementParsingResult::Terminated(data)
-        } else {
+        } else if punct_tok == *end {
             ElementParsingResult::Unterminated(data)
+        } else {
+            ElementParsingResult::Err(self.cursor.err_expected_token(
+                "unexpected token",
+                *punct,
+                punct_tok,
+            ))
         }
     }
 
