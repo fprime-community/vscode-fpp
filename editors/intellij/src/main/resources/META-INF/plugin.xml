@@ -9,6 +9,7 @@
     <depends>org.jetbrains.plugins.textmate</depends>
     <depends>com.intellij.modules.python</depends>
     <depends optional="true" config-file="fpp-tools-cmake.xml">com.intellij.cmake</depends>
+    <depends>com.intellij.diagram</depends>
 
     <resource-bundle>messages.FppBundle</resource-bundle>
 
@@ -74,7 +75,42 @@
                 instance="com.github.fprime_community.fpp_tools.settings.FppSettingsConfigurable"
                 id="settings.fpp"
                 displayName="FPP"/>
+
+        <!-- State machine diagram (JCEF + shared Mermaid webview bundle) -->
+        <toolWindow
+                id="FPP State Machine"
+                anchor="right"
+                factoryClass="com.github.fprime_community.fpp_tools.diagram.FppStateMachineToolWindowFactory"
+                icon="com.github.fprime_community.fpp_tools.FppIcons.FILE"/>
     </extensions>
+
+    <actions>
+        <action
+                id="Fpp.OpenDiagram"
+                class="com.github.fprime_community.fpp_tools.diagram.FppOpenDiagramAction"
+                text="Open FPP Diagram"
+                description="Visualize an FPP element as a diagram"
+                icon="AllIcons.Actions.Preview">
+            <add-to-group group-id="UML.EditorGroup" anchor="last"/>
+        </action>
+        <group id="Fpp.StateMachine.Toolbar">
+            <action id="Fpp.StateMachine.Fit"
+                    class="com.github.fprime_community.fpp_tools.diagram.FppStateMachineFitAction"
+                    text="Fit Diagram"
+                    description="Reset pan and zoom to fit"
+                    icon="AllIcons.General.FitContent"/>
+            <action id="Fpp.StateMachine.Export"
+                    class="com.github.fprime_community.fpp_tools.diagram.FppStateMachineExportAction"
+                    text="Export Diagram"
+                    description="Export the diagram as SVG"
+                    icon="AllIcons.ToolbarDecorator.Export"/>
+            <action id="Fpp.StateMachine.ToggleActionMode"
+                    class="com.github.fprime_community.fpp_tools.diagram.FppStateMachineToggleActionModeAction"
+                    text="Toggle Transition Action Mode"
+                    description="Switch between UML and flattened transition action labels"
+                    icon="AllIcons.Actions.ToggleVisibility"/>
+        </group>
+    </actions>
     <projectListeners>
         <listener
                 class="com.github.fprime_community.fpp_tools.FppSettingsLspRestartListener"

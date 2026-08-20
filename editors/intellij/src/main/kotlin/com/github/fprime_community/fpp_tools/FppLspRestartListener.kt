@@ -8,7 +8,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.platform.lsp.api.LspServerManager
+import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.ui.EditorNotifications
 import com.jetbrains.cidr.cpp.cmake.python.CMakePythonSdkService
@@ -60,22 +60,17 @@ class FppLspPackageChangeListener(private val project: Project) : PythonPackageM
 // onlyIfRunning should be rarely needed, as stopAndRestartIfNeeded only starts the server if needed.
 private fun Project.restartLspServerAsyncIfNeeded(reason: String?, onlyIfRunning: Boolean = false) {
     ApplicationManager.getApplication().invokeLater({
-        val server =
-            LspServerManager.getInstance(this).getServersForProvider(FppLspServerSupportProvider::class.java)
-                .firstOrNull()
-        val serverIsRunning =
-            server !== null && (server.state == LspServerState.Running || server.state == LspServerState.Initializing)
-        if (!onlyIfRunning || serverIsRunning) {
-            if (reason != null) {
-                // This doesn't mean that the server will actually start, but the intention was to start it.
-                val message: String? = if (server !== null) "FPP LSP is restarted" else "FPP LSP is started"
+        val clientIsRunning = fppLspClients(false)
+            .any { it.state == LspServerState.Running || it.state == LspServerState.Initializing }
 
-                if (message != null) {
-                    FppNotifications.pluginNotifications()
-                        .showProjectNotification(message, "Reason: $reason", NotificationType.INFORMATION, this)
-                }
+        if (!onlyIfRunning || clientIsRunning) {
+            if (reason != null) {
+                val message: String = if (clientIsRunning) "FPP LSP is restarted" else "FPP LSP is started"
+
+                FppNotifications.pluginNotifications()
+                    .showProjectNotification(message, "Reason: $reason", NotificationType.INFORMATION, this)
             }
-            LspServerManager.getInstance(this).stopAndRestartIfNeeded(FppLspServerSupportProvider::class.java)
+            LspClientManager.getInstance(this).stopAndRestartClientsIfNeeded(FppLspServerSupportProvider::class.java)
         }
     }, this.disposed)
 }

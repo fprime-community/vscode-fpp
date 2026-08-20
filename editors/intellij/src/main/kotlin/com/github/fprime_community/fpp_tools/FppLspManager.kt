@@ -29,6 +29,9 @@ private val LOG = logger<LspConfiguration>()
 private const val LSP_EXECUTABLE = "fpp_lsp_server"
 private const val LSP_PIP_PACKAGE = "fprime-fpp-lsp"
 
+/**
+ * This file manages the LSP executable depending on the plugin settings.
+ */
 @RequiresBackgroundThread
 fun Project.getLspConfiguration(): LspConfiguration {
     val settings = FppSettings.getInstance(this)
