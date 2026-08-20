@@ -451,11 +451,6 @@ impl Type {
         // Types share a common ancestor in the alias type hierarchy
         if !t1_a.is_canonical() || !t2_a.is_canonical() {
             fn lca(a: &Arc<Type>, b: &Arc<Type>) -> Option<Arc<Type>> {
-                // Collect the alias chain of `t`, most-derived (youngest) first:
-                // `t`, then its alias target, ... down to the canonical base.
-                // This matches Scala `getAncestors(t).reverse`, so that the search
-                // below returns the *least* (youngest) common ancestor rather than
-                // the oldest one.
                 fn get_ancestors(t: &Arc<Type>, out: &mut Vec<Arc<Type>>) {
                     out.push(t.clone());
                     if let Type::AliasType(AliasType { alias_type, .. }) = t.deref() {
