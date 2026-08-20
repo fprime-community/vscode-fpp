@@ -117,108 +117,199 @@ mod tests {
         Some(t)
     }
 
-    /// Asserts the common type option resolves to `Some(expected)` structurally.
-    #[track_caller]
-    fn assert_common_some(to1: &TypeOptionT, to2: &TypeOptionT, expected: &Arc<Type>) {
-        match TypeOption::common_type(to1, to2) {
-            Some(Some(got)) => assert!(
-                types_structurally_eq(&got, expected),
-                "expected common type option Some({expected}), got Some({got})"
-            ),
-            Some(None) => panic!("expected Some({expected}), got Some(None)"),
-            None => panic!("expected Some({expected}), got None (mismatch)"),
+    /// Structural equality on type options: `None`/`None` and `Some`/`Some`
+    /// with structurally-equal types (mirrors Scala `==` on `Option[Type]`).
+    fn option_eq(a: &TypeOptionT, b: &TypeOptionT) -> bool {
+        match (a, b) {
+            (None, None) => true,
+            (Some(t1), Some(t2)) => types_structurally_eq(t1, t2),
+            _ => false,
         }
     }
 
-    /// FPP spec `Type-Options.adoc`, "Computing a Common Type Option" rule 2.2:
-    /// an alias type is replaced with its underlying type. So `alias(I16)` vs
-    /// `I32` widens to `I32` exactly as bare `I16` vs `I32` does. (The Scala
-    /// reference is buggy here; the spec is authoritative.)
+    // -----------------------------------------------------------------------
+    // "common type option" should ...
+    // -----------------------------------------------------------------------
+
     #[test]
-    fn common_type_option_unwraps_aliases() {
+    fn common_type_option_resolvable_pairs() {
         with_test_ctx(|| {
-            let a_i16 = alias_type("A", i16(), 10);
-            // bare I16 vs I32 -> I32 (wider), per rules 2.3
-            assert_common_some(&some(i16()), &some(i32()), &i32());
-            // alias(I16) vs I32 -> same result (rule 2.2 then 2.3)
-            assert_common_some(&some(a_i16.clone()), &some(i32()), &i32());
-            assert_common_some(&some(i32()), &some(a_i16), &i32());
-
-            // chained alias A2 = A1 = I32 vs bare I32 -> I32 (identical underlying)
-            let a1 = alias_type("A1", i32(), 11);
-            let a2 = alias_type("A2", a1, 12);
-            assert_common_some(&some(a2), &some(i32()), &i32());
-
-            // two distinct aliases of I32 -> I32
-            let b1 = alias_type("B1", i32(), 13);
-            let b2 = alias_type("B2", i32(), 14);
-            assert_common_some(&some(b1), &some(b2), &i32());
+            use IntegerKind::*;
+            // ((o1, o2), expected)
+            let cases: Vec<((TypeOptionT, TypeOptionT), TypeOptionT)> = vec![
+                // Rule 1: None is absorbing
+                ((some(i32()), None), None),
+                ((None, some(i32())), None),
+                ((None, None), None),
+                // Rule 2.1: identical types
+                ((some(i32()), some(i32())), some(i32())),
+                (
+                    (some(default_enum()), some(default_enum())),
+                    some(default_enum()),
+                ),
+                // Rules 2.3/2.4: same-signedness integers resolve to the wider type
+                ((some(i8()), some(i32())), some(i32())),
+                ((some(i32()), some(i8())), some(i32())),
+                ((some(u16()), some(u64())), some(u64())),
+                // Rule 2.5: floats resolve to the wider float
+                ((some(f32()), some(f64())), some(f64())),
+                ((some(f64()), some(f32())), some(f64())),
+                // Rule 2.6: strings resolve to string
+                ((some(string(None)), some(string(None))), some(string(None))),
+                (
+                    (some(string_with_size(8)), some(string_with_size(16))),
+                    some(string(None)),
+                ),
+                // Rule 2.2: an alias is replaced with its underlying type, then
+                // the rules reapply. alias(I16) vs I32 widens to I32 exactly as
+                // bare I16 vs I32.
+                ((some(alias_type("A", i16(), 10)), some(i32())), some(i32())),
+                ((some(i32()), some(alias_type("A", i16(), 10))), some(i32())),
+                // Alias whose underlying type is identical to the other operand
+                ((some(alias_type("A", i32(), 11)), some(i32())), some(i32())),
+                // Chained alias: A2 = A1 = I32
+                (
+                    (
+                        some(alias_type("A2", alias_type("A1", i32(), 12), 13)),
+                        some(i32()),
+                    ),
+                    some(i32()),
+                ),
+                // Two distinct aliases of the same underlying primitive
+                (
+                    (
+                        some(alias_type("B1", i32(), 14)),
+                        some(alias_type("B2", i32(), 15)),
+                    ),
+                    some(i32()),
+                ),
+                // Alias of a wider int vs a narrower alias, same signedness -> wider
+                (
+                    (
+                        some(alias_type("W", i32(), 16)),
+                        some(alias_type("N", i8(), 17)),
+                    ),
+                    some(i32()),
+                ),
+            ];
+            let _ = U8;
+            for ((o1, o2), expected) in cases {
+                let got = TypeOption::common_type(&o1, &o2);
+                match got {
+                    Some(actual) => assert!(
+                        option_eq(&actual, &expected),
+                        "common_type({}, {}) expected {}, got {}",
+                        TypeOption::show(&o1),
+                        TypeOption::show(&o2),
+                        TypeOption::show(&expected),
+                        TypeOption::show(&actual),
+                    ),
+                    None => panic!(
+                        "common_type({}, {}) expected {}, got mismatch (None)",
+                        TypeOption::show(&o1),
+                        TypeOption::show(&o2),
+                        TypeOption::show(&expected),
+                    ),
+                }
+            }
         });
     }
 
-    /// Same-signedness integers resolve to the WIDER type (spec rules 2.3/2.4),
-    /// which differs from the general `Type::common_type` (that gives Integer).
     #[test]
-    fn common_type_option_widens_same_signedness() {
+    fn common_type_option_unresolvable_pairs() {
         with_test_ctx(|| {
-            assert_common_some(&some(i8()), &some(i32()), &i32());
-            assert_common_some(&some(i32()), &some(i8()), &i32());
-            assert_common_some(&some(u16()), &some(u64()), &u64());
-            assert_common_some(&some(f32()), &some(f64()), &f64());
+            use IntegerKind::*;
+            let cases: Vec<(TypeOptionT, TypeOptionT)> = vec![
+                // Mixed signedness has no rule
+                (some(i32()), some(u32())),
+                (some(alias_type("A", i32(), 20)), some(u32())),
+                // Enum is NOT unwrapped to its representation type here (unlike
+                // the general Type::common_type); enum vs. primitive is a mismatch.
+                (some(enumeration("E", I32, 21)), some(i32())),
+                (
+                    some(alias_type("AE", enumeration("E", I32, 21), 22)),
+                    some(i32()),
+                ),
+                // Numeric vs. string
+                (some(i32()), some(string(None))),
+                // Boolean vs. numeric
+                (some(boolean()), some(i32())),
+            ];
+            let _ = U8;
+            for (o1, o2) in cases {
+                assert!(
+                    TypeOption::common_type(&o1, &o2).is_none(),
+                    "common_type({}, {}) expected mismatch (None), got a result",
+                    TypeOption::show(&o1),
+                    TypeOption::show(&o2),
+                );
+            }
         });
     }
 
-    /// Signedness mismatch and enum-vs-primitive have no rule -> mismatch (None).
-    /// Enums are NOT unwrapped by the type-option rules.
+    // -----------------------------------------------------------------------
+    // "type option conversion" should ...
+    // -----------------------------------------------------------------------
+
     #[test]
-    fn common_type_option_mismatches() {
+    fn type_option_convertible_pairs() {
         with_test_ctx(|| {
-            // signed vs unsigned -> no rule
-            assert!(TypeOption::common_type(&some(i32()), &some(u32())).is_none());
-            // enum vs its own rep type -> mismatch (enums not unwrapped here)
-            let e = enumeration("E", IntegerKind::I32, 20);
-            assert!(TypeOption::common_type(&some(e.clone()), &some(i32())).is_none());
-            // alias of enum vs I32: underlying is the enum (not the rep) -> mismatch
-            let ae = alias_type("AE", e, 21);
-            assert!(TypeOption::common_type(&some(ae), &some(i32())).is_none());
+            let cases: Vec<(TypeOptionT, TypeOptionT)> = vec![
+                // Any type option may be converted to None
+                (some(i32()), None),
+                (None, None),
+                // Identical types
+                (some(i32()), some(i32())),
+                // Same-signedness widening
+                (some(i8()), some(i32())),
+                (some(u16()), some(u64())),
+                // Float widening
+                (some(f32()), some(f64())),
+                // Strings
+                (some(string(None)), some(string(None))),
+                (some(string_with_size(8)), some(string(None))),
+                // Rule 2.2: alias unwrapping. alias(I16) -> I32 (widen after unwrap).
+                (some(alias_type("A", i16(), 30)), some(i32())),
+                (some(i16()), some(alias_type("A", i32(), 31))),
+                (some(alias_type("A", i32(), 32)), some(i32())),
+            ];
+            for (o1, o2) in cases {
+                assert!(
+                    TypeOption::is_convertible_to(&o1, &o2),
+                    "expected {} -> {} to be convertible",
+                    TypeOption::show(&o1),
+                    TypeOption::show(&o2),
+                );
+            }
         });
     }
 
-    /// `None` (no value) is absorbing: any option with `None` yields `None`.
-    /// (Spec "Computing a Common Type Option" rule 1.)
     #[test]
-    fn common_type_option_none_is_absorbing() {
+    fn type_option_inconvertible_pairs() {
         with_test_ctx(|| {
-            assert!(matches!(
-                TypeOption::common_type(&None, &some(i32())),
-                Some(None)
-            ));
-            assert!(matches!(
-                TypeOption::common_type(&some(i32()), &None),
-                Some(None)
-            ));
-            assert!(matches!(TypeOption::common_type(&None, &None), Some(None)));
-        });
-    }
-
-    /// Conversion of type options (spec "Conversion of Type Options"): alias
-    /// unwrap (2.2), same-signedness widen-up (2.3/2.4), any-to-None (1).
-    #[test]
-    fn is_convertible_to_unwraps_aliases() {
-        with_test_ctx(|| {
-            let a_i16 = alias_type("A", i16(), 30);
-            // I16 -> I32 (wider, same signedness): allowed
-            assert!(TypeOption::is_convertible_to(&some(i16()), &some(i32())));
-            // alias(I16) -> I32: same, via rule 2.2
-            assert!(TypeOption::is_convertible_to(
-                &some(a_i16.clone()),
-                &some(i32())
-            ));
-            // I32 -> alias(I16): narrowing -> not allowed
-            assert!(!TypeOption::is_convertible_to(&some(i32()), &some(a_i16)));
-            // anything -> None allowed; None -> Some not allowed
-            assert!(TypeOption::is_convertible_to(&some(i32()), &None));
-            assert!(!TypeOption::is_convertible_to(&None, &some(i32())));
+            use IntegerKind::*;
+            let cases: Vec<(TypeOptionT, TypeOptionT)> = vec![
+                // None -> Some is not allowed
+                (None, some(i32())),
+                // Narrowing
+                (some(i32()), some(i16())),
+                (some(i32()), some(alias_type("A", i16(), 33))),
+                // Mixed signedness
+                (some(i32()), some(u32())),
+                // Float narrowing
+                (some(f64()), some(f32())),
+                // Enum is not unwrapped -> not convertible to a primitive here
+                (some(enumeration("E", I32, 34)), some(i32())),
+            ];
+            let _ = U8;
+            for (o1, o2) in cases {
+                assert!(
+                    !TypeOption::is_convertible_to(&o1, &o2),
+                    "expected {} -> {} to NOT be convertible",
+                    TypeOption::show(&o1),
+                    TypeOption::show(&o2),
+                );
+            }
         });
     }
 }
