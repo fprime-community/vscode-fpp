@@ -141,23 +141,18 @@ impl SemanticTokensState {
 
         let mut last = LineCol { line: 0, col: 0 };
 
-        let filter_range = match filter_range {
-            Some(filter_range) => Some(TextRange::new(
-                self.lines
-                    .offset(LineCol {
-                        line: filter_range.start.line,
-                        col: filter_range.start.character,
-                    })
-                    .unwrap(),
-                self.lines
-                    .offset(LineCol {
-                        line: filter_range.start.line,
-                        col: filter_range.start.character,
-                    })
-                    .unwrap(),
-            )),
-            None => None,
-        };
+        let filter_range = filter_range.and_then(|filter_range| {
+            Some(TextRange::new(
+                self.lines.offset(LineCol {
+                    line: filter_range.start.line,
+                    col: filter_range.start.character,
+                })?,
+                self.lines.offset(LineCol {
+                    line: filter_range.end.line,
+                    col: filter_range.end.character,
+                })?,
+            ))
+        });
 
         for (range, kind) in self.raw {
             if let Some(filter_range) = filter_range
@@ -166,8 +161,12 @@ impl SemanticTokensState {
                 continue;
             }
 
-            let start = self.lines.line_col(range.start());
-            let end = self.lines.line_col(range.end());
+            let (Some(start), Some(end)) = (
+                self.lines.try_line_col(range.start()),
+                self.lines.try_line_col(range.end()),
+            ) else {
+                continue;
+            };
 
             // We only support single line tokens
             assert_eq!(
