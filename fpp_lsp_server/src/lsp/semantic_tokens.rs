@@ -168,46 +168,63 @@ impl SemanticTokensState {
                 continue;
             };
 
-            // We only support single line tokens
-            assert_eq!(
-                start.line, end.line,
-                "semantic tokens should be a single line: {:?}, {:?} - {:?}",
-                kind, start, end
-            );
-
-            let delta_line = start.line - last.line;
-            let delta_start = if delta_line == 0 {
-                // Same line, offset the start position
-
-                assert!(
-                    start.col > last.col || tokens.data.is_empty(),
-                    "semantic tokens overlap: {}:{} (last) | {}:{}..{}:{} ({:?})",
-                    last.line,
-                    last.col,
-                    start.line,
-                    start.col,
-                    end.line,
-                    end.col,
-                    kind
-                );
-
-                start.col - last.col
-            } else {
-                // Token is on a different line, don't alter the column
-                start.col
-            };
-
             let (token_type, token_modifiers_bitset) = kind.type_and_modifier();
-            let length = end.col - start.col;
 
-            last = start;
-            tokens.data.push(SemanticToken {
-                delta_line,
-                delta_start,
-                length,
-                token_type,
-                token_modifiers_bitset,
-            });
+            // LSP semantic tokens cannot span multiple lines (the client
+            // advertises multilineTokenSupport: false). A range that crosses a
+            // line boundary is emitted as one token per line it covers.
+            for line in start.line..=end.line {
+                let start_col = if line == start.line { start.col } else { 0 };
+                let end_col = if line == end.line {
+                    end.col
+                } else {
+                    // The column at the end of this line, excluding the newline.
+                    match self.lines.line(line) {
+                        Some(line_range) => self.lines.line_col(line_range.end()).col,
+                        None => start_col,
+                    }
+                };
+
+                if start_col >= end_col {
+                    // Empty segment (e.g. a range that ends exactly at a line
+                    // break has a zero-width piece on the following line).
+                    continue;
+                }
+
+                let delta_line = line - last.line;
+                let delta_start = if delta_line == 0 {
+                    // Same line, offset the start position
+
+                    assert!(
+                        start_col > last.col || tokens.data.is_empty(),
+                        "semantic tokens overlap: {}:{} (last) | {}:{}..{}:{} ({:?})",
+                        last.line,
+                        last.col,
+                        line,
+                        start_col,
+                        line,
+                        end_col,
+                        kind
+                    );
+
+                    start_col - last.col
+                } else {
+                    // Token is on a different line, don't alter the column
+                    start_col
+                };
+
+                last = LineCol {
+                    line,
+                    col: start_col,
+                };
+                tokens.data.push(SemanticToken {
+                    delta_line,
+                    delta_start,
+                    length: end_col - start_col,
+                    token_type,
+                    token_modifiers_bitset,
+                });
+            }
         }
 
         tokens
