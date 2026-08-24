@@ -486,9 +486,9 @@ fn is_explodable(kind: SyntaxKind) -> bool {
 }
 
 /// Whether a block body preserves a single blank line at its start and end when
-/// the source had one. True for definition scopes and connection blocks; other
-/// bodies (structs, enums, packet sub-blocks, inline lists) hug their
-/// delimiters.
+/// the source had one. True for definition scopes, connection blocks, and
+/// telemetry packet-set / packet blocks; other bodies (structs, enums, packet
+/// `omit` blocks, inline lists) hug their delimiters.
 fn preserves_edge_blanks(kind: SyntaxKind) -> bool {
     match kind {
         MODULE_MEMBER_LIST
@@ -497,7 +497,9 @@ fn preserves_edge_blanks(kind: SyntaxKind) -> bool {
         | TOPOLOGY_MEMBER_LIST
         | STATE_MACHINE_MEMBER_LIST
         | STATE_MEMBER_LIST
-        | CONNECTION_MEMBER_LIST => true,
+        | CONNECTION_MEMBER_LIST
+        | TLM_PACKET_SET_MEMBER_LIST
+        | TLM_PACKET_MEMBER_LIST => true,
         _ => false,
     }
 }

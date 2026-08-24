@@ -1,7 +1,8 @@
 # Definition-scope bodies (module, component, interface, topology, state
-# machine), individual states, and connection blocks preserve a single blank
-# line at their start and end when the source has one. Data-type bodies
-# (struct, enum) always hug their delimiters.
+# machine), individual states, connection blocks, and telemetry packet-set /
+# packet blocks preserve a single blank line at their start and end when the
+# source has one. Data-type bodies (struct, enum) and packet `omit` blocks
+# always hug their delimiters.
 
 module WithBoth {
 
@@ -67,6 +68,21 @@ topology Topo {
   connections C {
 
     a.out -> b.in
+
+  }
+
+  telemetry packets PktSet {
+
+    packet P1 group 1 {
+
+      compA.channel1
+      compB.channel2
+
+    }
+
+  } omit {
+
+    compA.debug
 
   }
 
