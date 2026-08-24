@@ -56,11 +56,14 @@ impl Display for Task {
 
 impl GlobalState {
     fn new_translation_unit_cache(&self, uri: &str) -> anyhow::Result<TranslationUnitCache> {
+        // Read the file from VFS before starting garbage collection so a read
+        // error returns without an open GC context.
+        let content = self.vfs.read(uri)?;
+
         GarbageCollectionSet::start();
         self.diagnostics.start_garbage_collection();
 
-        // Read the file from VFS and produce the initial AST
-        let content = self.vfs.read(uri)?;
+        // Produce the initial AST
         let file = SourceFile::new(uri, content);
 
         let mut ast = fpp_ast::TransUnit(fpp_parser::parse(
