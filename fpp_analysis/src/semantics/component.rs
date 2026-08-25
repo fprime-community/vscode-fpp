@@ -72,6 +72,7 @@ impl Command {
         matches!(self.kind, Some(CommandKind::Async { .. }))
     }
 
+    /// Creates a command from a command specifier.
     pub fn from_spec_command(a: &Analysis, node: &SpecCommand) -> SemanticResult<Command> {
         let loc = node.span();
         if !matches!(node.kind, InputPortKind::Async) {
@@ -117,6 +118,7 @@ pub struct TlmChannel {
 }
 
 impl TlmChannel {
+    /// Creates a telemetry channel from a telemetry channel specifier.
     pub fn from_spec(a: &Analysis, node: &SpecTlmChannel) -> SemanticResult<TlmChannel> {
         let loc = node.span();
         let channel_type = a.type_map.get(&node.type_name.node_id).unwrap().clone();
@@ -137,6 +139,7 @@ impl TlmChannel {
     }
 }
 
+/// Computes limits from AST limits.
 fn compute_limits(_a: &Analysis, limits: &[fpp_ast::TlmChannelLimit]) -> SemanticResult {
     let mut seen: HashMap<String, Span> = HashMap::default();
     for limit in limits {
@@ -159,6 +162,7 @@ pub struct Record {
 }
 
 impl Record {
+    /// Creates a record from a record specifier.
     pub fn from_spec(a: &Analysis, node: &SpecRecord) -> SemanticResult<Record> {
         a.check_displayable_type(
             node.record_type.node_id,
@@ -180,6 +184,7 @@ pub struct Container {
 }
 
 impl Container {
+    /// Creates a container from a container specifier.
     pub fn from_spec(a: &Analysis, node: &SpecContainer) -> SemanticResult<Container> {
         a.get_nonnegative_big_int_value_opt(&node.default_priority)?;
         Ok(Container {
@@ -265,6 +270,7 @@ pub struct Event {
 }
 
 impl Event {
+    /// Creates an event from an event specifier.
     pub fn from_spec(a: &Analysis, node: &SpecEvent) -> SemanticResult<Event> {
         let loc = node.span();
         if Analysis::get_num_ref_params(&node.params) != 0 {
@@ -412,23 +418,40 @@ impl StateMachineInstance {
 #[derive(Debug, Clone)]
 pub struct Component {
     pub symbol: Symbol,
+    /// The AST node defining the component.
     pub node: Arc<DefComponent>,
     pub loc: Span,
+    /// The port interface of the component.
     pub port_interface: PortInterface,
+    /// The map from command opcodes to commands.
     pub command_map: HashMap<i128, Command>,
+    /// The next default opcode.
     pub default_opcode: i128,
+    /// The map from telemetry channel IDs to channels.
     pub tlm_channel_map: HashMap<i128, TlmChannel>,
+    /// The map from telemetry channel names to channels.
     pub tlm_channel_name_map: HashMap<String, TlmChannel>,
+    /// The next default channel ID.
     pub default_tlm_channel_id: i128,
+    /// The map from event IDs to events.
     pub event_map: HashMap<i128, Event>,
+    /// The next default event ID.
     pub default_event_id: i128,
+    /// The map from parameter IDs to parameters.
     pub param_map: HashMap<i128, Param>,
+    /// The next default parameter ID.
     pub default_param_id: i128,
+    /// The map from container IDs to containers.
     pub container_map: HashMap<i128, Container>,
+    /// The next default container ID.
     pub default_container_id: i128,
+    /// The map from record IDs to records.
     pub record_map: HashMap<i128, Record>,
+    /// The next default record ID.
     pub default_record_id: i128,
+    /// The map from state machine instance names to state machine instances.
     pub state_machine_instance_map: HashMap<String, StateMachineInstance>,
+    /// The list of port matching specifiers.
     pub spec_port_matching_list: Vec<Arc<SpecPortMatching>>,
     /// The resolved port matchings of this component. Populated with the
     /// matched-port-numbering phase; empty otherwise.
@@ -623,6 +646,9 @@ impl Component {
         )?;
         let mut c = self.clone();
         c.tlm_channel_map = map;
+        // Add the channel to the channel name map. If there is a duplicate
+        // name, we will catch it later when we check all the dictionary
+        // elements.
         c.tlm_channel_name_map.insert(name, channel);
         c.default_tlm_channel_id = next;
         Ok(c)
@@ -630,6 +656,7 @@ impl Component {
 
     /// Add a parameter
     pub fn add_param(&self, id_opt: Option<i128>, param: Param) -> SemanticResult<Component> {
+        // Update the parameter map and the default parameter ID.
         let (map, next) = add_element_to_id_map(
             &self.param_map,
             id_opt.unwrap_or(self.default_param_id),
@@ -639,6 +666,7 @@ impl Component {
         let mut c = self.clone();
         c.param_map = map;
         c.default_param_id = next;
+        // Add the implicit set and save commands.
         let upper = param.name.to_uppercase();
         let set_command = Command {
             loc: param.loc,
@@ -928,6 +956,7 @@ fn add_element_to_id_map<T: Clone>(
     Ok((m, id + 1))
 }
 
+/// Checks for duplicate names in dictionary.
 fn check_dictionary_names<T>(
     map: &HashMap<i128, T>,
     kind: &str,
