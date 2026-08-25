@@ -79,12 +79,34 @@ struct KindDef {
     variants: Vec<KindVariant>,
 }
 
+/// Whether a leaf-enum variant carries a payload (dropped in the Python mirror,
+/// but the match arm must still bind/ignore it).
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Payload {
+    Unit,
+    Tuple,
+    Struct,
+}
+
+struct LeafVariant {
+    name: String,
+    payload: Payload,
+}
+
+/// A leaf enum (e.g. `IntegerKind`) rendered as a fieldless Python `enum.Enum`
+/// via a `#[pyclass(eq, eq_int)]` mirror + a `From<&fpp_ast::X>` conversion.
+struct LeafEnumDef {
+    #[allow(dead_code)]
+    name: String,
+    variants: Vec<LeafVariant>,
+}
+
 #[derive(Default)]
 struct Registry {
     node_structs: BTreeMap<String, StructDef>,
     unions: BTreeMap<String, UnionDef>,
     kinds: BTreeMap<String, KindDef>,
-    used_leaves: BTreeSet<String>,
+    leaf_enums: BTreeMap<String, LeafEnumDef>,
     is_node: BTreeSet<String>,
     is_union: BTreeSet<String>,
     shadowed: BTreeSet<String>,
@@ -191,9 +213,54 @@ impl Parse for KindVariantDecl {
     }
 }
 
+/// `Variant` (unit) | `Variant(_)` (tuple payload) | `Variant{_}` (struct payload).
+struct LeafVariantDecl {
+    name: Ident,
+    payload: Payload,
+}
+
+impl Parse for LeafVariantDecl {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let name: Ident = input.parse()?;
+        let payload = if input.peek(syn::token::Paren) {
+            let content;
+            parenthesized!(content in input);
+            let _ = content.parse::<proc_macro2::TokenStream>();
+            Payload::Tuple
+        } else if input.peek(syn::token::Brace) {
+            let content;
+            braced!(content in input);
+            let _ = content.parse::<proc_macro2::TokenStream>();
+            Payload::Struct
+        } else {
+            Payload::Unit
+        };
+        Ok(LeafVariantDecl { name, payload })
+    }
+}
+
+/// `Name { V1, V2(_), … }` — a leaf enum with its variants.
+struct LeafEnumDecl {
+    name: Ident,
+    variants: Vec<LeafVariantDecl>,
+}
+
+impl Parse for LeafEnumDecl {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let name: Ident = input.parse()?;
+        let content;
+        braced!(content in input);
+        let variants = content.parse_terminated(LeafVariantDecl::parse, Token![,])?;
+        Ok(LeafEnumDecl {
+            name,
+            variants: variants.into_iter().collect(),
+        })
+    }
+}
+
 /// The whole `fpp_ast_bindings!` body.
 struct Dsl {
-    leaves: Vec<Ident>,
+    leaves: Vec<LeafEnumDecl>,
     shadowed: Vec<Ident>,
     nodes: Vec<(Ident, Vec<FieldDecl>)>,
     unions: Vec<(Ident, Vec<UnionVariantDecl>)>,
@@ -219,7 +286,12 @@ impl Parse for Dsl {
         while !input.is_empty() {
             let kw: Ident = input.parse()?;
             match kw.to_string().as_str() {
-                "leaves" => dsl.leaves = parse_ident_list(input)?,
+                "leaves" => {
+                    let content;
+                    braced!(content in input);
+                    let items = content.parse_terminated(LeafEnumDecl::parse, Token![,])?;
+                    dsl.leaves = items.into_iter().collect();
+                }
                 "shadowed" => dsl.shadowed = parse_ident_list(input)?,
                 "node" => {
                     let name: Ident = input.parse()?;
@@ -295,11 +367,28 @@ fn classify(card: Card, name: &str, leaves: &BTreeSet<String>, kinds: &BTreeSet<
 }
 
 fn build_registry(dsl: Dsl) -> Registry {
-    let leaves: BTreeSet<String> = dsl.leaves.iter().map(|i| i.to_string()).collect();
+    let leaves: BTreeSet<String> = dsl.leaves.iter().map(|l| l.name.to_string()).collect();
     let kinds_set: BTreeSet<String> = dsl.kinds.iter().map(|(n, _)| n.to_string()).collect();
 
+    let leaf_enums: BTreeMap<String, LeafEnumDef> = dsl
+        .leaves
+        .iter()
+        .map(|l| {
+            let name = l.name.to_string();
+            let variants = l
+                .variants
+                .iter()
+                .map(|v| LeafVariant {
+                    name: v.name.to_string(),
+                    payload: v.payload,
+                })
+                .collect();
+            (name.clone(), LeafEnumDef { name, variants })
+        })
+        .collect();
+
     let mut reg = Registry {
-        used_leaves: leaves.clone(),
+        leaf_enums,
         is_node: dsl.nodes.iter().map(|(n, _)| n.to_string()).collect(),
         is_union: dsl.unions.iter().map(|(n, _)| n.to_string()).collect(),
         shadowed: dsl.shadowed.iter().map(|i| i.to_string()).collect(),
@@ -413,10 +502,6 @@ fn kind_variant_wid(kind_name: &str, variant: &str) -> proc_macro2::Ident {
 
 fn union_ref_ident(name: &str) -> proc_macro2::Ident {
     format_ident!("{}Ref", name)
-}
-
-fn leaf_fn_ident(name: &str) -> proc_macro2::Ident {
-    format_ident!("{}_to_string", snake(name))
 }
 
 fn union_node_members(name: &str, reg: &Registry) -> Vec<proc_macro2::Ident> {
@@ -847,15 +932,41 @@ fn emit_py(reg: &Registry) -> TokenStream {
         });
     }
 
-    let mut leaf_fns = Vec::new();
-    for name in &reg.used_leaves {
-        let f = leaf_fn_ident(name);
-        let ty = ast_ty(name);
-        leaf_fns.push(quote! {
-            fn #f(x: &fpp_ast::#ty) -> String {
-                // Variant name via Debug; refined to FPP surface strings later.
-                let s = format!("{:?}", x);
-                s.split(|c: char| c == '(' || c == ' ' || c == '{').next().unwrap_or("").to_string()
+    // Leaf enums: a fieldless `#[pyclass(eq, eq_int)]` Python-enum mirror per leaf
+    // + a `From<&fpp_ast::X>` that maps each native variant onto it (payload, if
+    // any, is dropped — the Python mirror only carries the discriminant).
+    let mut leaf_defs = Vec::new();
+    for (name, def) in &reg.leaf_enums {
+        let ety = format_ident!("{}", name);
+        let nat = ast_ty(name);
+        let variant_ids: Vec<_> = def
+            .variants
+            .iter()
+            .map(|v| format_ident!("{}", v.name))
+            .collect();
+        let from_arms: Vec<_> = def
+            .variants
+            .iter()
+            .map(|v| {
+                let vid = format_ident!("{}", v.name);
+                let pat = match v.payload {
+                    Payload::Unit => quote!(fpp_ast::#nat::#vid),
+                    Payload::Tuple => quote!(fpp_ast::#nat::#vid(..)),
+                    Payload::Struct => quote!(fpp_ast::#nat::#vid { .. }),
+                };
+                quote!(#pat => #ety::#vid)
+            })
+            .collect();
+        register_calls.push(quote!(m.add_class::<#ety>()?;));
+        leaf_defs.push(quote! {
+            #[gen_stub_pyclass_enum]
+            #[pyclass(eq, eq_int, frozen, hash)]
+            #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+            pub enum #ety { #(#variant_ids,)* }
+            impl ::std::convert::From<&fpp_ast::#nat> for #ety {
+                fn from(x: &fpp_ast::#nat) -> Self {
+                    match x { #(#from_arms,)* }
+                }
             }
         });
     }
@@ -876,7 +987,7 @@ fn emit_py(reg: &Registry) -> TokenStream {
             #[getter] fn pre_annotation(&self, py: Python<'_>) -> Vec<String> { self.model.borrow(py).data.pre_anno(self.node) }
             #[getter] fn post_annotation(&self, py: Python<'_>) -> Vec<String> { self.model.borrow(py).data.post_anno(self.node) }
             /// The definition this use-site node resolves to (or None).
-            #[getter] fn definition(&self, py: Python<'_>) -> PyResult<Option<Py<crate::sem_py::Symbol>>> {
+            #[getter] fn definition(&self, py: Python<'_>) -> PyResult<Option<crate::unions::SymbolRef>> {
                 let sym = {
                     let m = self.model.borrow(py);
                     match m.data.analysis.use_def_map.get(&self.node) {
@@ -885,23 +996,23 @@ fn emit_py(reg: &Registry) -> TokenStream {
                     }
                 };
                 match sym {
-                    Some(s) => Ok(Some(crate::sem_py::build_symbol(&self.model, py, s)?)),
+                    Some(s) => Ok(Some(crate::unions::SymbolRef(crate::sem_py::build_symbol(&self.model, py, s)?.into_any()))),
                     None => Ok(None),
                 }
             }
             /// The resolved type of this node (or None).
-            #[getter] fn resolved_type(&self, py: Python<'_>) -> PyResult<Option<Py<crate::sem_py::Type>>> {
+            #[getter] fn resolved_type(&self, py: Python<'_>) -> PyResult<Option<crate::unions::TypeRef>> {
                 let ty = self.model.borrow(py).data.analysis.type_map.get(&self.node).cloned();
                 match ty {
-                    Some(ty) => Ok(Some(crate::sem_py::build_type(&self.model, py, ty)?)),
+                    Some(ty) => Ok(Some(crate::unions::TypeRef(crate::sem_py::build_type(&self.model, py, ty)?.into_any()))),
                     None => Ok(None),
                 }
             }
             /// The resolved (constant-folded) value of this node (or None).
-            #[getter] fn resolved_value(&self, py: Python<'_>) -> PyResult<Option<Py<crate::sem_py::Value>>> {
+            #[getter] fn resolved_value(&self, py: Python<'_>) -> PyResult<Option<crate::unions::ValueRef>> {
                 let v = self.model.borrow(py).data.analysis.value_map.get(&self.node).cloned();
                 match v {
-                    Some(ref v) => Ok(Some(crate::sem_py::build_value(&self.model, py, v)?)),
+                    Some(ref v) => Ok(Some(crate::unions::ValueRef(crate::sem_py::build_value(&self.model, py, v)?.into_any()))),
                     None => Ok(None),
                 }
             }
@@ -918,7 +1029,7 @@ fn emit_py(reg: &Registry) -> TokenStream {
         #(#wrappers)*
         #(#kind_wrappers)*
         #(#union_wrappers)*
-        #(#leaf_fns)*
+        #(#leaf_defs)*
 
         #[gen_stub_pyclass]
         #[pyclass(extends = AstNode, frozen)]
@@ -962,12 +1073,12 @@ fn emit_getter(
             }
         },
         Shape::Leaf(l) => {
-            let lf = leaf_fn_ident(l);
+            let ety = format_ident!("{}", l);
             quote! {
-                #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> String {
+                #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> #ety {
                     let sup = self_.as_super();
                     let m = sup.model.borrow(py);
-                    #lf(&m.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname)
+                    #ety::from(&m.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname)
                 }
             }
         }
@@ -978,12 +1089,12 @@ fn emit_getter(
             }
         },
         Shape::LeafOpt(l) => {
-            let lf = leaf_fn_ident(l);
+            let ety = format_ident!("{}", l);
             quote! {
-                #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> Option<String> {
+                #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> Option<#ety> {
                     let sup = self_.as_super();
                     let m = sup.model.borrow(py);
-                    m.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|v| #lf(v))
+                    m.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|v| #ety::from(v))
                 }
             }
         }
@@ -1080,10 +1191,10 @@ fn kind_field_parts(
             false,
         ),
         Shape::Leaf(l) => {
-            let lf = leaf_fn_ident(l);
+            let ety = format_ident!("{}", l);
             (
-                quote!(#[pyo3(get)] #fname: String),
-                quote!(#fname: #lf(#bind)),
+                quote!(#[pyo3(get)] #fname: #ety),
+                quote!(#fname: #ety::from(#bind)),
                 quote!(),
                 false,
             )
@@ -1095,10 +1206,10 @@ fn kind_field_parts(
             false,
         ),
         Shape::LeafOpt(l) => {
-            let lf = leaf_fn_ident(l);
+            let ety = format_ident!("{}", l);
             (
-                quote!(#[pyo3(get)] #fname: Option<String>),
-                quote!(#fname: #bind.as_ref().map(|v| #lf(v))),
+                quote!(#[pyo3(get)] #fname: Option<#ety>),
+                quote!(#fname: #bind.as_ref().map(|v| #ety::from(v))),
                 quote!(),
                 false,
             )
@@ -1193,7 +1304,7 @@ pub fn expand(input: TokenStream) -> TokenStream {
         use fpp_analysis::semantics::SymbolInterface;
         use fpp_core::Node;
         use pyo3::prelude::*;
-        use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
+        use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum, gen_stub_pymethods};
         use crate::lower_core::Walker;
 
         #walk

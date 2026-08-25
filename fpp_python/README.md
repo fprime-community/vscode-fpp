@@ -42,10 +42,32 @@ for member in module.members:
     print(type(member).__name__, getattr(member, "name", None))
 
 # Resolve semantics by navigation (no AST ids)
-arr = model.lookup("M.Arr")                 # -> Symbol
-t = arr.definition.resolved_type            # -> Type(kind="Array", array_size=4, ...)
-answer = model.lookup("M.answer").definition.value.resolved_value  # -> Value(42)
+arr = model.lookup("M.Arr")                 # -> Symbol (here an ArraySymbol)
+t = arr.definition.resolved_type            # -> Type (here an ArrayType); t.array_size == 4
+answer = model.lookup("M.answer").definition.value.resolved_value  # -> Value (an IntegerValue); .value == 42
 ```
+
+### Typed unions and enums
+
+The "closed union" semantic types — `Symbol`, `Type`, `Value`, `PortInstance`,
+`StateMachineElement` — are each a union of concrete subclasses over a base
+class. A getter typed as `Type` returns one of `ArrayType | EnumType | …`;
+discriminate with `isinstance` / `match` (each subclass exposes only its own
+fields) rather than a string tag:
+
+```python
+from fpp_python import ArrayType, PrimitiveIntType, IntegerKind
+
+match arr.definition.resolved_type:
+    case ArrayType() as a:
+        elt = a.element_type            # -> Type union
+        if isinstance(elt, PrimitiveIntType) and elt.rep_type == IntegerKind.U32:
+            ...
+```
+
+Enum-valued fields are real Python enums (`IntegerKind`, `ComponentKind`,
+`EventSeverity`, `QueueFull`, `Direction`, `CommandKind`, …), compared by member
+(e.g. `component.kind == ComponentKind.Passive`).
 
 `analyze(source, uri="<string>")` returns a `Model` with:
 

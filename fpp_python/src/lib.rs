@@ -29,11 +29,13 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 mod ast;
 mod diagnostics;
 mod entities_py;
+mod enums;
 mod ir_core;
 mod lower_core;
 mod model;
 mod noderef;
 mod sem_py;
+mod unions;
 
 use diagnostics::{Diagnostic, OwnedDiagnostic, SharedEmitter};
 use model::Model;
@@ -118,6 +120,8 @@ fn fpp_python(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ast::register(m)?;
     sem_py::register(m)?;
     entities_py::register(m)?;
+    enums::register(m)?;
+    unions::register(m)?;
     Ok(())
 }
 
@@ -132,4 +136,11 @@ fn fpp_python(m: &Bound<'_, PyModule>) -> PyResult<()> {
 pub fn stub_info() -> pyo3_stub_gen::Result<pyo3_stub_gen::StubInfo> {
     let manifest_dir: &std::path::Path = env!("CARGO_MANIFEST_DIR").as_ref();
     pyo3_stub_gen::StubInfo::from_pyproject_toml(manifest_dir.join("pyproject.toml"))
+}
+
+/// `(alias name, `Sub1 | Sub2 | …` RHS)` for every closed-union type. Consumed by
+/// the `stub_gen` binary to inject `<Alias>: typing.TypeAlias = …` lines that
+/// pyo3-stub-gen cannot express natively.
+pub fn union_aliases() -> Vec<(&'static str, String)> {
+    unions::union_aliases()
 }

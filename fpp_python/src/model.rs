@@ -84,12 +84,12 @@ impl Model {
     fn lookup(
         slf: PyRef<'_, Self>,
         qualified_name: &str,
-    ) -> PyResult<Option<Py<crate::sem_py::Symbol>>> {
+    ) -> PyResult<Option<crate::unions::SymbolRef>> {
         let py = slf.py();
         let sym = slf.data.by_qualified_name.get(qualified_name).cloned();
         let model: Py<Self> = slf.into();
         match sym {
-            Some(s) => Ok(Some(crate::sem_py::build_symbol(&model, py, s)?)),
+            Some(s) => Ok(Some(crate::sem_py::symbol_ref(&model, py, s)?)),
             None => Ok(None),
         }
     }

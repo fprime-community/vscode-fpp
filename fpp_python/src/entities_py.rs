@@ -19,22 +19,23 @@ use crate::ast::{
     AstNode, DefState, SpecCommand, SpecContainer, SpecEvent, SpecParam, SpecRecord,
     SpecStateMachineInstance, SpecTlmChannel,
 };
+use crate::enums::{CommandKind, Direction, GeneralKind, InstanceKind, StateMachineKind};
 use crate::ir_core::{Loc, ModelData};
 use crate::model::Model;
-use crate::sem_py::{Symbol, Type, Value, build_symbol, build_type, build_value};
+use crate::sem_py::{symbol_ref, type_ref, value_ref};
+use crate::unions::{PortInstanceRef, StateMachineElementRef, SymbolRef, TypeRef, ValueRef};
 use fpp_analysis::semantics::state_machine::{
-    Kind as SmKind, State as SemState, StateMachine as SemStateMachine,
-    StateMachineSymbol as SmSymbol,
+    State as SemState, StateMachine as SemStateMachine, StateMachineSymbol as SmSymbol,
 };
 use fpp_analysis::semantics::{
-    Command as SemCommand, CommandKind, Component as SemComponent,
+    Command as SemCommand, CommandKind as SemCommandKind, Component as SemComponent,
     ComponentInstance as SemComponentInstance, Connection as SemConnection,
-    Container as SemContainer, Direction, Endpoint as SemEndpoint, Event as SemEvent, FppSystem,
-    GeneralKind, InitSpecifier as SemInitSpecifier, Interface as SemInterface, InterfaceInstance,
-    Param as SemParam, PortInstance as SemPortInstance, PortInstanceIdentifier as SemPii,
-    PortInstanceType, PortInterface as SemPortInterface, PortMatching as SemPortMatching,
-    Record as SemRecord, StateMachineInstance as SemSmi, Symbol as SemSymbol, SymbolInterface,
-    TlmChannel as SemTlmChannel, Topology as SemTopology, component_kind_str,
+    Container as SemContainer, Endpoint as SemEndpoint, Event as SemEvent, FppSystem,
+    GeneralKind as SemGeneralKind, InitSpecifier as SemInitSpecifier, Interface as SemInterface,
+    InterfaceInstance, Param as SemParam, PortInstance as SemPortInstance,
+    PortInstanceIdentifier as SemPii, PortInstanceType, PortInterface as SemPortInterface,
+    PortMatching as SemPortMatching, Record as SemRecord, StateMachineInstance as SemSmi,
+    Symbol as SemSymbol, SymbolInterface, TlmChannel as SemTlmChannel, Topology as SemTopology,
 };
 // The `AstNode` *trait* (`.id()`/`.node`) is imported anonymously so the name
 // `AstNode` refers to the base pyclass imported above.
@@ -112,10 +113,10 @@ impl Component {
     fn qualified_name(&self) -> String {
         self.data.analysis.get_qualified_name(&self.sym)
     }
-    /// "active" | "passive" | "queued".
+    /// Component kind: active, passive, or queued.
     #[getter]
-    fn kind(&self) -> &'static str {
-        component_kind_str(&self.native().node.kind)
+    fn kind(&self) -> crate::ast::ComponentKind {
+        crate::ast::ComponentKind::from(&self.native().node.kind)
     }
     #[getter]
     fn port_interface(&self, py: Python<'_>) -> PyResult<Py<PortInterface>> {
@@ -356,21 +357,21 @@ impl PortInterface {
         self.pif.instance_type.clone()
     }
     #[getter]
-    fn ports(&self, py: Python<'_>) -> PyResult<Vec<Py<PortInstance>>> {
+    fn ports(&self, py: Python<'_>) -> PyResult<Vec<PortInstanceRef>> {
         let mut ports: Vec<&SemPortInstance> = self.pif.port_map.values().collect();
         ports.sort_by(|a, b| a.get_unqualified_name().cmp(b.get_unqualified_name()));
         ports
             .iter()
-            .map(|pi| PortInstance::build(&self.model, py, pi))
+            .map(|pi| port_instance_ref(&self.model, py, pi))
             .collect()
     }
     #[getter]
-    fn special_ports(&self, py: Python<'_>) -> PyResult<Vec<Py<PortInstance>>> {
+    fn special_ports(&self, py: Python<'_>) -> PyResult<Vec<PortInstanceRef>> {
         let mut ports: Vec<&SemPortInstance> = self.pif.special_port_map.values().collect();
         ports.sort_by(|a, b| a.get_unqualified_name().cmp(b.get_unqualified_name()));
         ports
             .iter()
-            .map(|pi| PortInstance::build(&self.model, py, pi))
+            .map(|pi| port_instance_ref(&self.model, py, pi))
             .collect()
     }
     fn __repr__(&self) -> String {
@@ -401,12 +402,10 @@ impl PortInterface {
 )]
 pub struct PortInstance;
 
-#[gen_stub_pymethods]
-#[pymethods]
 impl PortInstance {
-    /// "General" | "Special" | "Internal" | "Topology".
-    #[getter]
-    fn variant(&self) -> &'static str {
+    /// The variant name, for `__repr__` only (the public discriminant is the
+    /// concrete subclass identity / union alias, not a string).
+    fn variant_name(&self) -> &'static str {
         match self.pi {
             SemPortInstance::General { .. } => "General",
             SemPortInstance::Special { .. } => "Special",
@@ -414,6 +413,11 @@ impl PortInstance {
             SemPortInstance::Topology { .. } => "Topology",
         }
     }
+}
+
+#[gen_stub_pymethods]
+#[pymethods]
+impl PortInstance {
     #[getter]
     fn name(&self) -> String {
         self.pi.get_unqualified_name().to_string()
@@ -422,13 +426,10 @@ impl PortInstance {
     fn loc(&self) -> Option<Loc> {
         self.data.loc_of_span(self.pi.get_loc())
     }
-    /// "Input" | "Output" | None.
+    /// Port direction, if any.
     #[getter]
-    fn direction(&self) -> Option<&'static str> {
-        self.pi.get_direction().map(|d| match d {
-            Direction::Input => "Input",
-            Direction::Output => "Output",
-        })
+    fn direction(&self) -> Option<Direction> {
+        self.pi.get_direction().map(|d| Direction::from(&d))
     }
     #[getter]
     fn array_size(&self) -> i128 {
@@ -449,26 +450,18 @@ impl PortInstance {
             .collect()
     }
     fn __repr__(&self) -> String {
-        format!("<PortInstance {} '{}'>", self.variant(), self.name())
+        format!("<PortInstance {} '{}'>", self.variant_name(), self.name())
     }
 }
 
 #[gen_stub_pymethods]
 #[pymethods]
 impl GeneralPortInstance {
-    /// General port kind ("AsyncInput"/"GuardedInput"/"Output"/"SyncInput").
+    /// General port kind (async / guarded / sync input, or output).
     #[getter]
-    fn kind(self_: PyRef<'_, Self>) -> Option<String> {
+    fn kind(self_: PyRef<'_, Self>) -> Option<GeneralKind> {
         match &self_.as_super().pi {
-            SemPortInstance::General { kind, .. } => Some(
-                match kind {
-                    GeneralKind::AsyncInput { .. } => "AsyncInput",
-                    GeneralKind::GuardedInput => "GuardedInput",
-                    GeneralKind::Output => "Output",
-                    GeneralKind::SyncInput => "SyncInput",
-                }
-                .to_string(),
-            ),
+            SemPortInstance::General { kind, .. } => Some(GeneralKind::from(kind)),
             _ => None,
         }
     }
@@ -476,19 +469,19 @@ impl GeneralPortInstance {
     fn priority(self_: PyRef<'_, Self>) -> Option<i128> {
         match &self_.as_super().pi {
             SemPortInstance::General {
-                kind: GeneralKind::AsyncInput { priority, .. },
+                kind: SemGeneralKind::AsyncInput { priority, .. },
                 ..
             } => *priority,
             _ => None,
         }
     }
     #[getter]
-    fn queue_full(self_: PyRef<'_, Self>) -> Option<String> {
+    fn queue_full(self_: PyRef<'_, Self>) -> Option<crate::ast::QueueFull> {
         match &self_.as_super().pi {
             SemPortInstance::General {
-                kind: GeneralKind::AsyncInput { queue_full, .. },
+                kind: SemGeneralKind::AsyncInput { queue_full, .. },
                 ..
-            } => Some(format!("{:?}", queue_full)),
+            } => Some(crate::ast::QueueFull::from(queue_full)),
             _ => None,
         }
     }
@@ -501,11 +494,11 @@ impl GeneralPortInstance {
     }
     /// The port-definition symbol for a typed port, else None (serial).
     #[getter]
-    fn type_symbol(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<Py<Symbol>>> {
+    fn type_symbol(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<SymbolRef>> {
         let base = self_.as_super();
         match base.pi.get_type() {
             Some(PortInstanceType::DefPort(sym)) if base.data.ids.contains_key(&sym.node()) => {
-                Ok(Some(build_symbol(&base.model, py, sym)?))
+                Ok(Some(symbol_ref(&base.model, py, sym)?))
             }
             _ => Ok(None),
         }
@@ -515,14 +508,14 @@ impl GeneralPortInstance {
 #[gen_stub_pymethods]
 #[pymethods]
 impl SpecialPortInstance {
-    /// Special port kind, FPP-style (e.g. "telemetry").
+    /// Special port kind (e.g. telemetry, command recv).
     #[getter]
-    fn special_kind(self_: PyRef<'_, Self>) -> Option<String> {
+    fn special_kind(self_: PyRef<'_, Self>) -> Option<crate::ast::SpecialPortInstanceKind> {
         self_
             .as_super()
             .pi
             .get_special_kind()
-            .map(|k| k.to_string())
+            .map(|k| crate::ast::SpecialPortInstanceKind::from(&k))
     }
     #[getter]
     fn priority(self_: PyRef<'_, Self>) -> Option<i128> {
@@ -532,10 +525,10 @@ impl SpecialPortInstance {
         }
     }
     #[getter]
-    fn queue_full(self_: PyRef<'_, Self>) -> Option<String> {
+    fn queue_full(self_: PyRef<'_, Self>) -> Option<crate::ast::QueueFull> {
         match &self_.as_super().pi {
             SemPortInstance::Special { queue_full, .. } => {
-                queue_full.as_ref().map(|qf| format!("{:?}", qf))
+                queue_full.as_ref().map(crate::ast::QueueFull::from)
             }
             _ => None,
         }
@@ -546,9 +539,8 @@ impl SpecialPortInstance {
 #[pymethods]
 impl InternalPortInstance {
     #[getter]
-    fn input_kind(self_: PyRef<'_, Self>) -> Option<String> {
-        // The native `Internal` variant carries no input kind (mirrors the
-        // previous IR, which stored `None` for internal ports).
+    fn input_kind(self_: PyRef<'_, Self>) -> Option<crate::ast::InputPortKind> {
+        // The native `Internal` variant carries no input kind.
         let _ = self_;
         None
     }
@@ -560,9 +552,11 @@ impl InternalPortInstance {
         }
     }
     #[getter]
-    fn queue_full(self_: PyRef<'_, Self>) -> Option<String> {
+    fn queue_full(self_: PyRef<'_, Self>) -> Option<crate::ast::QueueFull> {
         match &self_.as_super().pi {
-            SemPortInstance::Internal { queue_full, .. } => Some(format!("{:?}", queue_full)),
+            SemPortInstance::Internal { queue_full, .. } => {
+                Some(crate::ast::QueueFull::from(queue_full))
+            }
             _ => None,
         }
     }
@@ -573,11 +567,11 @@ impl InternalPortInstance {
 impl TopologyPortInstance {
     /// The underlying aliased port instance.
     #[getter]
-    fn underlying(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<Py<PortInstance>>> {
+    fn underlying(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<PortInstanceRef>> {
         let base = self_.as_super();
         match &base.pi {
             SemPortInstance::Topology { underlying, .. } => {
-                Ok(Some(PortInstance::build(&base.model, py, underlying)?))
+                Ok(Some(port_instance_ref(&base.model, py, underlying)?))
             }
             _ => Ok(None),
         }
@@ -607,17 +601,14 @@ impl PortInstanceIdentifier {
     fn port_name(&self) -> String {
         self.pid.port_instance.get_unqualified_name().to_string()
     }
-    /// "Component" | "Topology".
+    /// Whether the owning instance is a component instance or a topology.
     #[getter]
-    fn instance_kind(&self) -> &'static str {
-        match self.pid.interface_instance {
-            InterfaceInstance::Component(_) => "Component",
-            InterfaceInstance::Topology(_) => "Topology",
-        }
+    fn instance_kind(&self) -> InstanceKind {
+        InstanceKind::from(&self.pid.interface_instance)
     }
     #[getter]
-    fn port_instance(&self, py: Python<'_>) -> PyResult<Py<PortInstance>> {
-        PortInstance::build(&self.model, py, &self.pid.port_instance)
+    fn port_instance(&self, py: Python<'_>) -> PyResult<PortInstanceRef> {
+        port_instance_ref(&self.model, py, &self.pid.port_instance)
     }
     /// The owning `ComponentInstance` (or `Topology` for topology instances).
     #[getter]
@@ -882,39 +873,36 @@ impl StateMachine {
     fn qualified_name(&self) -> String {
         self.data.analysis.get_qualified_name(&self.sym)
     }
-    /// "External" | "Internal".
+    /// External (F Prime-generated) vs internal state machine.
     #[getter]
-    fn kind(&self) -> &'static str {
-        match self.native().get_kind() {
-            SmKind::External => "External",
-            SmKind::Internal => "Internal",
-        }
+    fn kind(&self) -> StateMachineKind {
+        StateMachineKind::from(&self.native().get_kind())
     }
-    /// The actions, as typed symbols.
+    /// The actions, as typed elements.
     #[getter]
-    fn actions(&self, py: Python<'_>) -> PyResult<Vec<Py<StateMachineElement>>> {
+    fn actions(&self, py: Python<'_>) -> PyResult<Vec<StateMachineElementRef>> {
         self.native()
             .actions
             .iter()
-            .map(|s| StateMachineElement::build(&self.model, py, s.clone()))
+            .map(|s| sm_element_ref(&self.model, py, s))
             .collect()
     }
-    /// The guards, as typed symbols.
+    /// The guards, as typed elements.
     #[getter]
-    fn guards(&self, py: Python<'_>) -> PyResult<Vec<Py<StateMachineElement>>> {
+    fn guards(&self, py: Python<'_>) -> PyResult<Vec<StateMachineElementRef>> {
         self.native()
             .guards
             .iter()
-            .map(|s| StateMachineElement::build(&self.model, py, s.clone()))
+            .map(|s| sm_element_ref(&self.model, py, s))
             .collect()
     }
-    /// The signals, as typed symbols.
+    /// The signals, as typed elements.
     #[getter]
-    fn signals(&self, py: Python<'_>) -> PyResult<Vec<Py<StateMachineElement>>> {
+    fn signals(&self, py: Python<'_>) -> PyResult<Vec<StateMachineElementRef>> {
         self.native()
             .signals
             .iter()
-            .map(|s| StateMachineElement::build(&self.model, py, s.clone()))
+            .map(|s| sm_element_ref(&self.model, py, s))
             .collect()
     }
     /// The top-level states (each may nest substates).
@@ -958,16 +946,22 @@ impl StateMachine {
 
 // ---- state-machine symbols & states ---------------------------------------
 
-/// A definition inside a state machine: an action, guard, signal, state, or
-/// choice. Discriminate with `.kind`.
-#[fpp_python_macros::semantic_wrapper(native = SmSymbol)]
+/// A definition inside a state machine. The concrete subclass reflects the kind
+/// (`SmAction`, `SmGuard`, `SmSignal`, `SmState`, `SmChoice`); the shared fields
+/// live on the base.
+#[fpp_python_macros::semantic_wrapper(native = SmSymbol, subclasses(
+    Action => SmAction,
+    Guard => SmGuard,
+    Signal => SmSignal,
+    State => SmState,
+    Choice => SmChoice,
+))]
 pub struct StateMachineElement;
-#[gen_stub_pymethods]
-#[pymethods]
+
 impl StateMachineElement {
-    /// "Action" | "Guard" | "Signal" | "State" | "Choice".
-    #[getter]
-    fn kind(&self) -> &'static str {
+    /// The element-kind name, for `__repr__` only (the public discriminant is the
+    /// concrete subclass identity / union alias).
+    fn kind_name(&self) -> &'static str {
         match &self.native {
             SmSymbol::Action(_) => "Action",
             SmSymbol::Guard(_) => "Guard",
@@ -976,6 +970,20 @@ impl StateMachineElement {
             SmSymbol::Choice(_) => "Choice",
         }
     }
+    /// The declared payload-type node of an action/guard/signal, if any.
+    fn payload_type_node(&self) -> Option<Node> {
+        match &self.native {
+            SmSymbol::Action(d) => d.type_name.as_ref().map(|t| t.node_id),
+            SmSymbol::Guard(d) => d.type_name.as_ref().map(|t| t.node_id),
+            SmSymbol::Signal(d) => d.type_name.as_ref().map(|t| t.node_id),
+            _ => None,
+        }
+    }
+}
+
+#[gen_stub_pymethods]
+#[pymethods]
+impl StateMachineElement {
     #[getter]
     fn name(&self) -> String {
         self.native.get_unqualified_name().to_string()
@@ -990,26 +998,50 @@ impl StateMachineElement {
         use fpp_analysis::semantics::SymbolInterface;
         Model::build(&self.model, py, self.native.node())
     }
-    /// The declared payload type of an action/guard/signal, if any.
-    #[getter]
-    fn get_type(&self, py: Python<'_>) -> PyResult<Option<Py<Type>>> {
-        let tn = match &self.native {
-            SmSymbol::Action(d) => d.type_name.as_ref().map(|t| t.node_id),
-            SmSymbol::Guard(d) => d.type_name.as_ref().map(|t| t.node_id),
-            SmSymbol::Signal(d) => d.type_name.as_ref().map(|t| t.node_id),
-            _ => None,
-        };
-        match tn {
-            Some(n) => forward_type(&self.data, &self.model, py, n),
-            None => Ok(None),
-        }
-    }
     fn __repr__(&self) -> String {
         format!(
             "<StateMachineElement {} '{}'>",
-            self.kind(),
+            self.kind_name(),
             self.native.get_unqualified_name()
         )
+    }
+}
+
+/// The declared payload type of an action/guard/signal, if any.
+fn sm_element_type(base: &StateMachineElement, py: Python<'_>) -> PyResult<Option<TypeRef>> {
+    match base.payload_type_node() {
+        Some(n) => forward_type(&base.data, &base.model, py, n),
+        None => Ok(None),
+    }
+}
+
+#[gen_stub_pymethods]
+#[pymethods]
+impl SmAction {
+    /// The declared payload type, if any.
+    #[getter]
+    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<TypeRef>> {
+        sm_element_type(self_.as_super(), py)
+    }
+}
+
+#[gen_stub_pymethods]
+#[pymethods]
+impl SmGuard {
+    /// The declared payload type, if any.
+    #[getter]
+    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<TypeRef>> {
+        sm_element_type(self_.as_super(), py)
+    }
+}
+
+#[gen_stub_pymethods]
+#[pymethods]
+impl SmSignal {
+    /// The declared payload type, if any.
+    #[getter]
+    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<TypeRef>> {
+        sm_element_type(self_.as_super(), py)
     }
 }
 
@@ -1114,9 +1146,9 @@ fn forward_type(
     model: &Py<Model>,
     py: Python<'_>,
     node: Node,
-) -> PyResult<Option<Py<Type>>> {
+) -> PyResult<Option<TypeRef>> {
     match data.analysis.type_map.get(&node).cloned() {
-        Some(ty) => Ok(Some(build_type(model, py, ty)?)),
+        Some(ty) => Ok(Some(type_ref(model, py, ty)?)),
         None => Ok(None),
     }
 }
@@ -1127,11 +1159,33 @@ fn forward_value(
     model: &Py<Model>,
     py: Python<'_>,
     node: Node,
-) -> PyResult<Option<Py<Value>>> {
+) -> PyResult<Option<ValueRef>> {
     match data.analysis.value_map.get(&node).cloned() {
-        Some(ref v) => Ok(Some(build_value(model, py, v)?)),
+        Some(ref v) => Ok(Some(value_ref(model, py, v)?)),
         None => Ok(None),
     }
+}
+
+/// Build a `PortInstance` (dispatched to its subclass) as the union ref.
+fn port_instance_ref(
+    model: &Py<Model>,
+    py: Python<'_>,
+    pi: &SemPortInstance,
+) -> PyResult<PortInstanceRef> {
+    Ok(PortInstanceRef(
+        PortInstance::build(model, py, pi)?.into_any(),
+    ))
+}
+
+/// Build a `StateMachineElement` (dispatched to its subclass) as the union ref.
+fn sm_element_ref(
+    model: &Py<Model>,
+    py: Python<'_>,
+    sym: &SmSymbol,
+) -> PyResult<StateMachineElementRef> {
+    Ok(StateMachineElementRef(
+        StateMachineElement::build(model, py, sym)?.into_any(),
+    ))
 }
 
 #[fpp_python_macros::semantic_wrapper(native = SemCommand)]
@@ -1149,27 +1203,24 @@ impl Command {
     fn name(&self) -> String {
         self.native.name.clone()
     }
-    /// "Async" | "Guarded" | "Sync", or None for a synthesized param set/save command.
+    /// Dispatch kind, or None for a synthesized param set/save command.
     #[getter]
-    fn kind(&self) -> Option<&'static str> {
-        match &self.native.kind {
-            Some(CommandKind::Async { .. }) => Some("Async"),
-            Some(CommandKind::Guarded) => Some("Guarded"),
-            Some(CommandKind::Sync) => Some("Sync"),
-            None => None,
-        }
+    fn kind(&self) -> Option<CommandKind> {
+        self.native.kind.as_ref().map(CommandKind::from)
     }
     #[getter]
     fn priority(&self) -> Option<i128> {
         match &self.native.kind {
-            Some(CommandKind::Async { priority, .. }) => *priority,
+            Some(SemCommandKind::Async { priority, .. }) => *priority,
             _ => None,
         }
     }
     #[getter]
-    fn queue_full(&self) -> Option<String> {
+    fn queue_full(&self) -> Option<crate::ast::QueueFull> {
         match &self.native.kind {
-            Some(CommandKind::Async { queue_full, .. }) => Some(format!("{:?}", queue_full)),
+            Some(SemCommandKind::Async { queue_full, .. }) => {
+                Some(crate::ast::QueueFull::from(queue_full))
+            }
             _ => None,
         }
     }
@@ -1206,12 +1257,12 @@ impl Event {
     fn loc(&self) -> Option<Loc> {
         self.data.loc_of_span(self.native.loc)
     }
-    /// Event severity (e.g. "ActivityHigh", "Fatal"), from the AST spec.
+    /// Event severity, from the AST spec.
     #[getter]
-    fn severity(&self) -> Option<String> {
-        self.data
-            .node_of_span(self.native.loc)
-            .map(|n| format!("{:?}", self.data.node_as::<fpp_ast::SpecEvent>(n).severity))
+    fn severity(&self) -> Option<crate::ast::EventSeverity> {
+        self.data.node_of_span(self.native.loc).map(|n| {
+            crate::ast::EventSeverity::from(&self.data.node_as::<fpp_ast::SpecEvent>(n).severity)
+        })
     }
     /// The event format string, from the AST spec.
     #[getter]
@@ -1267,7 +1318,7 @@ impl Param {
     }
     /// The parameter's resolved type, from the AST spec.
     #[getter]
-    fn get_type(&self, py: Python<'_>) -> PyResult<Option<Py<Type>>> {
+    fn get_type(&self, py: Python<'_>) -> PyResult<Option<TypeRef>> {
         let Some(n) = self.data.node_of_span(self.native.loc) else {
             return Ok(None);
         };
@@ -1276,7 +1327,7 @@ impl Param {
     }
     /// The parameter's default value, if any.
     #[getter]
-    fn default(&self, py: Python<'_>) -> PyResult<Option<Py<Value>>> {
+    fn default(&self, py: Python<'_>) -> PyResult<Option<ValueRef>> {
         let Some(n) = self.data.node_of_span(self.native.loc) else {
             return Ok(None);
         };
@@ -1315,7 +1366,7 @@ impl TlmChannel {
     }
     /// The channel's resolved type, from the AST spec.
     #[getter]
-    fn get_type(&self, py: Python<'_>) -> PyResult<Option<Py<Type>>> {
+    fn get_type(&self, py: Python<'_>) -> PyResult<Option<TypeRef>> {
         let Some(n) = self.data.node_of_span(self.native.loc) else {
             return Ok(None);
         };
@@ -1367,7 +1418,7 @@ impl Record {
     }
     /// The record's resolved element type, from the AST spec.
     #[getter]
-    fn get_type(&self, py: Python<'_>) -> PyResult<Option<Py<Type>>> {
+    fn get_type(&self, py: Python<'_>) -> PyResult<Option<TypeRef>> {
         let Some(n) = self.data.node_of_span(self.native.loc) else {
             return Ok(None);
         };
@@ -1457,12 +1508,12 @@ pub struct PortMatching;
 #[pymethods]
 impl PortMatching {
     #[getter]
-    fn instance1(&self, py: Python<'_>) -> PyResult<Py<PortInstance>> {
-        PortInstance::build(&self.model, py, &self.native.instance1)
+    fn instance1(&self, py: Python<'_>) -> PyResult<PortInstanceRef> {
+        port_instance_ref(&self.model, py, &self.native.instance1)
     }
     #[getter]
-    fn instance2(&self, py: Python<'_>) -> PyResult<Py<PortInstance>> {
-        PortInstance::build(&self.model, py, &self.native.instance2)
+    fn instance2(&self, py: Python<'_>) -> PyResult<PortInstanceRef> {
+        port_instance_ref(&self.model, py, &self.native.instance2)
     }
     #[getter]
     fn loc(&self) -> Option<Loc> {
@@ -1521,6 +1572,11 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Topology>()?;
     m.add_class::<StateMachine>()?;
     m.add_class::<StateMachineElement>()?;
+    m.add_class::<SmAction>()?;
+    m.add_class::<SmGuard>()?;
+    m.add_class::<SmSignal>()?;
+    m.add_class::<SmState>()?;
+    m.add_class::<SmChoice>()?;
     m.add_class::<State>()?;
     Ok(())
 }

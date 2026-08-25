@@ -16,6 +16,7 @@
 use crate::ast::AstNode;
 use crate::ir_core::ModelData;
 use crate::model::Model;
+use crate::unions::{SymbolRef, TypeRef, ValueRef};
 use fpp_analysis::semantics::{
     Symbol as SemSymbol, SymbolInterface, Type as SemType, Value as SemValue,
 };
@@ -45,10 +46,6 @@ macro_rules! variant {
 
 // ---- integer/float kind helpers (formerly in `sem_lower`) -----------------
 
-fn ikind_str(k: &IntegerKind) -> String {
-    format!("{:?}", k)
-}
-
 fn ikind_signed(k: &IntegerKind) -> bool {
     use IntegerKind::*;
     matches!(k, I8 | I16 | I32 | I64)
@@ -62,10 +59,6 @@ fn ikind_bits(k: &IntegerKind) -> u32 {
         U32 | I32 => 32,
         U64 | I64 => 64,
     }
-}
-
-fn fkind_str(k: &FloatKind) -> String {
-    format!("{:?}", k)
 }
 
 fn fkind_bits(k: &FloatKind) -> u32 {
@@ -149,6 +142,24 @@ pub fn build_value(model: &Py<Model>, py: Python<'_>, v: &SemValue) -> PyResult<
     Value::dispatch(base, py, v)
 }
 
+// ---- union-typed wrappers -------------------------------------------------
+//
+// `build_*` returns the concrete subclass as the base `Py<*>`; these wrap it in
+// the `crate::unions::*Ref` newtype so getters render as the `Symbol` / `Type` /
+// `Value` union alias in the stub while handing back the concrete object.
+
+pub(crate) fn symbol_ref(model: &Py<Model>, py: Python<'_>, sym: SemSymbol) -> PyResult<SymbolRef> {
+    Ok(SymbolRef(build_symbol(model, py, sym)?.into_any()))
+}
+
+pub(crate) fn type_ref(model: &Py<Model>, py: Python<'_>, ty: Arc<SemType>) -> PyResult<TypeRef> {
+    Ok(TypeRef(build_type(model, py, ty)?.into_any()))
+}
+
+pub(crate) fn value_ref(model: &Py<Model>, py: Python<'_>, v: &SemValue) -> PyResult<ValueRef> {
+    Ok(ValueRef(build_value(model, py, v)?.into_any()))
+}
+
 // ===========================================================================
 // Symbol
 // ===========================================================================
@@ -198,10 +209,6 @@ impl Symbol {
 #[pymethods]
 impl Symbol {
     #[getter]
-    fn kind(&self) -> &'static str {
-        symbol_kind(&self.sym)
-    }
-    #[getter]
     fn name(&self) -> String {
         self.sym.name().data.clone()
     }
@@ -223,10 +230,10 @@ impl Symbol {
         Model::build(&self.model, py, self.sym.node())
     }
     #[getter]
-    fn parent(&self, py: Python<'_>) -> PyResult<Option<Py<Symbol>>> {
+    fn parent(&self, py: Python<'_>) -> PyResult<Option<SymbolRef>> {
         match self.data.analysis.parent_symbol_map.get(&self.sym) {
             Some(p) if self.data.ids.contains_key(&p.node()) => {
-                Ok(Some(build_symbol(&self.model, py, p.clone())?))
+                Ok(Some(symbol_ref(&self.model, py, p.clone())?))
             }
             _ => Ok(None),
         }
@@ -313,8 +320,8 @@ impl Symbol {
 // ===========================================================================
 
 /// A structurally-interned type. The concrete subclass reflects the type's
-/// shape (`ArrayType`, `EnumType`, ...); `.kind`, the `is_*` predicates,
-/// `.definition` and identity live on the base.
+/// shape (`ArrayType`, `EnumType`, ...); the `is_*` predicates, `.definition`
+/// and identity live on the base.
 #[fpp_python_macros::semantic_subclasses(over = SemType, variants(
     PrimitiveInt => PrimitiveIntType,
     Float => FloatType,
@@ -347,13 +354,9 @@ impl Type {
             None => false,
         }
     }
-}
-
-#[gen_stub_pymethods]
-#[pymethods]
-impl Type {
-    #[getter]
-    fn kind(&self) -> &'static str {
+    /// The type-shape name, for `__repr__` only (the public discriminant is the
+    /// concrete subclass identity / union alias, not a string).
+    fn kind_name(&self) -> &'static str {
         if self.is_unknown() {
             return "Unknown";
         }
@@ -372,6 +375,11 @@ impl Type {
             SemType::AnonStruct(_) => "AnonStruct",
         }
     }
+}
+
+#[gen_stub_pymethods]
+#[pymethods]
+impl Type {
     #[getter]
     fn is_int(&self) -> bool {
         matches!(self.t(), SemType::PrimitiveInt(_) | SemType::Integer)
@@ -445,7 +453,7 @@ impl Type {
         }
     }
     fn __repr__(&self) -> String {
-        format!("<Type {}>", self.kind())
+        format!("<Type {}>", self.kind_name())
     }
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
         match other.downcast::<Type>() {
@@ -469,11 +477,11 @@ impl Type {
 impl AbsType {
     /// The declared default value, if any.
     #[getter]
-    fn default_value(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<Py<Value>>> {
+    fn default_value(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<ValueRef>> {
         let base = self_.as_super();
         let d = variant!(base.t(), SemType::AbsType(a) => a.default_value.clone());
         match d {
-            Some(av) => Ok(Some(build_value(&base.model, py, &SemValue::AbsType(av))?)),
+            Some(av) => Ok(Some(value_ref(&base.model, py, &SemValue::AbsType(av))?)),
             None => Ok(None),
         }
     }
@@ -482,10 +490,10 @@ impl AbsType {
 #[gen_stub_pymethods]
 #[pymethods]
 impl PrimitiveIntType {
-    /// Integer representation kind, e.g. "U32".
+    /// Integer representation kind.
     #[getter]
-    fn rep_type(self_: PyRef<'_, Self>) -> String {
-        variant!(self_.as_super().t(), SemType::PrimitiveInt(k) => ikind_str(k))
+    fn rep_type(self_: PyRef<'_, Self>) -> crate::ast::IntegerKind {
+        variant!(self_.as_super().t(), SemType::PrimitiveInt(k) => crate::ast::IntegerKind::from(k))
     }
     #[getter]
     fn signed(self_: PyRef<'_, Self>) -> bool {
@@ -500,10 +508,10 @@ impl PrimitiveIntType {
 #[gen_stub_pymethods]
 #[pymethods]
 impl FloatType {
-    /// Float representation kind, e.g. "F32".
+    /// Float representation kind.
     #[getter]
-    fn rep_type(self_: PyRef<'_, Self>) -> String {
-        variant!(self_.as_super().t(), SemType::Float(k) => fkind_str(k))
+    fn rep_type(self_: PyRef<'_, Self>) -> crate::ast::FloatKind {
+        variant!(self_.as_super().t(), SemType::Float(k) => crate::ast::FloatKind::from(k))
     }
     #[getter]
     fn bits(self_: PyRef<'_, Self>) -> u32 {
@@ -526,10 +534,10 @@ impl StringType {
 impl AliasType {
     /// The underlying type, following alias chains.
     #[getter]
-    fn underlying(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Py<Type>> {
+    fn underlying(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<TypeRef> {
         let base = self_.as_super();
         let u = SemType::underlying_type(&base.ty);
-        build_type(&base.model, py, u)
+        type_ref(&base.model, py, u)
     }
 }
 
@@ -541,18 +549,18 @@ impl ArrayType {
         variant!(self_.as_super().t(), SemType::Array(a) => a.anon_array.size.map(|s| s as i128))
     }
     #[getter]
-    fn element_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Py<Type>> {
+    fn element_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<TypeRef> {
         let base = self_.as_super();
         let elt = variant!(base.t(), SemType::Array(a) => a.anon_array.elt_type.clone());
-        build_type(&base.model, py, elt)
+        type_ref(&base.model, py, elt)
     }
     /// The declared default value, if any.
     #[getter]
-    fn default(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<Py<Value>>> {
+    fn default(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<ValueRef>> {
         let base = self_.as_super();
         let d = variant!(base.t(), SemType::Array(a) => a.default.clone());
         match d {
-            Some(v) => Ok(Some(build_value(&base.model, py, &v)?)),
+            Some(v) => Ok(Some(value_ref(&base.model, py, &v)?)),
             None => Ok(None),
         }
     }
@@ -566,20 +574,20 @@ impl AnonArrayType {
         variant!(self_.as_super().t(), SemType::AnonArray(a) => a.size.map(|s| s as i128))
     }
     #[getter]
-    fn element_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Py<Type>> {
+    fn element_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<TypeRef> {
         let base = self_.as_super();
         let elt = variant!(base.t(), SemType::AnonArray(a) => a.elt_type.clone());
-        build_type(&base.model, py, elt)
+        type_ref(&base.model, py, elt)
     }
 }
 
 #[gen_stub_pymethods]
 #[pymethods]
 impl EnumType {
-    /// Integer representation kind, e.g. "I32".
+    /// Integer representation kind.
     #[getter]
-    fn rep_type(self_: PyRef<'_, Self>) -> String {
-        variant!(self_.as_super().t(), SemType::Enum(e) => ikind_str(&e.rep_type))
+    fn rep_type(self_: PyRef<'_, Self>) -> crate::ast::IntegerKind {
+        variant!(self_.as_super().t(), SemType::Enum(e) => crate::ast::IntegerKind::from(&e.rep_type))
     }
     #[getter]
     fn signed(self_: PyRef<'_, Self>) -> bool {
@@ -592,11 +600,11 @@ impl EnumType {
     /// The declared default value, if any. (Enum constants are reachable via
     /// `.definition`, the `DefEnum` AST node.)
     #[getter]
-    fn default(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<Py<Value>>> {
+    fn default(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<ValueRef>> {
         let base = self_.as_super();
         let d = variant!(base.t(), SemType::Enum(e) => e.default.clone());
         match d {
-            Some(v) => Ok(Some(build_value(&base.model, py, &v)?)),
+            Some(v) => Ok(Some(value_ref(&base.model, py, &v)?)),
             None => Ok(None),
         }
     }
@@ -606,22 +614,22 @@ impl EnumType {
 #[pymethods]
 impl StructType {
     #[getter]
-    fn members(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<BTreeMap<String, Py<Type>>> {
+    fn members(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<BTreeMap<String, TypeRef>> {
         let base = self_.as_super();
         let members = variant!(base.t(), SemType::Struct(s) => &s.anon_struct.members);
         let mut out = BTreeMap::new();
         for (name, mty) in members {
-            out.insert(name.clone(), build_type(&base.model, py, mty.clone())?);
+            out.insert(name.clone(), type_ref(&base.model, py, mty.clone())?);
         }
         Ok(out)
     }
     /// The declared default value, if any.
     #[getter]
-    fn default(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<Py<Value>>> {
+    fn default(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<ValueRef>> {
         let base = self_.as_super();
         let d = variant!(base.t(), SemType::Struct(s) => s.default.clone());
         match d {
-            Some(sv) => Ok(Some(build_value(&base.model, py, &SemValue::Struct(sv))?)),
+            Some(sv) => Ok(Some(value_ref(&base.model, py, &SemValue::Struct(sv))?)),
             None => Ok(None),
         }
     }
@@ -636,12 +644,12 @@ impl StructType {
 #[pymethods]
 impl AnonStructType {
     #[getter]
-    fn members(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<BTreeMap<String, Py<Type>>> {
+    fn members(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<BTreeMap<String, TypeRef>> {
         let base = self_.as_super();
         let members = variant!(base.t(), SemType::AnonStruct(s) => &s.members);
         let mut out = BTreeMap::new();
         for (name, mty) in members {
-            out.insert(name.clone(), build_type(&base.model, py, mty.clone())?);
+            out.insert(name.clone(), type_ref(&base.model, py, mty.clone())?);
         }
         Ok(out)
     }
@@ -652,7 +660,8 @@ impl AnonStructType {
 // ===========================================================================
 
 /// A resolved (constant-folded) value. The concrete subclass reflects the value
-/// kind (`IntegerValue`, `ArrayValue`, ...); `.kind` lives on the base.
+/// kind (`IntegerValue`, `ArrayValue`, ...); discriminate with `isinstance` /
+/// `match` over the `Value` union.
 #[fpp_python_macros::semantic_subclasses(over = SemValue, variants(
     Integer => IntegerValue,
     PrimitiveInteger => PrimitiveIntegerValue,
@@ -680,10 +689,6 @@ impl Value {
 #[gen_stub_pymethods]
 #[pymethods]
 impl Value {
-    #[getter]
-    fn kind(&self) -> &'static str {
-        value_kind_name(&self.val)
-    }
     fn __repr__(&self) -> String {
         format!("<Value {}>", value_kind_name(&self.val))
     }
@@ -705,10 +710,10 @@ impl PrimitiveIntegerValue {
     fn value(self_: PyRef<'_, Self>) -> i128 {
         variant!(self_.as_super().v(), SemValue::PrimitiveInteger(p) => p.value)
     }
-    /// Integer representation kind, e.g. "U32".
+    /// Integer representation kind.
     #[getter]
-    fn rep_type(self_: PyRef<'_, Self>) -> String {
-        variant!(self_.as_super().v(), SemValue::PrimitiveInteger(p) => ikind_str(&p.kind))
+    fn rep_type(self_: PyRef<'_, Self>) -> crate::ast::IntegerKind {
+        variant!(self_.as_super().v(), SemValue::PrimitiveInteger(p) => crate::ast::IntegerKind::from(&p.kind))
     }
 }
 
@@ -719,10 +724,10 @@ impl FloatValue {
     fn value(self_: PyRef<'_, Self>) -> f64 {
         variant!(self_.as_super().v(), SemValue::Float(f) => f.value)
     }
-    /// Float representation kind, e.g. "F32".
+    /// Float representation kind.
     #[getter]
-    fn rep_type(self_: PyRef<'_, Self>) -> String {
-        variant!(self_.as_super().v(), SemValue::Float(f) => fkind_str(&f.kind))
+    fn rep_type(self_: PyRef<'_, Self>) -> crate::ast::FloatKind {
+        variant!(self_.as_super().v(), SemValue::Float(f) => crate::ast::FloatKind::from(&f.kind))
     }
 }
 
@@ -758,10 +763,10 @@ impl EnumConstantValue {
     }
     /// The enum type.
     #[getter]
-    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Py<Type>> {
+    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<TypeRef> {
         let base = self_.as_super();
         let ty = variant!(base.v(), SemValue::EnumConstant(e) => e.ty.clone());
-        build_type(&base.model, py, ty)
+        type_ref(&base.model, py, ty)
     }
 }
 
@@ -769,20 +774,20 @@ impl EnumConstantValue {
 #[pymethods]
 impl ArrayValue {
     #[getter]
-    fn elements(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Vec<Py<Value>>> {
+    fn elements(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Vec<ValueRef>> {
         let base = self_.as_super();
         let elems = variant!(base.v(), SemValue::Array(a) => &a.anon_array.elements);
         elems
             .iter()
-            .map(|e| build_value(&base.model, py, e))
+            .map(|e| value_ref(&base.model, py, e))
             .collect()
     }
     /// The array type, if known.
     #[getter]
-    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<Py<Type>>> {
+    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<TypeRef>> {
         let base = self_.as_super();
         let ty = variant!(base.v(), SemValue::Array(a) => a.ty.clone());
-        Ok(Some(build_type(&base.model, py, ty)?))
+        Ok(Some(type_ref(&base.model, py, ty)?))
     }
 }
 
@@ -790,12 +795,12 @@ impl ArrayValue {
 #[pymethods]
 impl AnonArrayValue {
     #[getter]
-    fn elements(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Vec<Py<Value>>> {
+    fn elements(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Vec<ValueRef>> {
         let base = self_.as_super();
         let elems = variant!(base.v(), SemValue::AnonArray(a) => &a.elements);
         elems
             .iter()
-            .map(|e| build_value(&base.model, py, e))
+            .map(|e| value_ref(&base.model, py, e))
             .collect()
     }
 }
@@ -804,21 +809,21 @@ impl AnonArrayValue {
 #[pymethods]
 impl StructValue {
     #[getter]
-    fn members(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<BTreeMap<String, Py<Value>>> {
+    fn members(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<BTreeMap<String, ValueRef>> {
         let base = self_.as_super();
         let members = variant!(base.v(), SemValue::Struct(s) => &s.anon_struct.members);
         let mut out = BTreeMap::new();
         for (name, v) in members {
-            out.insert(name.clone(), build_value(&base.model, py, v)?);
+            out.insert(name.clone(), value_ref(&base.model, py, v)?);
         }
         Ok(out)
     }
     /// The struct type, if known.
     #[getter]
-    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<Py<Type>>> {
+    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<TypeRef>> {
         let base = self_.as_super();
         let ty = variant!(base.v(), SemValue::Struct(s) => s.ty.clone());
-        Ok(Some(build_type(&base.model, py, ty)?))
+        Ok(Some(type_ref(&base.model, py, ty)?))
     }
 }
 
@@ -826,12 +831,12 @@ impl StructValue {
 #[pymethods]
 impl AnonStructValue {
     #[getter]
-    fn members(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<BTreeMap<String, Py<Value>>> {
+    fn members(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<BTreeMap<String, ValueRef>> {
         let base = self_.as_super();
         let members = variant!(base.v(), SemValue::AnonStruct(s) => &s.members);
         let mut out = BTreeMap::new();
         for (name, v) in members {
-            out.insert(name.clone(), build_value(&base.model, py, v)?);
+            out.insert(name.clone(), value_ref(&base.model, py, v)?);
         }
         Ok(out)
     }
@@ -842,10 +847,10 @@ impl AnonStructValue {
 impl AbsTypeValue {
     /// The abstract type, if known.
     #[getter]
-    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<Py<Type>>> {
+    fn get_type(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<TypeRef>> {
         let base = self_.as_super();
         let ty = variant!(base.v(), SemValue::AbsType(a) => a.ty.clone());
-        Ok(Some(build_type(&base.model, py, ty)?))
+        Ok(Some(type_ref(&base.model, py, ty)?))
     }
 }
 

@@ -199,10 +199,13 @@ pub fn semantic_wrapper(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
     let variants: Vec<_> = args.subclasses.iter().map(|(v, _)| v).collect();
     let wrappers: Vec<_> = args.subclasses.iter().map(|(_, w)| w).collect();
+    // The base is exposed to Python as `<Name>Base`, freeing `<Name>` for the
+    // union alias registered in `crate::unions`.
+    let base_name = syn::LitStr::new(&format!("{name}Base"), name.span());
     let expanded = quote! {
         #(#attrs)*
         #[::pyo3_stub_gen::derive::gen_stub_pyclass]
-        #[::pyo3::pyclass(subclass, frozen)]
+        #[::pyo3::pyclass(subclass, frozen, name = #base_name)]
         #vis struct #name {
             #[allow(dead_code)]
             data: ::std::sync::Arc<crate::ir_core::ModelData>,
@@ -321,11 +324,14 @@ pub fn semantic_subclasses(attr: TokenStream, item: TokenStream) -> TokenStream 
     let over = &args.over;
     let variants: Vec<_> = args.variants.iter().map(|(v, _)| v).collect();
     let subs: Vec<_> = args.variants.iter().map(|(_, s)| s).collect();
+    // The base is exposed to Python as `<Name>Base`, freeing `<Name>` for the
+    // union alias registered in `crate::unions`.
+    let base_name = syn::LitStr::new(&format!("{name}Base"), name.span());
 
     let expanded = quote! {
         #(#attrs)*
         #[::pyo3_stub_gen::derive::gen_stub_pyclass]
-        #[::pyo3::pyclass(subclass, frozen)]
+        #[::pyo3::pyclass(subclass, frozen, name = #base_name)]
         #vis struct #name #fields
 
         #(
@@ -470,8 +476,10 @@ pub fn symbol_entity(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
         /// The symbol that names this entity.
         #[getter]
-        fn symbol(&self, py: ::pyo3::Python<'_>) -> ::pyo3::PyResult<::pyo3::Py<crate::sem_py::Symbol>> {
-            crate::sem_py::build_symbol(&self.model, py, self.sym.clone())
+        fn symbol(&self, py: ::pyo3::Python<'_>) -> ::pyo3::PyResult<crate::unions::SymbolRef> {
+            Ok(crate::unions::SymbolRef(
+                crate::sem_py::build_symbol(&self.model, py, self.sym.clone())?.into_any(),
+            ))
         }
         #definition_getter
         fn __eq__(&self, other: &::pyo3::Bound<'_, ::pyo3::PyAny>) -> bool {

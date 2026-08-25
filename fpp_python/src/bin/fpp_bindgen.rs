@@ -88,18 +88,28 @@ struct KindDef {
     variants: Vec<KindVariant>,
 }
 
+/// Whether a leaf-enum variant carries a payload (dropped in the Python mirror).
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Payload {
+    Unit,
+    Tuple,
+    Struct,
+}
+
 #[derive(Default)]
 struct Registry {
     node_structs: BTreeMap<String, StructDef>,
     unions: BTreeMap<String, UnionDef>,
     kinds: BTreeMap<String, KindDef>,
     leaf_enums: BTreeSet<String>,
+    // leaf enum -> its variants (name + payload kind), for the Python-enum mirror
+    leaf_defs: BTreeMap<String, Vec<(String, Payload)>>,
     aliases: BTreeMap<String, Type>,
     // categorization sets (name membership)
     is_node: BTreeSet<String>,
     is_union: BTreeSet<String>,
     is_kind: BTreeSet<String>,
-    // leaf enums actually referenced (need a to_string fn)
+    // leaf enums actually referenced (need a Python-enum mirror)
     used_leaves: BTreeSet<String>,
 }
 
@@ -255,7 +265,21 @@ fn build_registry(items: &[Item]) -> Registry {
                 reg.is_kind.insert(e.ident.to_string());
             }
             Item::Enum(e) => {
-                reg.leaf_enums.insert(e.ident.to_string());
+                let name = e.ident.to_string();
+                reg.leaf_enums.insert(name.clone());
+                let variants = e
+                    .variants
+                    .iter()
+                    .map(|v| {
+                        let payload = match &v.fields {
+                            Fields::Unit => Payload::Unit,
+                            Fields::Unnamed(_) => Payload::Tuple,
+                            Fields::Named(_) => Payload::Struct,
+                        };
+                        (v.ident.to_string(), payload)
+                    })
+                    .collect();
+                reg.leaf_defs.insert(name, variants);
             }
             Item::Type(t) => {
                 reg.aliases.insert(t.ident.to_string(), (*t.ty).clone());
@@ -541,11 +565,21 @@ fn emit_defs(reg: &Registry) -> String {
     let mut out = String::new();
     out.push_str("fpp_python_macros::fpp_ast_bindings! {\n");
 
-    // leaves { … } — the leaf enums actually referenced (rendered to str).
+    // leaves { … } — the leaf enums actually referenced, each with its variants
+    // (payload-carrying variants marked `V(_)` / `V{_}`), rendered as Python enums.
     if !reg.used_leaves.is_empty() {
         out.push_str("    leaves {\n");
         for l in &reg.used_leaves {
-            out.push_str(&format!("        {l},\n"));
+            let variants = reg.leaf_defs.get(l).map(Vec::as_slice).unwrap_or(&[]);
+            let rendered: Vec<String> = variants
+                .iter()
+                .map(|(name, payload)| match payload {
+                    Payload::Unit => name.clone(),
+                    Payload::Tuple => format!("{name}(_)"),
+                    Payload::Struct => format!("{name}{{_}}"),
+                })
+                .collect();
+            out.push_str(&format!("        {l} {{ {} }},\n", rendered.join(", ")));
         }
         out.push_str("    }\n\n");
     }

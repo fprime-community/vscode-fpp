@@ -6,9 +6,12 @@ and concrete / union AST return types.
 import fpp_python as f
 from fpp_python import (
     Command,
+    CommandKind,
     Event,
+    EventSeverity,
     ExprBinop,
     Param,
+    SmAction,
     State,
     StateMachineElement,
     Type,
@@ -31,7 +34,12 @@ def test_commands_are_typed_objects():
             assert isinstance(cmd, Command)
             assert isinstance(cmd.opcode, int)
             assert isinstance(cmd.name, str)
-            assert cmd.kind in (None, "Async", "Guarded", "Sync")
+            assert cmd.kind in (
+                None,
+                CommandKind.Async,
+                CommandKind.Guarded,
+                CommandKind.Sync,
+            )
             # `.spec` is the concrete SpecCommand AST node (None for a
             # synthesized parameter set/save command).
             assert cmd.spec is None or type(cmd.spec).__name__ == "SpecCommand"
@@ -57,7 +65,7 @@ def test_events_forward_severity():
         for e in c.events:
             seen = True
             assert isinstance(e, Event)
-            assert e.severity is None or isinstance(e.severity, str)
+            assert e.severity is None or isinstance(e.severity, EventSeverity)
     assert seen, "fixture should define events"
 
 
@@ -95,7 +103,8 @@ def test_state_machine_model():
 
     assert {a.name for a in sm.actions} == {"a"}
     assert all(
-        isinstance(a, StateMachineElement) and a.kind == "Action" for a in sm.actions
+        isinstance(a, StateMachineElement) and isinstance(a, SmAction)
+        for a in sm.actions
     )
     assert {s.name for s in sm.signals} == {"s"}
     assert sm.blocking_error is False

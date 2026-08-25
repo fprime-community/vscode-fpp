@@ -13,6 +13,7 @@ from fpp_python import (
     ArraySymbol,
     EnumType,
     FloatType,
+    IntegerKind,
     PrimitiveIntType,
     StructType,
 )
@@ -44,13 +45,13 @@ def test_array_type(m):
     assert isinstance(t, ArrayType)
     assert t.array_size == 4
     assert isinstance(t.element_type, PrimitiveIntType)
-    assert t.element_type.rep_type == "U32"
+    assert t.element_type.rep_type == IntegerKind.U32
 
 
 def test_enum_type(m):
     t = rtype(m, "M.E")
     assert isinstance(t, EnumType)
-    assert t.rep_type == "I32" and t.signed is True and t.bits == 32
+    assert t.rep_type == IntegerKind.I32 and t.signed is True and t.bits == 32
 
 
 def test_struct_type(m):
@@ -64,7 +65,7 @@ def test_struct_type(m):
 def test_alias_underlying(m):
     t = rtype(m, "M.Alias")
     assert isinstance(t, AliasType)
-    assert isinstance(t.underlying, PrimitiveIntType) and t.underlying.rep_type == "U16"
+    assert isinstance(t.underlying, PrimitiveIntType) and t.underlying.rep_type == IntegerKind.U16
 
 
 def test_type_use_resolves_to_definition(m):

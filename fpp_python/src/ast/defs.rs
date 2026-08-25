@@ -8,21 +8,21 @@
 
 fpp_python_macros::fpp_ast_bindings! {
     leaves {
-        Binop,
-        ComponentKind,
-        ConnectionPatternKind,
-        EventSeverity,
-        FloatKind,
-        FormalParamKind,
-        GeneralPortInstanceKind,
-        InputPortKind,
-        IntegerKind,
-        QueueFull,
-        SpecLocKind,
-        SpecialPortInstanceKind,
-        TlmChannelLimitKind,
-        TlmChannelUpdate,
-        Unop,
+        Binop { Add, Div, Mul, Sub, LShift, RShift },
+        ComponentKind { Active, Passive, Queued },
+        ConnectionPatternKind { Command, Event, Health, Param, Telemetry, TextEvent, Time },
+        EventSeverity { ActivityHigh, ActivityLow, Command, Diagnostic, Fatal, WarningHigh, WarningLow },
+        FloatKind { F32, F64 },
+        FormalParamKind { Ref, Value },
+        GeneralPortInstanceKind { Input(_), Output },
+        InputPortKind { Async, Guarded, Sync },
+        IntegerKind { U8, I8, U16, I16, U32, I32, U64, I64 },
+        QueueFull { Assert, Block, Drop, Hook },
+        SpecLocKind { Component, Instance, Constant, Port, StateMachine, System, Type, Interface },
+        SpecialPortInstanceKind { CommandRecv, CommandReg, CommandResp, Event, ParamGet, ParamSet, ProductGet, ProductRecv, ProductRequest, ProductSend, Telemetry, TextEvent, TimeGet },
+        TlmChannelLimitKind { Red, Orange, Yellow },
+        TlmChannelUpdate { Always, OnChange },
+        Unop { Minus },
     }
 
     shadowed { Connection, PortInstanceIdentifier }

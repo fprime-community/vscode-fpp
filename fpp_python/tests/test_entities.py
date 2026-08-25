@@ -4,6 +4,7 @@ import pytest
 
 import fpp_python as f
 from fpp_python import (
+    ComponentKind,
     ComponentSymbol,
     GeneralPortInstance,
     TopologySymbol,
@@ -34,7 +35,7 @@ def m():
 
 def test_component(m):
     (c,) = m.components()
-    assert c.name == "C" and c.kind == "passive"
+    assert c.name == "C" and c.kind == ComponentKind.Passive
     ports = c.port_interface.ports
     assert {p.name for p in ports} == {"pIn", "pOut"}
     assert all(isinstance(p, GeneralPortInstance) for p in ports)
