@@ -1,0 +1,82 @@
+# Native PyO3 bindings to the FPP compiler, packaged as the `fpp_python` wheel
+# (import `fpp_python`). Built with maturin; ships an `abi3` extension usable on
+# CPython >= 3.10. Not published to crates.io — the distribution is the wheel.
+[package]
+name = "fpp_python"
+description = "Native Python bindings to the FPP compiler (PyO3)"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+# Imported from Python as the top-level `fpp_python` module.
+name = "fpp_python"
+crate-type = ["cdylib", "rlib"]
+# No Rust unit tests / doctests here (the suite is pytest). Disabling the test
+# harness keeps `cargo test --workspace` from linking a test executable against
+# the default `extension-module` build, whose undefined `Py*` symbols only a
+# shared library (the wheel) may defer — an executable link would fail on Linux.
+test = false
+doctest = false
+
+# Dumps `python/fpp_python/__init__.pyi` from the annotated pyclasses via
+# pyo3-stub-gen. Gated behind the (non-default) `stubgen` feature so a plain
+# `cargo build --workspace` never builds it as an executable under the default
+# `extension-module` feature (which would fail to link, as above). Run it with
+# extension-module OFF so it links libpython and executes:
+#   cargo run -p fpp_python --no-default-features --features stubgen --bin stub_gen
+[[bin]]
+name = "stub_gen"
+required-features = ["stubgen"]
+doc = false
+
+# Regenerates the checked-in AST declaration `src/ast/defs.rs` by parsing the
+# `fpp_ast` source with syn. Gated behind the `bindgen` feature so the wheel
+# build never compiles syn/serde_json (and so `cargo build --workspace` skips it):
+#   cargo run -p fpp_python --features bindgen --bin fpp_bindgen
+[[bin]]
+name = "fpp_bindgen"
+path = "src/bin/fpp_bindgen.rs"
+required-features = ["bindgen"]
+doc = false
+
+[features]
+# `extension-module` is on by default so `cargo build` / `maturin` produce the
+# import-only extension (the wheel). Both binaries are gated behind non-default
+# features so `cargo build --workspace` only ever builds the cdylib under the
+# default feature — never an executable that would fail to link (see the notes
+# on `[lib]` and `[[bin]] stub_gen`).
+default = ["extension-module"]
+extension-module = ["pyo3/extension-module"]
+# Enables the `fpp_bindgen` declaration generator (syn + serde_json).
+bindgen = ["dep:syn", "dep:serde_json"]
+# Gate for the `stub_gen` binary (carries no deps; just excludes it from the
+# default `cargo build`). Build stub_gen with `--no-default-features --features stubgen`.
+stubgen = []
+
+[dependencies]
+# abi3-py310: a single wheel per platform covers CPython >= 3.10.
+pyo3 = { version = "0.25", features = ["abi3-py310"] }
+
+# Generates `__init__.pyi` from the actual pyclasses (single source of truth).
+# 0.13.x is the release line built against pyo3 0.25; 0.14+ requires pyo3 0.26.
+pyo3-stub-gen = "0.13"
+
+# Attribute macros that remove wrapper boilerplate (in-workspace proc-macro crate).
+fpp_python_macros = { path = "../fpp_python_macros", version = "=0.0.0" }
+
+# FPP compiler crates (in-workspace path deps).
+fpp_core = { path = "../fpp_core", version = "=0.0.0" }
+fpp_ast = { path = "../fpp_ast", version = "=0.0.0" }
+fpp_analysis = { path = "../fpp_analysis", version = "=0.0.0" }
+fpp_parser = { path = "../fpp_parser", version = "=0.0.0" }
+fpp_fs = { path = "../fpp_fs", version = "=0.0.0" }
+
+rustc-hash = "2"
+
+# Only used by the `fpp_bindgen` declaration generator (the `bindgen` feature).
+syn = { version = "2", features = ["full", "extra-traits", "visit"], optional = true }
+serde_json = { version = "1", optional = true }

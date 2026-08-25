@@ -14,6 +14,8 @@ members = [
     "fpp_util",
     "fpp_format",
     "fpp_diagram",
+    "fpp_python",
+    "fpp_python_macros",
 ]
 
 # Exclude fpp_macros from test suite

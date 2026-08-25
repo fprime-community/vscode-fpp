@@ -1,0 +1,122 @@
+name: Python bindings
+
+# Builds/tests the `fpp_python` PyO3 wheel and checks that its generated code is
+# in sync. Unlike the Rust jobs in `rust.yml` (which already build/clippy/test
+# the `fpp_python` cdylib via `--workspace`), these jobs exercise the Python
+# surface: the pytest suite, the codegen-drift check, and the type stub.
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: python-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  pytest:
+    name: "Pytest (Python ${{ matrix.python-version }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # Builds the abi3 extension (via the maturin backend) and installs it.
+      - name: Build + install the wheel
+        run: |
+          python -m pip install --upgrade pip
+          pip install ./fpp_python
+
+      # Fixtures are referenced by CWD-relative paths, so run from the crate dir.
+      - name: Run tests
+        working-directory: fpp_python
+        run: |
+          pip install pytest
+          pytest tests/ -v
+
+  codegen:
+    name: "Codegen drift"
+    runs-on: ubuntu-latest
+    # Regenerates the checked-in AST declaration (`fpp_python/src/ast/defs.rs`, a
+    # `fpp_ast_bindings!` mirror of the in-workspace `fpp_ast`) and the type stub
+    # (`fpp_python/fpp_python.pyi`, from the annotated pyclasses via pyo3-stub-gen),
+    # and fails if either drifts. `fpp_bindgen` stamps the resolved `fpp_ast`
+    # version into the declaration header, so an `fpp_ast` change trips this until
+    # the declaration is regenerated and committed.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # `stub_gen` links libpython (built with extension-module OFF), so a Python
+      # must be present for pyo3 to locate it.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # (a) Regenerate the checked-in AST declaration.
+      - name: Regenerate AST declaration
+        run: cargo run -p fpp_python --features bindgen --bin fpp_bindgen
+
+      # (b) Regenerate the type stub from the annotated pyclasses. The stub-dump
+      # binary must be built WITHOUT `extension-module` (a standalone executable
+      # links libpython), hence `--no-default-features --features stubgen`.
+      - name: Regenerate type stub
+        run: cargo run -p fpp_python --no-default-features --features stubgen --bin stub_gen
+
+      # (c) Fail if the regenerated declaration/stub differs from what's committed.
+      - name: Check for drift
+        run: |
+          if ! git diff --exit-code -- fpp_python/src/ast/defs.rs fpp_python/fpp_python.pyi; then
+            echo "::error::checked-in declaration/stub is stale; run \`cargo run -p fpp_python --features bindgen --bin fpp_bindgen\` and \`cargo run -p fpp_python --no-default-features --features stubgen --bin stub_gen\`, then commit the result."
+            exit 1
+          fi
+
+      # Prove the regenerated code still compiles as the import-only extension.
+      - name: Build native extension
+        run: cargo build -p fpp_python --lib
+
+  mypy:
+    name: "Mypy"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build + install the wheel + mypy
+        run: |
+          python -m pip install --upgrade pip mypy
+          pip install ./fpp_python
+
+      # Type-checks a tiny typed usage file, forcing mypy to load and validate the
+      # shipped `fpp_python/__init__.pyi` stub.
+      - name: Run mypy
+        run: mypy fpp_python/tests/typing_check.py

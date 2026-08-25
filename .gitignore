@@ -25,6 +25,19 @@ Thumbs.db
 *.bak
 *.tmp
 
+# Python build/test artifacts (the fpp_python wheel + its test suite)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+build/
+dist/
+*.egg-info/
+# Built extension modules (the wheel ships these; never commit them). The
+# checked-in `fpp_python/fpp_python.pyi` type stub is NOT matched by this.
+*.so
+*.pyd
+
 # Ignore any AI files
 CLAUDE.md
 
