@@ -11,6 +11,8 @@ from fpp_python import (
     AnonArrayValue,
     AnonStructValue,
     BooleanValue,
+    EnumConstantValue,
+    EnumType,
     FloatValue,
     IntegerValue,
     StringValue,
@@ -24,6 +26,8 @@ module M {
   constant fl = 2.5
   constant arr = [1, 2, 3]
   constant st = { x = 1, y = 2 }
+  enum E: I32 { A, B }
+  constant ec = E.B
 }
 """
 
@@ -42,6 +46,16 @@ def rval(m, qn):
 def test_integer_constant_folding(m):
     v = rval(m, "M.c")
     assert isinstance(v, IntegerValue) and v.value == 7  # 1 + 2*3
+    # `get_type` is mirrored as the `.type` getter (PyO3 strips the `get_` prefix).
+    assert v.type.is_int
+
+
+def test_enum_constant(m):
+    v = rval(m, "M.ec")
+    assert isinstance(v, EnumConstantValue)
+    # `EnumConstantValue.value` is the native `(String, i128)` tuple.
+    assert v.value == ("B", 1)
+    assert isinstance(v.ty, EnumType)
 
 
 def test_string(m):

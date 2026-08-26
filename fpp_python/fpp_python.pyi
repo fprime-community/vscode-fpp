@@ -5,44 +5,41 @@ import builtins
 import typing
 from enum import Enum
 
-Value: typing.TypeAlias = IntegerValue | PrimitiveIntegerValue | FloatValue | BooleanValue | StringValue | EnumConstantValue | ArrayValue | AnonArrayValue | StructValue | AnonStructValue | AbsTypeValue
-Type: typing.TypeAlias = PrimitiveIntType | FloatType | BooleanType | IntegerType | StringType | AbsType | AliasType | ArrayType | AnonArrayType | EnumType | StructType | AnonStructType | TypeBase
+Type: typing.TypeAlias = PrimitiveIntType | FloatType | StringType | BooleanType | IntegerType | AbsType | AliasType | ArrayType | AnonArrayType | EnumType | StructType | AnonStructType | TypeBase
+Value: typing.TypeAlias = PrimitiveIntegerValue | AbsTypeValue | IntegerValue | FloatValue | BooleanValue | StringValue | EnumConstantValue | AnonArrayValue | ArrayValue | AnonStructValue | StructValue
 Symbol: typing.TypeAlias = AbsTypeSymbol | AliasTypeSymbol | ArraySymbol | ComponentSymbol | ComponentInstanceSymbol | ConstantSymbol | EnumSymbol | EnumConstantSymbol | InterfaceSymbol | ModuleSymbol | PortSymbol | StateMachineSymbol | StructSymbol | SystemSymbol | TopologySymbol
+StateMachineElement: typing.TypeAlias = SmAction | SmGuard | SmChoice | SmSignal | SmState
 PortInstance: typing.TypeAlias = GeneralPortInstance | SpecialPortInstance | InternalPortInstance | TopologyPortInstance
-StateMachineElement: typing.TypeAlias = SmAction | SmGuard | SmSignal | SmState | SmChoice
 
 class AbsType(TypeBase):
     @property
-    def default_value(self) -> typing.Optional[Value]:
-        r"""
-        The declared default value, if any.
-        """
+    def node(self) -> DefAbsType: ...
+    @property
+    def default_value(self) -> typing.Optional[Value]: ...
 
 class AbsTypeSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefAbsType: ...
 
 class AbsTypeValue(ValueBase):
     @property
-    def type(self) -> typing.Optional[Type]:
-        r"""
-        The abstract type, if known.
-        """
+    def ty(self) -> Type: ...
 
 class AliasType(TypeBase):
     @property
-    def underlying(self) -> Type:
-        r"""
-        The underlying type, following alias chains.
-        """
+    def node(self) -> DefAliasType: ...
+    @property
+    def alias_type(self) -> Type: ...
 
 class AliasTypeSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefAliasType: ...
 
 class AnonArrayType(TypeBase):
     @property
-    def array_size(self) -> typing.Optional[builtins.int]: ...
+    def size(self) -> typing.Optional[builtins.int]: ...
     @property
-    def element_type(self) -> Type: ...
+    def elt_type(self) -> Type: ...
 
 class AnonArrayValue(ValueBase):
     @property
@@ -57,27 +54,22 @@ class AnonStructValue(ValueBase):
     def members(self) -> builtins.dict[builtins.str, Value]: ...
 
 class ArraySymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefArray: ...
 
 class ArrayType(TypeBase):
     @property
-    def array_size(self) -> typing.Optional[builtins.int]: ...
+    def node(self) -> DefArray: ...
     @property
-    def element_type(self) -> Type: ...
+    def anon_array(self) -> Type: ...
     @property
-    def default(self) -> typing.Optional[Value]:
-        r"""
-        The declared default value, if any.
-        """
+    def default(self) -> typing.Optional[Value]: ...
 
 class ArrayValue(ValueBase):
     @property
-    def elements(self) -> builtins.list[Value]: ...
+    def anon_array(self) -> Value: ...
     @property
-    def type(self) -> typing.Optional[Type]:
-        r"""
-        The array type, if known.
-        """
+    def ty(self) -> Type: ...
 
 class AstNode:
     r"""
@@ -122,22 +114,13 @@ class Command:
     @property
     def name(self) -> builtins.str: ...
     @property
-    def kind(self) -> typing.Optional[CommandKind]:
-        r"""
-        Dispatch kind, or None for a synthesized param set/save command.
-        """
-    @property
-    def priority(self) -> typing.Optional[builtins.int]: ...
-    @property
-    def queue_full(self) -> typing.Optional[QueueFull]: ...
+    def kind(self) -> typing.Optional[CommandKind]: ...
     @property
     def loc(self) -> typing.Optional[Loc]: ...
     @property
-    def spec(self) -> typing.Optional[SpecCommand]:
-        r"""
-        The `SpecCommand` AST node (formal params, opcode expr, annotations).
-        """
-    def __repr__(self) -> builtins.str: ...
+    def spec(self) -> typing.Optional[SpecCommand]: ...
+    @property
+    def is_async(self) -> builtins.bool: ...
 
 class Component:
     @property
@@ -156,6 +139,8 @@ class Component:
         The defining AST node.
         """
     @property
+    def port_interface(self) -> PortInterface: ...
+    @property
     def name(self) -> builtins.str: ...
     @property
     def qualified_name(self) -> builtins.str: ...
@@ -164,8 +149,6 @@ class Component:
         r"""
         Component kind: active, passive, or queued.
         """
-    @property
-    def port_interface(self) -> PortInterface: ...
     @property
     def commands(self) -> builtins.list[Command]:
         r"""
@@ -279,14 +262,24 @@ class ComponentInstance:
     def __repr__(self) -> builtins.str: ...
 
 class ComponentInstanceSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefComponentInstance: ...
 
 class ComponentSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefComponent: ...
 
 class Connection:
     @property
     def graph_name(self) -> builtins.str: ...
+    @property
+    def from_pn(self) -> typing.Optional[builtins.int]: ...
+    @property
+    def to_pn(self) -> typing.Optional[builtins.int]: ...
+    @property
+    def is_unmatched(self) -> builtins.bool: ...
+    @property
+    def loc(self) -> typing.Optional[Loc]: ...
     @property
     def from_(self) -> Endpoint:
         r"""
@@ -302,12 +295,10 @@ class Connection:
         """
     @property
     def target(self) -> Endpoint: ...
-    @property
-    def is_unmatched(self) -> builtins.bool: ...
-    def __repr__(self) -> builtins.str: ...
 
 class ConstantSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefConstant: ...
 
 class Container:
     @property
@@ -317,11 +308,7 @@ class Container:
     @property
     def loc(self) -> typing.Optional[Loc]: ...
     @property
-    def spec(self) -> typing.Optional[SpecContainer]:
-        r"""
-        The `SpecContainer` AST node (default priority, annotations).
-        """
-    def __repr__(self) -> builtins.str: ...
+    def spec(self) -> typing.Optional[SpecContainer]: ...
 
 class DefAbsType(AstNode):
     @property
@@ -530,49 +517,33 @@ class DoExpr(AstNode):
 
 class Endpoint:
     @property
+    def port_number(self) -> typing.Optional[builtins.int]: ...
+    @property
     def loc(self) -> typing.Optional[Loc]: ...
     @property
     def port(self) -> PortInstanceIdentifier: ...
-    @property
-    def port_number(self) -> typing.Optional[builtins.int]: ...
-    def __repr__(self) -> builtins.str: ...
 
 class EnumConstantSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefEnumConstant: ...
 
 class EnumConstantValue(ValueBase):
     @property
-    def name(self) -> builtins.str:
-        r"""
-        The enum-constant member name.
-        """
+    def value(self) -> tuple[builtins.str, builtins.int]: ...
     @property
-    def value(self) -> builtins.int: ...
-    @property
-    def type(self) -> Type:
-        r"""
-        The enum type.
-        """
+    def ty(self) -> Type: ...
 
 class EnumSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefEnum: ...
 
 class EnumType(TypeBase):
     @property
-    def rep_type(self) -> IntegerKind:
-        r"""
-        Integer representation kind.
-        """
+    def node(self) -> DefEnum: ...
     @property
-    def signed(self) -> builtins.bool: ...
+    def rep_type(self) -> IntegerKind: ...
     @property
-    def bits(self) -> builtins.int: ...
-    @property
-    def default(self) -> typing.Optional[Value]:
-        r"""
-        The declared default value, if any. (Enum constants are reachable via
-        `.definition`, the `DefEnum` AST node.)
-        """
+    def default(self) -> typing.Optional[Value]: ...
 
 class Event:
     @property
@@ -582,21 +553,7 @@ class Event:
     @property
     def loc(self) -> typing.Optional[Loc]: ...
     @property
-    def severity(self) -> typing.Optional[EventSeverity]:
-        r"""
-        Event severity, from the AST spec.
-        """
-    @property
-    def format(self) -> typing.Optional[builtins.str]:
-        r"""
-        The event format string, from the AST spec.
-        """
-    @property
-    def spec(self) -> typing.Optional[SpecEvent]:
-        r"""
-        The `SpecEvent` AST node (params, throttle, annotations).
-        """
-    def __repr__(self) -> builtins.str: ...
+    def spec(self) -> typing.Optional[SpecEvent]: ...
 
 class EventThrottle(AstNode):
     @property
@@ -674,21 +631,13 @@ class ExprUnop:
 
 class FloatType(TypeBase):
     @property
-    def rep_type(self) -> FloatKind:
-        r"""
-        Float representation kind.
-        """
-    @property
-    def bits(self) -> builtins.int: ...
+    def value(self) -> FloatKind: ...
 
 class FloatValue(ValueBase):
     @property
     def value(self) -> builtins.float: ...
     @property
-    def rep_type(self) -> FloatKind:
-        r"""
-        Float representation kind.
-        """
+    def kind(self) -> FloatKind: ...
 
 class FormalParam(AstNode):
     @property
@@ -727,7 +676,6 @@ class InitSpecifier:
     def phase(self) -> builtins.int: ...
     @property
     def loc(self) -> typing.Optional[Loc]: ...
-    def __repr__(self) -> builtins.str: ...
 
 class IntegerType(TypeBase):
     ...
@@ -753,11 +701,11 @@ class Interface:
         The defining AST node.
         """
     @property
+    def port_interface(self) -> PortInterface: ...
+    @property
     def name(self) -> builtins.str: ...
     @property
     def qualified_name(self) -> builtins.str: ...
-    @property
-    def port_interface(self) -> PortInterface: ...
     @property
     def imports(self) -> builtins.list[Interface]:
         r"""
@@ -768,15 +716,16 @@ class Interface:
     def __repr__(self) -> builtins.str: ...
 
 class InterfaceSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefInterface: ...
 
 class InternalPortInstance(PortInstanceBase):
     @property
-    def input_kind(self) -> typing.Optional[InputPortKind]: ...
-    @property
     def priority(self) -> typing.Optional[builtins.int]: ...
     @property
-    def queue_full(self) -> typing.Optional[QueueFull]: ...
+    def queue_full(self) -> QueueFull: ...
+    @property
+    def input_kind(self) -> typing.Optional[InputPortKind]: ...
 
 class LitString(AstNode):
     @property
@@ -844,7 +793,8 @@ class Model:
     def __repr__(self) -> builtins.str: ...
 
 class ModuleSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefModule: ...
 
 class Opaque(AstNode):
     @property
@@ -865,80 +815,44 @@ class Param:
     @property
     def loc(self) -> typing.Optional[Loc]: ...
     @property
-    def type(self) -> typing.Optional[Type]:
-        r"""
-        The parameter's resolved type, from the AST spec.
-        """
-    @property
-    def default(self) -> typing.Optional[Value]:
-        r"""
-        The parameter's default value, if any.
-        """
-    @property
     def spec(self) -> typing.Optional[SpecParam]: ...
-    def __repr__(self) -> builtins.str: ...
 
 class PortInstanceBase:
-    r"""
-    A port instance. The concrete subclass reflects the variant
-    (`GeneralPortInstance`, `SpecialPortInstance`, `InternalPortInstance`,
-    `TopologyPortInstance`); the shared fields live on the base.
-    """
     @property
-    def name(self) -> builtins.str: ...
+    def unqualified_name(self) -> builtins.str: ...
     @property
     def loc(self) -> typing.Optional[Loc]: ...
     @property
-    def direction(self) -> typing.Optional[Direction]:
-        r"""
-        Port direction, if any.
-        """
+    def node_id(self) -> builtins.int: ...
     @property
     def array_size(self) -> builtins.int: ...
     @property
-    def is_async_input(self) -> builtins.bool:
-        r"""
-        Whether this port dispatches asynchronously.
-        """
+    def direction(self) -> typing.Optional[Direction]: ...
+    @property
+    def special_kind(self) -> typing.Optional[SpecialPortInstanceKind]: ...
+    @property
+    def is_async_input(self) -> builtins.bool: ...
     @property
     def import_locs(self) -> builtins.list[Loc]:
         r"""
         Locations of the interface-import specs that pulled this port in.
         """
-    def __repr__(self) -> builtins.str: ...
 
 class PortInstanceIdentifier:
     @property
-    def qualified_name(self) -> builtins.str: ...
-    @property
-    def instance_name(self) -> builtins.str:
-        r"""
-        Fully-qualified name of the owning interface instance.
-        """
-    @property
-    def port_name(self) -> builtins.str: ...
-    @property
-    def instance_kind(self) -> InstanceKind:
-        r"""
-        Whether the owning instance is a component instance or a topology.
-        """
+    def interface_instance(self) -> typing.Optional[ComponentInstance | Topology]: ...
     @property
     def port_instance(self) -> PortInstance: ...
     @property
-    def instance(self) -> typing.Optional[ComponentInstance | Topology]:
-        r"""
-        The owning `ComponentInstance` (or `Topology` for topology instances).
-        """
-    def __repr__(self) -> builtins.str: ...
+    def qualified_name(self) -> builtins.str: ...
 
 class PortInterface:
     @property
     def instance_type(self) -> builtins.str: ...
     @property
-    def ports(self) -> builtins.list[PortInstance]: ...
+    def port_map(self) -> builtins.dict[builtins.str, PortInstance]: ...
     @property
-    def special_ports(self) -> builtins.list[PortInstance]: ...
-    def __repr__(self) -> builtins.str: ...
+    def special_port_map(self) -> builtins.dict[builtins.str, PortInstance]: ...
 
 class PortMatching:
     @property
@@ -947,30 +861,20 @@ class PortMatching:
     def instance2(self) -> PortInstance: ...
     @property
     def loc(self) -> typing.Optional[Loc]: ...
-    def __repr__(self) -> builtins.str: ...
 
 class PortSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefPort: ...
 
 class PrimitiveIntType(TypeBase):
     @property
-    def rep_type(self) -> IntegerKind:
-        r"""
-        Integer representation kind.
-        """
-    @property
-    def signed(self) -> builtins.bool: ...
-    @property
-    def bits(self) -> builtins.int: ...
+    def value(self) -> IntegerKind: ...
 
 class PrimitiveIntegerValue(ValueBase):
     @property
     def value(self) -> builtins.int: ...
     @property
-    def rep_type(self) -> IntegerKind:
-        r"""
-        Integer representation kind.
-        """
+    def kind(self) -> IntegerKind: ...
 
 class Qualified(AstNode):
     @property
@@ -987,45 +891,27 @@ class Record:
     @property
     def loc(self) -> typing.Optional[Loc]: ...
     @property
-    def type(self) -> typing.Optional[Type]:
-        r"""
-        The record's resolved element type, from the AST spec.
-        """
-    @property
-    def is_array(self) -> builtins.bool:
-        r"""
-        Whether the record is an array record.
-        """
-    @property
     def spec(self) -> typing.Optional[SpecRecord]: ...
-    def __repr__(self) -> builtins.str: ...
 
 class SmAction(StateMachineElementBase):
     @property
-    def type(self) -> typing.Optional[Type]:
-        r"""
-        The declared payload type, if any.
-        """
+    def definition(self) -> DefAction: ...
 
 class SmChoice(StateMachineElementBase):
-    ...
+    @property
+    def definition(self) -> DefChoice: ...
 
 class SmGuard(StateMachineElementBase):
     @property
-    def type(self) -> typing.Optional[Type]:
-        r"""
-        The declared payload type, if any.
-        """
+    def definition(self) -> DefGuard: ...
 
 class SmSignal(StateMachineElementBase):
     @property
-    def type(self) -> typing.Optional[Type]:
-        r"""
-        The declared payload type, if any.
-        """
+    def definition(self) -> DefSignal: ...
 
 class SmState(StateMachineElementBase):
-    ...
+    @property
+    def definition(self) -> DefState: ...
 
 class SpecCommand(AstNode):
     @property
@@ -1270,11 +1156,6 @@ class SpecTopPort(AstNode):
 
 class SpecialPortInstance(PortInstanceBase):
     @property
-    def special_kind(self) -> typing.Optional[SpecialPortInstanceKind]:
-        r"""
-        Special port kind (e.g. telemetry, command recv).
-        """
-    @property
     def priority(self) -> typing.Optional[builtins.int]: ...
     @property
     def queue_full(self) -> typing.Optional[QueueFull]: ...
@@ -1374,20 +1255,10 @@ class StateMachine:
     def __repr__(self) -> builtins.str: ...
 
 class StateMachineElementBase:
-    r"""
-    A definition inside a state machine. The concrete subclass reflects the kind
-    (`SmAction`, `SmGuard`, `SmSignal`, `SmState`, `SmChoice`); the shared fields
-    live on the base.
-    """
     @property
     def name(self) -> builtins.str: ...
     @property
     def loc(self) -> typing.Optional[Loc]: ...
-    @property
-    def definition(self) -> AstNode:
-        r"""
-        The defining AST node.
-        """
     def __repr__(self) -> builtins.str: ...
 
 class StateMachineInstance:
@@ -1396,23 +1267,17 @@ class StateMachineInstance:
     @property
     def loc(self) -> typing.Optional[Loc]: ...
     @property
-    def state_machine(self) -> typing.Optional[StateMachine]:
-        r"""
-        The state machine this is an instance of.
-        """
+    def symbol(self) -> Symbol: ...
     @property
     def spec(self) -> typing.Optional[SpecStateMachineInstance]: ...
-    def __repr__(self) -> builtins.str: ...
 
 class StateMachineSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefStateMachine: ...
 
 class StringType(TypeBase):
     @property
-    def size(self) -> typing.Optional[builtins.int]:
-        r"""
-        String size, if bounded.
-        """
+    def value(self) -> typing.Optional[builtins.int]: ...
 
 class StringValue(ValueBase):
     @property
@@ -1426,21 +1291,18 @@ class StructExprMember(AstNode):
     def __repr__(self) -> builtins.str: ...
 
 class StructSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefStruct: ...
 
 class StructType(TypeBase):
     @property
-    def members(self) -> builtins.dict[builtins.str, Type]: ...
+    def node(self) -> DefStruct: ...
     @property
-    def default(self) -> typing.Optional[Value]:
-        r"""
-        The declared default value, if any.
-        """
+    def anon_struct(self) -> Type: ...
     @property
-    def member_sizes(self) -> builtins.dict[builtins.str, builtins.int]:
-        r"""
-        Per-member array multiplicity (member name -> size).
-        """
+    def default(self) -> typing.Optional[Value]: ...
+    @property
+    def sizes(self) -> builtins.dict[builtins.str, builtins.int]: ...
 
 class StructTypeMember(AstNode):
     @property
@@ -1455,18 +1317,11 @@ class StructTypeMember(AstNode):
 
 class StructValue(ValueBase):
     @property
-    def members(self) -> builtins.dict[builtins.str, Value]: ...
+    def anon_struct(self) -> Value: ...
     @property
-    def type(self) -> typing.Optional[Type]:
-        r"""
-        The struct type, if known.
-        """
+    def ty(self) -> Type: ...
 
 class SymbolBase:
-    r"""
-    A resolved symbol. The concrete subclass reflects the symbol's kind
-    (`ComponentSymbol`, `PortSymbol`, ...); navigation and identity live here.
-    """
     @property
     def name(self) -> builtins.str: ...
     @property
@@ -1474,14 +1329,9 @@ class SymbolBase:
     @property
     def node_id(self) -> builtins.int: ...
     @property
-    def is_dictionary_def(self) -> builtins.bool: ...
-    @property
-    def definition(self) -> AstNode:
-        r"""
-        The defining AST node wrapper.
-        """
-    @property
     def parent(self) -> typing.Optional[Symbol]: ...
+    @property
+    def is_dictionary_def(self) -> builtins.bool: ...
     def as_component(self) -> typing.Optional[Component]:
         r"""
         The `Component` entity this symbol defines, or None.
@@ -1540,7 +1390,8 @@ class System:
     def __repr__(self) -> builtins.str: ...
 
 class SystemSymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefSystem: ...
 
 class TlmChannel:
     @property
@@ -1550,21 +1401,7 @@ class TlmChannel:
     @property
     def loc(self) -> typing.Optional[Loc]: ...
     @property
-    def type(self) -> typing.Optional[Type]:
-        r"""
-        The channel's resolved type, from the AST spec.
-        """
-    @property
-    def format(self) -> typing.Optional[builtins.str]:
-        r"""
-        The channel's format string, if specified.
-        """
-    @property
-    def spec(self) -> typing.Optional[SpecTlmChannel]:
-        r"""
-        The `SpecTlmChannel` AST node (limits, update kind, annotations).
-        """
-    def __repr__(self) -> builtins.str: ...
+    def spec(self) -> typing.Optional[SpecTlmChannel]: ...
 
 class TlmChannelIdentifier(AstNode):
     @property
@@ -1599,6 +1436,8 @@ class Topology:
     @property
     def name(self) -> builtins.str: ...
     @property
+    def port_interface(self) -> PortInterface: ...
+    @property
     def qualified_name(self) -> builtins.str: ...
     @property
     def instances(self) -> builtins.list[ComponentInstance]:
@@ -1615,11 +1454,6 @@ class Topology:
         r"""
         Ports with a direction that have no connections in this topology.
         """
-    @property
-    def port_interface(self) -> PortInterface:
-        r"""
-        The topology-level port interface (its exported top-level ports).
-        """
     def __eq__(self, other:typing.Any) -> builtins.bool: ...
     def __hash__(self) -> builtins.int: ...
     def connections(self) -> builtins.list[Connection]:
@@ -1630,13 +1464,11 @@ class Topology:
 
 class TopologyPortInstance(PortInstanceBase):
     @property
-    def underlying(self) -> typing.Optional[PortInstance]:
-        r"""
-        The underlying aliased port instance.
-        """
+    def underlying(self) -> PortInstance: ...
 
 class TopologySymbol(SymbolBase):
-    ...
+    @property
+    def definition(self) -> DefTopology: ...
 
 class TransitionExpr(AstNode):
     @property
@@ -1654,40 +1486,38 @@ class TransitionOrDoTransition:
     def value(self) -> TransitionExpr: ...
 
 class TypeBase:
-    r"""
-    A structurally-interned type. The concrete subclass reflects the type's
-    shape (`ArrayType`, `EnumType`, ...); the `is_*` predicates, `.definition`
-    and identity live on the base.
-    """
     @property
-    def is_int(self) -> builtins.bool: ...
+    def underlying_type(self) -> Type: ...
     @property
-    def is_float(self) -> builtins.bool: ...
+    def default_value(self) -> typing.Optional[Value]: ...
     @property
-    def is_numeric(self) -> builtins.bool: ...
+    def array_size(self) -> typing.Optional[builtins.int]: ...
     @property
-    def is_bool(self) -> builtins.bool: ...
+    def def_node_id(self) -> typing.Optional[builtins.int]: ...
     @property
-    def is_string(self) -> builtins.bool: ...
+    def has_numeric_members(self) -> builtins.bool: ...
     @property
-    def is_primitive(self) -> builtins.bool: ...
+    def is_convertible_to_numeric(self) -> builtins.bool: ...
     @property
-    def is_enum(self) -> builtins.bool: ...
-    @property
-    def is_array(self) -> builtins.bool: ...
-    @property
-    def is_struct(self) -> builtins.bool: ...
-    @property
-    def is_abs_type(self) -> builtins.bool: ...
-    @property
-    def is_alias(self) -> builtins.bool: ...
+    def is_promotable_to_array(self) -> builtins.bool: ...
     @property
     def is_displayable(self) -> builtins.bool: ...
     @property
-    def definition(self) -> typing.Optional[AstNode]:
-        r"""
-        The defining AST node (for named types), else None.
-        """
+    def is_float(self) -> builtins.bool: ...
+    @property
+    def primitive_serialized_size(self) -> typing.Optional[builtins.int]: ...
+    @property
+    def serialized_size(self) -> typing.Optional[builtins.int]: ...
+    @property
+    def is_int(self) -> builtins.bool: ...
+    @property
+    def is_primitive(self) -> builtins.bool: ...
+    @property
+    def is_canonical(self) -> builtins.bool: ...
+    @property
+    def is_promotable_to_struct(self) -> builtins.bool: ...
+    @property
+    def is_numeric(self) -> builtins.bool: ...
     def __repr__(self) -> builtins.str: ...
     def __eq__(self, other:typing.Any) -> builtins.bool: ...
     def __hash__(self) -> builtins.int: ...
@@ -1717,11 +1547,16 @@ class TypeNameString:
     def value(self) -> typing.Optional[Expr]: ...
 
 class ValueBase:
-    r"""
-    A resolved (constant-folded) value. The concrete subclass reflects the value
-    kind (`IntegerValue`, `ArrayValue`, ...); discriminate with `isinstance` /
-    `match` over the `Value` union.
-    """
+    @property
+    def as_shift_int(self) -> typing.Optional[builtins.int]: ...
+    @property
+    def type(self) -> Type: ...
+    @property
+    def is_zero(self) -> builtins.bool: ...
+    @property
+    def negate(self) -> typing.Optional[Value]: ...
+    @property
+    def truncate(self) -> Value: ...
     def __repr__(self) -> builtins.str: ...
 
 class Binop(Enum):
@@ -1797,14 +1632,6 @@ class InputPortKind(Enum):
     Async = ...
     Guarded = ...
     Sync = ...
-
-class InstanceKind(Enum):
-    r"""
-    The owner kind of a port-instance identifier: a component instance or a
-    topology.
-    """
-    Component = ...
-    Topology = ...
 
 class IntegerKind(Enum):
     U8 = ...

@@ -54,12 +54,16 @@ jobs:
   codegen:
     name: "Codegen drift"
     runs-on: ubuntu-latest
-    # Regenerates the checked-in AST declaration (`fpp_python/src/ast/defs.rs`, a
-    # `fpp_ast_bindings!` mirror of the in-workspace `fpp_ast`) and the type stub
+    # Regenerates the checked-in declarations — the AST mirror
+    # (`fpp_python/src/ast/defs.rs`, a `fpp_ast_bindings!` mirror of the in-workspace
+    # `fpp_ast`) and the semantic mirror (`fpp_python/src/sem/defs.rs`, a
+    # `fpp_sem_bindings!` mirror of `fpp_analysis`) — and the type stub
     # (`fpp_python/fpp_python.pyi`, from the annotated pyclasses via pyo3-stub-gen),
-    # and fails if either drifts. `fpp_bindgen` stamps the resolved `fpp_ast`
-    # version into the declaration header, so an `fpp_ast` change trips this until
-    # the declaration is regenerated and committed.
+    # and fails if any drifts. Each bindgen stamps the resolved upstream-crate
+    # version into its declaration header, so an `fpp_ast`/`fpp_analysis` change
+    # trips this until the declaration is regenerated and committed. (The
+    # hand-authored `fpp_python/src/sem/defs_manual.rs` is NOT generator-managed and
+    # is deliberately not drift-checked.)
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,17 +82,21 @@ jobs:
       - name: Regenerate AST declaration
         run: cargo run -p fpp_python --features bindgen --bin fpp_bindgen
 
+      # (a2) Regenerate the checked-in semantic declaration.
+      - name: Regenerate semantic declaration
+        run: cargo run -p fpp_python --features bindgen --bin fpp_sem_bindgen
+
       # (b) Regenerate the type stub from the annotated pyclasses. The stub-dump
       # binary must be built WITHOUT `extension-module` (a standalone executable
       # links libpython), hence `--no-default-features --features stubgen`.
       - name: Regenerate type stub
         run: cargo run -p fpp_python --no-default-features --features stubgen --bin stub_gen
 
-      # (c) Fail if the regenerated declaration/stub differs from what's committed.
+      # (c) Fail if any regenerated declaration/stub differs from what's committed.
       - name: Check for drift
         run: |
-          if ! git diff --exit-code -- fpp_python/src/ast/defs.rs fpp_python/fpp_python.pyi; then
-            echo "::error::checked-in declaration/stub is stale; run \`cargo run -p fpp_python --features bindgen --bin fpp_bindgen\` and \`cargo run -p fpp_python --no-default-features --features stubgen --bin stub_gen\`, then commit the result."
+          if ! git diff --exit-code -- fpp_python/src/ast/defs.rs fpp_python/src/sem/defs.rs fpp_python/fpp_python.pyi; then
+            echo "::error::checked-in declaration/stub is stale; run \`cargo run -p fpp_python --features bindgen --bin fpp_bindgen\`, \`cargo run -p fpp_python --features bindgen --bin fpp_sem_bindgen\`, and \`cargo run -p fpp_python --no-default-features --features stubgen --bin stub_gen\`, then commit the result."
             exit 1
           fi
 

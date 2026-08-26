@@ -2,6 +2,10 @@
 
 Entities are located by qualified name via `Model.lookup`, and their resolved
 type is read through `node.resolved_type` on the definition.
+
+The `Type` hierarchy is a faithful mirror of `fpp_analysis::semantics::Type`:
+public fields are getters (e.g. `ArrayType.anon_array`, `EnumType.rep_type`) and
+`&self`/`&Arc<Self>` methods are getters too (e.g. `is_int`, `underlying_type`).
 """
 
 import pytest
@@ -9,6 +13,8 @@ import pytest
 import fpp_python as f
 from fpp_python import (
     AliasType,
+    AnonArrayType,
+    AnonStructType,
     ArrayType,
     ArraySymbol,
     EnumType,
@@ -16,6 +22,7 @@ from fpp_python import (
     IntegerKind,
     PrimitiveIntType,
     StructType,
+    Type,
 )
 
 SRC = """
@@ -43,29 +50,50 @@ def rtype(m, qn):
 def test_array_type(m):
     t = rtype(m, "M.Arr")
     assert isinstance(t, ArrayType)
-    assert t.array_size == 4
-    assert isinstance(t.element_type, PrimitiveIntType)
-    assert t.element_type.rep_type == IntegerKind.U32
+    assert isinstance(t, Type)
+    # `ArrayType` mirrors its native fields: the structural anonymous array + the
+    # defining AST node.
+    aa = t.anon_array
+    assert isinstance(aa, AnonArrayType)
+    assert aa.size == 4
+    assert isinstance(aa.elt_type, PrimitiveIntType)
+    assert aa.elt_type.value == IntegerKind.U32
+    # The `node` field bridges to the AST definition wrapper.
+    assert t.node.node_id == m.lookup("M.Arr").node_id
 
 
 def test_enum_type(m):
     t = rtype(m, "M.E")
     assert isinstance(t, EnumType)
-    assert t.rep_type == IntegerKind.I32 and t.signed is True and t.bits == 32
+    # `rep_type` is a mirrored native field (the representation integer kind).
+    assert t.rep_type == IntegerKind.I32
+    assert t.is_displayable is True
 
 
 def test_struct_type(m):
     t = rtype(m, "M.S")
     assert isinstance(t, StructType)
-    assert set(t.members.keys()) == {"x", "y"}
-    assert isinstance(t.members["x"], PrimitiveIntType)
-    assert isinstance(t.members["y"], FloatType)
+    members = t.anon_struct.members
+    assert set(members.keys()) == {"x", "y"}
+    assert isinstance(members["x"], PrimitiveIntType)
+    assert isinstance(members["y"], FloatType)
 
 
-def test_alias_underlying(m):
+def test_alias_type(m):
     t = rtype(m, "M.Alias")
     assert isinstance(t, AliasType)
-    assert isinstance(t.underlying, PrimitiveIntType) and t.underlying.rep_type == IntegerKind.U16
+    # `alias_type` is the immediate aliased type; `underlying_type` follows the
+    # full alias chain (both are `Type` union values).
+    assert isinstance(t.alias_type, PrimitiveIntType)
+    assert t.alias_type.value == IntegerKind.U16
+    assert isinstance(t.underlying_type, PrimitiveIntType)
+    assert t.underlying_type.value == IntegerKind.U16
+
+
+def test_type_predicates(m):
+    assert rtype(m, "M.Alias").is_int is True
+    assert rtype(m, "M.E").is_int is False
+    assert rtype(m, "M.Arr").is_numeric is False
 
 
 def test_type_use_resolves_to_definition(m):

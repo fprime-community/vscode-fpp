@@ -84,64 +84,64 @@ impl Model {
     fn lookup(
         slf: PyRef<'_, Self>,
         qualified_name: &str,
-    ) -> PyResult<Option<crate::unions::SymbolRef>> {
+    ) -> PyResult<Option<crate::sem::SymbolRef>> {
         let py = slf.py();
         let sym = slf.data.by_qualified_name.get(qualified_name).cloned();
         let model: Py<Self> = slf.into();
         match sym {
-            Some(s) => Ok(Some(crate::sem_py::symbol_ref(&model, py, s)?)),
+            Some(s) => Ok(Some(crate::sem::symbol_ref(&model, py, s)?)),
             None => Ok(None),
         }
     }
 
     /// All components in the model.
-    fn components(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::entities_py::Component>>> {
+    fn components(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::sem::Component>>> {
         Self::entity_list(
             slf,
             |a| a.component_map.keys().cloned().collect(),
-            crate::entities_py::build_component,
+            crate::sem::build_component,
         )
     }
     /// All component instances in the model.
     fn component_instances(
         slf: PyRef<'_, Self>,
-    ) -> PyResult<Vec<Py<crate::entities_py::ComponentInstance>>> {
+    ) -> PyResult<Vec<Py<crate::sem::ComponentInstance>>> {
         Self::entity_list(
             slf,
             |a| a.component_instance_map.keys().cloned().collect(),
-            crate::entities_py::build_component_instance,
+            crate::sem::build_component_instance,
         )
     }
     /// All interfaces in the model.
-    fn interfaces(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::entities_py::Interface>>> {
+    fn interfaces(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::sem::Interface>>> {
         Self::entity_list(
             slf,
             |a| a.interface_map.keys().cloned().collect(),
-            crate::entities_py::build_interface,
+            crate::sem::build_interface,
         )
     }
     /// All topologies in the model.
-    fn topologies(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::entities_py::Topology>>> {
+    fn topologies(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::sem::Topology>>> {
         Self::entity_list(
             slf,
             |a| a.topology_map.keys().cloned().collect(),
-            crate::entities_py::build_topology,
+            crate::sem::build_topology,
         )
     }
     /// All systems (deployments) in the model.
-    fn systems(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::entities_py::System>>> {
+    fn systems(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::sem::System>>> {
         Self::entity_list(
             slf,
             |a| a.system_map.keys().cloned().collect(),
-            crate::entities_py::build_system,
+            crate::sem::build_system,
         )
     }
     /// All state machines in the model.
-    fn state_machines(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::entities_py::StateMachine>>> {
+    fn state_machines(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::sem::StateMachine>>> {
         Self::entity_list(
             slf,
             |a| a.state_machine_map.keys().cloned().collect(),
-            crate::entities_py::build_state_machine,
+            crate::sem::build_state_machine,
         )
     }
 

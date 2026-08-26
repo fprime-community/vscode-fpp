@@ -43,6 +43,16 @@ path = "src/bin/fpp_bindgen.rs"
 required-features = ["bindgen"]
 doc = false
 
+# Regenerates the checked-in semantic declaration `src/sem/defs.rs` by reflecting
+# the `fpp_analysis` semantic types (source parsed with syn). Same `bindgen` gate
+# as `fpp_bindgen`:
+#   cargo run -p fpp_python --features bindgen --bin fpp_sem_bindgen
+[[bin]]
+name = "fpp_sem_bindgen"
+path = "src/bin/fpp_sem_bindgen.rs"
+required-features = ["bindgen"]
+doc = false
+
 [features]
 # `extension-module` is on by default so `cargo build` / `maturin` produce the
 # import-only extension (the wheel). Both binaries are gated behind non-default
@@ -59,7 +69,7 @@ stubgen = []
 
 [dependencies]
 # abi3-py310: a single wheel per platform covers CPython >= 3.10.
-pyo3 = { version = "0.25", features = ["abi3-py310"] }
+pyo3 = { version = "0.25", features = ["abi3-py310", "multiple-pymethods"] }
 
 # Generates `__init__.pyi` from the actual pyclasses (single source of truth).
 # 0.13.x is the release line built against pyo3 0.25; 0.14+ requires pyo3 0.26.

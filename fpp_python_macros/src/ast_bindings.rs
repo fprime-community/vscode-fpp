@@ -987,7 +987,7 @@ fn emit_py(reg: &Registry) -> TokenStream {
             #[getter] fn pre_annotation(&self, py: Python<'_>) -> Vec<String> { self.model.borrow(py).data.pre_anno(self.node) }
             #[getter] fn post_annotation(&self, py: Python<'_>) -> Vec<String> { self.model.borrow(py).data.post_anno(self.node) }
             /// The definition this use-site node resolves to (or None).
-            #[getter] fn definition(&self, py: Python<'_>) -> PyResult<Option<crate::unions::SymbolRef>> {
+            #[getter] fn definition(&self, py: Python<'_>) -> PyResult<Option<crate::sem::SymbolRef>> {
                 let sym = {
                     let m = self.model.borrow(py);
                     match m.data.analysis.use_def_map.get(&self.node) {
@@ -996,23 +996,23 @@ fn emit_py(reg: &Registry) -> TokenStream {
                     }
                 };
                 match sym {
-                    Some(s) => Ok(Some(crate::unions::SymbolRef(crate::sem_py::build_symbol(&self.model, py, s)?.into_any()))),
+                    Some(s) => Ok(Some(crate::sem::SymbolRef(crate::sem::build_symbol(&self.model, py, s)?.into_any()))),
                     None => Ok(None),
                 }
             }
             /// The resolved type of this node (or None).
-            #[getter] fn resolved_type(&self, py: Python<'_>) -> PyResult<Option<crate::unions::TypeRef>> {
+            #[getter] fn resolved_type(&self, py: Python<'_>) -> PyResult<Option<crate::sem::TypeRef>> {
                 let ty = self.model.borrow(py).data.analysis.type_map.get(&self.node).cloned();
                 match ty {
-                    Some(ty) => Ok(Some(crate::unions::TypeRef(crate::sem_py::build_type(&self.model, py, ty)?.into_any()))),
+                    Some(ty) => Ok(Some(crate::sem::TypeRef(crate::sem::build_type(&self.model, py, ty)?.into_any()))),
                     None => Ok(None),
                 }
             }
             /// The resolved (constant-folded) value of this node (or None).
-            #[getter] fn resolved_value(&self, py: Python<'_>) -> PyResult<Option<crate::unions::ValueRef>> {
+            #[getter] fn resolved_value(&self, py: Python<'_>) -> PyResult<Option<crate::sem::ValueRef>> {
                 let v = self.model.borrow(py).data.analysis.value_map.get(&self.node).cloned();
                 match v {
-                    Some(ref v) => Ok(Some(crate::unions::ValueRef(crate::sem_py::build_value(&self.model, py, v)?.into_any()))),
+                    Some(ref v) => Ok(Some(crate::sem::ValueRef(crate::sem::build_value(&self.model, py, v)?.into_any()))),
                     None => Ok(None),
                 }
             }

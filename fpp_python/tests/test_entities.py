@@ -36,8 +36,8 @@ def m():
 def test_component(m):
     (c,) = m.components()
     assert c.name == "C" and c.kind == ComponentKind.Passive
-    ports = c.port_interface.ports
-    assert {p.name for p in ports} == {"pIn", "pOut"}
+    ports = list(c.port_interface.port_map.values())
+    assert {p.unqualified_name for p in ports} == {"pIn", "pOut"}
     assert all(isinstance(p, GeneralPortInstance) for p in ports)
 
 

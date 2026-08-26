@@ -33,11 +33,12 @@ module M {
 def constant_type_kind(node: DefConstant) -> Optional[IntegerKind]:
     """Validate the generated node stub's `.resolved_type` (-> Optional[Type], the
     `Type` union) and the base/subclass hierarchy: `isinstance` narrows the union
-    to a concrete subclass exposing its own fields (`PrimitiveIntType.rep_type`,
-    typed as the `IntegerKind` enum)."""
+    to a concrete subclass exposing its own fields (`PrimitiveIntType.value`,
+    typed as the `IntegerKind` enum — the mirrored `Type::PrimitiveInt(IntegerKind)`
+    payload)."""
     resolved: Optional[Type] = node.resolved_type
     if isinstance(resolved, PrimitiveIntType):
-        return resolved.rep_type  # IntegerKind, only on the subclass
+        return resolved.value  # IntegerKind, only on the subclass
     return None
 
 

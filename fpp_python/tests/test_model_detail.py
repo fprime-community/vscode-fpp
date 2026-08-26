@@ -54,7 +54,11 @@ def test_params_forward_type():
             seen = True
             assert isinstance(p, Param)
             assert isinstance(p.is_external, bool)
-            assert p.type is None or isinstance(p.type, Type)
+            # The resolved type lives in the `SpecParam` AST node (bridged by
+            # `.spec`); its `type_name` carries `.resolved_type`.
+            assert p.spec is not None
+            rt = p.spec.type_name.resolved_type
+            assert rt is None or isinstance(rt, Type)
     assert seen, "fixture should define parameters"
 
 
@@ -65,7 +69,9 @@ def test_events_forward_severity():
         for e in c.events:
             seen = True
             assert isinstance(e, Event)
-            assert e.severity is None or isinstance(e.severity, EventSeverity)
+            # Severity lives in the `SpecEvent` AST node (bridged by `.spec`).
+            assert e.spec is not None
+            assert isinstance(e.spec.severity, EventSeverity)
     assert seen, "fixture should define events"
 
 

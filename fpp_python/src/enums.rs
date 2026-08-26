@@ -10,7 +10,6 @@
 use fpp_analysis::semantics::state_machine::Kind as SmKind;
 use fpp_analysis::semantics::{
     CommandKind as SemCommandKind, Direction as SemDirection, GeneralKind as SemGeneralKind,
-    InterfaceInstance as SemInterfaceInstance,
 };
 use pyo3::prelude::*;
 use pyo3_stub_gen::derive::gen_stub_pyclass_enum;
@@ -95,30 +94,10 @@ impl From<&SmKind> for StateMachineKind {
     }
 }
 
-/// The owner kind of a port-instance identifier: a component instance or a
-/// topology.
-#[gen_stub_pyclass_enum]
-#[pyclass(eq, eq_int, frozen, hash)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub enum InstanceKind {
-    Component,
-    Topology,
-}
-
-impl From<&SemInterfaceInstance> for InstanceKind {
-    fn from(i: &SemInterfaceInstance) -> Self {
-        match i {
-            SemInterfaceInstance::Component(_) => InstanceKind::Component,
-            SemInterfaceInstance::Topology(_) => InstanceKind::Topology,
-        }
-    }
-}
-
 pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Direction>()?;
     m.add_class::<GeneralKind>()?;
     m.add_class::<CommandKind>()?;
     m.add_class::<StateMachineKind>()?;
-    m.add_class::<InstanceKind>()?;
     Ok(())
 }
