@@ -769,7 +769,7 @@ fn emit_py(reg: &Registry) -> TokenStream {
         let (gsc, gsm) = stub_attrs(name, reg);
         register_calls.push(quote!(m.add_class::<#wid>()?;));
         construct_arms.push(quote! {
-            Some(NodeKind::#kind) => Bound::new(py, PyClassInitializer::from(AstNode { model: model.clone_ref(py), node }).add_subclass(#wid))?.into_super().unbind()
+            Some(NodeKind::#kind) => Bound::new(py, PyClassInitializer::from(AstNode { data: data.clone(), model: model.clone_ref(py), node }).add_subclass(#wid))?.into_super().unbind()
         });
 
         let mut getters = Vec::new();
@@ -790,9 +790,9 @@ fn emit_py(reg: &Registry) -> TokenStream {
             #[pymethods]
             impl #wid {
                 #(#getters)*
-                fn __repr__(self_: PyRef<'_, Self>, py: Python<'_>) -> String {
+                fn __repr__(self_: PyRef<'_, Self>) -> String {
                     let sup = self_.as_super();
-                    format!(#repr, sup.model.borrow(py).data.id(sup.node))
+                    format!(#repr, sup.data.id(sup.node))
                 }
             }
         });
@@ -977,23 +977,28 @@ fn emit_py(reg: &Registry) -> TokenStream {
         /// `#[pyclass(extends = AstNode)]` unit subclasses.
         #[gen_stub_pyclass]
         #[pyclass(subclass, frozen)]
-        pub struct AstNode { model: Py<Model>, node: Node }
+        // `data` is the backing model data, captured once at construction (the same
+        // `Arc` as `model.borrow(py).data`) and read directly by every getter —
+        // mirroring the semantic-layer wrappers. `model` is kept only to build child
+        // wrappers via the memoizing `Model::build`.
+        pub struct AstNode {
+            data: ::std::sync::Arc<crate::ir_core::ModelData>,
+            model: Py<Model>,
+            node: Node,
+        }
 
         #[gen_stub_pymethods]
         #[pymethods]
         impl AstNode {
-            #[getter] fn node_id(&self, py: Python<'_>) -> u32 { self.model.borrow(py).data.id(self.node) }
-            #[getter] fn location(&self, py: Python<'_>) -> Option<Loc> { self.model.borrow(py).data.loc(self.node) }
-            #[getter] fn pre_annotation(&self, py: Python<'_>) -> Vec<String> { self.model.borrow(py).data.pre_anno(self.node) }
-            #[getter] fn post_annotation(&self, py: Python<'_>) -> Vec<String> { self.model.borrow(py).data.post_anno(self.node) }
+            #[getter] fn node_id(&self) -> u32 { self.data.id(self.node) }
+            #[getter] fn location(&self) -> Option<Loc> { self.data.loc(self.node) }
+            #[getter] fn pre_annotation(&self) -> Vec<String> { self.data.pre_anno(self.node) }
+            #[getter] fn post_annotation(&self) -> Vec<String> { self.data.post_anno(self.node) }
             /// The definition this use-site node resolves to (or None).
             #[getter] fn definition(&self, py: Python<'_>) -> PyResult<Option<crate::sem::SymbolRef>> {
-                let sym = {
-                    let m = self.model.borrow(py);
-                    match m.data.analysis.use_def_map.get(&self.node) {
-                        Some(s) if m.data.ids.contains_key(&s.node()) => Some(s.clone()),
-                        _ => None,
-                    }
+                let sym = match self.data.analysis.use_def_map.get(&self.node) {
+                    Some(s) if self.data.ids.contains_key(&s.node()) => Some(s.clone()),
+                    _ => None,
                 };
                 match sym {
                     Some(s) => Ok(Some(crate::sem::SymbolRef(crate::sem::build_symbol(&self.model, py, s)?.into_any()))),
@@ -1002,7 +1007,7 @@ fn emit_py(reg: &Registry) -> TokenStream {
             }
             /// The resolved type of this node (or None).
             #[getter] fn resolved_type(&self, py: Python<'_>) -> PyResult<Option<crate::sem::TypeRef>> {
-                let ty = self.model.borrow(py).data.analysis.type_map.get(&self.node).cloned();
+                let ty = self.data.analysis.type_map.get(&self.node).cloned();
                 match ty {
                     Some(ty) => Ok(Some(crate::sem::TypeRef(crate::sem::build_type(&self.model, py, ty)?.into_any()))),
                     None => Ok(None),
@@ -1010,7 +1015,7 @@ fn emit_py(reg: &Registry) -> TokenStream {
             }
             /// The resolved (constant-folded) value of this node (or None).
             #[getter] fn resolved_value(&self, py: Python<'_>) -> PyResult<Option<crate::sem::ValueRef>> {
-                let v = self.model.borrow(py).data.analysis.value_map.get(&self.node).cloned();
+                let v = self.data.analysis.value_map.get(&self.node).cloned();
                 match v {
                     Some(ref v) => Ok(Some(crate::sem::ValueRef(crate::sem::build_value(&self.model, py, v)?.into_any()))),
                     None => Ok(None),
@@ -1019,10 +1024,11 @@ fn emit_py(reg: &Registry) -> TokenStream {
         }
 
         pub fn construct(model: &Py<Model>, py: Python<'_>, node: Node) -> PyResult<Py<AstNode>> {
-            let tag = model.borrow(py).data.node_ptrs.get(&node).map(|nr| nr.tag);
+            let data = model.borrow(py).data.clone();
+            let tag = data.node_ptrs.get(&node).map(|nr| nr.tag);
             Ok(match tag {
                 #(#construct_arms,)*
-                _ => Bound::new(py, PyClassInitializer::from(AstNode { model: model.clone_ref(py), node }).add_subclass(Opaque))?.into_super().unbind(),
+                _ => Bound::new(py, PyClassInitializer::from(AstNode { data: data.clone(), model: model.clone_ref(py), node }).add_subclass(Opaque))?.into_super().unbind(),
             })
         }
 
@@ -1038,9 +1044,9 @@ fn emit_py(reg: &Registry) -> TokenStream {
         #[pymethods]
         impl Opaque {
             #[getter] fn kind(&self) -> String { "Opaque".to_string() }
-            fn __repr__(self_: PyRef<'_, Self>, py: Python<'_>) -> String {
+            fn __repr__(self_: PyRef<'_, Self>) -> String {
                 let sup = self_.as_super();
-                format!("<Opaque #{}>", sup.model.borrow(py).data.id(sup.node))
+                format!("<Opaque #{}>", sup.data.id(sup.node))
             }
         }
 
@@ -1061,47 +1067,45 @@ fn emit_getter(
 ) -> TokenStream {
     match shape {
         Shape::Str => quote! {
-            #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> String {
+            #[getter] fn #fname(self_: PyRef<'_, Self>) -> String {
                 let sup = self_.as_super();
-                sup.model.borrow(py).data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.clone()
+                sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.clone()
             }
         },
         Shape::Name | Shape::Lit => quote! {
-            #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> String {
+            #[getter] fn #fname(self_: PyRef<'_, Self>) -> String {
                 let sup = self_.as_super();
-                sup.model.borrow(py).data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.data.clone()
+                sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.data.clone()
             }
         },
         Shape::Leaf(l) => {
             let ety = format_ident!("{}", l);
             quote! {
-                #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> #ety {
+                #[getter] fn #fname(self_: PyRef<'_, Self>) -> #ety {
                     let sup = self_.as_super();
-                    let m = sup.model.borrow(py);
-                    #ety::from(&m.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname)
+                    #ety::from(&sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname)
                 }
             }
         }
         Shape::LitOpt => quote! {
-            #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> Option<String> {
+            #[getter] fn #fname(self_: PyRef<'_, Self>) -> Option<String> {
                 let sup = self_.as_super();
-                sup.model.borrow(py).data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|v| v.data.clone())
+                sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|v| v.data.clone())
             }
         },
         Shape::LeafOpt(l) => {
             let ety = format_ident!("{}", l);
             quote! {
-                #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> Option<#ety> {
+                #[getter] fn #fname(self_: PyRef<'_, Self>) -> Option<#ety> {
                     let sup = self_.as_super();
-                    let m = sup.model.borrow(py);
-                    m.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|v| #ety::from(v))
+                    sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|v| #ety::from(v))
                 }
             }
         }
         Shape::Bool => quote! {
-            #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> bool {
+            #[getter] fn #fname(self_: PyRef<'_, Self>) -> bool {
                 let sup = self_.as_super();
-                sup.model.borrow(py).data.node_as::<fpp_ast::#node_ty>(sup.node).#fname
+                sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname
             }
         },
         Shape::Skip => quote!(),
@@ -1115,7 +1119,7 @@ fn emit_getter(
                     quote! {
                         #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<#item_ty> {
                             let sup = self_.as_super();
-                            let child = { let m = sup.model.borrow(py); m.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.id() };
+                            let child = sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.id();
                             Ok(#build)
                         }
                     }
@@ -1125,7 +1129,7 @@ fn emit_getter(
                     quote! {
                         #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<#item_ty>> {
                             let sup = self_.as_super();
-                            let child = { let m = sup.model.borrow(py); m.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|v| v.id()) };
+                            let child = sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|v| v.id());
                             match child { Some(c) => Ok(Some(#build)), None => Ok(None) }
                         }
                     }
@@ -1135,7 +1139,7 @@ fn emit_getter(
                     quote! {
                         #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Vec<#item_ty>> {
                             let sup = self_.as_super();
-                            let children: Vec<Node> = { let m = sup.model.borrow(py); m.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.iter().map(|v| v.id()).collect() };
+                            let children: Vec<Node> = sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.iter().map(|v| v.id()).collect();
                             children.iter().map(|c| Ok(#build)).collect()
                         }
                     }
@@ -1145,7 +1149,7 @@ fn emit_getter(
                     quote! {
                         #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<Vec<#item_ty>>> {
                             let sup = self_.as_super();
-                            let children: Option<Vec<Node>> = { let m = sup.model.borrow(py); m.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|vs| vs.iter().map(|v| v.id()).collect()) };
+                            let children: Option<Vec<Node>> = sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|vs| vs.iter().map(|v| v.id()).collect());
                             match children {
                                 Some(cs) => Ok(Some(cs.iter().map(|c| Ok(#build)).collect::<PyResult<Vec<_>>>()?)),
                                 None => Ok(None),
@@ -1162,8 +1166,7 @@ fn emit_getter(
             quote! {
                 #[getter] fn #fname(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<#refty> {
                     let sup = self_.as_super();
-                    let m = sup.model.borrow(py);
-                    let n = m.data.node_as::<fpp_ast::#node_ty>(sup.node);
+                    let n = sup.data.node_as::<fpp_ast::#node_ty>(sup.node);
                     #buildfn(&sup.model, py, &n.#fname)
                 }
             }
