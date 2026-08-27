@@ -634,17 +634,6 @@ fpp_python_macros::fpp_sem_bindings! {
         }
     }
 
-    entity ResolvedConnection native fpp_analysis::semantics::ResolvedConnection {
-        fields {
-            from: entity(Endpoint),
-            to: entity(Endpoint),
-            is_unmatched: bool,
-            graph_name: str,
-            from_pn: opt(i128),
-            to_pn: opt(i128),
-        }
-    }
-
     entity Scope native fpp_analysis::semantics::Scope {
     }
 
@@ -743,7 +732,6 @@ fpp_python_macros::fpp_sem_bindings! {
             from_port_number_map: map(entity(Connection), i128),
             to_port_number_map: map(entity(Connection), i128),
             unconnected_port_set: list(entity(PortInstanceIdentifier)),
-            connections: list(entity(ResolvedConnection)),
         }
         methods {
             component_instance_map -> list(tuple(rewrap(InterfaceInstance::Component), span)),
