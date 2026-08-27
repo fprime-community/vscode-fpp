@@ -99,11 +99,16 @@ struct UnionInfo {
     native: Path,
     /// How the native value is stored / handed to the `*_ref` builder.
     handle: Handle,
+    /// Native variant name → its concrete Python subclass ident. Lets a
+    /// `rewrap(<Union>::<Variant>)` shape — whose native value is statically the
+    /// bare payload struct of exactly this variant — refine to the concrete
+    /// `Py<Subclass>` instead of the broad union alias.
+    subclasses: std::collections::BTreeMap<String, Ident>,
 }
 
 /// Union Python name → its [`UnionInfo`]. The `*Ref` newtype and `*_ref`/`build_*`
 /// fn names are derived from the Python name (see [`union_ref_ty`]/[`union_ref_fn`]),
-/// so only the native path + handle are stored.
+/// so only the native path + handle + variant→subclass map are stored.
 type UnionReg = std::collections::BTreeMap<String, UnionInfo>;
 
 /// The `crate::sem::<Name>Ref` return newtype for a union's Python name.
@@ -116,6 +121,25 @@ fn union_ref_ty(name: &str) -> TokenStream {
 fn union_ref_fn(name: &str) -> TokenStream {
     let id = format_ident!("{}_ref", snake(name));
     quote!(crate::sem::#id)
+}
+
+/// The `crate::sem::build_<snake>` dispatching builder fn for a union's Python
+/// name (returns `Py<Base>`, boxed as the concrete subclass at runtime).
+fn union_build_fn(name: &str) -> TokenStream {
+    let id = format_ident!("build_{}", snake(name));
+    quote!(crate::sem::#id)
+}
+
+/// The concrete subclass ident for a `rewrap(<Union>::<Variant>)`: the Python
+/// subclass the union's `Variant` boxes to. Panics on an unknown union/variant
+/// (a macro-authoring error — the DSL is machine-generated from the unions here).
+fn rewrap_subclass<'a>(reg: &'a UnionReg, name: &str, variant: &Ident) -> &'a Ident {
+    let info = reg
+        .get(name)
+        .unwrap_or_else(|| panic!("unregistered union `{name}`"));
+    info.subclasses
+        .get(&variant.to_string())
+        .unwrap_or_else(|| panic!("union `{name}` has no variant `{variant}`"))
 }
 
 /// A `Span`-backed detail materialized on access. These are not stored native
@@ -189,8 +213,9 @@ impl Shape {
         }
     }
 
-    /// The Rust return type of a getter yielding this shape.
-    fn ty(&self) -> TokenStream {
+    /// The Rust return type of a getter yielding this shape. `reg` resolves a
+    /// `RewrapRef`'s concrete subclass (its static native type is that payload).
+    fn ty(&self, reg: &UnionReg) -> TokenStream {
         match self {
             Shape::Bool => quote!(bool),
             Shape::I128 => quote!(i128),
@@ -200,28 +225,33 @@ impl Shape {
             Shape::Node => quote!(u32),
             Shape::Span => quote!(::pyo3::Py<crate::ir_core::Span>),
             Shape::UnionRef(name) => union_ref_ty(name),
-            Shape::RewrapRef(name, _) => union_ref_ty(name),
+            // A rewrapped bare payload is statically the variant's concrete type,
+            // so it refines to `Py<Subclass>` rather than the broad union alias.
+            Shape::RewrapRef(name, variant) => {
+                let sub = rewrap_subclass(reg, name, variant);
+                quote!(::pyo3::Py<crate::sem::#sub>)
+            }
             Shape::Leaf(p) => quote!(#p),
             Shape::AstDef(id) => quote!(::pyo3::Py<crate::ast::#id>),
             Shape::Opt(s) => {
-                let inner = s.ty();
+                let inner = s.ty(reg);
                 quote!(Option<#inner>)
             }
             Shape::List(s) => {
-                let inner = s.ty();
+                let inner = s.ty(reg);
                 quote!(Vec<#inner>)
             }
             Shape::Dict(s) => {
-                let inner = s.ty();
+                let inner = s.ty(reg);
                 quote!(::std::collections::BTreeMap<String, #inner>)
             }
             Shape::Map(k, v) => {
-                let kt = k.ty();
-                let vt = v.ty();
+                let kt = k.ty(reg);
+                let vt = v.ty(reg);
                 quote!(crate::ir_core::DictStub<#kt, #vt>)
             }
             Shape::Tuple(v) => {
-                let tys = v.iter().map(Shape::ty);
+                let tys = v.iter().map(|s| s.ty(reg));
                 quote!((#(#tys),*))
             }
             Shape::Materialize(Materialize::Loc) => quote!(Option<crate::ir_core::Loc>),
@@ -273,21 +303,33 @@ impl Shape {
                 }
             }
             Shape::RewrapRef(name, variant) => {
-                let f = union_ref_fn(name);
+                // Build through the union's dispatching builder (which boxes the
+                // concrete subclass at runtime), then downcast to that subclass —
+                // the native value is statically this variant's payload, so the
+                // downcast is infallible. Mirrors the `AstDef` downcast pattern.
+                let build = union_build_fn(name);
+                let sub = rewrap_subclass(reg, name, variant);
                 let info = reg
                     .get(name)
                     .unwrap_or_else(|| panic!("unregistered union `{name}`"));
                 let native = &info.native;
-                match info.handle {
+                let built = match info.handle {
                     Handle::ArcType => {
-                        quote!(#f(#model, py, ::std::sync::Arc::new(#native::#variant(::std::clone::Clone::clone(#vref))))?)
+                        quote!(#build(#model, py, ::std::sync::Arc::new(#native::#variant(::std::clone::Clone::clone(#vref))))?)
                     }
                     Handle::Value | Handle::Clone => {
-                        quote!(#f(#model, py, &#native::#variant(::std::clone::Clone::clone(#vref)))?)
+                        quote!(#build(#model, py, &#native::#variant(::std::clone::Clone::clone(#vref)))?)
                     }
                     Handle::Symbol => {
-                        quote!(#f(#model, py, #native::#variant(::std::clone::Clone::clone(#vref)))?)
+                        quote!(#build(#model, py, #native::#variant(::std::clone::Clone::clone(#vref)))?)
                     }
+                };
+                quote! {
+                    #built
+                        .into_bound(py)
+                        .into_any()
+                        .downcast_into::<crate::sem::#sub>()?
+                        .unbind()
                 }
             }
             Shape::Leaf(p) => quote!(#p::from(#vref)),
@@ -319,8 +361,8 @@ impl Shape {
                 })
             }
             Shape::Map(k, v) => {
-                let kt = k.ty();
-                let vt = v.ty();
+                let kt = k.ty(reg);
+                let vt = v.ty(reg);
                 let kexpr = k.expr(&quote!((__k)), model, data, reg);
                 let vexpr = v.expr(&quote!((__e)), model, data, reg);
                 quote!({
@@ -1376,7 +1418,7 @@ fn emit_union_methods(u: &UnionDecl, reg: &UnionReg) -> Vec<TokenStream> {
         };
         let vref = quote!((&__r));
         let expr = m.shape.expr(&vref, &model, &data, reg);
-        let ty = m.shape.ty();
+        let ty = m.shape.ty(reg);
         let body = quote! {
             let __r = #call;
             Ok(#expr)
@@ -1415,7 +1457,7 @@ fn emit_subclass_getters(
 
     let emit_one = |gname: &Ident, shape: &Shape, field_access: &TokenStream| -> TokenStream {
         let expr = shape.expr(field_access, &model, &data, reg);
-        let ty = shape.ty();
+        let ty = shape.ty(reg);
         let body = quote! {
             match #scrut {
                 #native::#variant(x) => Ok(#expr),
@@ -1461,7 +1503,7 @@ fn emit_subclass_getters(
                 }
                 let fname = &f.name;
                 let expr = f.shape.expr(&quote!((#fname)), &model, &data, reg);
-                let ty = f.shape.ty();
+                let ty = f.shape.ty(reg);
                 let body = quote! {
                     match #scrut {
                         #native::#variant { #fname, .. } => Ok(#expr),
@@ -1506,7 +1548,7 @@ fn emit_subclass_getters(
                 };
                 let vref = quote!((&__r));
                 let expr = m.shape.expr(&vref, &model, &data, reg);
-                let ty = m.shape.ty();
+                let ty = m.shape.ty(reg);
                 let body = quote! {
                     match #scrut {
                         #native::#variant(x) => { let __r = #call; Ok(#expr) },
@@ -1939,10 +1981,10 @@ fn emit_entity_clone(e: &EntityDecl, field: &Ident, reg: &UnionReg) -> (TokenStr
     let data = quote!(self.data);
 
     let extra_names: Vec<&Ident> = e.extras.iter().map(|f| &f.name).collect();
-    let extra_tys: Vec<TokenStream> = e.extras.iter().map(|f| f.shape.ty()).collect();
+    let extra_tys: Vec<TokenStream> = e.extras.iter().map(|f| f.shape.ty(reg)).collect();
     let extra_decls = e.extras.iter().map(|f| {
         let n = &f.name;
-        let t = f.shape.ty();
+        let t = f.shape.ty(reg);
         quote!(pub(crate) #n: #t)
     });
 
@@ -1957,7 +1999,7 @@ fn emit_entity_clone(e: &EntityDecl, field: &Ident, reg: &UnionReg) -> (TokenStr
         let expr = f.shape.expr(&quote!((&self.#n)), &model, &data, reg);
         getters.push(getter_tokens(&Getter::field(
             n.clone(),
-            f.shape.ty(),
+            f.shape.ty(reg),
             f.shape.needs_py(),
             quote!(Ok(#expr)),
         )));
@@ -1978,7 +2020,7 @@ fn emit_entity_clone(e: &EntityDecl, field: &Ident, reg: &UnionReg) -> (TokenStr
         let expr = f.shape.expr(&access, &model, &data, reg);
         getters.push(getter_tokens(&Getter::field(
             n.clone(),
-            f.shape.ty(),
+            f.shape.ty(reg),
             f.shape.needs_py(),
             quote!(Ok(#expr)),
         )));
@@ -2000,7 +2042,7 @@ fn emit_entity_clone(e: &EntityDecl, field: &Ident, reg: &UnionReg) -> (TokenStr
         let expr = m.shape.expr(&quote!((&__r)), &model, &data, reg);
         getters.push(getter_tokens(&Getter {
             name: mname.clone(),
-            shape_ty: m.shape.ty(),
+            shape_ty: m.shape.ty(reg),
             needs_py: m.shape.needs_py(),
             body: quote! { let __r = #call; Ok(#expr) },
             via_super: false,
@@ -2150,7 +2192,7 @@ fn emit_entity_symbol_keyed(
         let expr = f.shape.expr(&access, &model, &data, reg);
         getters.push(getter_tokens(&Getter::field(
             n.clone(),
-            f.shape.ty(),
+            f.shape.ty(reg),
             f.shape.needs_py(),
             quote!(Ok(#expr)),
         )));
@@ -2173,7 +2215,7 @@ fn emit_entity_symbol_keyed(
         let expr = m.shape.expr(&quote!((&__r)), &model, &data, reg);
         getters.push(getter_tokens(&Getter {
             name: mname.clone(),
-            shape_ty: m.shape.ty(),
+            shape_ty: m.shape.ty(reg),
             needs_py: m.shape.needs_py(),
             body: quote! { let __r = #call; Ok(#expr) },
             via_super: false,
@@ -2293,10 +2335,12 @@ fn emit_analysis(a: &AnalysisDecl, reg: &UnionReg) -> (TokenStream, TokenStream)
             continue;
         }
         let n = &f.name;
-        let expr = f.shape.expr(&quote!((&self.data.analysis.#n)), &model, &data, reg);
+        let expr = f
+            .shape
+            .expr(&quote!((&self.data.analysis.#n)), &model, &data, reg);
         getters.push(getter_tokens(&Getter::field(
             n.clone(),
-            f.shape.ty(),
+            f.shape.ty(reg),
             f.shape.needs_py(),
             quote!(Ok(#expr)),
         )));
@@ -2317,7 +2361,7 @@ fn emit_analysis(a: &AnalysisDecl, reg: &UnionReg) -> (TokenStream, TokenStream)
         let expr = m.shape.expr(&quote!((&__r)), &model, &data, reg);
         getters.push(getter_tokens(&Getter {
             name: mname.clone(),
-            shape_ty: m.shape.ty(),
+            shape_ty: m.shape.ty(reg),
             needs_py: m.shape.needs_py(),
             body: quote! { let __r = #call; Ok(#expr) },
             via_super: false,
@@ -2371,11 +2415,17 @@ pub fn expand(input: TokenStream) -> TokenStream {
         .unions
         .iter()
         .map(|u| {
+            let subclasses = u
+                .variants
+                .iter()
+                .map(|v| (v.native_variant.to_string(), v.subclass.clone()))
+                .collect();
             (
                 u.py.to_string(),
                 UnionInfo {
                     native: u.native.clone(),
                     handle: u.handle,
+                    subclasses,
                 },
             )
         })

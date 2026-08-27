@@ -637,7 +637,9 @@ fn classify(ctx: &mut Ctx, t: &Type, enq: &mut Vec<Id>) -> Shape {
                         ))
                     }
                     Some(ItemKind::Enum) => Shape::LeafAst(last),
-                    Some(ItemKind::Struct) if last.starts_with("Def") || last.starts_with("Spec") => {
+                    Some(ItemKind::Struct)
+                        if last.starts_with("Def") || last.starts_with("Spec") =>
+                    {
                         Shape::AstDef(last)
                     }
                     other => Shape::Skip(format!("fpp_ast::{last} ({other:?})")),
@@ -929,7 +931,10 @@ fn newtype_field_shape(ctx: &mut Ctx, sid: Id, enq: &mut Vec<Id>) -> Shape {
         Some(StructKind::Tuple(fs)) if fs.len() == 1 => fs[0],
         _ => None,
     };
-    match field_id.and_then(|fid| ctx.item(fid)).and_then(struct_field_ty) {
+    match field_id
+        .and_then(|fid| ctx.item(fid))
+        .and_then(struct_field_ty)
+    {
         Some(t) => {
             let t = t.clone();
             classify(ctx, &t, enq)
@@ -1192,8 +1197,9 @@ fn drop_field_shadowing_methods(
         }
     });
     for m in dropped {
-        ctx.skips
-            .push(format!("  skip {owner}.{m}() (method shadowed by field of the same name)"));
+        ctx.skips.push(format!(
+            "  skip {owner}.{m}() (method shadowed by field of the same name)"
+        ));
     }
 }
 
@@ -1307,7 +1313,11 @@ fn resolve_names(ctx: &Ctx, r: &Reflected) -> Names {
         let name = if used.get(&tentative).copied().unwrap_or(0) > 1
             || RESERVED_TYPE_NAMES.contains(&tentative.as_str())
         {
-            format!("{}{}", primary.get(&uid).cloned().unwrap_or_default(), variant)
+            format!(
+                "{}{}",
+                primary.get(&uid).cloned().unwrap_or_default(),
+                variant
+            )
         } else {
             tentative
         };
@@ -1391,7 +1401,13 @@ fn render_method(ctx: &Ctx, names: &Names, m: &MethodDef) -> String {
     }
 }
 
-fn log_skips(ctx: &Ctx, names: &Names, prefix: &str, fields: &[(String, Shape)], out: &mut Vec<String>) {
+fn log_skips(
+    ctx: &Ctx,
+    names: &Names,
+    prefix: &str,
+    fields: &[(String, Shape)],
+    out: &mut Vec<String>,
+) {
     for (fname, sh) in fields {
         if let Shape::Skip(reason) = sh {
             out.push(format!("  skip {prefix}.{fname}: {reason}"));
@@ -1474,7 +1490,11 @@ fn payload_name(ctx: &Ctx, names: &Names, sid: Id) -> String {
     ctx.last_segment(sid)
 }
 
-fn union_directives(ctx: &Ctx, u: &UnionDef, py: &str) -> (String, String, String, String, String, String) {
+fn union_directives(
+    ctx: &Ctx,
+    u: &UnionDef,
+    py: &str,
+) -> (String, String, String, String, String, String) {
     // (handle, accessor, extras, identity, repr, ...) — kept simple + matching the
     // known-good Type/Value/Symbol/StateMachineElement conventions.
     let (handle, accessor, mut extras) = match py {
@@ -1621,7 +1641,13 @@ fn emit_union(ctx: &Ctx, names: &Names, u: &UnionDef, out: &mut String, skips: &
     out.push_str("    }\n\n");
 }
 
-fn emit_payload(ctx: &Ctx, names: &Names, p: &PayloadDef, out: &mut String, skips: &mut Vec<String>) {
+fn emit_payload(
+    ctx: &Ctx,
+    names: &Names,
+    p: &PayloadDef,
+    out: &mut String,
+    skips: &mut Vec<String>,
+) {
     let name = payload_name(ctx, names, p.id);
     out.push_str(&format!(
         "    payload {name} native {} {{\n",
