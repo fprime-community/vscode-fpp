@@ -5,9 +5,7 @@
 use crate::ast::{self as py_ast, AstNode};
 use crate::diagnostics::{Diagnostic, OwnedDiagnostic};
 use crate::ir_core::ModelData;
-use fpp_analysis::semantics::Symbol as SemSymbol;
 use fpp_core::Node;
-use pyo3::PyClass;
 use pyo3::prelude::*;
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 use rustc_hash::FxHashMap;
@@ -94,55 +92,15 @@ impl Model {
         }
     }
 
-    /// All components in the model.
-    fn components(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::sem::Component>>> {
-        Self::entity_list(
-            slf,
-            |a| a.component_map.keys().cloned().collect(),
-            crate::sem::build_component,
-        )
-    }
-    /// All component instances in the model.
-    fn component_instances(
-        slf: PyRef<'_, Self>,
-    ) -> PyResult<Vec<Py<crate::sem::ComponentInstance>>> {
-        Self::entity_list(
-            slf,
-            |a| a.component_instance_map.keys().cloned().collect(),
-            crate::sem::build_component_instance,
-        )
-    }
-    /// All interfaces in the model.
-    fn interfaces(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::sem::Interface>>> {
-        Self::entity_list(
-            slf,
-            |a| a.interface_map.keys().cloned().collect(),
-            crate::sem::build_interface,
-        )
-    }
-    /// All topologies in the model.
-    fn topologies(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::sem::Topology>>> {
-        Self::entity_list(
-            slf,
-            |a| a.topology_map.keys().cloned().collect(),
-            crate::sem::build_topology,
-        )
-    }
-    /// All systems (deployments) in the model.
-    fn systems(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::sem::System>>> {
-        Self::entity_list(
-            slf,
-            |a| a.system_map.keys().cloned().collect(),
-            crate::sem::build_system,
-        )
-    }
-    /// All state machines in the model.
-    fn state_machines(slf: PyRef<'_, Self>) -> PyResult<Vec<Py<crate::sem::StateMachine>>> {
-        Self::entity_list(
-            slf,
-            |a| a.state_machine_map.keys().cloned().collect(),
-            crate::sem::build_state_machine,
-        )
+    /// The semantic analysis result — the strict 1:1 mirror of
+    /// `fpp_analysis::Analysis`. Navigate the model's semantics through its
+    /// public maps (e.g. `model.analysis.component_map`) and methods (e.g.
+    /// `model.analysis.get_qualified_name(sym)`).
+    #[getter]
+    fn analysis(slf: PyRef<'_, Self>) -> PyResult<Py<crate::sem::Analysis>> {
+        let py = slf.py();
+        let model: Py<Self> = slf.into();
+        crate::sem::build_analysis(&model, py)
     }
 
     fn __repr__(&self) -> String {
@@ -151,24 +109,5 @@ impl Model {
             self.data.ids.len(),
             self.error_count
         )
-    }
-}
-
-impl Model {
-    /// Build a list of entity wrappers, one per symbol keying an analysis entity
-    /// map. Only symbols whose def node was recorded during the walk are kept,
-    /// sorted by their walk id for deterministic (source) order.
-    fn entity_list<T: PyClass>(
-        slf: PyRef<'_, Self>,
-        keys: impl Fn(&fpp_analysis::Analysis) -> Vec<SemSymbol>,
-        build: impl Fn(&Py<Model>, Python<'_>, SemSymbol) -> PyResult<Py<T>>,
-    ) -> PyResult<Vec<Py<T>>> {
-        use fpp_analysis::semantics::SymbolInterface;
-        let py = slf.py();
-        let mut syms = keys(&slf.data.analysis);
-        syms.retain(|s| slf.data.ids.contains_key(&s.node()));
-        syms.sort_by_key(|s| slf.data.id(s.node()));
-        let model: Py<Self> = slf.into();
-        syms.into_iter().map(|s| build(&model, py, s)).collect()
     }
 }

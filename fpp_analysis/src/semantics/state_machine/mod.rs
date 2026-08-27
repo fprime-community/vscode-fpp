@@ -44,7 +44,7 @@ pub enum Kind {
 }
 
 /// An FPP state machine
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StateMachine {
     /// The AST node defining the state machine
     pub node: Arc<DefStateMachine>,

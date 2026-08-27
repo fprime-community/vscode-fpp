@@ -13,7 +13,7 @@
 use crate::diagnostics::SharedEmitter;
 use crate::noderef::NodeRef;
 use fpp_analysis::semantics::Symbol;
-use fpp_core::{Annotated, CompilerContext, Node, Span, Spanned};
+use fpp_core::{Annotated, CompilerContext, Node, Spanned};
 use pyo3::prelude::*;
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 use rustc_hash::FxHashMap;
@@ -36,6 +36,144 @@ pub struct Loc {
 impl Loc {
     fn __repr__(&self) -> String {
         format!("Loc({}:{}:{})", self.uri, self.line + 1, self.column + 1)
+    }
+}
+
+/// A lazy handle to a source span.
+///
+/// Holds only the opaque `fpp_core::Span` (a `usize` handle) plus the backing
+/// [`ModelData`]; the file/line/column are resolved on demand via
+/// [`ModelData::loc_of_span`] (which re-enters the retained compiler context with
+/// `run_ref`). Getters therefore never touch the context until a location is
+/// actually read, and `__eq__`/`__hash__` operate on the raw handle — so a `Span`
+/// is a cheap, context-free value usable as a `dict` key.
+#[gen_stub_pyclass]
+#[pyclass(frozen)]
+#[derive(Clone)]
+pub struct Span {
+    data: Arc<ModelData>,
+    span: fpp_core::Span,
+}
+
+impl Span {
+    /// Wrap a native span with its backing model data.
+    pub fn new(data: Arc<ModelData>, span: fpp_core::Span) -> Self {
+        Span { data, span }
+    }
+}
+
+#[gen_stub_pymethods]
+#[pymethods]
+impl Span {
+    /// Resolve this span to a concrete source [`Loc`] (enters the compiler context).
+    fn resolve(&self) -> Loc {
+        self.data
+            .loc_of_span(self.span)
+            .expect("a recorded span resolves to a location")
+    }
+
+    /// The source file URI/path.
+    #[getter]
+    fn uri(&self) -> String {
+        self.resolve().uri
+    }
+
+    /// The 0-indexed start line.
+    #[getter]
+    fn line(&self) -> u32 {
+        self.resolve().line
+    }
+
+    /// The 0-indexed start column.
+    #[getter]
+    fn column(&self) -> u32 {
+        self.resolve().column
+    }
+
+    /// The 0-indexed end line.
+    #[getter]
+    fn end_line(&self) -> u32 {
+        self.resolve().end_line
+    }
+
+    /// The 0-indexed end column.
+    #[getter]
+    fn end_column(&self) -> u32 {
+        self.resolve().end_column
+    }
+
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
+        match other.downcast::<Span>() {
+            Ok(o) => self.span == o.borrow().span,
+            Err(_) => false,
+        }
+    }
+
+    fn __hash__(&self) -> u64 {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        self.span.hash(&mut h);
+        h.finish()
+    }
+
+    fn __repr__(&self) -> String {
+        let l = self.resolve();
+        format!("<Span {}:{}:{}>", l.uri, l.line + 1, l.column + 1)
+    }
+}
+
+/// A `dict[K, V]` return wrapper over a built `Py<PyDict>`.
+///
+/// The runtime object is a plain Python `dict`; the `K`/`V` phantoms exist only
+/// to drive [`pyo3_stub_gen::PyStubType`] so the generated stub renders
+/// `dict[Kstub, Vstub]` instead of the default `dict[typing.Any, typing.Any]`
+/// that a bare `Py<PyDict>` would produce. This mirrors the union `*Ref`
+/// newtypes: a hand-rolled `IntoPyObject` + `PyStubType` pair used purely as a
+/// getter/method return type (never stored in a pyclass). The macro's `map(K, V)`
+/// shape builds the dict, then wraps it as `DictStub::<Kty, Vty>::new(..)`.
+///
+/// `allow(dead_code)`: the shape that constructs this is only emitted once the
+/// generator reflects `HashMap`/`BTreeMap` fields into `map(K, V)`; the type +
+/// its `new` constructor are the target API for that (a later phase).
+#[allow(dead_code)]
+pub struct DictStub<K, V> {
+    dict: Py<pyo3::types::PyDict>,
+    _marker: std::marker::PhantomData<(K, V)>,
+}
+
+impl<K, V> DictStub<K, V> {
+    /// Wrap an already-built `Py<PyDict>`.
+    #[allow(dead_code)]
+    pub fn new(dict: Py<pyo3::types::PyDict>) -> Self {
+        DictStub {
+            dict,
+            _marker: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<'py, K, V> IntoPyObject<'py> for DictStub<K, V> {
+    type Target = pyo3::types::PyDict;
+    type Output = Bound<'py, pyo3::types::PyDict>;
+    type Error = std::convert::Infallible;
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        Ok(self.dict.into_bound(py))
+    }
+}
+
+impl<K: pyo3_stub_gen::PyStubType, V: pyo3_stub_gen::PyStubType> pyo3_stub_gen::PyStubType
+    for DictStub<K, V>
+{
+    fn type_output() -> pyo3_stub_gen::TypeInfo {
+        let k = K::type_output();
+        let v = V::type_output();
+        let mut import = k.import;
+        import.extend(v.import);
+        import.insert("builtins".into());
+        pyo3_stub_gen::TypeInfo {
+            name: format!("builtins.dict[{}, {}]", k.name, v.name),
+            import,
+        }
     }
 }
 
@@ -72,7 +210,7 @@ pub struct ModelData {
     pub node_ptrs: FxHashMap<Node, NodeRef>,
     /// `Span -> Node`, bridging a thin analysis element (keyed by its `Spec*`
     /// node's span) to that AST node for detail forwarding.
-    pub nodes_by_span: FxHashMap<Span, Node>,
+    pub nodes_by_span: FxHashMap<fpp_core::Span, Node>,
     /// Fully-qualified name -> symbol, for `Model.lookup` (only symbols whose
     /// def node was recorded during the walk).
     pub by_qualified_name: FxHashMap<String, Symbol>,
@@ -92,7 +230,7 @@ impl ModelData {
     }
 
     /// The resolved location of a `Span` (resolved lazily against the live ctx).
-    pub fn loc_of_span(&self, span: Span) -> Option<Loc> {
+    pub fn loc_of_span(&self, span: fpp_core::Span) -> Option<Loc> {
         Some(fpp_core::run_ref(&self.ctx, || {
             crate::lower_core::loc_of_span(&span)
         }))
@@ -100,7 +238,7 @@ impl ModelData {
 
     /// The AST node whose span is `span`, if one was recorded during the walk.
     /// Used to bridge a thin analysis element to its `Spec*` AST node.
-    pub fn node_of_span(&self, span: Span) -> Option<Node> {
+    pub fn node_of_span(&self, span: fpp_core::Span) -> Option<Node> {
         self.nodes_by_span.get(&span).copied()
     }
 
