@@ -15,10 +15,8 @@ use std::sync::{Arc, Mutex};
 #[pyclass]
 pub struct Model {
     pub data: Arc<ModelData>,
-    // GIL-uncontended node memo keyed by `fpp_core::Node`; gives `is`-identity
-    // across navigation and makes cycles safe. Mutex (not RefCell) because
-    // pyclasses must be `Sync`. Values are the base `AstNode` (concrete subclass
-    // instances up-cast via `into_super`).
+    // Node memo giving `is`-identity across navigation and making cycles safe.
+    // `Mutex` (not `RefCell`) because pyclasses must be `Sync`.
     memo: Mutex<FxHashMap<Node, Py<AstNode>>>,
     diagnostics: Vec<OwnedDiagnostic>,
     #[pyo3(get)]

@@ -131,10 +131,6 @@ impl Span {
 /// newtypes: a hand-rolled `IntoPyObject` + `PyStubType` pair used purely as a
 /// getter/method return type (never stored in a pyclass). The macro's `map(K, V)`
 /// shape builds the dict, then wraps it as `DictStub::<Kty, Vty>::new(..)`.
-///
-/// `allow(dead_code)`: the shape that constructs this is only emitted once the
-/// generator reflects `HashMap`/`BTreeMap` fields into `map(K, V)`; the type +
-/// its `new` constructor are the target API for that (a later phase).
 #[allow(dead_code)]
 pub struct DictStub<K, V> {
     dict: Py<pyo3::types::PyDict>,
@@ -177,42 +173,30 @@ impl<K: pyo3_stub_gen::PyStubType, V: pyo3_stub_gen::PyStubType> pyo3_stub_gen::
     }
 }
 
-/// A fully analyzed model: the live parsed AST and the live
-/// `fpp_analysis::Analysis` kept alive for direct reads, plus the
-/// `fpp_core::Node`-keyed side-tables recorded during the walk (see
-/// `crate::lower_core::Walker`) and two small indexes derived from `analysis`.
+/// A fully analyzed model: the live parsed AST and `fpp_analysis::Analysis` kept
+/// alive for direct reads, plus the `fpp_core::Node`-keyed side-tables recorded
+/// during the walk (see `crate::lower_core::Walker`).
 ///
-/// `tu` is immutable for the life of this struct; `node_ptrs` aliases into it
-/// (see [`crate::noderef`] for the soundness argument). `analysis` references
-/// the *augmented clone*'s AST defs through `Symbol(Arc<DefX>)`; cross-refs to
-/// AST wrappers go through the shared `fpp_core::Node` handles into `tu`'s
-/// `node_ptrs`. Everything here is `Send + Sync` (including `ctx`), so it may
-/// live behind the `Sync` `Model` pyclass; wrappers resolve locations and
-/// annotations by re-entering the retained `ctx` via `fpp_core::run_ref`.
+/// `node_ptrs` aliases into `tu`, which is immutable for the life of this struct
+/// (see [`crate::noderef`] for the soundness argument). Everything here is
+/// `Send + Sync`, so it may live behind the `Sync` `Model` pyclass.
 pub struct ModelData {
     /// The live parsed AST (never mutated after the walk).
     pub tu: fpp_ast::TransUnit,
-    /// The live semantic analysis, read directly by the symbol/type/value and
-    /// entity wrappers.
+    /// The live semantic analysis.
     pub analysis: fpp_analysis::Analysis,
-    /// The live compiler context, kept alive so locations and annotations can be
-    /// resolved lazily via `run_ref` at getter time. `Send + Sync` (its fields
-    /// are `HashMap`/`Vec`/`Arc`/`Weak` and the
-    /// owned `SharedEmitter`), so it may live in the `Sync` `Model` pyclass.
+    /// The live compiler context, retained so locations/annotations resolve
+    /// lazily via `run_ref` at getter time.
     pub ctx: Arc<CompilerContext<SharedEmitter>>,
     /// Translation-unit top-level member nodes, in source order.
     pub roots: Vec<Node>,
-    /// Dense id per node (exposed as the `.node_id` attribute), assigned in
-    /// walk pre-order.
+    /// Dense id per node (the `.node_id` attribute), assigned in walk pre-order.
     pub ids: FxHashMap<Node, u32>,
-    /// Type-tag + raw pointer into `tu` per node (drives wrapper construction
-    /// and field reads).
+    /// Type-tag + raw pointer into `tu` per node.
     pub node_ptrs: FxHashMap<Node, NodeRef>,
-    /// `Span -> Node`, bridging a thin analysis element (keyed by its `Spec*`
-    /// node's span) to that AST node for detail forwarding.
+    /// `Span -> Node`, bridging a thin analysis element to its `Spec*` AST node.
     pub nodes_by_span: FxHashMap<fpp_core::Span, Node>,
-    /// Fully-qualified name -> symbol, for `Model.lookup` (only symbols whose
-    /// def node was recorded during the walk).
+    /// Fully-qualified name -> symbol, for `Model.lookup`.
     pub by_qualified_name: FxHashMap<String, Symbol>,
 }
 

@@ -5,8 +5,7 @@
 //! `fpp_python_macros::fpp_ast_bindings!` invocation inside it expands, at compile
 //! time, into the `AstNode` base + one `#[pyclass(extends = AstNode)]` wrapper
 //! per node, the kind/union `*Ref` newtypes, the `NodeKind` tag, and the
-//! recording walk (`walk_trans_unit` + `walk_*`) — the code that used to be
-//! checked in as `generated/{py_ast,walk}.rs`. Nothing here is tracked except
+//! recording walk (`walk_trans_unit` + `walk_*`). Nothing here is tracked except
 //! `defs.rs`; the expansion happens in the background.
 
 mod defs;

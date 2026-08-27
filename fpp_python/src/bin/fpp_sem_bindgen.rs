@@ -9,10 +9,10 @@
 //! The `fpp_sem_bindings!` proc macro expands that declaration into the
 //! read-only PyO3 wrappers.
 //!
-//! Unlike the previous `syn`-driven emitter, there are **no hand tables**: the
-//! set of unions / entities / leaf enums / payloads is the transitive closure of
-//! reachable types from `Analysis`'s public fields + eligible `&self`/`&Arc<Self>`
-//! methods. Type origin (`fpp_ast` vs `fpp_core` vs `fpp_analysis` vs `std`) is a
+//! There are **no hand tables**: the set of unions / entities / leaf enums /
+//! payloads is the transitive closure of reachable types from `Analysis`'s public
+//! fields + eligible `&self`/`&Arc<Self>` methods. Type origin (`fpp_ast` vs
+//! `fpp_core` vs `fpp_analysis` vs `std`) is a
 //! deterministic table lookup in the JSON's `paths`/`external_crates`, never a
 //! name/prefix guess. A type we cannot convert is emitted as `skip` (and logged),
 //! never a hard error.
@@ -1833,7 +1833,7 @@ fn resolve_config() -> Config {
             "--rustdoc-json" => cli_json = it.next().map(PathBuf::from),
             "--fpp-version" => cli_version = it.next(),
             "--out" => cli_out = it.next().map(PathBuf::from),
-            // Accepted for compatibility with the old CLI (ignored).
+            // Accepted but ignored (callers may still pass `--fpp-src`).
             "--fpp-src" => {
                 let _ = it.next();
             }

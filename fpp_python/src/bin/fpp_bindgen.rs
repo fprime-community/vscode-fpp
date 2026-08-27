@@ -5,11 +5,10 @@
 //! `fpp_python_macros::fpp_ast_bindings! { … }` invocation: a clean, readable ~1:1
 //! declaration of the `fpp_ast` grammar (nodes / unions / kind-enums / leaves).
 //! The `fpp_ast_bindings!` proc macro expands that declaration at compile time
-//! into the PyO3 node wrappers + the recording walk — the repetitive code that
-//! used to be checked in as `generated/{py_ast,walk}.rs`.
+//! into the PyO3 node wrappers + the recording walk.
 //!
-//! So this tool is now just parse + classify + a DSL pretty-printer; all wrapper/
-//! walk emission lives in `fpp_python_macros::ast_bindings`. There is no owned
+//! This tool is just parse + classify + a DSL pretty-printer; all wrapper/walk
+//! emission lives in `fpp_python_macros::ast_bindings`. There is no owned
 //! per-node IR: wrappers read the parsed AST directly.
 //!
 //! Classification reuses the annotations the fpp-tools proc-macros already

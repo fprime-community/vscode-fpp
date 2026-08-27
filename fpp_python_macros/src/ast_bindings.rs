@@ -1,12 +1,10 @@
-//! The `fpp_ast_bindings!` function-like macro: expands a clean, declarative
-//! mirror of the `fpp_ast` grammar (emitted by `codegen/fpp_bindgen` into
-//! `native/src/ast/defs.rs`) into the PyO3 AST-node wrappers + the recording
-//! walk — the code that used to be checked in as `generated/{py_ast,walk}.rs`.
+//! The `fpp_ast_bindings!` function-like macro: expands a declarative mirror of
+//! the `fpp_ast` grammar (emitted by `codegen/fpp_bindgen` into
+//! `native/src/ast/defs.rs`) into the PyO3 AST-node wrappers + the recording walk.
 //!
-//! The DSL is parsed into the same `Registry`/`Shape`/`Card` model the generator
-//! used; the emit logic (`emit_walk`/`emit_py` + helpers) is ported near-verbatim
-//! from `fpp_bindgen`, so it is parameterized only by `&Registry` and produces
-//! the same tokens. The macro never reads `fpp_ast` source — only its DSL tokens.
+//! The DSL is parsed into a `Registry`/`Shape`/`Card` model; `emit_walk`/`emit_py`
+//! emit tokens parameterized only by `&Registry`. The macro never reads `fpp_ast`
+//! source — only its DSL tokens.
 //!
 //! A field's shape is a pure function of its (cardinality-stripped) type name +
 //! the block's category sets: `String`/`bool`/`LitString`/`Name`/`Span` are
@@ -20,7 +18,7 @@ use syn::parse::{Parse, ParseStream};
 use syn::{Ident, Token, braced, bracketed, parenthesized};
 
 // ---------------------------------------------------------------------------
-// Model (mirrors codegen/fpp_bindgen)
+// Model
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -333,18 +331,12 @@ impl Parse for Dsl {
 // ---------------------------------------------------------------------------
 
 /// The shape of a field, from its cardinality + type name + the category sets.
-/// Mirrors `fpp_bindgen::classify_one` collapsed to a name-based function (the
-/// `#[visitable(ignore)]` bit is redundant with the type — see the module docs).
 fn classify(card: Card, name: &str, leaves: &BTreeSet<String>, kinds: &BTreeSet<String>) -> Shape {
     match name {
         "String" => Shape::Str,
         "bool" => Shape::Bool,
-        // `LitString` is an `#[ast]` node but is only ever used as a
-        // `#[visitable(ignore)]` string-leaf (its `.data`), never as a walked
-        // child — so it is always `Lit`, matching `classify_one`'s ignore branch
-        // for the pinned grammar. If a future `fpp_ast` used `LitString` as a
-        // real child, `fpp_bindgen` would emit it here and this arm would need to
-        // consult the node set first (the DSL carries no `ignore` bit).
+        // `LitString` is only ever used as an ignored string-leaf (its `.data`),
+        // never a walked child, so it is always `Lit`.
         "LitString" => {
             if card == Card::Opt {
                 Shape::LitOpt
@@ -450,7 +442,7 @@ fn build_registry(dsl: Dsl) -> Registry {
 }
 
 // ---------------------------------------------------------------------------
-// Naming helpers (ported from fpp_bindgen)
+// Naming helpers
 // ---------------------------------------------------------------------------
 
 fn snake(s: &str) -> String {

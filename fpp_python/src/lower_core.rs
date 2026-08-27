@@ -25,8 +25,7 @@ pub struct Walker {
     next: u32,
     ids: FxHashMap<Node, u32>,
     node_ptrs: FxHashMap<Node, NodeRef>,
-    /// `Span -> Node`, so a thin analysis element (whose `loc` is the span of
-    /// its `Spec*` AST node) can bridge to that node and forward its detail.
+    /// `Span -> Node`, bridging a thin analysis element to its `Spec*` AST node.
     nodes_by_span: FxHashMap<Span, Node>,
 }
 
@@ -72,9 +71,8 @@ impl Walker {
 
 /// Build the fully-qualified-name -> [`Symbol`] index for `Model.lookup`, inside
 /// the `run` scope. Only symbols whose def node was recorded during the walk are
-/// included (mirrors the previous mirror, which skipped synthetic/unwalked
-/// nodes). `get_qualified_name` is context-free, but building the index once
-/// here keeps lookups O(1).
+/// included (synthetic/unwalked nodes are skipped). `get_qualified_name` is
+/// context-free, but building the index once here keeps lookups O(1).
 pub fn build_indexes(a: &Analysis, ids: &FxHashMap<Node, u32>) -> FxHashMap<String, Symbol> {
     let mut by_qualified_name: FxHashMap<String, Symbol> = FxHashMap::default();
     for (def_node, sym) in &a.symbol_map {
