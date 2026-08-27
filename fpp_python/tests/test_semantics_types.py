@@ -71,7 +71,7 @@ def test_enum_type(m):
     assert t.is_displayable is True
 
 
-def test_struct_type(m):
+def test_struct_type(m: f.Model):
     t = rtype(m, "M.S")
     assert isinstance(t, StructType)
     members = t.anon_struct.members

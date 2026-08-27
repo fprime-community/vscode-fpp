@@ -74,7 +74,7 @@ def test_component_instances(m):
     assert a.component_map[csym].node.name == "C"
 
 
-def test_topology_connections(m):
+def test_topology_connections(m: f.Model):
     a = m.analysis
     (tsym, top) = next(iter(a.topology_map.items()))
     assert isinstance(tsym, SymbolTopology)
@@ -82,8 +82,7 @@ def test_topology_connections(m):
     # `connection_map` is keyed by connection-graph name.
     assert set(top.connection_map) == {"C1"}
     (conn,) = top.connection_map["C1"]
-    # `from` is a Python keyword, so the output endpoint getter is `from_`.
-    src = getattr(conn, "from_")
+    src = conn.from_
     assert src.port.qualified_name == "a.pOut"
     assert conn.to.port.qualified_name == "b.pIn"
     assert conn.is_unmatched is False

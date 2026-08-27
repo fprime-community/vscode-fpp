@@ -33,7 +33,6 @@ use fpp_ast::{
     DefAction, DefGuard, DefSignal, DefState, DefStateMachine, SpecInitialTransition,
     StateMachineMember, StateMember,
 };
-use fpp_core::Annotated;
 use std::sync::Arc;
 
 /// The kind of a state machine
@@ -103,9 +102,9 @@ impl StateMachine {
         self.sma.blocking_error
     }
 
-    /// The unqualified names of the leaf states.
+    /// The unqualified names of the leaf states, one per distinct leaf state.
     pub fn leaf_state_names(&self) -> Vec<String> {
-        StateMachine::get_leaf_states(&self.node)
+        Self::get_leaf_states(&self.node)
             .iter()
             .map(|s| s.name.data.clone())
             .collect()
@@ -171,12 +170,7 @@ impl StateMachine {
             .collect()
     }
 
-    /// Gets the set of leaf states of a state machine.
-    ///
-    /// Identical leaf states collapse into one: we deduplicate on
-    /// `(pre-annotation, name, post-annotation)` — the same key `AddStateEnums`
-    /// uses when it synthesizes the `State` enum — so callers never
-    /// double-count a leaf.
+    /// Gets the leaf states of a state machine.
     pub fn get_leaf_states(sm: &DefStateMachine) -> Vec<Arc<DefState>> {
         let mut states = Vec::new();
         for member in sm.members.as_deref().unwrap_or(&[]) {
@@ -184,10 +178,6 @@ impl StateMachine {
                 Self::collect_leaf_states(node, &mut states);
             }
         }
-        let mut seen = std::collections::HashSet::new();
-        states.retain(|s| {
-            seen.insert((s.pre_annotation(), s.name.data.clone(), s.post_annotation()))
-        });
         states
     }
 
