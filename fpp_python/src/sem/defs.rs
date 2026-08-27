@@ -114,7 +114,7 @@ fpp_python_macros::fpp_sem_bindings! {
 
     union PortInstanceType native fpp_analysis::semantics::PortInstanceType handle clone alias "PortInstanceType" accessor native repr variant {
         variants {
-            DefPort => DefPort : symbol,
+            DefPort => PortInstanceTypeDefPort : symbol,
             Serial => Serial : unit,
         }
         methods {
@@ -169,7 +169,7 @@ fpp_python_macros::fpp_sem_bindings! {
             Component => SymbolComponent : astdef(DefComponent),
             ComponentInstance => SymbolComponentInstance : astdef(DefComponentInstance),
             Constant => Constant : astdef(DefConstant),
-            Enum => Enum : astdef(DefEnum),
+            Enum => SymbolEnum : astdef(DefEnum),
             EnumConstant => EnumConstant : astdef(DefEnumConstant),
             Interface => SymbolInterface : astdef(DefInterface),
             Module => Module : astdef(DefModule),

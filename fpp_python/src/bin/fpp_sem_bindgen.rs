@@ -389,12 +389,21 @@ const MAPS: &[&str] = &["HashMap", "BTreeMap", "FxHashMap", "IndexMap"];
 
 /// Bare type names that always get their CamelCased last-module-segment prefix
 /// (even when unique among emitted classes), because the bare form shadows or
-/// confuses a Rust std / crate type in the generated module (e.g.
+/// confuses a type already living in the generated module (e.g.
 /// `transition_graph::Node` → `TransitionGraphNode`, `transition_graph::Arc` →
 /// `TransitionGraphArc`, and `FormatReplacementKind::Default` → a subclass
 /// `FormatReplacementKindDefault` so it does not shadow `std::default::Default`).
+///
+/// `Enum` and `DefPort` are semantic-layer names that collide with *other things
+/// in the same emitted Python module*, invisible to the emitted-class uniqueness
+/// pass: `Enum` (the `Symbol::Enum` variant) shadows the `enum.Enum` the stub
+/// imports as the base of every leaf-enum mirror, and `DefPort` (the
+/// `PortInstanceType::DefPort` variant) shadows the `fpp_ast` `DefPort` node
+/// wrapper registered by the sibling AST bindings. Prefixing yields `SymbolEnum`
+/// / `PortInstanceTypeDefPort`.
 const RESERVED_TYPE_NAMES: &[&str] = &[
-    "Arc", "Box", "Rc", "Node", "Cell", "RefCell", "Ref", "Cow", "Weak", "Default",
+    "Arc", "Box", "Rc", "Node", "Cell", "RefCell", "Ref", "Cow", "Weak", "Default", "Enum",
+    "DefPort",
 ];
 
 /// `fpp_ast` enums that are payload-bearing (exposed as `union`s in the AST

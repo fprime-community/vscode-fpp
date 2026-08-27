@@ -1,13 +1,21 @@
-"""Analysis-entity navigation: components, instances, topology, connections."""
+"""Analysis-entity navigation: components, instances, topology, connections.
+
+Everything is reached through the `model.analysis` mirror of
+`fpp_analysis::Analysis` — its public maps and query methods — rather than any
+curated `Model` accessor.
+"""
 
 import pytest
 
 import fpp_python as f
 from fpp_python import (
     ComponentKind,
-    ComponentSymbol,
-    GeneralPortInstance,
-    TopologySymbol,
+    Direction,
+    General,
+    PortInstance,
+    Span,
+    SymbolComponent,
+    SymbolTopology,
 )
 
 SRC = """
@@ -28,46 +36,65 @@ topology T {
 
 @pytest.fixture(scope="module")
 def m():
-    model = f.analyze(SRC)
+    model = f.analyze(SRC, uri="entities.fpp")
     assert not model.has_errors, [d.message for d in model.diagnostics]
     return model
 
 
-def test_component(m):
-    (c,) = m.components()
-    assert c.name == "C" and c.kind == ComponentKind.Passive
-    ports = list(c.port_interface.port_map.values())
-    assert {p.unqualified_name for p in ports} == {"pIn", "pOut"}
-    assert all(isinstance(p, GeneralPortInstance) for p in ports)
+def test_component_map(m):
+    a = m.analysis
+    (sym, comp) = next(iter(a.component_map.items()))
+    assert isinstance(sym, SymbolComponent)
+    # Symbol keys support value lookup.
+    assert a.component_map[sym] is not None
+    assert a.get_qualified_name(sym) == "C"
+    assert comp.node.name == "C"
+    assert comp.kind == ComponentKind.Passive
+    assert isinstance(comp.loc, Span)
+    assert comp.loc.uri == "entities.fpp"
+
+
+def test_component_ports(m):
+    (comp,) = m.analysis.component_map.values()
+    ports = comp.port_interface.port_map
+    assert set(ports) == {"pIn", "pOut"}
+    assert all(isinstance(p, (PortInstance, General)) for p in ports.values())
+    dirs = {n: p.direction for n, p in ports.items()}
+    assert dirs == {"pIn": Direction.Input, "pOut": Direction.Output}
 
 
 def test_component_instances(m):
-    insts = {i.name: i for i in m.component_instances()}
+    a = m.analysis
+    insts = {ci.qualified_name: ci for ci in a.component_instance_map.values()}
+    assert set(insts) == {"a", "b"}
     assert insts["a"].base_id == 0x100
-    assert insts["a"].component.name == "C"
-
-
-def test_symbol_as_component(m):
-    c_sym = m.lookup("C")
-    assert isinstance(c_sym, ComponentSymbol)
-    comp = c_sym.as_component()
-    assert comp is not None and comp.name == "C"
-    # A non-component symbol yields None.
-    t_sym = m.lookup("T")
-    assert isinstance(t_sym, TopologySymbol)
-    assert t_sym.as_component() is None
-    assert t_sym.as_topology() is not None
+    assert insts["b"].base_id == 0x200
+    # The instance's component symbol keys back into the component map.
+    csym = insts["a"].component_symbol
+    assert a.component_map[csym].node.name == "C"
 
 
 def test_topology_connections(m):
-    (t,) = m.topologies()
-    assert t.name == "T"
-    (conn,) = t.connections
-    assert conn.source.port.qualified_name == "a.pOut"
-    assert conn.target.port.qualified_name == "b.pIn"
-    assert conn.source.port_number == 0 and conn.target.port_number == 0
+    a = m.analysis
+    (tsym, top) = next(iter(a.topology_map.items()))
+    assert isinstance(tsym, SymbolTopology)
+    assert top.name == "T"
+    # `connection_map` is keyed by connection-graph name.
+    assert set(top.connection_map) == {"C1"}
+    (conn,) = top.connection_map["C1"]
+    # `from` is a Python keyword, so the output endpoint getter is `from_`.
+    src = getattr(conn, "from_")
+    assert src.port.qualified_name == "a.pOut"
+    assert conn.to.port.qualified_name == "b.pIn"
+    assert conn.is_unmatched is False
 
 
-def test_instance_component_equality(m):
-    insts = {i.name: i for i in m.component_instances()}
-    assert insts["a"].component == m.lookup("C").as_component()
+def test_span_resolves(m):
+    (comp,) = m.analysis.component_map.values()
+    span = comp.loc
+    loc = span.resolve()
+    assert loc.uri == "entities.fpp"
+    # `passive component C` is on the 3rd source line (0-indexed 2).
+    assert span.line == loc.line == 2
+    # Spans are hashable, handle-equal values.
+    assert span == comp.loc and hash(span) == hash(comp.loc)

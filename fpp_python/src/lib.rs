@@ -70,16 +70,8 @@ fn run_pipeline(uri: &str, content: String) -> (ir_core::ModelData, Vec<OwnedDia
         let mut ast = fpp_parser::parse(src, |p| p.trans_unit(), None);
         let mut analysis = fpp_analysis::Analysis::new();
         let _ = fpp_analysis::resolve_includes(&mut analysis, fpp_fs::FsReader {}, &mut ast);
-        // Analyze an augmented *clone* so the compiler-synthesized per-state-
-        // machine `enum State` never leaks into the exposed AST (which would make
-        // state-machine sources non-idempotent on round-trip). The clone shares
-        // node handles with `ast`, so analysis results key onto `ast`'s nodes;
-        // the synthetic enum's fresh handles are absent from the walk and thus
-        // skipped. `ast` itself is never mutated after this point, so the pointers
-        // recorded by the walk stay valid (see `crate::noderef`).
-        let mut augmented = ast.clone();
-        fpp_analysis::add_state_enums(&mut augmented);
-        let _ = fpp_analysis::check_semantics(&mut analysis, vec![&augmented]);
+        fpp_analysis::add_state_enums(&mut ast);
+        let _ = fpp_analysis::check_semantics(&mut analysis, vec![&ast]);
         let mut walker = lower_core::Walker::new();
         let roots = crate::ast::walk_trans_unit(&mut walker, &ast);
         let (ids, node_ptrs, nodes_by_span) = walker.finish();

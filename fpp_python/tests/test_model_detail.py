@@ -1,21 +1,21 @@
-"""Navigation over the fully-typed semantic model added in the native rewrite:
-Component sub-elements, ComponentInstance attributes, the state-machine model,
-and concrete / union AST return types.
+"""Detailed navigation of the semantic model reached through `model.analysis`:
+component sub-element maps (commands / events / params / telemetry), the
+`CommandKind` union subclasses, and the state-machine model.
 """
 
 import fpp_python as f
 from fpp_python import (
-    Command,
+    Async,
     CommandKind,
-    Event,
-    EventSeverity,
-    ExprBinop,
-    Param,
-    SmAction,
-    State,
-    StateMachineElement,
-    Type,
-    TypeName,
+    Guarded,
+    Kind,
+    QueueFull,
+    Span,
+    Sync,
+    Action,
+    Signal,
+    StateMachineSymbol,
+    SymbolStateMachine,
 )
 
 
@@ -25,61 +25,122 @@ def _model(path: str):
     return m
 
 
-def test_commands_are_typed_objects():
+def _only_component(m):
+    (comp,) = m.analysis.component_map.values()
+    return comp
+
+
+def test_commands_from_fixture():
     m = _model("tests/commands/commands.fpp")
-    seen = False
-    for c in m.components():
-        for cmd in c.commands:
-            seen = True
-            assert isinstance(cmd, Command)
-            assert isinstance(cmd.opcode, int)
-            assert isinstance(cmd.name, str)
-            assert cmd.kind in (
-                None,
-                CommandKind.Async,
-                CommandKind.Guarded,
-                CommandKind.Sync,
-            )
-            # `.spec` is the concrete SpecCommand AST node (None for a
-            # synthesized parameter set/save command).
-            assert cmd.spec is None or type(cmd.spec).__name__ == "SpecCommand"
-    assert seen, "fixture should define commands"
+    comp = _only_component(m)
+    assert m.analysis.get_qualified_name(comp.symbol) == "PriorityQueueFull"
+    # `command_map` is keyed by opcode; the fixture assigns 0, 1 and (explicit) 0x10.
+    cmds = comp.command_map
+    assert set(cmds) == {0, 1, 0x10}
+    assert cmds[0].name == "COMMAND_1"
+    assert cmds[0x10].name == "COMMAND_3"
+    # Every command in this fixture is async, and carries a priority.
+    for op, cmd in cmds.items():
+        assert cmd.opcode == op
+        assert cmd.is_async
+        assert isinstance(cmd.kind, Async)
+        assert isinstance(cmd.kind, CommandKind)
+        assert isinstance(cmd.loc, Span)
+    assert cmds[0].kind.priority == 10
+    assert cmds[1].kind.priority == 20
+    # COMMAND_3 declares `drop`; the others default to the assert behavior.
+    assert cmds[0x10].kind.queue_full == QueueFull.Drop
+    assert cmds[0].kind.queue_full == QueueFull.Assert
 
 
-def test_params_forward_type():
-    m = _model("tests/parameters/parameters.fpp")
-    seen = False
-    for c in m.components():
-        for p in c.params:
-            seen = True
-            assert isinstance(p, Param)
-            assert isinstance(p.is_external, bool)
-            # The resolved type lives in the `SpecParam` AST node (bridged by
-            # `.spec`); its `type_name` carries `.resolved_type`.
-            assert p.spec is not None
-            rt = p.spec.type_name.resolved_type
-            assert rt is None or isinstance(rt, Type)
-    assert seen, "fixture should define parameters"
+def test_command_kinds_are_union_subclasses():
+    # A component with one of each command kind exercises all three subclasses.
+    src = """
+    module Fw {
+      port Cmd
+      port CmdReg
+      port CmdResponse
+    }
+    active component K {
+      command recv port cmdIn
+      command reg port cmdRegOut
+      command resp port cmdResponseOut
+      sync command S_CMD
+      guarded command G_CMD
+      async command A_CMD
+    }
+    """
+    m = f.analyze(src, uri="k.fpp")
+    assert not m.has_errors, [d.message for d in m.diagnostics]
+    comp = _only_component(m)
+    by_name = {c.name: c.kind for c in comp.command_map.values()}
+    assert isinstance(by_name["S_CMD"], Sync)
+    assert isinstance(by_name["G_CMD"], Guarded)
+    assert isinstance(by_name["A_CMD"], Async)
+    assert all(isinstance(k, CommandKind) for k in by_name.values())
 
 
-def test_events_forward_severity():
+def test_events_from_fixture():
     m = _model("tests/events/events.fpp")
-    seen = False
-    for c in m.components():
-        for e in c.events:
-            seen = True
-            assert isinstance(e, Event)
-            # Severity lives in the `SpecEvent` AST node (bridged by `.spec`).
-            assert e.spec is not None
-            assert isinstance(e.spec.severity, EventSeverity)
-    assert seen, "fixture should define events"
+    a = m.analysis
+    comps = {a.get_qualified_name(s): c for s, c in a.component_map.items()}
+    assert {"EventIdentifiers", "M.EventThrottling"} <= set(comps)
+    events = comps["EventIdentifiers"].event_map
+    # Two explicit ids (0x10, 0x11) plus one auto-assigned (0x12).
+    assert set(events) == {0x10, 0x11, 0x12}
+    assert {e.id for e in events.values()} == {0x10, 0x11, 0x12}
+    assert events[0x10].name == "Event1"
+    assert all(isinstance(e.loc, Span) for e in events.values())
 
 
-def test_instance_attributes_forwarded_from_ast():
-    m = _model("tests/ports/ports.fpp")
-    # At least one instance in this fixture declares a queue size; the analysis
-    # discards it, so it is forwarded from the DefComponentInstance AST.
-    assert any(ci.queue_size is not None for ci in m.component_instances())
+def test_params_from_fixture():
+    m = _model("tests/parameters/parameters.fpp")
+    comp = _only_component(m)
+    params = comp.param_map
+    by_name = {p.name: p for p in params.values()}
+    assert set(by_name) == {"Param1", "Param2", "Param3", "Param4"}
+    # Param1 gets implied set/save opcodes 0x00 / 0x01.
+    assert by_name["Param1"].set_opcode == 0
+    assert by_name["Param1"].save_opcode == 1
+    # Param2 declares explicit set/save opcodes.
+    assert by_name["Param2"].set_opcode == 0x10
+    assert by_name["Param2"].save_opcode == 0x11
+    # Only Param4 is external.
+    assert by_name["Param4"].is_external is True
+    assert by_name["Param1"].is_external is False
+
+
+def test_telemetry_and_dicts():
+    src = """
+    module Fw {
+      port Cmd
+      port CmdReg
+      port CmdResponse
+      port Tlm
+      port Time
+    }
+    passive component K {
+      command recv port cmdIn
+      command reg port cmdRegOut
+      command resp port cmdResponseOut
+      telemetry port tlmOut
+      time get port timeGetOut
+      telemetry CH1: U32
+      telemetry CH2: F32 id 0x10
+    }
+    """
+    m = f.analyze(src, uri="tlm.fpp")
+    assert not m.has_errors, [d.message for d in m.diagnostics]
+    comp = _only_component(m)
+    # Telemetry channels are defined; no `command` definitions (only cmd ports).
+    assert comp.has_telemetry is True
+    assert comp.has_commands is False
+    channels = {t.id: t.name for t in comp.tlm_channel_map.values()}
+    assert channels == {0: "CH1", 0x10: "CH2"}
+    # The name-keyed mirror agrees.
+    assert set(comp.tlm_channel_name_map) == {"CH1", "CH2"}
+    # The list accessor is opcode/id ordered.
+    assert [t.name for t in comp.tlm] == ["CH1", "CH2"]
 
 
 SM_SRC = """
@@ -105,33 +166,21 @@ module M {
 def test_state_machine_model():
     m = f.analyze(SM_SRC, uri="sm.fpp")
     assert not m.has_errors, [d.message for d in m.diagnostics]
-    (sm,) = m.state_machines()
-
-    assert {a.name for a in sm.actions} == {"a"}
-    assert all(
-        isinstance(a, StateMachineElement) and isinstance(a, SmAction)
-        for a in sm.actions
-    )
-    assert {s.name for s in sm.signals} == {"s"}
+    a = m.analysis
+    (sym, sm) = next(iter(a.state_machine_map.items()))
+    assert isinstance(sym, SymbolStateMachine)
+    assert a.get_qualified_name(sym) == "M.SM"
+    assert sm.node.name == "SM"
+    assert sm.kind == Kind.Internal
     assert sm.blocking_error is False
+    assert sm.has_actions and sm.has_guards and sm.has_signals
 
-    states = {s.name: s for s in sm.states}
-    assert isinstance(states["S1"], State)
-    assert states["S1"].is_leaf
-    assert not states["S2"].is_leaf
-    assert states["S2"].entry_actions == ["a"]
-    assert {s.name for s in states["S2"].substates} == {"S3"}
+    (action,) = sm.actions
+    assert isinstance(action, Action)
+    assert isinstance(action, StateMachineSymbol)
+    assert action.unqualified_name == "a"
+    assert action.definition.name == "a"
 
-
-def test_concrete_and_union_ast_return_types():
-    # A single-type field returns the concrete node type...
-    m = f.analyze("array A = [3] U32\n", uri="a.fpp")
-    assert not m.has_errors, [d.message for d in m.diagnostics]
-    (def_array,) = list(m.ast())
-    assert isinstance(def_array.elt_type, TypeName)
-
-    # ...and an #[ast]-union field returns a precise union member.
-    m2 = f.analyze("constant c = 1 + 2\n", uri="c.fpp")
-    assert not m2.has_errors, [d.message for d in m2.diagnostics]
-    (def_const,) = list(m2.ast())
-    assert isinstance(def_const.value.kind, ExprBinop)
+    (signal,) = sm.signals
+    assert isinstance(signal, Signal)
+    assert signal.unqualified_name == "s"

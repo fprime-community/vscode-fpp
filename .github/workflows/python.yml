@@ -61,9 +61,10 @@ jobs:
     # (`fpp_python/fpp_python.pyi`, from the annotated pyclasses via pyo3-stub-gen),
     # and fails if any drifts. Each bindgen stamps the resolved upstream-crate
     # version into its declaration header, so an `fpp_ast`/`fpp_analysis` change
-    # trips this until the declaration is regenerated and committed. (The
-    # hand-authored `fpp_python/src/sem/defs_manual.rs` is NOT generator-managed and
-    # is deliberately not drift-checked.)
+    # trips this until the declaration is regenerated and committed. The semantic
+    # layer is now entirely generated (`sem/defs.rs` is a full `fpp_analysis`
+    # mirror; there is no hand-authored declaration to exempt), and regenerating it
+    # shells out to `cargo +nightly rustdoc`, so this job installs nightly too.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,6 +78,12 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+
+      # `fpp_sem_bindgen` reflects `fpp_analysis` from rustdoc JSON, which it
+      # produces via `cargo +nightly rustdoc` — so a nightly toolchain must be
+      # present for the semantic-declaration regeneration step below.
+      - name: Install nightly Rust (for fpp_sem_bindgen rustdoc)
+        uses: dtolnay/rust-toolchain@nightly
 
       # (a) Regenerate the checked-in AST declaration.
       - name: Regenerate AST declaration

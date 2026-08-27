@@ -1249,8 +1249,65 @@ impl Getter {
     }
 }
 
+/// Whether `s` is a Python (hard) keyword — one that cannot appear as a bare
+/// `def <name>` in a `.pyi` stub, nor be read as a plain attribute. Soft keywords
+/// (`match`/`case`/`type`) are omitted: they parse fine as identifiers.
+fn is_py_keyword(s: &str) -> bool {
+    matches!(
+        s,
+        "False"
+            | "None"
+            | "True"
+            | "and"
+            | "as"
+            | "assert"
+            | "async"
+            | "await"
+            | "break"
+            | "class"
+            | "continue"
+            | "def"
+            | "del"
+            | "elif"
+            | "else"
+            | "except"
+            | "finally"
+            | "for"
+            | "from"
+            | "global"
+            | "if"
+            | "import"
+            | "in"
+            | "is"
+            | "lambda"
+            | "nonlocal"
+            | "not"
+            | "or"
+            | "pass"
+            | "raise"
+            | "return"
+            | "try"
+            | "while"
+            | "with"
+            | "yield"
+    )
+}
+
+/// The Python-facing name for a getter/method: a native field/method whose name
+/// collides with a Python keyword (e.g. `Connection::from`) is exposed with a
+/// trailing underscore (`from_`), matching PEP 8. Only the emitted fn name is
+/// rewritten — getter bodies read the native value through the caller-built
+/// access expression, so the underlying field/method reference is unaffected.
+fn py_getter_ident(name: &Ident) -> Ident {
+    if is_py_keyword(&name.to_string()) {
+        format_ident!("{}_", name)
+    } else {
+        name.clone()
+    }
+}
+
 fn getter_tokens(g: &Getter) -> TokenStream {
-    let name = &g.name;
+    let name = py_getter_ident(&g.name);
     let ty = &g.shape_ty;
     let body = &g.body;
     let extra = &g.extra_params;
