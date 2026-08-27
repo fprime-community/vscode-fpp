@@ -118,44 +118,6 @@ fn union_ref_fn(name: &str) -> TokenStream {
     quote!(crate::sem::#id)
 }
 
-/// TRANSITIONAL: the closed unions that may be referenced from a *different*
-/// `fpp_sem_bindings!` invocation than the one declaring them (today `defs.rs`
-/// references the `PortInstance` union declared in the hand-authored
-/// `defs_manual.rs`). Once the semantic layer is a single generated invocation,
-/// every referenced union is locally declared and this seed can be deleted.
-fn builtin_unions() -> UnionReg {
-    let mut m = UnionReg::new();
-    m.insert(
-        "Type".into(),
-        UnionInfo {
-            native: syn::parse_quote!(fpp_analysis::semantics::Type),
-            handle: Handle::ArcType,
-        },
-    );
-    m.insert(
-        "Value".into(),
-        UnionInfo {
-            native: syn::parse_quote!(fpp_analysis::semantics::Value),
-            handle: Handle::Value,
-        },
-    );
-    m.insert(
-        "Symbol".into(),
-        UnionInfo {
-            native: syn::parse_quote!(fpp_analysis::semantics::Symbol),
-            handle: Handle::Symbol,
-        },
-    );
-    m.insert(
-        "PortInstance".into(),
-        UnionInfo {
-            native: syn::parse_quote!(fpp_analysis::semantics::PortInstance),
-            handle: Handle::Clone,
-        },
-    );
-    m
-}
-
 /// A `Span`-backed detail materialized on access. These are not stored native
 /// fields — the wrapper resolves them from a span (or an `InterfaceInstance`) at
 /// access time.
@@ -2403,18 +2365,21 @@ pub fn expand(input: TokenStream) -> TokenStream {
 
     // The union registry: every declared union keyed by its Python name, so a
     // `union(<Name>)`/`rewrap(<Name>::V)` shape resolves its native path + handle.
-    // Seeded with the transitional cross-invocation builtins (see
-    // [`builtin_unions`]); locally declared unions override the seed.
-    let mut union_reg: UnionReg = builtin_unions();
-    for u in &dsl.unions {
-        union_reg.insert(
-            u.py.to_string(),
-            UnionInfo {
-                native: u.native.clone(),
-                handle: u.handle,
-            },
-        );
-    }
+    // Built purely from the declared unions — every referenced union is locally
+    // declared in this single invocation.
+    let union_reg: UnionReg = dsl
+        .unions
+        .iter()
+        .map(|u| {
+            (
+                u.py.to_string(),
+                UnionInfo {
+                    native: u.native.clone(),
+                    handle: u.handle,
+                },
+            )
+        })
+        .collect();
 
     let mut defs = Vec::new();
     let mut register_calls = Vec::new();
