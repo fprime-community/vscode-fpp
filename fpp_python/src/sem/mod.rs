@@ -35,12 +35,10 @@ pub(crate) use hand::{build_spec, instance_ref};
 // `defs::*` ones. (The `Special`/`Topology` port subclasses are registered inside
 // `defs_manual`; they need no Rust re-export.)
 pub use defs_manual::{
-    Command, Component, ComponentInstance, Connection, Container, Endpoint, Event,
-    GeneralPortInstance, InitSpecifier, Interface, InternalPortInstance, Param, PortInstance,
-    PortInstanceIdentifier, PortInstanceRef, PortInterface, PortMatching, Record, StateMachine,
-    StateMachineInstance, System, TlmChannel, Topology, build_component, build_component_instance,
-    build_interface, build_port_instance, build_state_machine, build_system, build_topology,
-    port_instance_ref,
+    Component, ComponentInstance, Connection, Endpoint, GeneralPortInstance, Interface,
+    InternalPortInstance, PortInstance, PortInstanceRef, StateMachine, System, Topology,
+    build_component, build_component_instance, build_interface, build_port_instance,
+    build_state_machine, build_system, build_topology, port_instance_ref,
 };
 // The symbol-keyed `*_by_symbol` resolvers are crate-internal (used by the
 // hand-written cross-layer escape hatches in `hand`).

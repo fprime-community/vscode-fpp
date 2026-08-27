@@ -29,12 +29,32 @@ pub struct ComponentInstance {
     pub qualified_name: String,
     pub base_id: i128,
     pub max_id: i128,
+    /// Declared queue size (constant-folded), if any. Only active/queued
+    /// components carry one.
+    pub queue_size: Option<i128>,
+    /// Declared stack size (constant-folded), if any (active components only).
+    pub stack_size: Option<i128>,
+    /// Declared priority (constant-folded), if any (active components only).
+    pub priority: Option<i128>,
+    /// Declared CPU affinity (constant-folded), if any (active components only).
+    pub cpu: Option<i128>,
+    /// The C++ implementation type name, if given.
+    pub impl_type: Option<String>,
+    /// The header file, if given.
+    pub file: Option<String>,
     pub init_specifier_map: HashMap<i128, InitSpecifier>,
     /// The symbol of the component this instance is an instance of.
     pub component_symbol: Symbol,
 }
 
 impl ComponentInstance {
+    /// The init specifiers, ordered by phase.
+    pub fn init_specifiers(&self) -> Vec<&InitSpecifier> {
+        let mut items: Vec<&InitSpecifier> = self.init_specifier_map.values().collect();
+        items.sort_by_key(|s| s.phase);
+        items
+    }
+
     /// Adds an init specifier
     pub fn add_init_specifier(&self, spec: InitSpecifier) -> SemanticResult<ComponentInstance> {
         if let Some(prev) = self.init_specifier_map.get(&spec.phase) {
@@ -68,8 +88,8 @@ impl ComponentInstance {
             None => 0,
         };
 
-        let _queue_size = get_queue_size(a, &name, loc, &component_kind, &node.queue_size)?;
-        let _stack_size = get_active_attribute(
+        let queue_size = get_queue_size(a, &name, loc, &component_kind, &node.queue_size)?;
+        let stack_size = get_active_attribute(
             a,
             &name,
             &component_kind,
@@ -77,10 +97,12 @@ impl ComponentInstance {
             &node.stack_size,
             true,
         )?;
-        let _priority =
+        let priority =
             get_active_attribute(a, &name, &component_kind, "priority", &node.priority, false)?;
-        let _cpu =
+        let cpu =
             get_active_attribute(a, &name, &component_kind, "CPU affinity", &node.cpu, false)?;
+        let impl_type = node.impl_type.as_ref().map(|s| s.data.clone());
+        let file = node.file.as_ref().map(|s| s.data.clone());
 
         let symbol = a.get_symbol(node);
         let qualified_name = a.get_qualified_name(&symbol);
@@ -92,6 +114,12 @@ impl ComponentInstance {
             qualified_name,
             base_id,
             max_id,
+            queue_size,
+            stack_size,
+            priority,
+            cpu,
+            impl_type,
+            file,
             init_specifier_map: HashMap::default(),
             component_symbol: component.symbol.clone(),
         }))

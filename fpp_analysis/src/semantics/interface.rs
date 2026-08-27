@@ -194,6 +194,49 @@ impl PortInstance {
         }
     }
 
+    /// The general-port kind, for a general port instance (else `None`).
+    pub fn general_kind(&self) -> Option<GeneralKind> {
+        match self {
+            PortInstance::General { kind, .. } => Some(kind.clone()),
+            _ => None,
+        }
+    }
+
+    /// The async-input priority of a general port instance, if any.
+    pub fn priority(&self) -> Option<i128> {
+        match self {
+            PortInstance::General {
+                kind: GeneralKind::AsyncInput { priority, .. },
+                ..
+            } => *priority,
+            _ => None,
+        }
+    }
+
+    /// The async-input queue-full behavior of a general port instance, if any.
+    pub fn queue_full(&self) -> Option<QueueFull> {
+        match self {
+            PortInstance::General {
+                kind: GeneralKind::AsyncInput { queue_full, .. },
+                ..
+            } => Some(queue_full.clone()),
+            _ => None,
+        }
+    }
+
+    /// Whether this port instance is serial (untyped).
+    pub fn is_serial(&self) -> bool {
+        matches!(self.get_type(), Some(PortInstanceType::Serial))
+    }
+
+    /// The port-definition symbol for a typed port, if any (else serial/none).
+    pub fn type_symbol(&self) -> Option<Symbol> {
+        match self.get_type() {
+            Some(PortInstanceType::DefPort(sym)) => Some(sym),
+            _ => None,
+        }
+    }
+
     /// Check whether this port instance may be connected. Internal ports cannot.
     pub fn require_connection_at(&self, loc: Span) -> SemanticResult {
         match self {

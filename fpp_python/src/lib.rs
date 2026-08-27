@@ -26,8 +26,10 @@
 //! `cargo run -p fpp_python --features bindgen --bin fpp_sem_bindgen`) *and* the
 //! hand-authored `src/sem/defs_manual.rs`, with `src/sem/hand.rs` supplying the
 //! escape hatches the macro cannot produce mechanically. Everything else is the
-//! small hand-written core: `ir_core`, `lower_core`, `noderef`, `model`, the
-//! leaf-enum mirrors (`enums`), and the diagnostics shim (`diagnostics`).
+//! small hand-written core: `ir_core`, `lower_core`, `noderef`, `model`, and the
+//! diagnostics shim (`diagnostics`). The analysis-only leaf-enum mirrors
+//! (`Direction`/`GeneralKind`/`CommandKind`/`StateMachineKind`) are generated
+//! into `crate::sem` by the semantic bindings.
 
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
@@ -36,7 +38,6 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 
 mod ast;
 mod diagnostics;
-mod enums;
 mod ir_core;
 mod lower_core;
 mod model;
@@ -125,7 +126,6 @@ fn fpp_python(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ir_core::Loc>()?;
     ast::register(m)?;
     sem::register(m)?;
-    enums::register(m)?;
     Ok(())
 }
 

@@ -7,28 +7,28 @@
 //!
 //! * `build_*` entry points carry per-hierarchy quirks (e.g. the synthetic
 //!   "unknown" `Type`) that the uniform generated `dispatch` cannot express.
-//! * Identity (`__eq__`/`__hash__`) is non-structural — by definition node id /
-//!   `Type::identical` — so it is never generated (a structural derive would
-//!   violate the compiler's identity contract).
+//!
+//! Non-structural identity (`__eq__`/`__hash__`, by definition node id or
+//! `Type::identical`) and `__repr__` are emitted by the `identity`/`repr`
+//! generator directives (never a structural derive, which would violate the
+//! compiler's identity contract). `Type` keeps only its `__repr__` here — the
+//! "unknown"-type discriminant is part of the `build_type` quirk.
 
 use crate::ast::{ComponentKind, DefState};
-use crate::enums::GeneralKind;
 use crate::ir_core::{Loc, ModelData};
+use crate::sem::GeneralKind;
 use crate::model::Model;
 use crate::sem::{
     Command, Component, ComponentInstance, Connection, Container, Endpoint, Event,
     GeneralPortInstance, InitSpecifier, Interface, InternalPortInstance, Param, PortInstance,
     PortInstanceIdentifier, PortMatching, Record, StateMachine, StateMachineElement,
     StateMachineElementRef, StateMachineInstance, Symbol, SymbolRef, System, TlmChannel, Topology,
-    Type, Value, build_interface, component_by_symbol, component_instance_by_symbol,
-    interface_by_symbol, symbol_ref, topology_by_symbol,
+    Type, build_interface, component_by_symbol, component_instance_by_symbol, interface_by_symbol,
+    symbol_ref, topology_by_symbol,
 };
-use fpp_analysis::semantics::state_machine::{
-    State as SemState, StateMachine as SemStateMachine, StateMachineSymbol as SmSymbol,
-};
+use fpp_analysis::semantics::state_machine::State as SemState;
 use fpp_analysis::semantics::{
-    GeneralKind as SemGeneralKind, InterfaceInstance, PortInstance as SemPortInstance,
-    PortInstanceType, Symbol as SemSymbol, SymbolInterface, Type as SemType, Value as SemValue,
+    InterfaceInstance, Symbol as SemSymbol, SymbolInterface, Type as SemType,
 };
 // The `AstNode` *trait* (`.id()`/`.node`) is imported anonymously (its methods
 // are used on `QualIdent`, but the name is not).
@@ -99,46 +99,6 @@ impl Type {
     fn __repr__(&self) -> String {
         format!("<Type {}>", self.kind_name())
     }
-    fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
-        match other.downcast::<Type>() {
-            Ok(o) => SemType::identical(&self.ty, &o.borrow().ty),
-            Err(_) => false,
-        }
-    }
-    fn __hash__(&self) -> u64 {
-        match self.ty.def_node_id() {
-            Some(n) => self.data.ids.get(&n).copied().unwrap_or(0) as u64,
-            None => 0,
-        }
-    }
-}
-
-impl Value {
-    /// The value-kind name, for `__repr__` only (the public discriminant is the
-    /// concrete subclass identity / `Value` union alias).
-    fn kind_name(&self) -> &'static str {
-        match &self.val {
-            SemValue::Integer(_) => "Integer",
-            SemValue::PrimitiveInteger(_) => "PrimitiveInteger",
-            SemValue::Float(_) => "Float",
-            SemValue::Boolean(_) => "Boolean",
-            SemValue::String(_) => "String",
-            SemValue::EnumConstant(_) => "EnumConstant",
-            SemValue::Array(_) => "Array",
-            SemValue::AnonArray(_) => "AnonArray",
-            SemValue::Struct(_) => "Struct",
-            SemValue::AnonStruct(_) => "AnonStruct",
-            SemValue::AbsType(_) => "AbsType",
-        }
-    }
-}
-
-#[gen_stub_pymethods]
-#[pymethods]
-impl Value {
-    fn __repr__(&self) -> String {
-        format!("<Value {}>", self.kind_name())
-    }
 }
 
 // ---- Symbol escape hatches ------------------------------------------------
@@ -146,30 +106,11 @@ impl Value {
 // `Symbol`'s navigation is not a field/method mirror: `qualified_name`/`parent`
 // are `Analysis` operations over the symbol, `name` projects `fpp_ast::Name.data`,
 // and the `as_*` bridges resolve the symbol to an entity through the analysis
-// maps. Identity is by definition node id. These stay hand-written; the macro
-// generates the base/subclasses, `dispatch`, `build_symbol`, `symbol_ref`, the
-// `SymbolRef` alias, the `is_dictionary_def` method, and each subclass's concrete
-// `definition` getter.
-
-fn symbol_kind(s: &SemSymbol) -> &'static str {
-    match s {
-        SemSymbol::AbsType(_) => "AbsType",
-        SemSymbol::AliasType(_) => "AliasType",
-        SemSymbol::Array(_) => "Array",
-        SemSymbol::Component(_) => "Component",
-        SemSymbol::ComponentInstance(_) => "ComponentInstance",
-        SemSymbol::Constant(_) => "Constant",
-        SemSymbol::Enum(_) => "Enum",
-        SemSymbol::EnumConstant(_) => "EnumConstant",
-        SemSymbol::Interface(_) => "Interface",
-        SemSymbol::Module(_) => "Module",
-        SemSymbol::Port(_) => "Port",
-        SemSymbol::StateMachine(_) => "StateMachine",
-        SemSymbol::Struct(_) => "Struct",
-        SemSymbol::System(_) => "System",
-        SemSymbol::Topology(_) => "Topology",
-    }
-}
+// maps. These stay hand-written; the macro generates the base/subclasses,
+// `dispatch`, `build_symbol`, `symbol_ref`, the `SymbolRef` alias, the
+// `is_dictionary_def` method, each subclass's concrete `definition` getter, and —
+// via the `identity node` / `repr variant_qualified` directives — `__eq__` (by
+// node id), `__hash__`, and `__repr__`.
 
 impl Symbol {
     /// Build the entity wrapper for this symbol iff it defines one of that kind.
@@ -192,11 +133,7 @@ impl Symbol {
 impl Symbol {
     #[getter]
     fn name(&self) -> String {
-        self.sym.name().data.clone()
-    }
-    #[getter]
-    fn qualified_name(&self) -> String {
-        self.data.analysis.get_qualified_name(&self.sym)
+        self.sym.unqualified_name().to_string()
     }
     #[getter]
     fn node_id(&self) -> u32 {
@@ -204,7 +141,7 @@ impl Symbol {
     }
     #[getter]
     fn parent(&self, py: Python<'_>) -> PyResult<Option<SymbolRef>> {
-        match self.data.analysis.parent_symbol_map.get(&self.sym) {
+        match self.sym.parent(&self.data.analysis) {
             Some(p) if self.data.ids.contains_key(&p.node()) => {
                 Ok(Some(symbol_ref(&self.model, py, p.clone())?))
             }
@@ -260,51 +197,17 @@ impl Symbol {
             crate::sem::build_state_machine,
         )
     }
-
-    fn __repr__(&self) -> String {
-        format!(
-            "<Symbol {} '{}'>",
-            symbol_kind(&self.sym),
-            self.data.analysis.get_qualified_name(&self.sym)
-        )
-    }
-    fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
-        match other.downcast::<Symbol>() {
-            Ok(o) => {
-                let o = o.borrow();
-                self.sym == o.sym
-            }
-            Err(_) => false,
-        }
-    }
-    fn __hash__(&self) -> u64 {
-        self.data.ids.get(&self.sym.node()).copied().unwrap_or(0) as u64
-    }
 }
 
 // ---- StateMachineElement escape hatches -----------------------------------
 //
-// The element's name and location are not native fields: `name` projects
-// `get_unqualified_name`, and `loc` resolves the element's node id to a source
-// location (via `ModelData::loc`, whose `run_ref` scope reads the node's span).
-// `__repr__` renders the kind discriminant (not a public getter). The
-// macro generates the base/subclasses, `dispatch`, `build_state_machine_element`,
-// `state_machine_element_ref`, the `StateMachineElement` alias, and each
-// subclass's concrete `definition` getter.
-
-impl StateMachineElement {
-    /// The element-kind name, for `__repr__` only (the public discriminant is the
-    /// concrete subclass identity / `StateMachineElement` union alias).
-    fn kind_name(&self) -> &'static str {
-        match &self.native {
-            SmSymbol::Action(_) => "Action",
-            SmSymbol::Guard(_) => "Guard",
-            SmSymbol::Choice(_) => "Choice",
-            SmSymbol::Signal(_) => "Signal",
-            SmSymbol::State(_) => "State",
-        }
-    }
-}
+// The element's `name` is not a native field — it projects `get_unqualified_name`
+// (a `&str` return the reflector does not classify) — so it stays hand-written.
+// The macro generates the base/subclasses, `dispatch`,
+// `build_state_machine_element`, `state_machine_element_ref`, the
+// `StateMachineElement` alias, each subclass's concrete `definition` getter, the
+// `loc` getter (via the `loc_from_node` directive), and `__repr__` (via the
+// `repr variant_unqualified` directive).
 
 #[gen_stub_pymethods]
 #[pymethods]
@@ -312,20 +215,6 @@ impl StateMachineElement {
     #[getter]
     fn name(&self) -> String {
         self.native.get_unqualified_name().to_string()
-    }
-    #[getter]
-    fn loc(&self) -> Option<crate::ir_core::Loc> {
-        // The element's `get_span()` reads the compiler context (node -> span), so
-        // it must run inside a `run_ref` scope: resolve via the node id, and let
-        // `ModelData::loc` take the span inside its own scope.
-        self.data.loc(self.native.node())
-    }
-    fn __repr__(&self) -> String {
-        format!(
-            "<StateMachineElement {} '{}'>",
-            self.kind_name(),
-            self.native.get_unqualified_name()
-        )
     }
 }
 
@@ -337,7 +226,8 @@ impl StateMachineElement {
 // an `InterfaceInstance` to its top-level entity (may be `None`, cross-layer);
 // the `PortInstance` subclass getters decode nested `GeneralKind`/`PortInstanceType`
 // payloads; `import_locs` is a `Vec<Span>` filter-map; and `Connection`'s
-// endpoints carry the connection's resolved port numbers into a fresh `Endpoint`.
+// `from_`/`source`/`to`/`target` endpoint aliases forward the resolved endpoints
+// (`from` is a Python keyword, so they cannot be generated by field name).
 
 /// Build a thin element's `Spec*` AST node (bridged by its `loc` span) as the
 /// concrete wrapper type `T`, or `None`.
@@ -418,44 +308,30 @@ impl GeneralPortInstance {
     /// General port kind (async / guarded / sync input, or output).
     #[getter]
     fn kind(self_: PyRef<'_, Self>) -> Option<GeneralKind> {
-        match &self_.as_super().pi {
-            SemPortInstance::General { kind, .. } => Some(GeneralKind::from(kind)),
-            _ => None,
-        }
+        self_.as_super().pi.general_kind().map(|k| GeneralKind::from(&k))
     }
     #[getter]
     fn priority(self_: PyRef<'_, Self>) -> Option<i128> {
-        match &self_.as_super().pi {
-            SemPortInstance::General {
-                kind: SemGeneralKind::AsyncInput { priority, .. },
-                ..
-            } => *priority,
-            _ => None,
-        }
+        self_.as_super().pi.priority()
     }
     #[getter]
     fn queue_full(self_: PyRef<'_, Self>) -> Option<crate::ast::QueueFull> {
-        match &self_.as_super().pi {
-            SemPortInstance::General {
-                kind: SemGeneralKind::AsyncInput { queue_full, .. },
-                ..
-            } => Some(crate::ast::QueueFull::from(queue_full)),
-            _ => None,
-        }
+        self_
+            .as_super()
+            .pi
+            .queue_full()
+            .map(|q| crate::ast::QueueFull::from(&q))
     }
     #[getter]
     fn is_serial(self_: PyRef<'_, Self>) -> bool {
-        matches!(
-            self_.as_super().pi.get_type(),
-            Some(PortInstanceType::Serial)
-        )
+        self_.as_super().pi.is_serial()
     }
     /// The port-definition symbol for a typed port, else None (serial).
     #[getter]
     fn type_symbol(self_: PyRef<'_, Self>, py: Python<'_>) -> PyResult<Option<SymbolRef>> {
         let base = self_.as_super();
-        match base.pi.get_type() {
-            Some(PortInstanceType::DefPort(sym)) if base.data.ids.contains_key(&sym.node()) => {
+        match base.pi.type_symbol() {
+            Some(sym) if base.data.ids.contains_key(&sym.node()) => {
                 Ok(Some(symbol_ref(&base.model, py, sym)?))
             }
             _ => Ok(None),
@@ -478,23 +354,24 @@ impl InternalPortInstance {
 #[pymethods]
 impl Connection {
     /// The output (source) endpoint. Named `from_` because `from` is a Python
-    /// keyword; `source` is an alias.
+    /// keyword; `source` is an alias. The endpoint already carries the resolved
+    /// port number (baked into `ResolvedConnection` by port numbering).
     #[getter]
     fn from_(&self, py: Python<'_>) -> PyResult<Py<Endpoint>> {
-        Endpoint::build(&self.model, py, self.conn.from.clone(), self.from_pn)
+        Endpoint::build(&self.model, py, self.resolved.from.clone())
     }
     #[getter]
     fn source(&self, py: Python<'_>) -> PyResult<Py<Endpoint>> {
-        Endpoint::build(&self.model, py, self.conn.from.clone(), self.from_pn)
+        Endpoint::build(&self.model, py, self.resolved.from.clone())
     }
     /// The input (destination) endpoint.
     #[getter]
     fn to(&self, py: Python<'_>) -> PyResult<Py<Endpoint>> {
-        Endpoint::build(&self.model, py, self.conn.to.clone(), self.to_pn)
+        Endpoint::build(&self.model, py, self.resolved.to.clone())
     }
     #[getter]
     fn target(&self, py: Python<'_>) -> PyResult<Py<Endpoint>> {
-        Endpoint::build(&self.model, py, self.conn.to.clone(), self.to_pn)
+        Endpoint::build(&self.model, py, self.resolved.to.clone())
     }
 }
 
@@ -504,20 +381,9 @@ impl Connection {
 // accessor of the symbol-keyed entities generated in `crate::sem::defs_manual`.
 // They are the members that cannot be produced mechanically by the `symbol_keyed`
 // handle: the sorted nested-entity maps (built with per-element extras), the
-// `DefComponentInstance` attribute + constant-fold reads, the `run_ref`
-// connection-number resolution, the cross-layer symbol resolvers, the sym-derived
-// `name`/`qualified_name`, `kind`, and the state-machine element/state walks.
-
-/// The constant-folded integer value of an AST expression node, if it folds to
-/// one. Used to forward instance attributes (queue/stack/priority/cpu) that the
-/// analysis validates then discards but the AST retains.
-fn resolved_int(data: &ModelData, node: Node) -> Option<i128> {
-    match data.analysis.value_map.get(&node) {
-        Some(SemValue::Integer(i)) => Some(i.0),
-        Some(SemValue::PrimitiveInteger(p)) => Some(p.value),
-        _ => None,
-    }
-}
+// `DefComponentInstance` attribute + constant-fold reads, the cross-layer symbol
+// resolvers, the sym-derived `name`/`qualified_name`, `kind`, and the
+// state-machine element/state walks.
 
 // ---- Component ------------------------------------------------------------
 
@@ -535,66 +401,60 @@ impl Component {
     /// Component kind: active, passive, or queued.
     #[getter]
     fn kind(&self) -> ComponentKind {
-        ComponentKind::from(&self.native().node.kind)
+        ComponentKind::from(&self.native().kind())
     }
     /// The commands, ordered by opcode.
     #[getter]
     fn commands(&self, py: Python<'_>) -> PyResult<Vec<Py<Command>>> {
-        let mut items: Vec<_> = self.native().command_map.iter().collect();
-        items.sort_by_key(|(op, _)| **op);
-        items
+        self.native()
+            .commands()
             .into_iter()
-            .map(|(op, cmd)| Command::build(&self.model, py, cmd.clone(), *op))
+            .map(|cmd| Command::build(&self.model, py, cmd.clone()))
             .collect()
     }
     /// The telemetry channels, ordered by id.
     #[getter]
     fn telemetry(&self, py: Python<'_>) -> PyResult<Vec<Py<TlmChannel>>> {
-        let mut items: Vec<_> = self.native().tlm_channel_map.iter().collect();
-        items.sort_by_key(|(id, _)| **id);
-        items
+        self.native()
+            .tlm()
             .into_iter()
-            .map(|(id, t)| TlmChannel::build(&self.model, py, t.clone(), *id))
+            .map(|t| TlmChannel::build(&self.model, py, t.clone()))
             .collect()
     }
     /// The events, ordered by id.
     #[getter]
     fn events(&self, py: Python<'_>) -> PyResult<Vec<Py<Event>>> {
-        let mut items: Vec<_> = self.native().event_map.iter().collect();
-        items.sort_by_key(|(id, _)| **id);
-        items
+        self.native()
+            .events()
             .into_iter()
-            .map(|(id, e)| Event::build(&self.model, py, e.clone(), *id))
+            .map(|e| Event::build(&self.model, py, e.clone()))
             .collect()
     }
     /// The parameters, ordered by id.
     #[getter]
     fn params(&self, py: Python<'_>) -> PyResult<Vec<Py<Param>>> {
-        let mut items: Vec<_> = self.native().param_map.iter().collect();
-        items.sort_by_key(|(id, _)| **id);
-        items
+        self.native()
+            .params()
             .into_iter()
-            .map(|(id, p)| Param::build(&self.model, py, p.clone(), *id))
+            .map(|p| Param::build(&self.model, py, p.clone()))
             .collect()
     }
     /// The data-product containers, ordered by id.
     #[getter]
     fn containers(&self, py: Python<'_>) -> PyResult<Vec<Py<Container>>> {
-        let mut items: Vec<_> = self.native().container_map.iter().collect();
-        items.sort_by_key(|(id, _)| **id);
-        items
+        self.native()
+            .containers()
             .into_iter()
-            .map(|(id, ct)| Container::build(&self.model, py, ct.clone(), *id))
+            .map(|ct| Container::build(&self.model, py, ct.clone()))
             .collect()
     }
     /// The data-product records, ordered by id.
     #[getter]
     fn records(&self, py: Python<'_>) -> PyResult<Vec<Py<Record>>> {
-        let mut items: Vec<_> = self.native().record_map.iter().collect();
-        items.sort_by_key(|(id, _)| **id);
-        items
+        self.native()
+            .records()
             .into_iter()
-            .map(|(id, r)| Record::build(&self.model, py, r.clone(), *id))
+            .map(|r| Record::build(&self.model, py, r.clone()))
             .collect()
     }
     /// The state-machine instances, ordered by name.
@@ -611,33 +471,14 @@ impl Component {
     #[getter]
     fn port_matchings(&self, py: Python<'_>) -> PyResult<Vec<Py<PortMatching>>> {
         self.native()
-            .port_matching_list
+            .port_matchings()
             .iter()
             .map(|pm| PortMatching::build(&self.model, py, pm.clone()))
             .collect()
     }
-    fn __repr__(&self) -> String {
-        format!("<Component '{}'>", self.qualified_name())
-    }
 }
 
 // ---- ComponentInstance ----------------------------------------------------
-
-impl ComponentInstance {
-    /// The instance's `DefComponentInstance` AST node (retains the attributes
-    /// the analysis validates then discards: queue/stack/priority/cpu/impl/file).
-    fn def(&self) -> &fpp_ast::DefComponentInstance {
-        self.data
-            .node_as::<fpp_ast::DefComponentInstance>(self.sym.node())
-    }
-    /// Forward a constant-folded integer attribute from the AST.
-    fn attr_int(
-        &self,
-        f: impl Fn(&fpp_ast::DefComponentInstance) -> Option<&fpp_ast::Expr>,
-    ) -> Option<i128> {
-        f(self.def()).and_then(|e| resolved_int(&self.data, e.node_id))
-    }
-}
 
 #[gen_stub_pymethods]
 #[pymethods]
@@ -645,32 +486,32 @@ impl ComponentInstance {
     /// Declared queue size (constant-folded), if any.
     #[getter]
     fn queue_size(&self) -> Option<i128> {
-        self.attr_int(|d| d.queue_size.as_ref())
+        self.native().queue_size
     }
     /// Declared stack size (constant-folded), if any.
     #[getter]
     fn stack_size(&self) -> Option<i128> {
-        self.attr_int(|d| d.stack_size.as_ref())
+        self.native().stack_size
     }
     /// Declared priority (constant-folded), if any.
     #[getter]
     fn priority(&self) -> Option<i128> {
-        self.attr_int(|d| d.priority.as_ref())
+        self.native().priority
     }
     /// Declared CPU affinity (constant-folded), if any.
     #[getter]
     fn cpu(&self) -> Option<i128> {
-        self.attr_int(|d| d.cpu.as_ref())
+        self.native().cpu
     }
     /// The C++ implementation type name, if given.
     #[getter]
     fn impl_type(&self) -> Option<String> {
-        self.def().impl_type.as_ref().map(|s| s.data.clone())
+        self.native().impl_type.clone()
     }
     /// The header file, if given.
     #[getter]
     fn file(&self) -> Option<String> {
-        self.def().file.as_ref().map(|s| s.data.clone())
+        self.native().file.clone()
     }
     /// The component this is an instance of.
     #[getter]
@@ -685,15 +526,11 @@ impl ComponentInstance {
     /// The init specifiers, ordered by phase.
     #[getter]
     fn init_specifiers(&self, py: Python<'_>) -> PyResult<Vec<Py<InitSpecifier>>> {
-        let mut items: Vec<_> = self.native().init_specifier_map.values().collect();
-        items.sort_by_key(|s| s.phase);
-        items
+        self.native()
+            .init_specifiers()
             .into_iter()
             .map(|s| InitSpecifier::build(&self.model, py, s.clone()))
             .collect()
-    }
-    fn __repr__(&self) -> String {
-        format!("<ComponentInstance '{}'>", self.native().qualified_name)
     }
 }
 
@@ -730,9 +567,6 @@ impl Interface {
         }
         Ok(out)
     }
-    fn __repr__(&self) -> String {
-        format!("<Interface '{}'>", self.qualified_name())
-    }
 }
 
 // ---- System ---------------------------------------------------------------
@@ -752,9 +586,6 @@ impl System {
     #[getter]
     fn topology(&self, py: Python<'_>) -> PyResult<Option<Py<Topology>>> {
         topology_by_symbol(&self.data, &self.model, py, Some(&self.native().topology))
-    }
-    fn __repr__(&self) -> String {
-        format!("<System '{}'>", self.qualified_name())
     }
 }
 
@@ -777,52 +608,6 @@ impl Topology {
                 component_instance_by_symbol(&self.data, &self.model, py, sym.as_ref())?
             {
                 out.push(obj);
-            }
-        }
-        Ok(out)
-    }
-    /// The connections of this topology (across all connection graphs).
-    fn connections(&self, py: Python<'_>) -> PyResult<Vec<Py<Connection>>> {
-        let top = self.native();
-        // Resolve all port numbers up front inside one `run_ref`: the lookup keys
-        // on `Connection`, whose `Ord`/`Hash` reads span files through the live
-        // context. Then zip them back on by position (iteration order is stable).
-        let pns: Vec<(Option<i128>, Option<i128>)> = fpp_core::run_ref(&self.data.ctx, || {
-            let mut v = Vec::new();
-            for conns in top.connection_map.values() {
-                for conn in conns {
-                    let from_pn = top
-                        .from_port_number_map
-                        .get(conn)
-                        .copied()
-                        .or(conn.from.port_number);
-                    let to_pn = top
-                        .to_port_number_map
-                        .get(conn)
-                        .copied()
-                        .or(conn.to.port_number);
-                    v.push((from_pn, to_pn));
-                }
-            }
-            v
-        });
-        let mut out = Vec::new();
-        let mut idx = 0usize;
-        for (graph_name, conns) in &top.connection_map {
-            for conn in conns {
-                let (from_pn, to_pn) = pns
-                    .get(idx)
-                    .copied()
-                    .unwrap_or((conn.from.port_number, conn.to.port_number));
-                idx += 1;
-                out.push(Connection::build(
-                    &self.model,
-                    py,
-                    conn.clone(),
-                    graph_name.clone(),
-                    from_pn,
-                    to_pn,
-                )?);
             }
         }
         Ok(out)
@@ -858,9 +643,6 @@ impl Topology {
             .map(|pii| PortInstanceIdentifier::build(&self.model, py, pii.clone()))
             .collect()
     }
-    fn __repr__(&self) -> String {
-        format!("<Topology '{}'>", self.native().name)
-    }
 }
 
 // ---- StateMachine ---------------------------------------------------------
@@ -878,8 +660,8 @@ impl StateMachine {
     }
     /// External (F Prime-generated) vs internal state machine.
     #[getter]
-    fn kind(&self) -> crate::enums::StateMachineKind {
-        crate::enums::StateMachineKind::from(&self.native().get_kind())
+    fn kind(&self) -> crate::sem::StateMachineKind {
+        crate::sem::StateMachineKind::from(&self.native().get_kind())
     }
     /// The actions, as typed elements.
     #[getter]
@@ -932,18 +714,12 @@ impl StateMachine {
     /// The unqualified names of the leaf states.
     #[getter]
     fn leaf_states(&self) -> Vec<String> {
-        SemStateMachine::get_leaf_states(&self.native().node)
-            .iter()
-            .map(|s| s.name.data.clone())
-            .collect()
+        self.native().leaf_state_names()
     }
     /// Whether a blocking analysis error was recorded for this state machine.
     #[getter]
     fn blocking_error(&self) -> bool {
-        self.native().sma.blocking_error
-    }
-    fn __repr__(&self) -> String {
-        format!("<StateMachine '{}'>", self.qualified_name())
+        self.native().blocking_error()
     }
 }
 

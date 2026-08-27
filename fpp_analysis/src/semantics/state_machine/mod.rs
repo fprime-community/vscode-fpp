@@ -98,6 +98,19 @@ impl StateMachine {
         StateMachine::get_symbol_kind(&self.node)
     }
 
+    /// Whether a blocking analysis error was recorded for this state machine.
+    pub fn blocking_error(&self) -> bool {
+        self.sma.blocking_error
+    }
+
+    /// The unqualified names of the leaf states.
+    pub fn leaf_state_names(&self) -> Vec<String> {
+        StateMachine::get_leaf_states(&self.node)
+            .iter()
+            .map(|s| s.name.data.clone())
+            .collect()
+    }
+
     pub fn get_symbol_kind(sm: &DefStateMachine) -> Kind {
         match sm.members {
             None => Kind::External,

@@ -55,6 +55,9 @@ pub struct Command {
     pub name: String,
     /// The kind of a non-parameter command, or `None` for a param set/save command.
     pub kind: Option<CommandKind>,
+    /// The resolved opcode of this command in its component's command dictionary.
+    /// Assigned when the command is added to the map (see [`Component::add_command`]).
+    pub opcode: i128,
 }
 
 #[derive(Debug, Clone)]
@@ -105,6 +108,8 @@ impl Command {
             loc,
             name: node.name.data.clone(),
             kind: Some(kind),
+            // Overwritten with the resolved opcode by `Component::add_command`.
+            opcode: 0,
         })
     }
 }
@@ -114,6 +119,9 @@ impl Command {
 pub struct TlmChannel {
     pub loc: Span,
     pub name: String,
+    /// The resolved id of this channel in its component's telemetry dictionary.
+    /// Assigned when the channel is added to the id map.
+    pub id: i128,
 }
 
 impl TlmChannel {
@@ -133,6 +141,8 @@ impl TlmChannel {
         Ok(TlmChannel {
             loc,
             name: node.name.data.clone(),
+            // Overwritten with the resolved id when added to the id map.
+            id: 0,
         })
     }
 }
@@ -156,6 +166,9 @@ fn compute_limits(_a: &Analysis, limits: &[fpp_ast::TlmChannelLimit]) -> Semanti
 pub struct Record {
     pub loc: Span,
     pub name: String,
+    /// The resolved id of this record in its component's data-product dictionary.
+    /// Assigned when the record is added to the id map.
+    pub id: i128,
 }
 
 impl Record {
@@ -168,6 +181,8 @@ impl Record {
         Ok(Record {
             loc: node.span(),
             name: node.name.data.clone(),
+            // Overwritten with the resolved id when added to the id map.
+            id: 0,
         })
     }
 }
@@ -177,6 +192,9 @@ impl Record {
 pub struct Container {
     pub loc: Span,
     pub name: String,
+    /// The resolved id of this container in its component's data-product
+    /// dictionary. Assigned when the container is added to the id map.
+    pub id: i128,
 }
 
 impl Container {
@@ -185,6 +203,8 @@ impl Container {
         Ok(Container {
             loc: node.span(),
             name: node.name.data.clone(),
+            // Overwritten with the resolved id when added to the id map.
+            id: 0,
         })
     }
 }
@@ -197,6 +217,9 @@ pub struct Param {
     pub set_opcode: i128,
     pub save_opcode: i128,
     pub is_external: bool,
+    /// The resolved id of this parameter in its component's parameter dictionary.
+    /// Assigned when the parameter is added to the id map.
+    pub id: i128,
 }
 
 impl Param {
@@ -244,6 +267,8 @@ impl Param {
                 set_opcode,
                 save_opcode,
                 is_external: node.is_external,
+                // Overwritten with the resolved id when added to the id map.
+                id: 0,
             },
             default2,
         ))
@@ -262,6 +287,9 @@ fn compute_opcode(int_opt: Option<i128>, default_opcode: i128) -> (i128, i128) {
 pub struct Event {
     pub loc: Span,
     pub name: String,
+    /// The resolved id of this event in its component's event dictionary.
+    /// Assigned when the event is added to the id map.
+    pub id: i128,
 }
 
 impl Event {
@@ -290,6 +318,8 @@ impl Event {
         Ok(Event {
             loc,
             name: node.name.data.clone(),
+            // Overwritten with the resolved id when added to the id map.
+            id: 0,
         })
     }
 }
@@ -478,12 +508,60 @@ impl Component {
         }
     }
 
-    fn kind(&self) -> &ComponentKind {
-        &self.node.kind
+    /// Component kind: active, passive, or queued.
+    pub fn kind(&self) -> ComponentKind {
+        self.node.kind.clone()
     }
 
     fn component_name(&self) -> &str {
         &self.node.name.data
+    }
+
+    /// The commands, ordered by opcode.
+    pub fn commands(&self) -> Vec<&Command> {
+        let mut items: Vec<&Command> = self.command_map.values().collect();
+        items.sort_by_key(|c| c.opcode);
+        items
+    }
+
+    /// The events, ordered by id.
+    pub fn events(&self) -> Vec<&Event> {
+        let mut items: Vec<&Event> = self.event_map.values().collect();
+        items.sort_by_key(|e| e.id);
+        items
+    }
+
+    /// The parameters, ordered by id.
+    pub fn params(&self) -> Vec<&Param> {
+        let mut items: Vec<&Param> = self.param_map.values().collect();
+        items.sort_by_key(|p| p.id);
+        items
+    }
+
+    /// The telemetry channels, ordered by id.
+    pub fn tlm(&self) -> Vec<&TlmChannel> {
+        let mut items: Vec<&TlmChannel> = self.tlm_channel_map.values().collect();
+        items.sort_by_key(|t| t.id);
+        items
+    }
+
+    /// The data-product records, ordered by id.
+    pub fn records(&self) -> Vec<&Record> {
+        let mut items: Vec<&Record> = self.record_map.values().collect();
+        items.sort_by_key(|r| r.id);
+        items
+    }
+
+    /// The data-product containers, ordered by id.
+    pub fn containers(&self) -> Vec<&Container> {
+        let mut items: Vec<&Container> = self.container_map.values().collect();
+        items.sort_by_key(|c| c.id);
+        items
+    }
+
+    /// The resolved port matchings of this component.
+    pub fn port_matchings(&self) -> &[PortMatching] {
+        &self.port_matching_list
     }
 
     /// Query whether the component has parameters
@@ -539,6 +617,8 @@ impl Component {
             });
         }
         let mut c = self.clone();
+        let mut command = command;
+        command.opcode = opcode;
         c.command_map.insert(opcode, command);
         c.default_opcode = opcode + 1;
         Ok(c)
@@ -573,6 +653,7 @@ impl Component {
             id_opt.unwrap_or(self.default_container_id),
             container,
             |c| c.loc,
+            |c, id| c.id = id,
         )?;
         let mut c = self.clone();
         c.container_map = map;
@@ -587,6 +668,7 @@ impl Component {
             id_opt.unwrap_or(self.default_event_id),
             event,
             |e| e.loc,
+            |e, id| e.id = id,
         )?;
         let mut c = self.clone();
         c.event_map = map;
@@ -601,6 +683,7 @@ impl Component {
             id_opt.unwrap_or(self.default_record_id),
             record,
             |r| r.loc,
+            |r, id| r.id = id,
         )?;
         let mut c = self.clone();
         c.record_map = map;
@@ -615,12 +698,13 @@ impl Component {
         channel: TlmChannel,
     ) -> SemanticResult<Component> {
         let name = channel.name.clone();
-        let (map, next) = add_element_to_id_map(
-            &self.tlm_channel_map,
-            id_opt.unwrap_or(self.default_tlm_channel_id),
-            channel.clone(),
-            |t| t.loc,
-        )?;
+        let id = id_opt.unwrap_or(self.default_tlm_channel_id);
+        let mut channel = channel;
+        channel.id = id;
+        let (map, next) =
+            add_element_to_id_map(&self.tlm_channel_map, id, channel.clone(), |t| t.loc, |t, id| {
+                t.id = id
+            })?;
         let mut c = self.clone();
         c.tlm_channel_map = map;
         c.tlm_channel_name_map.insert(name, channel);
@@ -635,6 +719,7 @@ impl Component {
             id_opt.unwrap_or(self.default_param_id),
             param.clone(),
             |p| p.loc,
+            |p, id| p.id = id,
         )?;
         let mut c = self.clone();
         c.param_map = map;
@@ -644,11 +729,15 @@ impl Component {
             loc: param.loc,
             name: format!("{}_PRM_SET", upper),
             kind: None,
+            // Overwritten with the resolved opcode by `add_command`.
+            opcode: 0,
         };
         let save_command = Command {
             loc: param.loc,
             name: format!("{}_PRM_SAVE", upper),
             kind: None,
+            // Overwritten with the resolved opcode by `add_command`.
+            opcode: 0,
         };
         let c = c.add_command(Some(param.set_opcode), set_command)?;
         let c = c.add_command(Some(param.save_opcode), save_command)?;
@@ -729,7 +818,7 @@ impl Component {
             Ok(())
         } else {
             Err(SemanticError::MissingAsync {
-                kind: component_kind_str(self.kind()).to_string(),
+                kind: component_kind_str(&self.kind()).to_string(),
                 loc: self.loc,
             })
         }
@@ -909,12 +998,15 @@ impl Component {
     }
 }
 
-/// Add an element to an id map, returning the updated map and the next default id
+/// Add an element to an id map, returning the updated map and the next default id.
+/// `set_id` stamps the resolved id onto the element before it is stored, so each
+/// stored element carries its own dictionary id.
 fn add_element_to_id_map<T: Clone>(
     map: &HashMap<i128, T>,
     id: i128,
     element: T,
     get_loc: impl Fn(&T) -> Span,
+    set_id: impl Fn(&mut T, i128),
 ) -> SemanticResult<(HashMap<i128, T>, i128)> {
     if let Some(prev) = map.get(&id) {
         return Err(SemanticError::DuplicateIdValue {
@@ -924,6 +1016,8 @@ fn add_element_to_id_map<T: Clone>(
         });
     }
     let mut m = map.clone();
+    let mut element = element;
+    set_id(&mut element, id);
     m.insert(id, element);
     Ok((m, id + 1))
 }

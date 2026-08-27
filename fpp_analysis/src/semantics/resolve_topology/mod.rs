@@ -65,6 +65,7 @@ pub fn resolve(a: &Analysis, t: &mut Topology) -> SemanticResult {
     resolve_partially_numbered::resolve(a, t)?;
     resolve_port_numbers::resolve(a, t)?;
     resolve_unconnected_ports::resolve(a, t);
+    t.finalize_connections();
 
     // Check the topologies interface against the `implements` clause
     check_topology_interface::check(a, t)?;

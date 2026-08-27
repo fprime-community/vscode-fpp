@@ -14,8 +14,7 @@ use std::collections::BTreeSet;
 // A map from component instances to connections for tracking
 // matching pairs of connections
 //
-// The Rust `ComponentInstance` does not implement hashing, so this is keyed by
-// the remote component instance's qualified name.
+// Keyed by component instance's qualified name.
 type InstanceConnectionMap = HashMap<String, Connection>;
 
 // A map from port numbers to connections for tracking port
@@ -23,9 +22,6 @@ type InstanceConnectionMap = HashMap<String, Connection>;
 type PortConnectionMap = HashMap<i128, Connection>;
 
 // State for matched port numbering
-//
-// The topology `t` is threaded separately as a `&mut` reference rather than
-// being carried in the state, since Rust cannot copy it cheaply.
 struct State {
     // The port instance for port 1
     pi1: PortInstance,

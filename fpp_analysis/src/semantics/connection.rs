@@ -36,6 +36,9 @@ pub struct TopologyInstance {
 }
 
 /// An FPP interface instance: a component instance or an imported topology.
+// `ComponentInstance` is a rich resolved struct (dictionary attributes + maps),
+// so the `Component` variant dwarfs `Topology`; held inline by value on purpose.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone)]
 pub enum InterfaceInstance {
     Component(ComponentInstance),
@@ -502,6 +505,59 @@ impl Connection {
             }
             _ => false,
         }
+    }
+}
+
+/// A [`Connection`] paired with the port numbers resolved for it during topology
+/// port numbering, plus the connection-graph name it belongs to.
+#[derive(Debug, Clone)]
+pub struct ResolvedConnection {
+    /// The from (output) endpoint, carrying the resolved `from_pn`.
+    pub from: Endpoint,
+    /// The to (input) endpoint, carrying the resolved `to_pn`.
+    pub to: Endpoint,
+    /// Whether the connection is declared `unmatched`.
+    pub is_unmatched: bool,
+    /// The connection-graph name this connection belongs to.
+    pub graph_name: String,
+    /// The resolved from (output) port number.
+    pub from_pn: Option<i128>,
+    /// The resolved to (input) port number.
+    pub to_pn: Option<i128>,
+}
+
+impl ResolvedConnection {
+    /// Build the resolved form of `conn` in graph `graph_name`, reading its
+    /// resolved port numbers from the topology's numbering maps (falling back to
+    /// each endpoint's explicit port number).
+    pub fn new(t: &Topology, graph_name: &str, conn: &Connection) -> ResolvedConnection {
+        let from_pn = t
+            .from_port_number_map
+            .get(conn)
+            .copied()
+            .or(conn.from.port_number);
+        let to_pn = t
+            .to_port_number_map
+            .get(conn)
+            .copied()
+            .or(conn.to.port_number);
+        let mut from = conn.from.clone();
+        from.port_number = from_pn;
+        let mut to = conn.to.clone();
+        to.port_number = to_pn;
+        ResolvedConnection {
+            from,
+            to,
+            is_unmatched: conn.is_unmatched,
+            graph_name: graph_name.to_string(),
+            from_pn,
+            to_pn,
+        }
+    }
+
+    /// The location of the connection (its from endpoint).
+    pub fn get_loc(&self) -> Span {
+        self.from.loc
     }
 }
 

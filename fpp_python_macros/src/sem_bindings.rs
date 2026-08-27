@@ -18,8 +18,9 @@
 //! # Grammar
 //!
 //! ```text
-//! union <PyName> native <path> handle <arc_type|value|symbol> ref "<Alias>"
-//!       accessor <ident> [include_base] {
+//! union <PyName> native <path> handle <arc_type|value|symbol|clone> alias "<Alias>"
+//!       accessor <ident> [include_base] [custom_build] [loc_from_node]
+//!       [identity <node|identical>] [repr <variant|variant_qualified|variant_unqualified>] {
 //!     variants { <NativeVariant> => <Subclass> : <payloadkind>, … }
 //!     methods  { [assoc] <name> [(analysis)] -> <shape>, … }
 //! }
@@ -33,7 +34,16 @@
 //!     fields  { <name>: <shape>, … }
 //!     methods { … }
 //! }
+//! leaf_enum <PyName> native <path> {
+//!     <NativeVariant>: <unit|tuple|struct>, …   // fieldless Python-enum mirror
+//! }
 //! ```
+//!
+//! `loc_from_node` emits a base `loc` getter resolving the location from the
+//! native's node id. `identity` emits `__eq__`/`__hash__` (`node`: native `==` +
+//! hash by node id; `identical`: `Type::identical` + `def_node_id`). `repr` emits
+//! `__repr__` (`<Alias Variant [ 'qualified'|'unqualified' name ]>`). A
+//! `leaf_enum` emits a `#[pyclass(eq, eq_int)]` mirror + `From<&native>`.
 //!
 //! An `entity` is a standalone `#[pyclass(frozen)]` (not a union subclass). A
 //! `clone`-handle entity (default, or `field <ident>`) stores a native `Clone`;
@@ -57,46 +67,78 @@ use syn::{Ident, LitStr, Path, Token, braced, parenthesized};
 // Model
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum UnionKind {
-    Type,
-    Value,
-    Symbol,
+/// A registered closed union: the metadata a `UnionRef`/`RewrapRef` shape needs
+/// to build its `*Ref` wrapper. This is a data table (see [`registered_union`]),
+/// not a hardcoded `Type`/`Value`/`Symbol` vocabulary — a union is just a name
+/// keying a row. `PortInstance` is registered here too, so it is no longer a
+/// standalone shape primitive.
+struct RegisteredUnion {
+    /// The native `fpp_analysis` enum path this union mirrors.
+    native: TokenStream,
+    /// The `crate::sem` `*_ref` builder that wraps a native value as the union.
+    ref_fn: TokenStream,
+    /// The `crate::sem` `*Ref` newtype the builder returns.
+    ref_ty: TokenStream,
+    /// How the native value is handed to `ref_fn` (owned clone vs by reference,
+    /// and — for `RewrapRef` — how the reconstructed variant is passed).
+    handle: Handle,
 }
 
-impl UnionKind {
-    /// The native `fpp_analysis` enum path this union mirrors.
-    fn native(self) -> TokenStream {
-        match self {
-            UnionKind::Type => quote!(fpp_analysis::semantics::Type),
-            UnionKind::Value => quote!(fpp_analysis::semantics::Value),
-            UnionKind::Symbol => quote!(fpp_analysis::semantics::Symbol),
-        }
+/// The registry row for a union `key` (the canonical union name).
+fn registered_union(key: &str) -> RegisteredUnion {
+    match key {
+        "Type" => RegisteredUnion {
+            native: quote!(fpp_analysis::semantics::Type),
+            ref_fn: quote!(crate::sem::type_ref),
+            ref_ty: quote!(crate::sem::TypeRef),
+            handle: Handle::ArcType,
+        },
+        "Value" => RegisteredUnion {
+            native: quote!(fpp_analysis::semantics::Value),
+            ref_fn: quote!(crate::sem::value_ref),
+            ref_ty: quote!(crate::sem::ValueRef),
+            handle: Handle::Value,
+        },
+        "Symbol" => RegisteredUnion {
+            native: quote!(fpp_analysis::semantics::Symbol),
+            ref_fn: quote!(crate::sem::symbol_ref),
+            ref_ty: quote!(crate::sem::SymbolRef),
+            handle: Handle::Symbol,
+        },
+        "PortInstance" => RegisteredUnion {
+            native: quote!(fpp_analysis::semantics::PortInstance),
+            ref_fn: quote!(crate::sem::port_instance_ref),
+            ref_ty: quote!(crate::sem::PortInstanceRef),
+            handle: Handle::Clone,
+        },
+        other => panic!("unregistered union `{other}`"),
     }
-    /// The `crate::sem` `*_ref` builder that wraps a native value as the union.
-    fn ref_fn(self) -> TokenStream {
-        match self {
-            UnionKind::Type => quote!(crate::sem::type_ref),
-            UnionKind::Value => quote!(crate::sem::value_ref),
-            UnionKind::Symbol => quote!(crate::sem::symbol_ref),
-        }
+}
+
+/// Map a union DSL token (`type`/`value`/`symbol`/`port_instance`) or native name
+/// (`Type`/`Value`/…) to its registry key, if registered.
+fn union_key(tok: &str) -> Option<&'static str> {
+    match tok {
+        "type" | "Type" => Some("Type"),
+        "value" | "Value" => Some("Value"),
+        "symbol" | "Symbol" => Some("Symbol"),
+        "port_instance" | "PortInstance" => Some("PortInstance"),
+        _ => None,
     }
-    /// The `crate::sem` `*Ref` newtype the builder returns.
-    fn ref_ty(self) -> TokenStream {
-        match self {
-            UnionKind::Type => quote!(crate::sem::TypeRef),
-            UnionKind::Value => quote!(crate::sem::ValueRef),
-            UnionKind::Symbol => quote!(crate::sem::SymbolRef),
-        }
-    }
-    fn from_ident(id: &Ident) -> Option<UnionKind> {
-        match id.to_string().as_str() {
-            "Type" => Some(UnionKind::Type),
-            "Value" => Some(UnionKind::Value),
-            "Symbol" => Some(UnionKind::Symbol),
-            _ => None,
-        }
-    }
+}
+
+/// A `Span`-backed detail materialized on access. These are not stored native
+/// fields — the wrapper resolves them from a span (or an `InterfaceInstance`) at
+/// access time.
+enum Materialize {
+    /// A `fpp_core::Span` → `Option<crate::ir_core::Loc>` (resolved location).
+    Loc,
+    /// A `fpp_core::Span` bridged to its `Spec*` AST node →
+    /// `Option<Py<crate::ast::SpecX>>` (the thin-element detail forwarder).
+    Spec(Ident),
+    /// A native `InterfaceInstance` → `Option<InstanceRef>` (the owning
+    /// component-instance / topology resolver).
+    Instance,
 }
 
 /// A field/method conversion shape: a native value → a Python object.
@@ -107,10 +149,14 @@ enum Shape {
     Usize,
     Str,
     Node,
-    Union(UnionKind),
-    /// A bare payload struct rewrapped into its enum before conversion, e.g.
-    /// `rewrap(Type::AnonArray)` on a field of type `AnonArrayType`.
-    Rewrap(UnionKind, Ident),
+    /// A registered closed union → its `*Ref` wrapper. The `String` keys the
+    /// union registry (`Type`/`Value`/`Symbol`/`PortInstance`); see
+    /// [`registered_union`].
+    UnionRef(String),
+    /// A bare payload struct rewrapped into a registered union's variant before
+    /// conversion, e.g. `rewrap(Type::AnonArray)` on a field of type
+    /// `AnonArrayType`. The `String` keys the union registry.
+    RewrapRef(String, Ident),
     Leaf(Path),
     AstDef(Ident),
     Opt(Box<Shape>),
@@ -119,19 +165,11 @@ enum Shape {
     Dict(Box<Shape>),
     /// A Rust tuple → a Python `tuple`, e.g. `(String, i128)`.
     Tuple(Vec<Shape>),
-    /// A `fpp_core::Span` → `Option<crate::ir_core::Loc>` (resolved location).
-    Loc,
-    /// A `fpp_core::Span` bridged to its `Spec*` AST node →
-    /// `Option<Py<crate::ast::SpecX>>` (the thin-element detail forwarder).
-    Spec(Ident),
-    /// A nested entity value → `Py<crate::sem::Wrapper>` via `Wrapper::build`
-    /// (only valid for entities with no build-time extras).
-    Entity(Ident),
-    /// A native `PortInstance` → `PortInstanceRef` (its closed-union wrapper).
-    PortInstance,
-    /// A native `InterfaceInstance` → `Option<InstanceRef>` (the hand-written
-    /// component-instance / topology resolver).
-    Instance,
+    /// A `Span`-backed detail materialized on access (see [`Materialize`]).
+    Materialize(Materialize),
+    /// A nested reflected struct/entity value → `Py<crate::sem::Wrapper>` via
+    /// `Wrapper::build` (only valid for entities with no build-time extras).
+    StructRef(Ident),
     Skip,
 }
 
@@ -139,8 +177,10 @@ impl Shape {
     /// Whether emission touches the union builders (needs `py` + the model).
     fn needs_py(&self) -> bool {
         match self {
-            Shape::Union(_) | Shape::Rewrap(..) | Shape::AstDef(_) => true,
-            Shape::Spec(_) | Shape::Entity(_) | Shape::PortInstance | Shape::Instance => true,
+            Shape::UnionRef(_) | Shape::RewrapRef(..) | Shape::AstDef(_) | Shape::StructRef(_) => {
+                true
+            }
+            Shape::Materialize(m) => matches!(m, Materialize::Spec(_) | Materialize::Instance),
             Shape::Opt(s) | Shape::List(s) | Shape::Dict(s) => s.needs_py(),
             Shape::Tuple(v) => v.iter().any(Shape::needs_py),
             _ => false,
@@ -156,8 +196,8 @@ impl Shape {
             Shape::Usize => quote!(i128),
             Shape::Str => quote!(String),
             Shape::Node => quote!(u32),
-            Shape::Union(k) => k.ref_ty(),
-            Shape::Rewrap(k, _) => k.ref_ty(),
+            Shape::UnionRef(key) => registered_union(key).ref_ty,
+            Shape::RewrapRef(key, _) => registered_union(key).ref_ty,
             Shape::Leaf(p) => quote!(#p),
             Shape::AstDef(id) => quote!(::pyo3::Py<crate::ast::#id>),
             Shape::Opt(s) => {
@@ -176,11 +216,12 @@ impl Shape {
                 let tys = v.iter().map(Shape::ty);
                 quote!((#(#tys),*))
             }
-            Shape::Loc => quote!(Option<crate::ir_core::Loc>),
-            Shape::Spec(id) => quote!(Option<::pyo3::Py<crate::ast::#id>>),
-            Shape::Entity(id) => quote!(::pyo3::Py<crate::sem::#id>),
-            Shape::PortInstance => quote!(crate::sem::PortInstanceRef),
-            Shape::Instance => quote!(Option<crate::sem::InstanceRef>),
+            Shape::Materialize(Materialize::Loc) => quote!(Option<crate::ir_core::Loc>),
+            Shape::Materialize(Materialize::Spec(id)) => {
+                quote!(Option<::pyo3::Py<crate::ast::#id>>)
+            }
+            Shape::Materialize(Materialize::Instance) => quote!(Option<crate::sem::InstanceRef>),
+            Shape::StructRef(id) => quote!(::pyo3::Py<crate::sem::#id>),
             Shape::Skip => quote!(()),
         }
     }
@@ -200,26 +241,29 @@ impl Shape {
             // (method returns like `PortInstance::get_unqualified_name`).
             Shape::Str => quote!((#vref).to_string()),
             Shape::Node => quote!(#data.ids.get(#vref).copied().unwrap_or(0)),
-            Shape::Union(k) => {
-                let f = k.ref_fn();
-                match k {
-                    // value_ref takes `&Value`; type_ref/symbol_ref take an owned
-                    // clone (Arc<Type> / Symbol).
-                    UnionKind::Value => quote!(#f(#model, py, #vref)?),
-                    _ => quote!(#f(#model, py, ::std::clone::Clone::clone(#vref))?),
+            Shape::UnionRef(key) => {
+                let ru = registered_union(key);
+                let f = &ru.ref_fn;
+                // Arc-type / symbol handles take an owned clone; value / clone
+                // handles take the native by reference.
+                if ru.handle.passes_owned() {
+                    quote!(#f(#model, py, ::std::clone::Clone::clone(#vref))?)
+                } else {
+                    quote!(#f(#model, py, #vref)?)
                 }
             }
-            Shape::Rewrap(k, variant) => {
-                let f = k.ref_fn();
-                let native = k.native();
-                match k {
-                    UnionKind::Type => {
+            Shape::RewrapRef(key, variant) => {
+                let ru = registered_union(key);
+                let f = &ru.ref_fn;
+                let native = &ru.native;
+                match ru.handle {
+                    Handle::ArcType => {
                         quote!(#f(#model, py, ::std::sync::Arc::new(#native::#variant(::std::clone::Clone::clone(#vref))))?)
                     }
-                    UnionKind::Value => {
+                    Handle::Value | Handle::Clone => {
                         quote!(#f(#model, py, &#native::#variant(::std::clone::Clone::clone(#vref)))?)
                     }
-                    UnionKind::Symbol => {
+                    Handle::Symbol => {
                         quote!(#f(#model, py, #native::#variant(::std::clone::Clone::clone(#vref)))?)
                     }
                 }
@@ -260,15 +304,16 @@ impl Shape {
                 quote!((#(#elems),*))
             }
             // `#vref` is a `&Span`; dereference to the `Copy` `Span`.
-            Shape::Loc => quote!(#data.loc_of_span(*#vref)),
-            Shape::Spec(id) => {
+            Shape::Materialize(Materialize::Loc) => quote!(#data.loc_of_span(*#vref)),
+            Shape::Materialize(Materialize::Spec(id)) => {
                 quote!(crate::sem::build_spec::<crate::ast::#id>(&#data, #model, py, *#vref)?)
             }
-            Shape::Entity(id) => {
+            Shape::Materialize(Materialize::Instance) => {
+                quote!(crate::sem::instance_ref(&#data, #model, py, #vref)?)
+            }
+            Shape::StructRef(id) => {
                 quote!(crate::sem::#id::build(#model, py, ::std::clone::Clone::clone(#vref))?)
             }
-            Shape::PortInstance => quote!(crate::sem::port_instance_ref(#model, py, #vref)?),
-            Shape::Instance => quote!(crate::sem::instance_ref(&#data, #model, py, #vref)?),
             Shape::Skip => quote!(()),
         }
     }
@@ -322,6 +367,12 @@ impl Handle {
     fn is_arc(self) -> bool {
         matches!(self, Handle::ArcType)
     }
+    /// Whether a `*_ref` builder for this handle takes an owned clone of the
+    /// native value (Arc-type / symbol) rather than a shared reference
+    /// (value / by-value clone).
+    fn passes_owned(self) -> bool {
+        matches!(self, Handle::ArcType | Handle::Symbol)
+    }
     /// The base struct field type storing the native handle. `native` is the
     /// union's native enum path (used by the by-value `Clone` handle).
     fn field_ty(self, native: &Path) -> TokenStream {
@@ -334,6 +385,32 @@ impl Handle {
     }
 }
 
+/// A union's identity (`__eq__`/`__hash__`) directive.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Identity {
+    /// No generated identity — default PyO3 object identity.
+    None,
+    /// Native `==` + hash by node id (`accessor.node()` via `SymbolInterface`).
+    Node,
+    /// The `Type` quirk: `Type::identical` + hash by `def_node_id`.
+    Identical,
+}
+
+/// A union's `__repr__` directive. All forms render `<Alias …>`; the `…` is the
+/// native variant discriminant name, optionally followed by a quoted qualified /
+/// unqualified name.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Repr {
+    /// No generated repr — hand-written elsewhere.
+    None,
+    /// `<Alias Variant>`.
+    Variant,
+    /// `<Alias Variant 'qualified_name'>`.
+    VariantQualified,
+    /// `<Alias Variant 'unqualified_name'>`.
+    VariantUnqualified,
+}
+
 struct UnionDecl {
     py: Ident,
     native: Path,
@@ -344,6 +421,13 @@ struct UnionDecl {
     /// When set, `build_*` is hand-written (a per-hierarchy quirk, e.g. the
     /// unknown `Type`); otherwise the macro generates a default dispatch build.
     custom_build: bool,
+    /// When set, emit a base `loc` getter resolving the source location from the
+    /// stored native's node id (`accessor.node()` via `SymbolInterface`).
+    loc_from_node: bool,
+    /// Identity directive (`__eq__`/`__hash__`).
+    identity: Identity,
+    /// `__repr__` directive.
+    repr: Repr,
     variants: Vec<VariantDecl>,
     methods: Vec<MethodDecl>,
 }
@@ -383,10 +467,33 @@ struct EntityDecl {
     methods: Vec<MethodDecl>,
 }
 
+/// The binding pattern of a leaf-enum native variant, controlling the `From`
+/// match arm (a fieldless mirror discards any payload).
+#[derive(Clone, Copy)]
+enum LeafPattern {
+    /// `Native::V` (no fields).
+    Unit,
+    /// `Native::V(..)` (tuple/newtype fields).
+    Tuple,
+    /// `Native::V { .. }` (named fields).
+    Struct,
+}
+
+/// A leaf-enum mirror: a fieldless `#[pyclass(eq, eq_int)]` Python enum plus a
+/// `From<&native>` mapping each native variant onto it (the discriminant only;
+/// any payload is exposed by dedicated getters elsewhere).
+struct LeafEnumDecl {
+    py: Ident,
+    native: Path,
+    /// `(variant ident, its native binding pattern)`.
+    variants: Vec<(Ident, LeafPattern)>,
+}
+
 struct Dsl {
     unions: Vec<UnionDecl>,
     payloads: Vec<PayloadDecl>,
     entities: Vec<EntityDecl>,
+    leaf_enums: Vec<LeafEnumDecl>,
 }
 
 // ---------------------------------------------------------------------------
@@ -398,7 +505,7 @@ impl Parse for Shape {
         // `type` is a reserved keyword; the rest are plain idents.
         if input.peek(Token![type]) {
             input.parse::<Token![type]>()?;
-            return Ok(Shape::Union(UnionKind::Type));
+            return Ok(Shape::UnionRef("Type".into()));
         }
         let kw: Ident = input.parse()?;
         let s = kw.to_string();
@@ -412,11 +519,11 @@ impl Parse for Shape {
             }
             "str" => Shape::Str,
             "node" => Shape::Node,
-            "value" => Shape::Union(UnionKind::Value),
-            "symbol" => Shape::Union(UnionKind::Symbol),
-            "loc" => Shape::Loc,
-            "port_instance" => Shape::PortInstance,
-            "instance" => Shape::Instance,
+            "value" => Shape::UnionRef("Value".into()),
+            "symbol" => Shape::UnionRef("Symbol".into()),
+            "port_instance" => Shape::UnionRef("PortInstance".into()),
+            "loc" => Shape::Materialize(Materialize::Loc),
+            "instance" => Shape::Materialize(Materialize::Instance),
             "skip" => Shape::Skip,
             "opt" | "list" | "dict" => {
                 let content;
@@ -447,23 +554,26 @@ impl Parse for Shape {
             "spec" => {
                 let content;
                 parenthesized!(content in input);
-                Shape::Spec(content.parse()?)
+                Shape::Materialize(Materialize::Spec(content.parse()?))
             }
             "entity" => {
                 let content;
                 parenthesized!(content in input);
-                Shape::Entity(content.parse()?)
+                Shape::StructRef(content.parse()?)
             }
             "rewrap" => {
                 let content;
                 parenthesized!(content in input);
                 let path: Path = content.parse()?;
                 let seg0 = &path.segments[0].ident;
-                let kind = UnionKind::from_ident(seg0).ok_or_else(|| {
-                    syn::Error::new(seg0.span(), "rewrap union must be Type/Value/Symbol")
+                let key = union_key(&seg0.to_string()).ok_or_else(|| {
+                    syn::Error::new(
+                        seg0.span(),
+                        "rewrap union must be a registered union (Type/Value/Symbol/PortInstance)",
+                    )
                 })?;
                 let variant = path.segments[1].ident.clone();
-                Shape::Rewrap(kind, variant)
+                Shape::RewrapRef(key.to_string(), variant)
             }
             other => {
                 return Err(syn::Error::new(
@@ -620,6 +730,48 @@ impl Parse for UnionDecl {
         } else {
             false
         };
+        let loc_from_node = if peek_kw(input, "loc_from_node") {
+            input.parse::<Ident>()?;
+            true
+        } else {
+            false
+        };
+        let identity = if peek_kw(input, "identity") {
+            input.parse::<Ident>()?; // consume `identity`
+            let mode: Ident = input.parse()?;
+            match mode.to_string().as_str() {
+                "node" => Identity::Node,
+                "identical" => Identity::Identical,
+                other => {
+                    return Err(syn::Error::new(
+                        mode.span(),
+                        format!("unknown identity mode `{other}` (expected node/identical)"),
+                    ));
+                }
+            }
+        } else {
+            Identity::None
+        };
+        let repr = if peek_kw(input, "repr") {
+            input.parse::<Ident>()?; // consume `repr`
+            let mode: Ident = input.parse()?;
+            match mode.to_string().as_str() {
+                "variant" => Repr::Variant,
+                "variant_qualified" => Repr::VariantQualified,
+                "variant_unqualified" => Repr::VariantUnqualified,
+                other => {
+                    return Err(syn::Error::new(
+                        mode.span(),
+                        format!(
+                            "unknown repr mode `{other}` \
+                             (expected variant/variant_qualified/variant_unqualified)"
+                        ),
+                    ));
+                }
+            }
+        } else {
+            Repr::None
+        };
         let body;
         braced!(body in input);
         let variants = parse_section::<VariantDecl>(&body, "variants")?;
@@ -636,6 +788,9 @@ impl Parse for UnionDecl {
             accessor,
             include_base,
             custom_build,
+            loc_from_node,
+            identity,
+            repr,
             variants,
             methods,
         })
@@ -732,6 +887,47 @@ impl Parse for EntityDecl {
     }
 }
 
+impl Parse for LeafEnumDecl {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let py: Ident = input.parse()?;
+        expect_kw(input, "native")?;
+        let native: Path = input.parse()?;
+        let body;
+        braced!(body in input);
+        // `<Variant>: <unit|tuple|struct>,` entries.
+        let entries = body.parse_terminated(
+            |s: ParseStream| -> syn::Result<(Ident, LeafPattern)> {
+                let variant: Ident = s.parse()?;
+                s.parse::<Token![:]>()?;
+                // `struct` is a reserved keyword, so it is peeked separately.
+                let pat = if s.peek(Token![struct]) {
+                    s.parse::<Token![struct]>()?;
+                    LeafPattern::Struct
+                } else {
+                    let kind: Ident = s.parse()?;
+                    match kind.to_string().as_str() {
+                        "unit" => LeafPattern::Unit,
+                        "tuple" => LeafPattern::Tuple,
+                        other => {
+                            return Err(syn::Error::new(
+                                kind.span(),
+                                format!("unknown leaf-enum pattern `{other}`"),
+                            ));
+                        }
+                    }
+                };
+                Ok((variant, pat))
+            },
+            Token![,],
+        )?;
+        Ok(LeafEnumDecl {
+            py,
+            native,
+            variants: entries.into_iter().collect(),
+        })
+    }
+}
+
 fn expect_kw(input: ParseStream, name: &str) -> syn::Result<()> {
     let kw: Ident = input.parse()?;
     if kw != name {
@@ -754,16 +950,20 @@ impl Parse for Dsl {
         let mut unions = Vec::new();
         let mut payloads = Vec::new();
         let mut entities = Vec::new();
+        let mut leaf_enums = Vec::new();
         while !input.is_empty() {
             let kw: Ident = input.parse()?;
             match kw.to_string().as_str() {
                 "union" => unions.push(input.parse()?),
                 "payload" => payloads.push(input.parse()?),
                 "entity" => entities.push(input.parse()?),
+                "leaf_enum" => leaf_enums.push(input.parse()?),
                 other => {
                     return Err(syn::Error::new(
                         kw.span(),
-                        format!("unknown section `{other}` (expected union/payload/entity)"),
+                        format!(
+                            "unknown section `{other}` (expected union/payload/entity/leaf_enum)"
+                        ),
                     ));
                 }
             }
@@ -772,6 +972,7 @@ impl Parse for Dsl {
             unions,
             payloads,
             entities,
+            leaf_enums,
         })
     }
 }
@@ -839,7 +1040,20 @@ fn emit_union_methods(u: &UnionDecl) -> Vec<TokenStream> {
     let native = &u.native;
     let model = quote!(&self.model);
     let data = quote!(self.data);
-    u.methods
+    let mut out: Vec<TokenStream> = Vec::new();
+    // A `loc_from_node` union resolves its source location from the stored
+    // native's node id (the native carries a node, not a span). `ModelData::loc`
+    // takes the node's span inside its own `run_ref` scope.
+    if u.loc_from_node {
+        out.push(quote! {
+            /// The source location of this element's definition.
+            #[getter]
+            fn loc(&self) -> ::std::option::Option<crate::ir_core::Loc> {
+                self.data.loc(self.#accessor.node())
+            }
+        });
+    }
+    out.extend(u.methods
         .iter()
         .map(|m| {
             let mname = &m.name;
@@ -869,8 +1083,8 @@ fn emit_union_methods(u: &UnionDecl) -> Vec<TokenStream> {
                 body,
                 via_super: false,
             })
-        })
-        .collect()
+        }));
+    out
 }
 
 /// Emit a subclass's field getters (projected through the base handle).
@@ -1003,6 +1217,130 @@ fn emit_subclass_getters(
     }
 }
 
+/// The base scrutinee (`&Native`) matching the stored handle (for the `__repr__`
+/// kind-name match).
+fn union_base_scrut(u: &UnionDecl) -> TokenStream {
+    let accessor = &u.accessor;
+    if u.handle.is_arc() {
+        quote!(self.#accessor.as_ref())
+    } else {
+        quote!(&self.#accessor)
+    }
+}
+
+/// The `<Native>::<Variant><pattern>` match pattern for a variant (payload
+/// discarded — only the discriminant is named).
+fn variant_match_pattern(native: &Path, v: &VariantDecl) -> TokenStream {
+    let variant = &v.native_variant;
+    match &v.payload {
+        PayloadKind::Unit => quote!(#native::#variant),
+        PayloadKind::StructVariant(_) => quote!(#native::#variant { .. }),
+        _ => quote!(#native::#variant(..)),
+    }
+}
+
+/// Emit the private `sem_repr_kind` helper (the native variant discriminant name),
+/// used only by a generated `__repr__`. Empty when no repr is generated.
+fn emit_union_kind_helper(u: &UnionDecl) -> TokenStream {
+    if u.repr == Repr::None {
+        return quote!();
+    }
+    let base = &u.py;
+    let native = &u.native;
+    let scrut = union_base_scrut(u);
+    let arms = u.variants.iter().map(|v| {
+        let pat = variant_match_pattern(native, v);
+        let name = v.native_variant.to_string();
+        quote!(#pat => #name)
+    });
+    quote! {
+        impl #base {
+            /// The native variant discriminant name (for `__repr__`).
+            fn sem_repr_kind(&self) -> &'static str {
+                match #scrut {
+                    #(#arms),*
+                }
+            }
+        }
+    }
+}
+
+/// Emit the generated `__repr__` method (empty when hand-written).
+fn emit_union_repr(u: &UnionDecl) -> TokenStream {
+    let accessor = &u.accessor;
+    let alias = u.alias.value();
+    match u.repr {
+        Repr::None => quote!(),
+        Repr::Variant => {
+            let fmt = format!("<{alias} {{}}>");
+            quote! {
+                fn __repr__(&self) -> ::std::string::String {
+                    format!(#fmt, self.sem_repr_kind())
+                }
+            }
+        }
+        Repr::VariantQualified => {
+            let fmt = format!("<{alias} {{}} '{{}}'>");
+            quote! {
+                fn __repr__(&self) -> ::std::string::String {
+                    format!(
+                        #fmt,
+                        self.sem_repr_kind(),
+                        self.data.analysis.get_qualified_name(&self.#accessor)
+                    )
+                }
+            }
+        }
+        Repr::VariantUnqualified => {
+            let fmt = format!("<{alias} {{}} '{{}}'>");
+            quote! {
+                fn __repr__(&self) -> ::std::string::String {
+                    format!(#fmt, self.sem_repr_kind(), self.#accessor.get_unqualified_name())
+                }
+            }
+        }
+    }
+}
+
+/// Emit the generated `__eq__`/`__hash__` methods (empty when default identity).
+fn emit_union_identity(u: &UnionDecl) -> TokenStream {
+    let base = &u.py;
+    let accessor = &u.accessor;
+    let native = &u.native;
+    match u.identity {
+        Identity::None => quote!(),
+        Identity::Node => quote! {
+            fn __eq__(&self, other: &::pyo3::Bound<'_, ::pyo3::PyAny>) -> bool {
+                match other.downcast::<#base>() {
+                    ::std::result::Result::Ok(o) => self.#accessor == o.borrow().#accessor,
+                    ::std::result::Result::Err(_) => false,
+                }
+            }
+            fn __hash__(&self) -> u64 {
+                self.data.ids.get(&self.#accessor.node()).copied().unwrap_or(0) as u64
+            }
+        },
+        Identity::Identical => quote! {
+            fn __eq__(&self, other: &::pyo3::Bound<'_, ::pyo3::PyAny>) -> bool {
+                match other.downcast::<#base>() {
+                    ::std::result::Result::Ok(o) => {
+                        #native::identical(&self.#accessor, &o.borrow().#accessor)
+                    }
+                    ::std::result::Result::Err(_) => false,
+                }
+            }
+            fn __hash__(&self) -> u64 {
+                match self.#accessor.def_node_id() {
+                    ::std::option::Option::Some(n) => {
+                        self.data.ids.get(&n).copied().unwrap_or(0) as u64
+                    }
+                    ::std::option::Option::None => 0,
+                }
+            }
+        },
+    }
+}
+
 fn emit_union(
     u: &UnionDecl,
     payloads: &[PayloadDecl],
@@ -1065,6 +1403,9 @@ fn emit_union(
     }
 
     let methods = emit_union_methods(u);
+    let identity_methods = emit_union_identity(u);
+    let repr_method = emit_union_repr(u);
+    let kind_helper = emit_union_kind_helper(u);
 
     // Dispatch + register (base + subclasses + the runtime union object).
     let native = &u.native;
@@ -1075,7 +1416,11 @@ fn emit_union(
         #[::pyo3::pymethods]
         impl #base {
             #(#methods)*
+            #identity_methods
+            #repr_method
         }
+
+        #kind_helper
 
         impl #base {
             /// Box `base` as the concrete subclass matching `disc`'s variant.
@@ -1264,7 +1609,7 @@ fn emit_entity_clone(e: &EntityDecl, field: &Ident) -> (TokenStream, TokenStream
             continue;
         }
         let n = &f.name;
-        let access = if matches!(f.shape, Shape::Spec(_)) {
+        let access = if matches!(f.shape, Shape::Materialize(Materialize::Spec(_))) {
             quote!((&self.#field.loc))
         } else {
             quote!((&self.#field.#n))
@@ -1416,6 +1761,12 @@ fn emit_entity_symbol_keyed(
             self.data.ids.get(&self.sym.node()).copied().unwrap_or(0) as u64
         }
     });
+    let repr_fmt = format!("<{py} '{{}}'>");
+    getters.push(quote! {
+        fn __repr__(&self) -> ::std::string::String {
+            format!(#repr_fmt, self.data.analysis.get_qualified_name(&self.sym))
+        }
+    });
 
     // Mechanical field getters: project through `native()`.
     for f in &e.fields {
@@ -1520,6 +1871,40 @@ fn emit_entity_symbol_keyed(
     (def_ts, quote!(m.add_class::<#py>()?;))
 }
 
+/// Emit a leaf-enum mirror: the fieldless `#[pyclass(eq, eq_int)]` Python enum +
+/// a `From<&native>` mapping each native variant onto it. Returns
+/// `(definition, register_call)`.
+fn emit_leaf_enum(e: &LeafEnumDecl) -> (TokenStream, TokenStream) {
+    let py = &e.py;
+    let native = &e.native;
+    let variant_idents: Vec<&Ident> = e.variants.iter().map(|(v, _)| v).collect();
+    let from_arms = e.variants.iter().map(|(v, pat)| {
+        let lhs = match pat {
+            LeafPattern::Unit => quote!(#native::#v),
+            LeafPattern::Tuple => quote!(#native::#v(..)),
+            LeafPattern::Struct => quote!(#native::#v { .. }),
+        };
+        quote!(#lhs => #py::#v)
+    });
+    let def = quote! {
+        #[::pyo3_stub_gen::derive::gen_stub_pyclass_enum]
+        #[::pyo3::pyclass(eq, eq_int, frozen, hash)]
+        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+        pub enum #py {
+            #(#variant_idents),*
+        }
+
+        impl ::std::convert::From<&#native> for #py {
+            fn from(__v: &#native) -> Self {
+                match __v {
+                    #(#from_arms),*
+                }
+            }
+        }
+    };
+    (def, quote!(m.add_class::<#py>()?;))
+}
+
 pub fn expand(input: TokenStream) -> TokenStream {
     let dsl = match syn::parse2::<Dsl>(input) {
         Ok(d) => d,
@@ -1541,6 +1926,12 @@ pub fn expand(input: TokenStream) -> TokenStream {
 
     for e in &dsl.entities {
         let (def, reg) = emit_entity(e);
+        defs.push(def);
+        register_calls.push(reg);
+    }
+
+    for e in &dsl.leaf_enums {
+        let (def, reg) = emit_leaf_enum(e);
         defs.push(def);
         register_calls.push(reg);
     }

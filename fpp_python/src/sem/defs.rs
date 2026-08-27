@@ -7,7 +7,7 @@
 #![allow(dead_code, unused_variables, clippy::all)]
 
 fpp_python_macros::fpp_sem_bindings! {
-    union Type native fpp_analysis::semantics::Type handle arc_type alias "Type" accessor ty include_base custom_build {
+    union Type native fpp_analysis::semantics::Type handle arc_type alias "Type" accessor ty include_base custom_build identity identical {
         variants {
             PrimitiveInt => PrimitiveIntType : leaf(crate::ast::IntegerKind),
             Float => FloatType : leaf(crate::ast::FloatKind),
@@ -42,7 +42,7 @@ fpp_python_macros::fpp_sem_bindings! {
         }
     }
 
-    union Value native fpp_analysis::semantics::Value handle value alias "Value" accessor val {
+    union Value native fpp_analysis::semantics::Value handle value alias "Value" accessor val repr variant {
         variants {
             PrimitiveInteger => PrimitiveIntegerValue : payload,
             AbsType => AbsTypeValue : payload,
@@ -65,7 +65,7 @@ fpp_python_macros::fpp_sem_bindings! {
         }
     }
 
-    union Symbol native fpp_analysis::semantics::Symbol handle symbol alias "Symbol" accessor sym {
+    union Symbol native fpp_analysis::semantics::Symbol handle symbol alias "Symbol" accessor sym identity node repr variant_qualified {
         variants {
             AbsType => AbsTypeSymbol : astdef(DefAbsType),
             AliasType => AliasTypeSymbol : astdef(DefAliasType),
@@ -84,11 +84,12 @@ fpp_python_macros::fpp_sem_bindings! {
             Topology => TopologySymbol : astdef(DefTopology),
         }
         methods {
+            qualified_name(analysis) -> str,
             is_dictionary_def -> bool,
         }
     }
 
-    union StateMachineElement native fpp_analysis::semantics::state_machine::StateMachineSymbol handle clone alias "StateMachineElement" accessor native {
+    union StateMachineElement native fpp_analysis::semantics::state_machine::StateMachineSymbol handle clone alias "StateMachineElement" accessor native loc_from_node repr variant_unqualified {
         variants {
             Action => SmAction : astdef(DefAction),
             Guard => SmGuard : astdef(DefGuard),
@@ -203,6 +204,132 @@ fpp_python_macros::fpp_sem_bindings! {
             anon_struct: rewrap(Value::AnonStruct),
             ty: type,
         }
+    }
+
+    entity PortInterface native fpp_analysis::semantics::PortInterface field pif {
+        fields {
+            instance_type: str,
+            port_map: dict(port_instance),
+            special_port_map: dict(port_instance),
+        }
+    }
+
+    entity PortInstanceIdentifier native fpp_analysis::semantics::PortInstanceIdentifier field pid {
+        fields {
+            interface_instance: instance,
+            port_instance: port_instance,
+        }
+        methods {
+            qualified_name -> str,
+        }
+    }
+
+    entity PortMatching native fpp_analysis::semantics::PortMatching {
+        fields {
+            instance1: port_instance,
+            instance2: port_instance,
+            loc: loc,
+        }
+    }
+
+    entity InitSpecifier native fpp_analysis::semantics::InitSpecifier {
+        fields {
+            loc: loc,
+            phase: i128,
+        }
+    }
+
+    entity StateMachineInstance native fpp_analysis::semantics::StateMachineInstance {
+        fields {
+            loc: loc,
+            name: str,
+            symbol: symbol,
+            spec: spec(SpecStateMachineInstance),
+        }
+    }
+
+    entity Command native fpp_analysis::semantics::Command {
+        fields {
+            loc: loc,
+            name: str,
+            kind: opt(leaf(crate::sem::CommandKind)),
+            opcode: i128,
+            spec: spec(SpecCommand),
+        }
+        methods {
+            is_async -> bool,
+        }
+    }
+
+    entity Event native fpp_analysis::semantics::Event {
+        fields {
+            loc: loc,
+            name: str,
+            id: i128,
+            spec: spec(SpecEvent),
+        }
+    }
+
+    entity Param native fpp_analysis::semantics::Param {
+        fields {
+            loc: loc,
+            name: str,
+            set_opcode: i128,
+            save_opcode: i128,
+            is_external: bool,
+            id: i128,
+            spec: spec(SpecParam),
+        }
+    }
+
+    entity TlmChannel native fpp_analysis::semantics::TlmChannel {
+        fields {
+            loc: loc,
+            name: str,
+            id: i128,
+            spec: spec(SpecTlmChannel),
+        }
+    }
+
+    entity Record native fpp_analysis::semantics::Record {
+        fields {
+            loc: loc,
+            name: str,
+            id: i128,
+            spec: spec(SpecRecord),
+        }
+    }
+
+    entity Container native fpp_analysis::semantics::Container {
+        fields {
+            loc: loc,
+            name: str,
+            id: i128,
+            spec: spec(SpecContainer),
+        }
+    }
+
+    leaf_enum Direction native fpp_analysis::semantics::Direction {
+        Input: unit,
+        Output: unit,
+    }
+
+    leaf_enum GeneralKind native fpp_analysis::semantics::GeneralKind {
+        AsyncInput: struct,
+        GuardedInput: unit,
+        Output: unit,
+        SyncInput: unit,
+    }
+
+    leaf_enum CommandKind native fpp_analysis::semantics::CommandKind {
+        Async: struct,
+        Guarded: unit,
+        Sync: unit,
+    }
+
+    leaf_enum StateMachineKind native fpp_analysis::semantics::state_machine::Kind {
+        External: unit,
+        Internal: unit,
     }
 
 }

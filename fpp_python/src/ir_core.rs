@@ -57,9 +57,9 @@ pub struct ModelData {
     /// The live semantic analysis, read directly by the symbol/type/value and
     /// entity wrappers.
     pub analysis: fpp_analysis::Analysis,
-    /// The live compiler context, kept alive so locations, annotations, and
-    /// `Connection`-keyed lookups can be resolved lazily via `run_ref` at getter
-    /// time. `Send + Sync` (its fields are `HashMap`/`Vec`/`Arc`/`Weak` and the
+    /// The live compiler context, kept alive so locations and annotations can be
+    /// resolved lazily via `run_ref` at getter time. `Send + Sync` (its fields
+    /// are `HashMap`/`Vec`/`Arc`/`Weak` and the
     /// owned `SharedEmitter`), so it may live in the `Sync` `Model` pyclass.
     pub ctx: Arc<CompilerContext<SharedEmitter>>,
     /// Translation-unit top-level member nodes, in source order.

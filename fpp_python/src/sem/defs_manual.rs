@@ -3,14 +3,24 @@
 //! into read-only PyO3 wrappers.
 //!
 //! Unlike [`super::defs`] (which `fpp_sem_bindgen` regenerates from
-//! `fpp_analysis` source), this file is maintained by hand. These entities are
-//! too irregular to reflect mechanically: their exposure mixes build-time extra
-//! scalars supplied by the parent during map iteration (`Command.opcode`,
-//! `Event.id`, `Connection.{graph_name,from_pn,to_pn}`, `Endpoint.port_number` —
-//! none of which are native struct fields), cross-layer `Spec*` bridges via the
-//! `loc` span, and (for `PortInstance`) an inline-struct-variant closed union
-//! whose per-variant field exposure is deliberately pruned (`General`'s detail
-//! is nested in `GeneralKind` and stays hand-written in `super::hand`).
+//! `fpp_analysis` source), this file is maintained by hand. The entities left
+//! here are too irregular to reflect mechanically: the `Connection`/`Endpoint`
+//! cluster wraps `fpp_analysis::ResolvedConnection` (which carries the graph name
+//! and resolved `from_pn`/`to_pn` alongside endpoints whose `port_number` is the
+//! resolved number), so its `from_`/`source`/`to`/`target` endpoint aliases stay
+//! hand-written (`from` is a Python keyword); the top-level symbol-keyed entities
+//! whose rich getters are hand-written; and (for
+//! `PortInstance`) an inline-struct-variant closed union whose per-variant field
+//! exposure is deliberately pruned (`General`'s detail is nested in `GeneralKind`
+//! and stays hand-written in `super::hand`), and whose base methods return
+//! context-computed spans / references the reflector cannot mirror mechanically.
+//!
+//! The purely-mechanical clone-handle entities (`PortInterface`,
+//! `PortInstanceIdentifier`, `PortMatching`, `InitSpecifier`,
+//! `StateMachineInstance`, and the per-element dictionary entities
+//! `Command`/`Event`/`Param`/`TlmChannel`/`Record`/`Container` — whose id/opcode
+//! are now native fields, so they need no extras) are generated into
+//! [`super::defs`].
 //!
 //! The escape hatches (`PortInstance` subclass detail, `PortInstance.import_locs`,
 //! `Connection.from_`/`source`/`to`/`target`, `build_spec`, `instance_ref` +
@@ -38,125 +48,33 @@ fpp_python_macros::fpp_sem_bindings! {
             get_loc -> loc,
             get_node_id -> node,
             get_array_size -> i128,
-            get_direction -> opt(leaf(crate::enums::Direction)),
+            get_direction -> opt(leaf(crate::sem::Direction)),
             get_special_kind -> opt(leaf(crate::ast::SpecialPortInstanceKind)),
             is_async_input -> bool,
         }
     }
 
-    entity PortInterface native fpp_analysis::semantics::PortInterface field pif {
-        fields {
-            instance_type:    str,
-            port_map:         dict(port_instance),
-            special_port_map: dict(port_instance),
-        }
-    }
-
-    entity PortInstanceIdentifier native fpp_analysis::semantics::PortInstanceIdentifier field pid {
-        fields {
-            interface_instance: instance,
-            port_instance:      port_instance,
-        }
-        methods {
-            qualified_name -> str,
-        }
-    }
-
     entity Endpoint native fpp_analysis::semantics::Endpoint field ep {
-        extras { port_number: opt(i128) }
         fields {
-            loc:  loc,
-            port: entity(PortInstanceIdentifier),
-        }
-    }
-
-    entity Connection native fpp_analysis::semantics::Connection field conn {
-        extras { graph_name: str, from_pn: opt(i128), to_pn: opt(i128) }
-        fields { is_unmatched: bool }
-        methods { get_loc -> loc }
-    }
-
-    entity Command native fpp_analysis::semantics::Command {
-        extras { opcode: i128 }
-        fields {
-            name: str,
-            kind: opt(leaf(crate::enums::CommandKind)),
-            loc:  loc,
-            spec: spec(SpecCommand),
-        }
-        methods { is_async -> bool }
-    }
-
-    entity Event native fpp_analysis::semantics::Event {
-        extras { id: i128 }
-        fields {
-            name: str,
-            loc:  loc,
-            spec: spec(SpecEvent),
-        }
-    }
-
-    entity Param native fpp_analysis::semantics::Param {
-        extras { id: i128 }
-        fields {
-            name:        str,
-            set_opcode:  i128,
-            save_opcode: i128,
-            is_external: bool,
             loc:         loc,
-            spec:        spec(SpecParam),
+            port:        entity(PortInstanceIdentifier),
+            // The resolved port number: a native field baked in by port numbering
+            // (see `ResolvedConnection` in fpp_analysis).
+            port_number: opt(i128),
         }
     }
 
-    entity TlmChannel native fpp_analysis::semantics::TlmChannel {
-        extras { id: i128 }
+    // Wraps the resolved connection carrying its graph name + resolved port
+    // numbers (no build-time extras). The `from_`/`source`/`to`/`target` endpoint
+    // aliases stay hand-written in `super::hand` (`from` is a Python keyword).
+    entity Connection native fpp_analysis::semantics::ResolvedConnection field resolved {
         fields {
-            name: str,
-            loc:  loc,
-            spec: spec(SpecTlmChannel),
+            graph_name:   str,
+            from_pn:      opt(i128),
+            to_pn:        opt(i128),
+            is_unmatched: bool,
         }
-    }
-
-    entity Record native fpp_analysis::semantics::Record {
-        extras { id: i128 }
-        fields {
-            name: str,
-            loc:  loc,
-            spec: spec(SpecRecord),
-        }
-    }
-
-    entity Container native fpp_analysis::semantics::Container {
-        extras { id: i128 }
-        fields {
-            name: str,
-            loc:  loc,
-            spec: spec(SpecContainer),
-        }
-    }
-
-    entity StateMachineInstance native fpp_analysis::semantics::StateMachineInstance {
-        fields {
-            name:   str,
-            loc:    loc,
-            symbol: symbol,
-            spec:   spec(SpecStateMachineInstance),
-        }
-    }
-
-    entity PortMatching native fpp_analysis::semantics::PortMatching {
-        fields {
-            instance1: port_instance,
-            instance2: port_instance,
-            loc:       loc,
-        }
-    }
-
-    entity InitSpecifier native fpp_analysis::semantics::InitSpecifier {
-        fields {
-            phase: i128,
-            loc:   loc,
-        }
+        methods { get_loc -> loc }
     }
 
     // ---- top-level symbol-keyed entities ----------------------------------
@@ -165,9 +83,8 @@ fpp_python_macros::fpp_sem_bindings! {
     // access (see the `symbol_keyed` handle). Only the mechanically-mirrorable
     // members live here; the rich getters (sorted nested-entity maps, the
     // `DefComponentInstance` attribute / constant-fold reads, the cross-layer
-    // resolvers, the `run_ref` connection dance, `name`/`qualified_name`, `kind`,
-    // the state-machine element/state walks, and the node-backed `State`) stay
-    // hand-written in `super::hand`.
+    // resolvers, `name`/`qualified_name`, `kind`, the state-machine element/state
+    // walks, and the node-backed `State`) stay hand-written in `super::hand`.
 
     entity Component native fpp_analysis::semantics::Component
            handle symbol_keyed(component_map) def DefComponent {
@@ -203,6 +120,9 @@ fpp_python_macros::fpp_sem_bindings! {
             // NB: the native `name` field is the *qualified* name (topology.rs).
             name:           str,
             port_interface: entity(PortInterface),
+            // The connections across all graphs, with resolved port numbers baked
+            // in by fpp_analysis (native `Topology.connections`); no `run_ref`.
+            connections:    list(entity(Connection)),
         }
     }
 

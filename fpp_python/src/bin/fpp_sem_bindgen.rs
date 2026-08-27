@@ -25,6 +25,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::LazyLock;
 use syn::{Fields, GenericArgument, Item, PathArguments, ReturnType, Type};
 
 // ---------------------------------------------------------------------------
@@ -55,6 +56,18 @@ struct UnionCfg {
     root: bool,
     /// Whether `build_*` is hand-written (carries a per-hierarchy quirk).
     custom_build: bool,
+    /// Whether to emit a `loc` getter resolving the source location from the
+    /// stored native value's node id (`accessor.node()` via `SymbolInterface`) —
+    /// for `clone`-handle unions whose native carries a node rather than a span.
+    loc_from_node: bool,
+    /// Identity (`__eq__`/`__hash__`) directive: `""` (none — default object
+    /// identity), `"node"` (native `==` + hash by node id), or `"identical"` (the
+    /// `Type` quirk: `Type::identical` + hash by `def_node_id`).
+    identity: &'static str,
+    /// `__repr__` directive: `""` (none — hand-written), `"variant"`
+    /// (`<Alias Variant>`), `"variant_qualified"` (`<Alias Variant 'qname'>`), or
+    /// `"variant_unqualified"` (`<Alias Variant 'uname'>`).
+    repr: &'static str,
 }
 
 fn unions() -> Vec<UnionCfg> {
@@ -70,6 +83,11 @@ fn unions() -> Vec<UnionCfg> {
             include_base: true,
             root: true,
             custom_build: true,
+            loc_from_node: false,
+            // `Type` keeps its hand-written `__repr__` (the synthetic "unknown"
+            // type quirk); its identity is by `Type::identical` + `def_node_id`.
+            identity: "identical",
+            repr: "",
         },
         UnionCfg {
             enum_name: "Value",
@@ -82,6 +100,9 @@ fn unions() -> Vec<UnionCfg> {
             include_base: false,
             root: true,
             custom_build: false,
+            loc_from_node: false,
+            identity: "",
+            repr: "variant",
         },
         UnionCfg {
             enum_name: "Symbol",
@@ -94,6 +115,9 @@ fn unions() -> Vec<UnionCfg> {
             include_base: false,
             root: true,
             custom_build: false,
+            loc_from_node: false,
+            identity: "node",
+            repr: "variant_qualified",
         },
         UnionCfg {
             enum_name: "StateMachineSymbol",
@@ -106,19 +130,272 @@ fn unions() -> Vec<UnionCfg> {
             include_base: false,
             root: true,
             custom_build: false,
+            loc_from_node: true,
+            identity: "",
+            repr: "variant_unqualified",
         },
     ]
 }
 
-/// Known fieldless / discriminant enums → the Python-enum mirror path.
-fn leaf_path(name: &str) -> Option<&'static str> {
-    match name {
-        "IntegerKind" => Some("crate::ast::IntegerKind"),
-        "FloatKind" => Some("crate::ast::FloatKind"),
-        "Direction" => Some("crate::enums::Direction"),
-        "GeneralKind" => Some("crate::enums::GeneralKind"),
-        "CommandKind" => Some("crate::enums::CommandKind"),
-        _ => None,
+// ---------------------------------------------------------------------------
+// Config: the standalone `entity` items to mirror (hand-maintained)
+// ---------------------------------------------------------------------------
+
+/// A standalone `clone`-handle `entity` to emit: a `#[pyclass(frozen)]` holding a
+/// native `Clone`, whose members are reflected mechanically from source. Only the
+/// entities with NO build-time extras and no rich hand-getters are described here;
+/// the extras-bearing ones (`Command`/`Event`/…/`Connection`) and the top-level
+/// symbol-keyed ones (`Component`/`Interface`/…) stay hand-authored in
+/// `sem/defs_manual.rs`.
+struct EntityCfg {
+    /// Python (and, for these, native) type name.
+    name: &'static str,
+    /// The stored-handle field ident, or `None` for the macro default (`native`).
+    field: Option<&'static str>,
+    /// A synthetic `spec: spec(<Spec*>)` field bridged through the entity's `loc`
+    /// span (the thin-element detail forwarder), if the entity carries one.
+    spec: Option<&'static str>,
+}
+
+fn entities() -> Vec<EntityCfg> {
+    vec![
+        EntityCfg {
+            name: "PortInterface",
+            field: Some("pif"),
+            spec: None,
+        },
+        EntityCfg {
+            name: "PortInstanceIdentifier",
+            field: Some("pid"),
+            spec: None,
+        },
+        EntityCfg {
+            name: "PortMatching",
+            field: None,
+            spec: None,
+        },
+        EntityCfg {
+            name: "InitSpecifier",
+            field: None,
+            spec: None,
+        },
+        EntityCfg {
+            name: "StateMachineInstance",
+            field: None,
+            spec: Some("SpecStateMachineInstance"),
+        },
+        // The per-element component dictionary entities. Their build-time id/opcode
+        // is now a native struct field (populated in the add-to-id-map path), so
+        // they carry no extras and reflect mechanically; the thin-element `spec`
+        // detail forwarder is bridged through each entity's `loc` span.
+        EntityCfg {
+            name: "Command",
+            field: None,
+            spec: Some("SpecCommand"),
+        },
+        EntityCfg {
+            name: "Event",
+            field: None,
+            spec: Some("SpecEvent"),
+        },
+        EntityCfg {
+            name: "Param",
+            field: None,
+            spec: Some("SpecParam"),
+        },
+        EntityCfg {
+            name: "TlmChannel",
+            field: None,
+            spec: Some("SpecTlmChannel"),
+        },
+        EntityCfg {
+            name: "Record",
+            field: None,
+            spec: Some("SpecRecord"),
+        },
+        EntityCfg {
+            name: "Container",
+            field: None,
+            spec: Some("SpecContainer"),
+        },
+    ]
+}
+
+// ---------------------------------------------------------------------------
+// Config: the leaf (fieldless-discriminant) enums to MIRROR as Python enums
+// (hand-maintained). These are the `fpp_analysis` enums with no `fpp_ast` leaf
+// equivalent; the generator emits a `#[pyclass(eq, eq_int)]` mirror + a
+// `From<&native>` for each, so `crate::sem` owns them (retiring `crate::enums`).
+// The AST leaves (`IntegerKind`/`FloatKind`/`QueueFull`/…) are mirrored by the
+// AST bindings and reused via `crate::ast`; they are NOT emitted here.
+// ---------------------------------------------------------------------------
+
+/// A leaf enum to mirror: its Python name, the native enum ident (reflected from
+/// source for its variants), and the native enum's fully-qualified path.
+struct LeafEnumCfg {
+    /// Python (generated) enum name.
+    py: &'static str,
+    /// Native enum ident, as reflected from source (the key into `Model::enums`).
+    enum_name: &'static str,
+    /// The fully-qualified native enum path.
+    native_path: &'static str,
+}
+
+fn leaf_enums() -> Vec<LeafEnumCfg> {
+    vec![
+        LeafEnumCfg {
+            py: "Direction",
+            enum_name: "Direction",
+            native_path: "fpp_analysis::semantics::Direction",
+        },
+        LeafEnumCfg {
+            py: "GeneralKind",
+            enum_name: "GeneralKind",
+            native_path: "fpp_analysis::semantics::GeneralKind",
+        },
+        LeafEnumCfg {
+            py: "CommandKind",
+            enum_name: "CommandKind",
+            native_path: "fpp_analysis::semantics::CommandKind",
+        },
+        LeafEnumCfg {
+            py: "StateMachineKind",
+            enum_name: "Kind",
+            native_path: "fpp_analysis::semantics::state_machine::Kind",
+        },
+    ]
+}
+
+// ---------------------------------------------------------------------------
+// Type registry: one table mapping a domain type NAME to how it binds into the
+// DSL / [`Shape`] vocabulary. This replaces the scattered `classify_named`
+// special-cases (leaf paths, the union check, the `Span`/`Node` handling, and
+// the `Def*` AST bridge) with a single lookup, so which domain types exist and
+// how they convert is registry *data*, not hardcoded control flow.
+// ---------------------------------------------------------------------------
+
+/// How a named type binds into the [`Shape`] vocabulary.
+#[derive(Clone)]
+enum Binding {
+    /// A primitive scalar (`bool`/int/float/`String`): the concrete `Shape` is
+    /// derived from the name itself (see [`scalar_shape`]).
+    Scalar,
+    /// A fieldless discriminant enum mirrored as a Python enum at this path.
+    Leaf(&'static str),
+    /// A `fpp_core::Span`-backed detail materialized on access: `"loc"` (source
+    /// location) or `"instance"` (the owning component-instance/topology of an
+    /// `InterfaceInstance`).
+    Materialize(&'static str),
+    /// `fpp_core::Node` → a dense `u32` id.
+    DenseId,
+    /// An `Arc<fpp_ast::DefX>` bridged to the concrete `crate::ast::DefX` wrapper.
+    BridgeAst,
+    /// A registered closed union (its enum reflected from source).
+    Union,
+    /// A registered reflected struct/entity → recursively wrapped as its own
+    /// wrapper (the entity layer emitted in a later pass).
+    Struct,
+    /// Not convertible.
+    Skip,
+}
+
+/// One table mapping a type NAME to its [`Binding`]. Explicit rows cover the
+/// scalars, leaf enums, span-materialized details, dense ids, and the registered
+/// unions; the `Def*` AST bridge and everything else fall through in [`binding`].
+///
+/// [`binding`]: TypeRegistry::binding
+struct TypeRegistry {
+    rows: BTreeMap<&'static str, Binding>,
+}
+
+impl TypeRegistry {
+    fn build() -> Self {
+        let mut rows: BTreeMap<&'static str, Binding> = BTreeMap::new();
+
+        // Primitive scalars (widened to Python int/float/str/bool on access).
+        for n in [
+            "bool", "i128", "f64", "f32", "usize", "isize", "u8", "u16", "u32", "u64", "i8",
+            "i16", "i32", "i64", "String",
+        ] {
+            rows.insert(n, Binding::Scalar);
+        }
+
+        // Dense node id and span-materialized details.
+        rows.insert("Node", Binding::DenseId);
+        rows.insert("Span", Binding::Materialize("loc"));
+        rows.insert("InterfaceInstance", Binding::Materialize("instance"));
+
+        // Fieldless discriminant enums → their Python-enum mirror path. The AST
+        // leaves live in `crate::ast` (mirrored by the AST bindings); the
+        // analysis-only leaves are emitted by this binary (see [`leaf_enums`]) and
+        // live in `crate::sem`.
+        for (name, path) in [
+            ("IntegerKind", "crate::ast::IntegerKind"),
+            ("FloatKind", "crate::ast::FloatKind"),
+            ("Direction", "crate::sem::Direction"),
+            ("GeneralKind", "crate::sem::GeneralKind"),
+            ("CommandKind", "crate::sem::CommandKind"),
+            ("QueueFull", "crate::ast::QueueFull"),
+            ("SpecialPortInstanceKind", "crate::ast::SpecialPortInstanceKind"),
+            ("ComponentKind", "crate::ast::ComponentKind"),
+            // `fpp_analysis::semantics::state_machine::Kind` (external/internal).
+            ("Kind", "crate::sem::StateMachineKind"),
+        ] {
+            rows.insert(name, Binding::Leaf(path));
+        }
+
+        // The registered closed unions (their native enums, reflected from source).
+        for u in unions() {
+            rows.insert(u.enum_name, Binding::Union);
+        }
+        // `PortInstance` is a registered closed union too (its wrapper lives in the
+        // hand-authored `defs_manual`), so a `PortInstance`-typed field renders as
+        // the `port_instance` token. It is not emitted by this binary.
+        rows.insert("PortInstance", Binding::Union);
+
+        TypeRegistry { rows }
+    }
+
+    /// The binding for a type NAME. Explicit rows win; otherwise a `Def*` name
+    /// bridges to its AST wrapper and anything else is [`Binding::Skip`].
+    fn binding(&self, name: &str) -> Binding {
+        if let Some(b) = self.rows.get(name) {
+            return b.clone();
+        }
+        // `DefModuleStub` and any other `Def*` bridge to a `crate::ast::DefX`.
+        if name == "DefModuleStub" || name.starts_with("Def") {
+            return Binding::BridgeAst;
+        }
+        Binding::Skip
+    }
+}
+
+/// The process-wide registry (stateless; built once from [`unions`] + the static
+/// rows).
+static REGISTRY: LazyLock<TypeRegistry> = LazyLock::new(TypeRegistry::build);
+
+/// The `Shape` for a primitive scalar name, or `None` if `name` is not a scalar.
+fn scalar_shape(name: &str) -> Option<Shape> {
+    Some(match name {
+        "bool" => Shape::Bool,
+        "i128" => Shape::I128,
+        "f64" | "f32" => Shape::F64,
+        "usize" | "isize" | "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" => {
+            Shape::Int(name.to_string())
+        }
+        "String" => Shape::Str,
+        _ => return None,
+    })
+}
+
+/// The concrete `crate::ast::Def*` wrapper a `Def*` name bridges to. `DefModuleStub`
+/// is a fpp_analysis type (not an AST node) whose `node_id` points at the real
+/// `DefModule` AST node.
+fn ast_bridge_target(name: &str) -> String {
+    if name == "DefModuleStub" {
+        "DefModule".to_string()
+    } else {
+        name.to_string()
     }
 }
 
@@ -153,6 +430,10 @@ enum Shape {
     Rewrap(String, String), // (union, variant) — a bare payload struct
     Leaf(String),           // python enum path
     AstDef(String),         // fpp_ast::DefX
+    Loc,                    // fpp_core::Span -> resolved source location
+    Instance,               // InterfaceInstance -> owning component-instance/topology
+    Spec(String),           // synthetic: a Span bridged to its Spec* AST node
+    Entity(String),         // a nested reflected entity -> its own wrapper
     Opt(Box<Shape>),
     List(Box<Shape>),
     Dict(Box<Shape>),
@@ -173,11 +454,16 @@ impl Shape {
                 "Type" => "type".into(),
                 "Value" => "value".into(),
                 "Symbol" => "symbol".into(),
+                "PortInstance" => "port_instance".into(),
                 other => other.to_lowercase(),
             },
             Shape::Rewrap(u, v) => format!("rewrap({u}::{v})"),
             Shape::Leaf(p) => format!("leaf({p})"),
             Shape::AstDef(d) => format!("astdef({d})"),
+            Shape::Loc => "loc".into(),
+            Shape::Instance => "instance".into(),
+            Shape::Spec(s) => format!("spec({s})"),
+            Shape::Entity(e) => format!("entity({e})"),
             Shape::Opt(s) => format!("opt({})", s.render()),
             Shape::List(s) => format!("list({})", s.render()),
             Shape::Dict(s) => format!("dict({})", s.render()),
@@ -242,6 +528,18 @@ fn main() {
         "value.rs",
         "symbol.rs",
         "state_machine/symbol.rs",
+        // The state-machine `Kind` leaf enum (external/internal) lives here.
+        "state_machine/mod.rs",
+        // Entity-layer sources: the native structs/enums for the standalone
+        // `entity` items emitted by [`entities`] (and the `PortInstance` union,
+        // reflected for its `port_instance`-typed fields). The extras-bearing and
+        // symbol-keyed entities stay hand-authored in `sem/defs_manual.rs`; their
+        // sources (topology.rs/system.rs/state_machine/machine.rs) are added when
+        // those entities move here.
+        "interface.rs",
+        "connection.rs",
+        "component.rs",
+        "component_instance.rs",
     ];
     let mut items: Vec<Item> = Vec::new();
     for f in files {
@@ -379,10 +677,6 @@ fn collect_methods(items: &[Item], model: &mut Model) {
 // Classification
 // ---------------------------------------------------------------------------
 
-fn is_union(name: &str) -> bool {
-    unions().iter().any(|u| u.enum_name == name)
-}
-
 /// Classify a field/return type into a [`Shape`].
 fn classify(ty: &Type, model: &Model) -> Shape {
     // Decompose containers first (Box/Arc transparent).
@@ -447,26 +741,28 @@ fn classify(ty: &Type, model: &Model) -> Shape {
 }
 
 fn classify_named(name: &str, model: &Model) -> Shape {
-    match name {
-        "bool" => Shape::Bool,
-        "i128" => Shape::I128,
-        "f64" | "f32" => Shape::F64,
-        "usize" | "isize" | "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" => {
-            Shape::Int(name.to_string())
+    match REGISTRY.binding(name) {
+        Binding::Scalar => scalar_shape(name).expect("scalar binding <=> scalar name"),
+        Binding::DenseId => Shape::Node,
+        Binding::Union => Shape::Union(name.to_string()),
+        Binding::Leaf(path) => Shape::Leaf(path.to_string()),
+        Binding::BridgeAst => Shape::AstDef(ast_bridge_target(name)),
+        // Span-materialized details: a source location, or the owning
+        // component-instance / topology of an `InterfaceInstance`.
+        Binding::Materialize("loc") => Shape::Loc,
+        Binding::Materialize("instance") => Shape::Instance,
+        Binding::Materialize(kind) => Shape::Skip(format!("materialize {kind} `{name}`")),
+        // A reflected struct/entity → its own wrapper (recursively wrapped).
+        Binding::Struct => Shape::Entity(name.to_string()),
+        Binding::Skip => {
+            // A payload struct pointing into a union is rewrapped into its enum
+            // before conversion (dynamic: keyed by the reflected payload index).
+            if let Some((u, v)) = model.payload_index.get(name) {
+                Shape::Rewrap(u.clone(), v.clone())
+            } else {
+                Shape::Skip(format!("unmodeled type `{name}`"))
+            }
         }
-        "String" => Shape::Str,
-        "Node" => Shape::Node,
-        _ if is_union(name) => Shape::Union(name.to_string()),
-        _ if model.payload_index.contains_key(name) => {
-            let (u, v) = model.payload_index[name].clone();
-            Shape::Rewrap(u, v)
-        }
-        _ if leaf_path(name).is_some() => Shape::Leaf(leaf_path(name).unwrap().to_string()),
-        // `DefModuleStub` is a fpp_analysis type (not an AST node) whose `node_id`
-        // points at the real `DefModule` AST node — bridge to that wrapper.
-        "DefModuleStub" => Shape::AstDef("DefModule".to_string()),
-        _ if name.starts_with("Def") => Shape::AstDef(name.to_string()),
-        _ => Shape::Skip(format!("unmodeled type `{name}`")),
     }
 }
 
@@ -552,6 +848,12 @@ fn classify_method(self_ty: &str, m: &syn::ImplItemFn, model: &Model) -> Option<
         ReturnType::Type(_, ty) => classify(ty, model),
     };
     if ret.is_skip() {
+        return None;
+    }
+    // Span-materialized details are only mechanical for *stored* fields: a method
+    // that computes one (e.g. `get_span` → `node.span()`) reads the compiler
+    // context and would panic outside a `run_ref` scope, so it is not reflected.
+    if matches!(ret, Shape::Loc | Shape::Instance | Shape::Spec(_)) {
         return None;
     }
 
@@ -670,8 +972,83 @@ fn emit(model: &Model, version: &str) -> String {
         emit_payload(&mut out, name, model);
     }
 
+    for e in &entities() {
+        emit_entity(&mut out, e, model);
+    }
+
+    for le in &leaf_enums() {
+        emit_leaf_enum(&mut out, le, model);
+    }
+
     out.push_str("}\n");
     out
+}
+
+/// Emit a `leaf_enum` block: the native enum's variant idents (reflected from
+/// source) each tagged with its binding pattern (`unit`/`tuple`/`struct`), so the
+/// macro can emit a fieldless Python-enum mirror plus a `From<&native>` whose
+/// per-variant match arm uses the right pattern.
+fn emit_leaf_enum(out: &mut String, le: &LeafEnumCfg, model: &Model) {
+    let variants = model
+        .enums
+        .get(le.enum_name)
+        .unwrap_or_else(|| panic!("leaf enum `{}` not found in source", le.enum_name));
+    out.push_str(&format!(
+        "    leaf_enum {} native {} {{\n",
+        le.py, le.native_path
+    ));
+    for (variant, payload) in variants {
+        let pattern = match payload {
+            VariantPayload::Unit => "unit",
+            VariantPayload::Newtype(_) => "tuple",
+            VariantPayload::Other => "struct",
+        };
+        out.push_str(&format!("        {variant}: {pattern},\n"));
+    }
+    out.push_str("    }\n\n");
+}
+
+/// Emit a standalone `clone`-handle `entity` block: the native struct's public
+/// fields (classified into shapes), an optional synthetic `spec` field, and the
+/// eligible `&self`/associated methods — all reflected mechanically from source.
+fn emit_entity(out: &mut String, e: &EntityCfg, model: &Model) {
+    let sd = model
+        .structs
+        .get(e.name)
+        .unwrap_or_else(|| panic!("entity `{}` not found in source", e.name));
+    let field = match e.field {
+        Some(f) => format!(" field {f}"),
+        None => String::new(),
+    };
+    out.push_str(&format!(
+        "    entity {} native {}{} {{\n",
+        e.name,
+        native_path(e.name),
+        field
+    ));
+    out.push_str("        fields {\n");
+    for (fname, ty) in &sd.fields {
+        let shape = classify(ty, model);
+        if let Shape::Skip(reason) = &shape {
+            eprintln!("  skip {}.{fname}: {reason}", e.name);
+        }
+        out.push_str(&format!("            {fname}: {},\n", shape.render()));
+    }
+    // The synthetic `spec` field (bridged through the entity's `loc` span).
+    if let Some(spec) = e.spec {
+        out.push_str(&format!("            spec: spec({spec}),\n"));
+    }
+    out.push_str("        }\n");
+
+    let methods = model.methods.get(e.name).cloned().unwrap_or_default();
+    if !methods.is_empty() {
+        out.push_str("        methods {\n");
+        for m in &methods {
+            out.push_str(&format!("            {}\n", render_method(m)));
+        }
+        out.push_str("        }\n");
+    }
+    out.push_str("    }\n\n");
 }
 
 /// If `ty` (possibly wrapped) is a payload struct, its name.
@@ -707,15 +1084,33 @@ fn emit_union(out: &mut String, u: &UnionCfg, model: &Model, needed: &mut BTreeS
         .unwrap_or_else(|| panic!("union `{}` not found in source", u.enum_name));
     let base = if u.include_base { " include_base" } else { "" };
     let build = if u.custom_build { " custom_build" } else { "" };
+    let locfn = if u.loc_from_node {
+        " loc_from_node"
+    } else {
+        ""
+    };
+    let identity = if u.identity.is_empty() {
+        String::new()
+    } else {
+        format!(" identity {}", u.identity)
+    };
+    let repr = if u.repr.is_empty() {
+        String::new()
+    } else {
+        format!(" repr {}", u.repr)
+    };
     out.push_str(&format!(
-        "    union {} native {} handle {} alias \"{}\" accessor {}{}{} {{\n",
+        "    union {} native {} handle {} alias \"{}\" accessor {}{}{}{}{}{} {{\n",
         u.alias,
         union_native_path(u),
         u.handle,
         u.alias,
         u.accessor,
         base,
-        build
+        build,
+        locfn,
+        identity,
+        repr
     ));
     out.push_str("        variants {\n");
     for (variant, payload) in variants {

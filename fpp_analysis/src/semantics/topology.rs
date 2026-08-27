@@ -112,6 +112,12 @@ pub struct Topology {
     pub to_port_number_map: BTreeMap<Connection, i128>,
     /// The unconnected port instances.
     pub unconnected_port_set: BTreeSet<PortInstanceIdentifier>,
+    /// The connections of this topology with their resolved port numbers baked
+    /// in, in `connection_map` order. Populated once port numbering is complete
+    /// (see [`crate::semantics::resolve_topology`]); lets read-time consumers
+    /// reach resolved numbers without a `Connection`-keyed (context-touching)
+    /// lookup.
+    pub connections: Vec<crate::semantics::ResolvedConnection>,
 }
 
 impl Topology {
@@ -138,6 +144,7 @@ impl Topology {
             from_port_number_map: BTreeMap::new(),
             to_port_number_map: BTreeMap::new(),
             unconnected_port_set: BTreeSet::new(),
+            connections: Vec::new(),
         }
     }
 
@@ -365,6 +372,20 @@ impl Topology {
             }
         }
         s
+    }
+
+    /// Populate [`Topology::connections`] from the connection graphs and the
+    /// resolved port-number maps. Must run after port numbering is complete and
+    /// while the compiler context is live (the `Connection`-keyed map lookups
+    /// read span files).
+    pub fn finalize_connections(&mut self) {
+        let mut out = Vec::new();
+        for (graph_name, conns) in &self.connection_map {
+            for conn in conns {
+                out.push(crate::semantics::ResolvedConnection::new(self, graph_name, conn));
+            }
+        }
+        self.connections = out;
     }
 
     /// The component instances of this topology, in qualified-name order.

@@ -62,7 +62,7 @@ def test_symbol_as_component(m):
 def test_topology_connections(m):
     (t,) = m.topologies()
     assert t.name == "T"
-    (conn,) = t.connections()
+    (conn,) = t.connections
     assert conn.source.port.qualified_name == "a.pOut"
     assert conn.target.port.qualified_name == "b.pIn"
     assert conn.source.port_number == 0 and conn.target.port_number == 0
