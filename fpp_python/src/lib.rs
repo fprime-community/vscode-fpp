@@ -40,11 +40,10 @@ fn run_pipeline(uri: &str, content: String) -> (ir_core::ModelData, Vec<OwnedDia
     let emitter = SharedEmitter::default();
     let mut ctx = fpp_core::CompilerContext::new(emitter.clone());
     #[allow(clippy::type_complexity)]
-    let (tu, analysis, roots, ids, node_ptrs, nodes_by_span, by_qualified_name): (
+    let (tu, analysis, roots, ids, node_ptrs, by_qualified_name): (
         fpp_ast::TransUnit,
         fpp_analysis::Analysis,
         Vec<fpp_core::Node>,
-        _,
         _,
         _,
         _,
@@ -57,17 +56,9 @@ fn run_pipeline(uri: &str, content: String) -> (ir_core::ModelData, Vec<OwnedDia
         let _ = fpp_analysis::check_semantics(&mut analysis, vec![&ast]);
         let mut walker = lower_core::Walker::new();
         let roots = crate::ast::walk_trans_unit(&mut walker, &ast);
-        let (ids, node_ptrs, nodes_by_span) = walker.finish();
+        let (ids, node_ptrs) = walker.finish();
         let by_qualified_name = lower_core::build_indexes(&analysis, &ids);
-        (
-            ast,
-            analysis,
-            roots,
-            ids,
-            node_ptrs,
-            nodes_by_span,
-            by_qualified_name,
-        )
+        (ast, analysis, roots, ids, node_ptrs, by_qualified_name)
     });
     let data = ir_core::ModelData {
         tu,
@@ -76,7 +67,6 @@ fn run_pipeline(uri: &str, content: String) -> (ir_core::ModelData, Vec<OwnedDia
         roots,
         ids,
         node_ptrs,
-        nodes_by_span,
         by_qualified_name,
     };
     (data, emitter.take())

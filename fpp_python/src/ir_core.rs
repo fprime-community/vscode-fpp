@@ -7,8 +7,8 @@
 //! the symbol/type/value/entity wrappers read `analysis` directly, and
 //! locations/annotations are resolved lazily against the retained `ctx` via
 //! `fpp_core::run_ref` (so they need no eager side-tables). The only owned
-//! lookups are the dense ids, the node pointers, the span->node bridge, and the
-//! `by_qualified_name` index.
+//! lookups are the dense ids, the node pointers, and the `by_qualified_name`
+//! index.
 
 use crate::diagnostics::SharedEmitter;
 use crate::noderef::NodeRef;
@@ -194,8 +194,6 @@ pub struct ModelData {
     pub ids: FxHashMap<Node, u32>,
     /// Type-tag + raw pointer into `tu` per node.
     pub node_ptrs: FxHashMap<Node, NodeRef>,
-    /// `Span -> Node`, bridging a thin analysis element to its `Spec*` AST node.
-    pub nodes_by_span: FxHashMap<fpp_core::Span, Node>,
     /// Fully-qualified name -> symbol, for `Model.lookup`.
     pub by_qualified_name: FxHashMap<String, Symbol>,
 }
@@ -218,12 +216,6 @@ impl ModelData {
         Some(fpp_core::run_ref(&self.ctx, || {
             crate::lower_core::loc_of_span(&span)
         }))
-    }
-
-    /// The AST node whose span is `span`, if one was recorded during the walk.
-    /// Used to bridge a thin analysis element to its `Spec*` AST node.
-    pub fn node_of_span(&self, span: fpp_core::Span) -> Option<Node> {
-        self.nodes_by_span.get(&span).copied()
     }
 
     /// The definition symbol that use-site `node` resolves to, if the reference

@@ -1,21 +1,20 @@
 //! Hand-written core of the recording walk: the [`Walker`] that assigns each AST
-//! node a dense id, records a type-tagged pointer to it, and indexes it by span.
-//! The per-node `walk_*` functions and the `walk_trans_unit` entry point are
-//! expanded by `fpp_python_macros::fpp_ast_bindings!` into `crate::ast`.
+//! node a dense id and records a type-tagged pointer to it. The per-node `walk_*`
+//! functions and the `walk_trans_unit` entry point are expanded by
+//! `fpp_python_macros::fpp_ast_bindings!` into `crate::ast`.
 //!
 //! Locations and annotations are **not** recorded here — the live
 //! `CompilerContext` is kept alive in [`crate::ir_core::ModelData`] and resolved
-//! lazily (via `fpp_core::run_ref`) at getter time. The walk still runs inside a
-//! `fpp_core::run` scope (it reads each node's span for the span index) over an
-//! AST that is never mutated afterwards (so the recorded pointers stay valid —
-//! see `crate::noderef`).
+//! lazily (via `fpp_core::run_ref`) at getter time. The walk runs inside the
+//! pipeline's `fpp_core::run` scope over an AST that is never mutated afterwards
+//! (so the recorded pointers stay valid — see `crate::noderef`).
 
 use crate::ast::NodeKind;
 use crate::ir_core::Loc;
 use crate::noderef::NodeRef;
 use fpp_analysis::Analysis;
 use fpp_analysis::semantics::Symbol;
-use fpp_core::{Node, Span, Spanned};
+use fpp_core::Node;
 use rustc_hash::FxHashMap;
 
 /// Accumulates the side-tables while walking the AST. Ids are assigned in
@@ -25,8 +24,6 @@ pub struct Walker {
     next: u32,
     ids: FxHashMap<Node, u32>,
     node_ptrs: FxHashMap<Node, NodeRef>,
-    /// `Span -> Node`, bridging a thin analysis element to its `Spec*` AST node.
-    nodes_by_span: FxHashMap<Span, Node>,
 }
 
 impl Walker {
@@ -34,10 +31,10 @@ impl Walker {
         Walker::default()
     }
 
-    /// Record a node on first sight: assign its dense id, index it by span, and
-    /// store its type-tagged pointer. Returns `true` if the node was newly seen
-    /// (caller should recurse into its children), `false` if it was already
-    /// recorded (shared node — skip to avoid rebuilding).
+    /// Record a node on first sight: assign its dense id and store its
+    /// type-tagged pointer. Returns `true` if the node was newly seen (caller
+    /// should recurse into its children), `false` if it was already recorded
+    /// (shared node — skip to avoid rebuilding).
     ///
     /// # Safety
     ///
@@ -51,21 +48,13 @@ impl Walker {
         let id = self.next;
         self.next += 1;
         self.ids.insert(node, id);
-        self.nodes_by_span.entry(node.span()).or_insert(node);
         self.node_ptrs.insert(node, NodeRef { tag, ptr });
         true
     }
 
     /// Consume the walker, yielding the recorded side-tables.
-    #[allow(clippy::type_complexity)]
-    pub fn finish(
-        self,
-    ) -> (
-        FxHashMap<Node, u32>,
-        FxHashMap<Node, NodeRef>,
-        FxHashMap<Span, Node>,
-    ) {
-        (self.ids, self.node_ptrs, self.nodes_by_span)
+    pub fn finish(self) -> (FxHashMap<Node, u32>, FxHashMap<Node, NodeRef>) {
+        (self.ids, self.node_ptrs)
     }
 }
 
