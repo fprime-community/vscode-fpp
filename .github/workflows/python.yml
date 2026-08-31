@@ -79,19 +79,16 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      # `fpp_sem_bindgen` reflects `fpp_analysis` from rustdoc JSON, which it
-      # produces via `cargo +nightly rustdoc` — so a nightly toolchain must be
-      # present for the semantic-declaration regeneration step below.
-      - name: Install nightly Rust (for fpp_sem_bindgen rustdoc)
+      # `bindgen` reflects `fpp_analysis` from rustdoc JSON, which it produces via
+      # `cargo +nightly rustdoc` — so a nightly toolchain must be present for the
+      # declaration regeneration step below.
+      - name: Install nightly Rust (for bindgen rustdoc)
         uses: dtolnay/rust-toolchain@nightly
 
-      # (a) Regenerate the checked-in AST declaration.
-      - name: Regenerate AST declaration
-        run: cargo run -p fpp_python --features bindgen --bin fpp_bindgen
-
-      # (a2) Regenerate the checked-in semantic declaration.
-      - name: Regenerate semantic declaration
-        run: cargo run -p fpp_python --features bindgen --bin fpp_sem_bindgen
+      # (a) Regenerate BOTH checked-in declarations (AST + semantic). Runs before
+      # the stub dump so the stub reflects the freshly-regenerated pyclasses.
+      - name: Regenerate declarations
+        run: cargo run -p fpp_python --features bindgen --bin bindgen
 
       # (b) Regenerate the type stub from the annotated pyclasses. The stub-dump
       # binary must be built WITHOUT `extension-module` (a standalone executable
@@ -103,7 +100,7 @@ jobs:
       - name: Check for drift
         run: |
           if ! git diff --exit-code -- fpp_python/src/ast/defs.rs fpp_python/src/sem/defs.rs fpp_python/fpp_python.pyi; then
-            echo "::error::checked-in declaration/stub is stale; run \`cargo run -p fpp_python --features bindgen --bin fpp_bindgen\`, \`cargo run -p fpp_python --features bindgen --bin fpp_sem_bindgen\`, and \`cargo run -p fpp_python --no-default-features --features stubgen --bin stub_gen\`, then commit the result."
+            echo "::error::checked-in declaration/stub is stale; run \`cargo run -p fpp_python --features bindgen --bin bindgen\` and \`cargo run -p fpp_python --no-default-features --features stubgen --bin stub_gen\`, then commit the result."
             exit 1
           fi
 

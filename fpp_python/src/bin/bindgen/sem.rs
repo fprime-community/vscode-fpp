@@ -1,10 +1,9 @@
-//! Declaration emitter for the native FPP **semantic** bindings — the
-//! semantic-layer analog of `fpp_bindgen` (which mirrors `fpp_ast`).
+//! The semantic declaration emitter — the semantic-layer analog of the
+//! [`ast_emit`](super::ast_emit) AST pretty-printer.
 //!
 //! Reflects `fpp_analysis` from **rustdoc JSON** (compiler-resolved,
-//! post-macro-expansion) and emits ONE checked-in file — by default
-//! `fpp_python/src/sem/defs.rs` — containing a
-//! `fpp_python_macros::fpp_sem_bindings! { … }` invocation: a mechanical 1:1
+//! post-macro-expansion) and emits the checked-in `fpp_python/src/sem/defs.rs` —
+//! a `fpp_python_macros::fpp_sem_bindings! { … }` invocation: a mechanical 1:1
 //! mirror of the semantic data structures rooted at `fpp_analysis::Analysis`.
 //! The `fpp_sem_bindings!` proc macro expands that declaration into the
 //! read-only PyO3 wrappers.
@@ -12,27 +11,26 @@
 //! There are **no hand tables**: the set of unions / entities / leaf enums /
 //! payloads is the transitive closure of reachable types from `Analysis`'s public
 //! fields + eligible `&self`/`&Arc<Self>` methods. Type origin (`fpp_ast` vs
-//! `fpp_core` vs `fpp_analysis` vs `std`) is a
-//! deterministic table lookup in the JSON's `paths`/`external_crates`, never a
-//! name/prefix guess. A type we cannot convert is emitted as `skip` (and logged),
-//! never a hard error.
+//! `fpp_core` vs `fpp_analysis` vs `std`) is a deterministic table lookup in the
+//! JSON's `paths`/`external_crates`, never a name/prefix guess. An `fpp_ast`
+//! reference is resolved against the shared [`partition`](super::partition) — the
+//! REAL grammar classification — rather than a `Def*/Spec*` name prefix. A type
+//! we cannot convert is emitted as `skip` (and logged), never a hard error.
 //!
-//! Input: with `--rustdoc-json <path>` the JSON is read directly; otherwise it is
-//! produced by invoking nightly rustdoc via the `rustdoc-json` crate. The JSON's
-//! `format_version` is asserted against `rustdoc_types::FORMAT_VERSION` at startup
-//! so a schema bump fails loudly. CLI:
-//! `[--rustdoc-json <file>] [--fpp-version <v>] [--out <file>]`.
+//! The JSON is either read directly (`--rustdoc-json`) or produced by invoking
+//! nightly rustdoc via the `rustdoc-json` crate; the driver ([`super::main`])
+//! parses it and asserts its `format_version` before handing the [`Crate`] here.
 
 #![allow(dead_code)]
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
-use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use rustdoc_types::{
     Crate, Enum, GenericArg, GenericArgs, GenericParamDefKind, Id, Item, ItemEnum, ItemKind,
     ItemSummary, Struct, StructKind, Type, Variant, VariantKind, Visibility,
 };
+
+use super::partition::{AstClass, AstRef};
 
 // ---------------------------------------------------------------------------
 // Shape vocabulary (mirrors fpp_python_macros::sem_bindings::Shape)
@@ -83,8 +81,12 @@ impl Shape {
 #[derive(Clone)]
 enum ArgKind {
     Analysis,
+    /// A borrowed `&Symbol` param.
     Symbol,
-    /// A scalar argkind token: `i128` / `bool` / `str` / `usize`.
+    /// An owned `Symbol` param.
+    SymbolOwned,
+    /// A scalar argkind token: `i128` / `bool` / `usize` / `str` (a borrowed `&str`)
+    /// / `string` (an owned `String`).
     Scalar(&'static str),
 }
 
@@ -123,7 +125,7 @@ struct VariantDef {
 }
 
 /// A reflected union (payload-bearing local enum).
-struct UnionDef {
+pub struct UnionDef {
     id: Id,
     variants: Vec<VariantDef>,
     methods: Vec<MethodDef>,
@@ -132,7 +134,7 @@ struct UnionDef {
 /// A reflected entity / opaque (local struct, or an alias whose target is a local
 /// struct). `impl_id` is the type whose impls supply the members (the alias
 /// target, or the struct itself).
-struct EntityDef {
+pub struct EntityDef {
     id: Id,
     impl_id: Id,
     fields: Vec<(String, Shape)>,
@@ -143,14 +145,14 @@ struct EntityDef {
 }
 
 /// A reflected `payload` struct (a union variant's bare payload).
-struct PayloadDef {
+pub struct PayloadDef {
     id: Id,
     fields: Vec<(String, Shape)>,
     methods: Vec<MethodDef>,
 }
 
 /// A reflected all-unit local enum (`leaf_enum`).
-struct LeafEnumDef {
+pub struct LeafEnumDef {
     id: Id,
     variants: Vec<(String, &'static str)>,
 }
@@ -159,7 +161,7 @@ struct LeafEnumDef {
 // Reflection context
 // ---------------------------------------------------------------------------
 
-struct Ctx<'a> {
+pub struct Ctx<'a> {
     krate: &'a Crate,
     /// Shortest accessible public path per local item `Id` (glob-reexport aware).
     best_path: BTreeMap<u32, Vec<String>>,
@@ -171,11 +173,26 @@ struct Ctx<'a> {
     /// Type-alias `Id` → its target *struct* `Id` (only for aliases whose target
     /// peels to a local struct — the "entity alias" case, e.g. `Scope`).
     alias_struct: BTreeMap<u32, Id>,
+    /// The shared `fpp_ast` grammar classification (an owned snapshot): an
+    /// `fpp_ast::X` reference is resolved against this, not a name prefix.
+    ast: AstClass,
+    /// Leaf enums referenced from the `fpp_ast` arm (`leaf(crate::ast::X)`),
+    /// cross-fed back into the AST partition so `ast/defs.rs` mirrors each one.
+    used_ast_leaves: BTreeSet<String>,
     /// Diagnostics (types skipped, with reasons) — logged to stderr at the end.
     skips: Vec<String>,
 }
 
 impl<'a> Ctx<'a> {
+    /// Leaf enums the semantic layer references via `leaf(crate::ast::X)`; fed to
+    /// the AST partition's `register_used_leaf` after reflection.
+    pub fn used_ast_leaves(&self) -> &BTreeSet<String> {
+        &self.used_ast_leaves
+    }
+    /// Reflection diagnostics accumulated during the closure (field/method drops).
+    pub fn skips(&self) -> &[String] {
+        &self.skips
+    }
     fn item(&self, id: Id) -> Option<&Item> {
         self.krate.index.get(&id)
     }
@@ -387,6 +404,17 @@ const WRAPPERS: &[&str] = &["Box", "Arc", "Rc"];
 const LISTS: &[&str] = &["Vec", "VecDeque", "HashSet", "BTreeSet", "FxHashSet"];
 const MAPS: &[&str] = &["HashMap", "BTreeMap", "FxHashMap", "IndexMap"];
 
+/// The reflection-root struct in `fpp_analysis`: the entry point of the transitive
+/// closure. Every reflected union / entity / payload / leaf enum is reachable from
+/// this struct's public fields + eligible methods.
+const ROOT_TYPE_NAME: &str = "Analysis";
+
+/// The `fpp_analysis` newtype bridging to the `fpp_ast` [`DEF_MODULE_AST`] node: it
+/// is reflected as an `astdef(DefModule)`, never as a standalone payload/entity.
+const DEF_MODULE_STUB: &str = "DefModuleStub";
+/// The `fpp_ast` node [`DEF_MODULE_STUB`] resolves to.
+const DEF_MODULE_AST: &str = "DefModule";
+
 /// Bare type names that always get their CamelCased last-module-segment prefix
 /// (even when unique among emitted classes), because the bare form shadows or
 /// confuses a type already living in the generated module (e.g.
@@ -405,11 +433,6 @@ const RESERVED_TYPE_NAMES: &[&str] = &[
     "Arc", "Box", "Rc", "Node", "Cell", "RefCell", "Ref", "Cow", "Weak", "Default", "Enum",
     "DefPort",
 ];
-
-/// `fpp_ast` enums that are payload-bearing (exposed as `union`s in the AST
-/// bindings, not fieldless `leaf` mirrors), so a semantic reference to them cannot
-/// bridge through `leaf(crate::ast::X)`. Skipped (logged) rather than mis-emitted.
-const NON_LEAF_AST_ENUMS: &[&str] = &["QualIdent"];
 
 /// Peel `Box`/`Arc`/`Rc` (transparent) → the innermost referenced type.
 fn peel_wrappers(t: &Type) -> &Type {
@@ -499,7 +522,7 @@ fn build_payload_index(ctx: &mut Ctx) {
         for (vit, v) in enum_variant_defs(ctx, e) {
             if let Some(sid) = single_tuple_local_struct(ctx, v) {
                 // The `DefModuleStub` bridge is an astdef, never a payload.
-                if ctx.last_segment(sid) == "DefModuleStub" {
+                if ctx.last_segment(sid) == DEF_MODULE_STUB {
                     continue;
                 }
                 let vname = vit.name.clone().unwrap_or_default();
@@ -628,21 +651,20 @@ fn classify(ctx: &mut Ctx, t: &Type, enq: &mut Vec<Id>) -> Shape {
                 Some("fpp_core") => match last.as_str() {
                     "Node" => Shape::Node,
                     "Span" => Shape::Span,
-                    _ => Shape::Skip(format!("fpp_core::{last}")),
+                    _ => Shape::Skip(format!(
+                        "fpp_core::{last} (unrecognized fpp_core type; classify handles only Node/Span)"
+                    )),
                 },
-                Some("fpp_ast") => match ctx.kind(p.id) {
-                    Some(ItemKind::Enum) if NON_LEAF_AST_ENUMS.contains(&last.as_str()) => {
-                        Shape::Skip(format!(
-                            "fpp_ast::{last} (payload-bearing enum; not a leaf mirror in crate::ast)"
-                        ))
+                // Resolve against the REAL grammar partition (Rule R1). Shadowing
+                // is applied later, by the driver's normalize phase, once the
+                // resolved semantic names are known.
+                Some("fpp_ast") => match ctx.ast.classify_ast_ref(&last) {
+                    AstRef::AstDef(name) => Shape::AstDef(name),
+                    AstRef::Leaf(name) => {
+                        ctx.used_ast_leaves.insert(name.clone());
+                        Shape::LeafAst(name)
                     }
-                    Some(ItemKind::Enum) => Shape::LeafAst(last),
-                    Some(ItemKind::Struct)
-                        if last.starts_with("Def") || last.starts_with("Spec") =>
-                    {
-                        Shape::AstDef(last)
-                    }
-                    other => Shape::Skip(format!("fpp_ast::{last} ({other:?})")),
+                    AstRef::Skip(reason) => Shape::Skip(reason),
                 },
                 Some("fpp_analysis") => classify_local(ctx, p.id, &last, enq),
                 Some(other) => Shape::Skip(format!("{other}::{last}")),
@@ -664,11 +686,27 @@ fn skip_reason(s: &Shape) -> String {
     }
 }
 
+/// A short human-readable description of a `Type` for skip diagnostics (the last
+/// path segment for resolved types, the primitive name, etc.).
+fn type_desc(t: &Type) -> String {
+    match t {
+        Type::Primitive(p) => p.clone(),
+        Type::BorrowedRef { type_, .. } => format!("&{}", type_desc(type_)),
+        Type::ResolvedPath(p) => p.path.rsplit("::").next().unwrap_or(&p.path).to_string(),
+        Type::Tuple(_) => "tuple".into(),
+        Type::Slice(_) => "slice".into(),
+        Type::Array { .. } => "array".into(),
+        Type::Generic(g) => g.clone(),
+        Type::QualifiedPath { name, .. } => name.clone(),
+        _ => "?".into(),
+    }
+}
+
 /// Classify a local (`fpp_analysis`) resolved type by its `Id`.
 fn classify_local(ctx: &mut Ctx, id: Id, last: &str, enq: &mut Vec<Id>) -> Shape {
     // The `DefModuleStub` bridge → the real `DefModule` AST node.
-    if last == "DefModuleStub" {
-        return Shape::AstDef("DefModule".into());
+    if last == DEF_MODULE_STUB {
+        return Shape::AstDef(DEF_MODULE_AST.into());
     }
     match ctx.kind(id) {
         Some(ItemKind::Enum) => {
@@ -683,17 +721,28 @@ fn classify_local(ctx: &mut Ctx, id: Id, last: &str, enq: &mut Vec<Id>) -> Shape
             if let Some((uid, variant)) = ctx.payload_index.get(&id.0).cloned() {
                 enq.push(uid);
                 Shape::Rewrap(uid, variant)
-            } else {
+            } else if impls_clone(ctx, id) {
                 enq.push(id);
                 Shape::Entity(id)
+            } else {
+                // The clone-entity handle stores the native by value and clones it
+                // (see the macro's `entity`), so a struct without `Clone` cannot be
+                // emitted — skip it (logged) rather than emit code that won't build.
+                Shape::Skip(format!("fpp_analysis::{last} (struct has no Clone impl)"))
             }
         }
         Some(ItemKind::TypeAlias) => {
             // An alias to a local struct → an "entity alias" (reflected under the
-            // alias's own name/path); anything else → inline the target.
-            if ctx.alias_struct.contains_key(&id.0) {
-                enq.push(id);
-                Shape::Entity(id)
+            // alias's own name/path); anything else → inline the target. The alias's
+            // native type is (transparently) the target struct, so the clone-entity
+            // handle still requires the target to impl `Clone`.
+            if let Some(target) = ctx.alias_struct.get(&id.0).copied() {
+                if impls_clone(ctx, target) {
+                    enq.push(id);
+                    Shape::Entity(id)
+                } else {
+                    Shape::Skip(format!("alias {last} (target struct has no Clone impl)"))
+                }
             } else if let ItemEnum::TypeAlias(ta) = &ctx.item(id).unwrap().inner {
                 let target = ta.type_.clone();
                 classify(ctx, &target, enq)
@@ -791,18 +840,52 @@ fn classify_method(
     let first = inputs.first()?;
     let (assoc, rest) = receiver(owner, first)?;
 
-    // Every remaining arg must be a marshallable argkind.
+    // Every remaining arg must be a marshallable argkind. A param outside the
+    // supported vocabulary drops the whole method — logged (matching the
+    // struct/enum skip style) rather than dropped silently.
     let mut params: Vec<(String, ArgKind)> = Vec::new();
     for (pname, pty) in &inputs[rest..] {
-        let ak = arg_kind(ctx, pty)?;
-        params.push((pname.clone(), ak));
+        match arg_kind(ctx, pty) {
+            Some(ak) => params.push((pname.clone(), ak)),
+            None => {
+                let owner_name = ctx.last_segment(owner);
+                let desc = type_desc(pty);
+                ctx.skips.push(format!(
+                    "  skip {owner_name}.{name}(): unsupported param `{pname}: {desc}`"
+                ));
+                return None;
+            }
+        }
     }
 
     // Return type must classify to a non-skip shape; a computed `span` (needs the
-    // live context outside a plain getter) is skipped conservatively.
+    // live context outside a plain getter) is skipped conservatively. Either drop
+    // is logged (matching the param-drop style) rather than silent — a method with
+    // a valid receiver + params but an unconvertible return is a real omission.
     let out = output.as_ref()?;
     let ret = classify(ctx, out, enq);
     if ret.is_skip() || matches!(ret, Shape::Span) {
+        let owner_name = ctx.last_segment(owner);
+        let reason = if matches!(ret, Shape::Span) {
+            "computed span (needs the live context outside a getter)".to_string()
+        } else {
+            skip_reason(&ret)
+        };
+        ctx.skips.push(format!(
+            "  skip {owner_name}.{name}(): unsupported return ({reason})"
+        ));
+        return None;
+    }
+    // Rule R2: an `fpp_ast` node returned BY VALUE from an analysis method is
+    // synthesized fresh (its `node_id` is never recorded in the walk), so an
+    // `astdef` getter over it would raise at runtime. Only fields / variant
+    // payloads carry recorded walk nodes; drop the method (logged).
+    if shape_contains_astdef(&ret) {
+        let owner_name = ctx.last_segment(owner);
+        ctx.skips.push(format!(
+            "  skip {owner_name}.{name}(): fpp_ast node returned by value from an analysis \
+             method is built fresh (not a recorded walk node); not runtime-safe as astdef"
+        ));
         return None;
     }
     Some(MethodDef {
@@ -811,6 +894,18 @@ fn classify_method(
         params,
         ret,
     })
+}
+
+/// Whether a return shape contains an `fpp_ast` walked node anywhere (Rule R2),
+/// recursing through `opt`/`list`/`map`/`tuple`.
+fn shape_contains_astdef(s: &Shape) -> bool {
+    match s {
+        Shape::AstDef(_) => true,
+        Shape::Opt(i) | Shape::List(i) => shape_contains_astdef(i),
+        Shape::Map(k, v) => shape_contains_astdef(k) || shape_contains_astdef(v),
+        Shape::Tuple(v) => v.iter().any(shape_contains_astdef),
+        _ => false,
+    }
 }
 
 /// Interpret the first input as a receiver. Returns `(assoc, rest_start_index)`.
@@ -843,6 +938,10 @@ fn receiver(owner: Id, first: &(String, Type)) -> Option<(bool, usize)> {
 }
 
 fn arg_kind(ctx: &Ctx, t: &Type) -> Option<ArgKind> {
+    // Preserve owned-vs-borrowed: peeling `&` loses it, and an owned `Symbol` /
+    // `String` param must marshal differently from a borrowed one (Fix E). `&str`
+    // is inherently borrowed (unsized), so it is always the borrowed `str` token.
+    let borrowed = matches!(t, Type::BorrowedRef { .. });
     let base = match t {
         Type::BorrowedRef { type_, .. } => type_.as_ref(),
         other => other,
@@ -861,8 +960,12 @@ fn arg_kind(ctx: &Ctx, t: &Type) -> Option<ArgKind> {
             let last = p.path.rsplit("::").next().unwrap_or(&p.path);
             match (last, ctx.crate_name(p.id).as_deref()) {
                 ("Analysis", Some("fpp_analysis")) => Some(ArgKind::Analysis),
-                ("Symbol", Some("fpp_analysis")) => Some(ArgKind::Symbol),
-                ("String", _) => Some(ArgKind::Scalar("str")),
+                ("Symbol", Some("fpp_analysis")) => Some(if borrowed {
+                    ArgKind::Symbol
+                } else {
+                    ArgKind::SymbolOwned
+                }),
+                ("String", _) => Some(ArgKind::Scalar(if borrowed { "str" } else { "string" })),
                 _ => None,
             }
         }
@@ -909,7 +1012,7 @@ fn variant_payload(ctx: &mut Ctx, v: &Variant, enq: &mut Vec<Id>) -> VariantPayl
             if let Type::ResolvedPath(p) = &peeled {
                 if ctx.is_local(p.id)
                     && matches!(ctx.kind(p.id), Some(ItemKind::Struct))
-                    && ctx.last_segment(p.id) != "DefModuleStub"
+                    && ctx.last_segment(p.id) != DEF_MODULE_STUB
                 {
                     if ctx.newtype_payloads.contains(&p.id.0) {
                         // Single-field tuple struct → inline as a `newtype`.
@@ -1024,18 +1127,20 @@ fn has_qualified_name(ctx: &Ctx, impl_owner: Id) -> bool {
 // Closure
 // ---------------------------------------------------------------------------
 
-struct Reflected {
+pub struct Reflected {
     analysis_id: Id,
     analysis_fields: Vec<(String, Shape)>,
     analysis_methods: Vec<MethodDef>,
-    unions: Vec<UnionDef>,
-    payloads: Vec<PayloadDef>,
-    entities: Vec<EntityDef>,
-    leaf_enums: Vec<LeafEnumDef>,
+    pub unions: Vec<UnionDef>,
+    pub payloads: Vec<PayloadDef>,
+    pub entities: Vec<EntityDef>,
+    pub leaf_enums: Vec<LeafEnumDef>,
 }
 
-fn reflect(ctx: &mut Ctx) -> Reflected {
-    let analysis_id = find_analysis(ctx).expect("fpp_analysis::Analysis struct not found");
+pub fn reflect(ctx: &mut Ctx) -> Reflected {
+    let analysis_id = find_analysis(ctx).unwrap_or_else(|| {
+        panic!("reflection-root struct `fpp_analysis::{ROOT_TYPE_NAME}` not found")
+    });
 
     let mut reached: BTreeSet<u32> = BTreeSet::new();
     let mut queue: Vec<Id> = Vec::new();
@@ -1137,7 +1242,7 @@ fn find_analysis(ctx: &Ctx) -> Option<Id> {
         .index
         .values()
         .filter(|it| {
-            it.name.as_deref() == Some("Analysis")
+            it.name.as_deref() == Some(ROOT_TYPE_NAME)
                 && matches!(it.inner, ItemEnum::Struct(_))
                 && ctx.is_local(it.id)
         })
@@ -1145,7 +1250,7 @@ fn find_analysis(ctx: &Ctx) -> Option<Id> {
         // The crate-level `Analysis` (def path `fpp_analysis::analysis::Analysis`).
         .find(|id| {
             ctx.def_path(*id)
-                .map(|p| p.last().map(String::as_str) == Some("Analysis"))
+                .map(|p| p.last().map(String::as_str) == Some(ROOT_TYPE_NAME))
                 .unwrap_or(false)
         })
 }
@@ -1240,7 +1345,7 @@ fn build_leaf_enum(ctx: &Ctx, id: Id) -> LeafEnumDef {
 
 /// Python names for every emitted class, keyed by rustdoc `Id` for primaries and
 /// by `(union_id, native_variant)` for subclasses.
-struct Names {
+pub struct Names {
     /// Primary py name per `Id` (union / entity / leaf_enum). For unions the
     /// special `Type`/`Value`/`Symbol` are kept verbatim.
     primary: BTreeMap<u32, String>,
@@ -1255,9 +1360,19 @@ impl Names {
     fn entity(&self, id: Id) -> &str {
         self.primary.get(&id.0).map(String::as_str).unwrap_or("?")
     }
+    /// Every emitted Python class name (primaries + subclasses) — the RESOLVED,
+    /// post-disambiguation names the driver intersects with the AST node set to
+    /// derive the entity-shadowed nodes.
+    pub fn all_python_names(&self) -> BTreeSet<String> {
+        self.primary
+            .values()
+            .chain(self.subclass.values())
+            .cloned()
+            .collect()
+    }
 }
 
-fn resolve_names(ctx: &Ctx, r: &Reflected) -> Names {
+pub fn resolve_names(ctx: &Ctx, r: &Reflected) -> Names {
     // 1) Primary names: unions, entities, leaf_enums.
     let mut primary_ids: Vec<Id> = Vec::new();
     for u in &r.unions {
@@ -1331,16 +1446,6 @@ fn resolve_names(ctx: &Ctx, r: &Reflected) -> Names {
 // Emit
 // ---------------------------------------------------------------------------
 
-fn union_shape_token(pyname: &str) -> Option<&'static str> {
-    match pyname {
-        "Type" => Some("type"),
-        "Value" => Some("value"),
-        "Symbol" => Some("symbol"),
-        "PortInstance" => Some("port_instance"),
-        _ => None,
-    }
-}
-
 fn render_shape(ctx: &Ctx, names: &Names, s: &Shape) -> String {
     match s {
         Shape::Bool => "bool".into(),
@@ -1350,13 +1455,9 @@ fn render_shape(ctx: &Ctx, names: &Names, s: &Shape) -> String {
         Shape::Str => "str".into(),
         Shape::Node => "node".into(),
         Shape::Span => "span".into(),
-        Shape::Union(id) => {
-            let py = names.union(*id);
-            match union_shape_token(py) {
-                Some(tok) => tok.into(),
-                None => format!("union({py})"),
-            }
-        }
+        // Every closed union is referenced generically by its Python name; the
+        // macro has no per-union shorthand vocabulary to keep in sync.
+        Shape::Union(id) => format!("union({})", names.union(*id)),
         Shape::Rewrap(uid, variant) => {
             format!("rewrap({}::{})", names.union(*uid), variant)
         }
@@ -1392,6 +1493,7 @@ fn render_method(ctx: &Ctx, names: &Names, m: &MethodDef) -> String {
                 let kw = match k {
                     ArgKind::Analysis => "analysis",
                     ArgKind::Symbol => "symbol",
+                    ArgKind::SymbolOwned => "symbol_owned",
                     ArgKind::Scalar(s) => s,
                 };
                 format!("{n}: {kw}")
@@ -1418,7 +1520,13 @@ fn log_skips(
     }
 }
 
-fn emit(ctx: &Ctx, r: &Reflected, names: &Names, version: &str, skips: &mut Vec<String>) -> String {
+pub fn emit(
+    ctx: &Ctx,
+    r: &Reflected,
+    names: &Names,
+    version: &str,
+    skips: &mut Vec<String>,
+) -> String {
     let mut out = String::new();
     out.push_str(&header(version));
     out.push_str("fpp_python_macros::fpp_sem_bindings! {\n");
@@ -1490,35 +1598,48 @@ fn payload_name(ctx: &Ctx, names: &Names, sid: Id) -> String {
     ctx.last_segment(sid)
 }
 
-fn union_directives(
-    ctx: &Ctx,
-    u: &UnionDef,
-    py: &str,
-) -> (String, String, String, String, String, String) {
-    // (handle, accessor, extras, identity, repr, ...) — kept simple + matching the
-    // known-good Type/Value/Symbol/StateMachineElement conventions.
-    let (handle, accessor, mut extras) = match py {
-        "Type" => ("arc_type", "ty", " include_base custom_build".to_string()),
-        "Value" => ("value", "val", String::new()),
-        "Symbol" => ("symbol", "sym", String::new()),
+/// Select a union's storage `handle`/`accessor` + `identity`/`repr` directives.
+///
+/// The three special unions (arc-shared `Type`, by-value `Value`, symbol-keyed
+/// `Symbol`) are recognized by their NATIVE path — not the resolved *Python* name.
+/// The Python name is a post-disambiguation display string that a name collision
+/// can rewrite; keying selection on it would silently downgrade a renamed special
+/// union to a plain `clone` (dropping `Symbol`'s value identity, `Type`'s Arc
+/// storage, …). The native path is disambiguation-invariant. A rename of the
+/// underlying `fpp_analysis` type instead falls through to `clone` here, and
+/// [`assert_special_union_handles`] then FAILS LOUD if the union still
+/// *structurally* looks arc/symbol-shaped, so the downgrade can never pass
+/// silently.
+fn union_directives(ctx: &Ctx, u: &UnionDef) -> (String, String, String, String, String, String) {
+    // (handle, accessor, extras, identity, repr, ...) — matching the known-good
+    // Type/Value/Symbol conventions.
+    let (handle, accessor, mut extras) = match ctx.native_path(u.id).as_str() {
+        "fpp_analysis::semantics::Type" => {
+            ("arc_type", "ty", " include_base custom_build".to_string())
+        }
+        "fpp_analysis::semantics::Value" => ("value", "val", String::new()),
+        "fpp_analysis::semantics::Symbol" => ("symbol", "sym", String::new()),
         _ => ("clone", "native", String::new()),
     };
     // `loc_from_node` for clone unions whose native carries a node (SymbolInterface).
     if handle == "clone" && has_no_arg_node(ctx, u.id) {
         extras.push_str(" loc_from_node");
     }
-    let identity = match py {
-        "Type" => " identity identical".to_string(),
-        "Symbol" => " identity node".to_string(),
+    // Identity/repr directives carry the `fpp_analysis` method identifiers they
+    // call as explicit payloads, so a rename regenerates a still-correct call site
+    // in the macro instead of a compile break or silent downgrade.
+    let identity = match handle {
+        "arc_type" => " identity identical(identical, def_node_id)".to_string(),
+        "symbol" => " identity node".to_string(),
         _ => String::new(),
     };
-    let repr = match py {
-        "Type" => String::new(),
-        "Value" => " repr variant".to_string(),
-        "Symbol" => " repr variant_qualified".to_string(),
+    let repr = match handle {
+        "arc_type" => String::new(),
+        "value" => " repr variant".to_string(),
+        "symbol" => " repr variant_qualified(get_qualified_name)".to_string(),
         _ => {
             if has_unqualified_name(ctx, u.id) {
-                " repr variant_unqualified".to_string()
+                " repr variant_unqualified(get_unqualified_name)".to_string()
             } else {
                 " repr variant".to_string()
             }
@@ -1532,6 +1653,336 @@ fn union_directives(
         repr,
         String::new(),
     )
+}
+
+/// The core `fpp_analysis` semantic hierarchies that reflection from the root
+/// [`ROOT_TYPE_NAME`] struct must always reach. Losing one signals the reflection
+/// root or a public field path changed; [`assert_core_unions_present`] turns that
+/// into a loud abort instead of a silently-shrunken binding surface.
+const CORE_UNION_NATIVES: &[&str] = &[
+    "fpp_analysis::semantics::Type",
+    "fpp_analysis::semantics::Value",
+    "fpp_analysis::semantics::Symbol",
+];
+
+/// FAIL LOUD if reflection failed to reach one of the [`CORE_UNION_NATIVES`].
+pub fn assert_core_unions_present(ctx: &Ctx, r: &Reflected) {
+    for native in CORE_UNION_NATIVES {
+        assert!(
+            r.unions.iter().any(|u| ctx.native_path(u.id) == *native),
+            "core union `{native}` was not reflected from `{ROOT_TYPE_NAME}` — the \
+             reflection root or a public field path changed"
+        );
+    }
+}
+
+/// FAIL LOUD if the two `fpp_core` types the [`classify`] `fpp_core` arm keys on by
+/// exact name (`Node`/`Span`) no longer resolve. The arm matches by name, so a
+/// rename in `fpp_core` would silently downgrade every referencing field to `skip`;
+/// this aborts with a clear message instead.
+fn assert_fpp_core_types(ctx: &Ctx) {
+    for name in ["Node", "Span"] {
+        let found = ctx.krate.paths.values().any(|s| {
+            s.path.last().map(String::as_str) == Some(name)
+                && ctx
+                    .krate
+                    .external_crates
+                    .get(&s.crate_id)
+                    .map(|c| c.name.as_str())
+                    == Some("fpp_core")
+        });
+        assert!(
+            found,
+            "fpp_core::{name} not found in rustdoc paths — the `fpp_core` classification \
+             arm keys on this exact name; update `classify` if fpp_core renamed it"
+        );
+    }
+}
+
+/// FAIL LOUD if the [`DEF_MODULE_STUB`] bridge type no longer exists. The
+/// reflection maps it to `astdef(`[`DEF_MODULE_AST`]`)` by name, so its
+/// disappearance would silently drop the module bridge.
+fn assert_def_module_stub(ctx: &Ctx) {
+    let found = ctx.krate.index.values().any(|it| {
+        it.name.as_deref() == Some(DEF_MODULE_STUB)
+            && matches!(it.inner, ItemEnum::Struct(_))
+            && ctx.is_local(it.id)
+    });
+    assert!(
+        found,
+        "`{DEF_MODULE_STUB}` struct not found in fpp_analysis — the {DEF_MODULE_STUB}→\
+         {DEF_MODULE_AST} bridge keys on this name"
+    );
+}
+
+/// FAIL LOUD if a union that *structurally* requires a special handle would be
+/// emitted as a plain `clone` (the silent-downgrade hazard behind [finding #1]).
+/// Two independent structural signals gate the check:
+///   * arc-shared — the enum is stored behind `Arc<…>` somewhere in `fpp_analysis`
+///     (only `Type` today); such a union MUST use the `arc_type` handle.
+///   * symbol-keyed — the enum implements `SymbolInterface` AND keys one of the
+///     root `Analysis` struct's own map fields (only `Symbol` today; the nested
+///     `StateMachineSymbol` also implements the trait but never keys an `Analysis`
+///     field, so the map-key refinement is what isolates the identity-bearing
+///     case); such a union MUST keep the `symbol` handle + an `identity` directive.
+///
+/// A future `fpp_analysis` rename that slips a special union through the native-path
+/// match in [`union_directives`] trips one of these and aborts the generator with a
+/// clear message, instead of silently shipping a broken binding.
+pub fn assert_special_union_handles(ctx: &Ctx, r: &Reflected) {
+    let arc_ids = arc_wrapped_enum_ids(ctx);
+    let mut analysis_key_unions: BTreeSet<u32> = BTreeSet::new();
+    let mut analysis_key_entities: BTreeSet<u32> = BTreeSet::new();
+    for (_, sh) in &r.analysis_fields {
+        collect_map_keys(sh, &mut analysis_key_unions, &mut analysis_key_entities);
+    }
+    for u in &r.unions {
+        let (handle, .., identity, _repr, _) = union_directives(ctx, u);
+        let native = ctx.native_path(u.id);
+        if arc_ids.contains(&u.id.0) && handle != "arc_type" {
+            panic!(
+                "union `{native}` is stored behind Arc<…> but was classified as \
+                 `{handle}` — add it to the special-union mapping in `union_directives` \
+                 (arc_type handle)"
+            );
+        }
+        if impls_symbol_interface(ctx, u.id)
+            && analysis_key_unions.contains(&u.id.0)
+            && (handle != "symbol" || identity.is_empty())
+        {
+            panic!(
+                "union `{native}` implements SymbolInterface and keys a root Analysis \
+                 map but was classified as `{handle}`{} — add it to the special-union \
+                 mapping in `union_directives` (symbol handle + `identity node`)",
+                if identity.is_empty() {
+                    " with no identity"
+                } else {
+                    ""
+                }
+            );
+        }
+    }
+}
+
+/// Local enum `Id`s that appear behind an `Arc<…>` anywhere in `fpp_analysis`
+/// (struct fields, enum-variant fields, fn signatures, type aliases) — the
+/// structural signal for the `arc_type` handle.
+fn arc_wrapped_enum_ids(ctx: &Ctx) -> BTreeSet<u32> {
+    let mut out = BTreeSet::new();
+    for it in ctx.krate.index.values() {
+        match &it.inner {
+            ItemEnum::StructField(t) => find_arc_wrapped(ctx, t, &mut out),
+            ItemEnum::TypeAlias(a) => find_arc_wrapped(ctx, &a.type_, &mut out),
+            ItemEnum::Function(f) => {
+                for (_, t) in &f.sig.inputs {
+                    find_arc_wrapped(ctx, t, &mut out);
+                }
+                if let Some(o) = &f.sig.output {
+                    find_arc_wrapped(ctx, o, &mut out);
+                }
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
+fn find_arc_wrapped(ctx: &Ctx, ty: &Type, out: &mut BTreeSet<u32>) {
+    match ty {
+        Type::ResolvedPath(p) => {
+            let last = p.path.rsplit("::").next().unwrap_or(&p.path);
+            let args = path_type_args(&p.args);
+            if last == "Arc" {
+                if let Some(inner) = args.first() {
+                    if let Type::ResolvedPath(ip) = peel_wrappers(inner) {
+                        if ctx.is_local(ip.id) && matches!(ctx.kind(ip.id), Some(ItemKind::Enum)) {
+                            out.insert(ip.id.0);
+                        }
+                    }
+                }
+            }
+            for a in args {
+                find_arc_wrapped(ctx, a, out);
+            }
+        }
+        Type::BorrowedRef { type_, .. } => find_arc_wrapped(ctx, type_, out),
+        Type::Tuple(elems) => {
+            for e in elems {
+                find_arc_wrapped(ctx, e, out);
+            }
+        }
+        Type::Slice(t) => find_arc_wrapped(ctx, t, out),
+        Type::Array { type_, .. } => find_arc_wrapped(ctx, type_, out),
+        _ => {}
+    }
+}
+
+/// Whether a local type implements `Clone` (derived or hand-written). The
+/// clone-entity handle stores the native by value and clones it, so an entity
+/// struct without `Clone` cannot be emitted.
+fn impls_clone(ctx: &Ctx, id: Id) -> bool {
+    let impl_ids: Vec<Id> = match ctx.item(id).map(|it| &it.inner) {
+        Some(ItemEnum::Struct(s)) => s.impls.clone(),
+        Some(ItemEnum::Enum(e)) => e.impls.clone(),
+        _ => return false,
+    };
+    for iid in impl_ids {
+        let Some(ItemEnum::Impl(imp)) = ctx.item(iid).map(|it| &it.inner) else {
+            continue;
+        };
+        if let Some(tr) = &imp.trait_ {
+            if tr.path.rsplit("::").next().unwrap_or(&tr.path) == "Clone" {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Whether a local type implements the `fpp_analysis` `SymbolInterface` trait.
+fn impls_symbol_interface(ctx: &Ctx, id: Id) -> bool {
+    let impl_ids: Vec<Id> = match ctx.item(id).map(|it| &it.inner) {
+        Some(ItemEnum::Enum(e)) => e.impls.clone(),
+        Some(ItemEnum::Struct(s)) => s.impls.clone(),
+        _ => return false,
+    };
+    for iid in impl_ids {
+        let Some(ItemEnum::Impl(imp)) = ctx.item(iid).map(|it| &it.inner) else {
+            continue;
+        };
+        if let Some(tr) = &imp.trait_ {
+            let last = tr.path.rsplit("::").next().unwrap_or(&tr.path);
+            if last == "SymbolInterface" && ctx.crate_name(tr.id).as_deref() == Some("fpp_analysis")
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Walk `s`, collecting the union / entity `Id`s that appear in any map KEY
+/// position (recursing through nested maps/opt/list/tuple).
+fn collect_map_keys(s: &Shape, ku: &mut BTreeSet<u32>, ke: &mut BTreeSet<u32>) {
+    match s {
+        Shape::Map(k, v) => {
+            collect_key_ids(k, ku, ke);
+            collect_map_keys(k, ku, ke);
+            collect_map_keys(v, ku, ke);
+        }
+        Shape::Opt(i) | Shape::List(i) => collect_map_keys(i, ku, ke),
+        Shape::Tuple(v) => v.iter().for_each(|e| collect_map_keys(e, ku, ke)),
+        _ => {}
+    }
+}
+
+/// Collect every union / entity `Id` referenced anywhere inside `s` (a key shape).
+fn collect_key_ids(s: &Shape, ku: &mut BTreeSet<u32>, ke: &mut BTreeSet<u32>) {
+    match s {
+        Shape::Union(id) => {
+            ku.insert(id.0);
+        }
+        Shape::Entity(id) => {
+            ke.insert(id.0);
+        }
+        Shape::Opt(i) | Shape::List(i) => collect_key_ids(i, ku, ke),
+        Shape::Tuple(v) => v.iter().for_each(|e| collect_key_ids(e, ku, ke)),
+        Shape::Map(k, v) => {
+            collect_key_ids(k, ku, ke);
+            collect_key_ids(v, ku, ke);
+        }
+        _ => {}
+    }
+}
+
+/// Every conversion `Shape` reachable in the reflected model (analysis, unions,
+/// payloads, entities — fields, variant payloads, and method returns).
+fn all_shapes(r: &Reflected) -> Vec<&Shape> {
+    let mut v: Vec<&Shape> = Vec::new();
+    for (_, s) in &r.analysis_fields {
+        v.push(s);
+    }
+    for m in &r.analysis_methods {
+        v.push(&m.ret);
+    }
+    for u in &r.unions {
+        for var in &u.variants {
+            match &var.payload {
+                VariantPayload::Value(s) | VariantPayload::Newtype(s) => v.push(s),
+                VariantPayload::StructVariant(fs) => fs.iter().for_each(|(_, s)| v.push(s)),
+                _ => {}
+            }
+        }
+        for m in &u.methods {
+            v.push(&m.ret);
+        }
+    }
+    for p in &r.payloads {
+        for (_, s) in &p.fields {
+            v.push(s);
+        }
+        for m in &p.methods {
+            v.push(&m.ret);
+        }
+    }
+    for e in &r.entities {
+        for (_, s) in &e.fields {
+            v.push(s);
+        }
+        for m in &e.methods {
+            v.push(&m.ret);
+        }
+    }
+    v
+}
+
+/// FAIL LOUD (as logged `WARN` lines) for every union / entity used as a `map(...)`
+/// KEY that carries NO identity directive: without `__eq__`/`__hash__` its Python
+/// wrapper falls back to object identity, so a dict lookup with a freshly-built key
+/// silently misses. Logged rather than aborting because the current read-only maps
+/// legitimately expose such keys for iteration only, and a hard abort would block
+/// regeneration; the diagnostic still surfaces every occurrence on each run.
+pub fn warn_identityless_map_keys(
+    ctx: &Ctx,
+    r: &Reflected,
+    names: &Names,
+    skips: &mut Vec<String>,
+) {
+    let mut union_has_identity: BTreeMap<u32, bool> = BTreeMap::new();
+    for u in &r.unions {
+        let (_, _, _, identity, _, _) = union_directives(ctx, u);
+        union_has_identity.insert(u.id.0, !identity.is_empty());
+    }
+    let entity_has_identity: BTreeMap<u32, bool> = r
+        .entities
+        .iter()
+        .map(|e| (e.id.0, e.identity_qualified))
+        .collect();
+
+    let mut key_unions: BTreeSet<u32> = BTreeSet::new();
+    let mut key_entities: BTreeSet<u32> = BTreeSet::new();
+    for sh in all_shapes(r) {
+        collect_map_keys(sh, &mut key_unions, &mut key_entities);
+    }
+
+    for uid in key_unions {
+        if !union_has_identity.get(&uid).copied().unwrap_or(false) {
+            skips.push(format!(
+                "  WARN union {} keys a map but has no identity directive \
+                 (dict lookups by a rebuilt key will miss)",
+                names.union(Id(uid))
+            ));
+        }
+    }
+    for eid in key_entities {
+        if !entity_has_identity.get(&eid).copied().unwrap_or(false) {
+            skips.push(format!(
+                "  WARN entity {} keys a map but has no identity directive \
+                 (dict lookups by a rebuilt key will miss)",
+                names.entity(Id(eid))
+            ));
+        }
+    }
 }
 
 fn has_no_arg_node(ctx: &Ctx, id: Id) -> bool {
@@ -1597,7 +2048,7 @@ fn has_no_arg_method_returning_node(ctx: &Ctx, id: Id, name: &str) -> bool {
 
 fn emit_union(ctx: &Ctx, names: &Names, u: &UnionDef, out: &mut String, skips: &mut Vec<String>) {
     let py = names.union(u.id).to_string();
-    let (handle, accessor, extras, identity, repr, _) = union_directives(ctx, u, &py);
+    let (handle, accessor, extras, identity, repr, _) = union_directives(ctx, u);
     out.push_str(&format!(
         "    union {py} native {} handle {handle} alias \"{py}\" accessor {accessor}{extras}{identity}{repr} {{\n",
         ctx.native_path(u.id)
@@ -1671,7 +2122,7 @@ fn emit_payload(
 fn emit_entity(ctx: &Ctx, names: &Names, e: &EntityDef, out: &mut String, skips: &mut Vec<String>) {
     let name = names.entity(e.id).to_string();
     let identity = if e.identity_qualified {
-        " identity qualified_name"
+        " identity qualified_name(qualified_name)"
     } else {
         ""
     };
@@ -1726,18 +2177,18 @@ fn emit_leaf_enum(ctx: &Ctx, names: &Names, l: &LeafEnumDef, out: &mut String) {
 
 fn header(version: &str) -> String {
     format!(
-        "// @generated by fpp_sem_bindgen from fpp_analysis v{version} — do not edit\n\
+        "// @generated by bindgen from fpp_analysis v{version} — do not edit\n\
          //! Declarative mirror of the `fpp_analysis` semantic layer, expanded by the\n\
          //! `fpp_python_macros::fpp_sem_bindings!` proc macro into the read-only PyO3\n\
-         //! wrappers for the semantic data structures. GENERATED by `fpp_sem_bindgen`\n\
+         //! wrappers for the semantic data structures. GENERATED by `bindgen`\n\
          //! (rustdoc-JSON reflection of `fpp_analysis`, rooted at `Analysis`) — do not\n\
          //! edit by hand; regenerate with\n\
-         //! `cargo run -p fpp_python --features bindgen --bin fpp_sem_bindgen`.\n\
+         //! `cargo run -p fpp_python --features bindgen --bin bindgen`.\n\
          #![allow(dead_code, unused_variables, clippy::all)]\n\n"
     )
 }
 
-fn write_out(path: &Path, text: &str) {
+pub fn write_out(path: &std::path::Path, text: &str) {
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).unwrap();
     }
@@ -1745,142 +2196,91 @@ fn write_out(path: &Path, text: &str) {
 }
 
 // ---------------------------------------------------------------------------
-// Main / config
+// Reflection context construction + the shadow-normalize pass
 // ---------------------------------------------------------------------------
 
-fn main() {
-    let cfg = resolve_config();
-
-    let json = match &cfg.rustdoc_json {
-        Some(p) => std::fs::read_to_string(p)
-            .unwrap_or_else(|e| panic!("read rustdoc JSON {}: {e}", p.display())),
-        None => {
-            let manifest = cfg
-                .manifest
-                .clone()
-                .unwrap_or_else(|| PathBuf::from("fpp_analysis/Cargo.toml"));
-            let path = rustdoc_json::Builder::default()
-                .toolchain("nightly")
-                .manifest_path(&manifest)
-                .document_private_items(true)
-                .build()
-                .unwrap_or_else(|e| panic!("rustdoc-json build failed: {e}"));
-            std::fs::read_to_string(&path)
-                .unwrap_or_else(|e| panic!("read rustdoc JSON {}: {e}", path.display()))
-        }
-    };
-
-    let krate: Crate =
-        serde_json::from_str(&json).unwrap_or_else(|e| panic!("parse rustdoc JSON: {e}"));
-    assert_eq!(
-        krate.format_version,
-        rustdoc_types::FORMAT_VERSION,
-        "rustdoc JSON format_version {} != rustdoc_types::FORMAT_VERSION {} — pin the \
-         `rustdoc-types` version to the emitting nightly",
-        krate.format_version,
-        rustdoc_types::FORMAT_VERSION
-    );
-
-    let best_path = build_best_paths(&krate);
+/// Build the reflection context over a parsed rustdoc [`Crate`] + the shared AST
+/// classification, then fail loud if the by-name bridges (`fpp_core::Node`/`Span`,
+/// `DefModuleStub`) no longer resolve — before reflection silently routes around
+/// them.
+pub fn prepare<'a>(krate: &'a Crate, ast: AstClass) -> Ctx<'a> {
+    let best_path = build_best_paths(krate);
     let mut ctx = Ctx {
-        krate: &krate,
+        krate,
         best_path,
         payload_index: BTreeMap::new(),
         newtype_payloads: BTreeSet::new(),
         alias_struct: BTreeMap::new(),
+        ast,
+        used_ast_leaves: BTreeSet::new(),
         skips: Vec::new(),
     };
     build_payload_index(&mut ctx);
     build_alias_index(&mut ctx);
+    assert_fpp_core_types(&ctx);
+    assert_def_module_stub(&ctx);
+    ctx
+}
 
-    let reflected = reflect(&mut ctx);
-    let names = resolve_names(&ctx, &reflected);
-    let mut skips = Vec::new();
-    let text = emit(&ctx, &reflected, &names, &cfg.version, &mut skips);
-    write_out(&cfg.out_file, &text);
-
-    // Fold in the notes recorded during reflection (field/method-collision drops).
-    skips.extend(ctx.skips.iter().cloned());
-    for s in &skips {
-        eprintln!("{s}");
+/// Phase E: rewrite `astdef(x)` → `skip` for every shadowed AST node `x` — its
+/// Python name is owned by a semantic class, so the node has no stub and is
+/// opaque as a child. Walks the reflected fields + variant payloads; method
+/// returns carrying an `astdef` were already dropped by Rule R2, so none survive
+/// there. Returns one log line per rewrite.
+pub fn apply_shadow(r: &mut Reflected, shadowed: &BTreeSet<String>) -> Vec<String> {
+    let mut log = Vec::new();
+    for (fname, sh) in &mut r.analysis_fields {
+        shadow_shape(sh, shadowed, &format!("Analysis.{fname}"), &mut log);
     }
-    eprintln!(
-        "fpp_sem_bindgen: fpp_analysis v{} -> {} ({} unions, {} payloads, {} entities, {} leaf_enums; {} skips)",
-        cfg.version,
-        cfg.out_file.display(),
-        reflected.unions.len(),
-        reflected.payloads.len(),
-        reflected.entities.len(),
-        reflected.leaf_enums.len(),
-        skips.len(),
-    );
-}
-
-struct Config {
-    rustdoc_json: Option<PathBuf>,
-    manifest: Option<PathBuf>,
-    version: String,
-    out_file: PathBuf,
-}
-
-fn resolve_config() -> Config {
-    let mut cli_json: Option<PathBuf> = None;
-    let mut cli_version: Option<String> = None;
-    let mut cli_out: Option<PathBuf> = None;
-    let mut it = std::env::args().skip(1);
-    while let Some(arg) = it.next() {
-        match arg.as_str() {
-            "--rustdoc-json" => cli_json = it.next().map(PathBuf::from),
-            "--fpp-version" => cli_version = it.next(),
-            "--out" => cli_out = it.next().map(PathBuf::from),
-            // Accepted but ignored (callers may still pass `--fpp-src`).
-            "--fpp-src" => {
-                let _ = it.next();
+    for u in &mut r.unions {
+        for v in &mut u.variants {
+            let label = v.native.clone();
+            match &mut v.payload {
+                VariantPayload::Value(sh) | VariantPayload::Newtype(sh) => {
+                    shadow_shape(sh, shadowed, &label, &mut log);
+                }
+                VariantPayload::StructVariant(fs) => {
+                    for (n, sh) in fs.iter_mut() {
+                        shadow_shape(sh, shadowed, &format!("{label}.{n}"), &mut log);
+                    }
+                }
+                _ => {}
             }
-            _ => {}
         }
     }
-    let (manifest, meta_version) = cargo_metadata_fpp_analysis();
-    Config {
-        rustdoc_json: cli_json,
-        manifest,
-        version: cli_version
-            .or(meta_version)
-            .unwrap_or_else(|| "unknown".to_string()),
-        out_file: cli_out.unwrap_or_else(|| PathBuf::from("fpp_python/src/sem/defs.rs")),
+    for p in &mut r.payloads {
+        for (fname, sh) in &mut p.fields {
+            shadow_shape(sh, shadowed, fname, &mut log);
+        }
     }
+    for e in &mut r.entities {
+        for (fname, sh) in &mut e.fields {
+            shadow_shape(sh, shadowed, fname, &mut log);
+        }
+    }
+    log
 }
 
-/// The `fpp_analysis` manifest path + version from `cargo metadata`.
-fn cargo_metadata_fpp_analysis() -> (Option<PathBuf>, Option<String>) {
-    let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
-    let output = match Command::new(cargo)
-        .args(["metadata", "--format-version", "1"])
-        .output()
-    {
-        Ok(o) if o.status.success() => o,
-        _ => return (None, None),
-    };
-    let meta: serde_json::Value = match serde_json::from_slice(&output.stdout) {
-        Ok(v) => v,
-        Err(_) => return (None, None),
-    };
-    let Some(packages) = meta.get("packages").and_then(|p| p.as_array()) else {
-        return (None, None);
-    };
-    for pkg in packages {
-        if pkg.get("name").and_then(|n| n.as_str()) != Some("fpp_analysis") {
-            continue;
+fn shadow_shape(s: &mut Shape, shadowed: &BTreeSet<String>, label: &str, log: &mut Vec<String>) {
+    match s {
+        Shape::AstDef(name) if shadowed.contains(name) => {
+            log.push(format!(
+                "  shadow {label}: astdef({name}) -> skip (name owned by a sem class)"
+            ));
+            *s = Shape::Skip(format!(
+                "{name}: shadowed AST node (name owned by a sem class)"
+            ));
         }
-        let version = pkg
-            .get("version")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string());
-        let manifest = pkg
-            .get("manifest_path")
-            .and_then(|m| m.as_str())
-            .map(PathBuf::from);
-        return (manifest, version);
+        Shape::Opt(i) | Shape::List(i) => shadow_shape(i, shadowed, label, log),
+        Shape::Map(k, v) => {
+            shadow_shape(k, shadowed, label, log);
+            shadow_shape(v, shadowed, label, log);
+        }
+        Shape::Tuple(v) => {
+            for e in v {
+                shadow_shape(e, shadowed, label, log);
+            }
+        }
+        _ => {}
     }
-    (None, None)
 }

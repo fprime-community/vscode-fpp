@@ -1,5 +1,5 @@
 //! The `fpp_sem_bindings!` function-like macro: expands a declarative mirror of
-//! the `fpp_analysis` semantic layer (emitted by `fpp_sem_bindgen` into
+//! the `fpp_analysis` semantic layer (emitted by the `bindgen` binary into
 //! `fpp_python/src/sem/defs.rs`) into the read-only PyO3 wrappers for the
 //! semantic data structures — the `Symbol`/`Type`/`Value` closed-union
 //! hierarchies, the entity structs, their union `*Ref` newtypes + Python
@@ -12,7 +12,7 @@
 //! wrapper stores its native value) and an explicit *method* list, and every
 //! field/method records its resolved *shape* (how the native value converts to a
 //! Python object). The macro is a dumb emitter over those shapes; all
-//! classification happens in `fpp_sem_bindgen`. The macro never reads
+//! classification happens in the `bindgen` binary. The macro never reads
 //! `fpp_analysis` source — only its DSL tokens.
 //!
 //! # Grammar
@@ -20,7 +20,8 @@
 //! ```text
 //! union <PyName> native <path> handle <arc_type|value|symbol|clone> alias "<Alias>"
 //!       accessor <ident> [include_base] [custom_build] [loc_from_node]
-//!       [identity <node|identical>] [repr <variant|variant_qualified|variant_unqualified>] {
+//!       [identity <node | identical[(<eq_fn>, <node_id_method>)]>]
+//!       [repr <variant | variant_qualified[(<method>)] | variant_unqualified[(<method>)]>] {
 //!     variants { <NativeVariant> => <Subclass> : <payloadkind>, … }
 //!     methods  { [assoc] <name> [(analysis)] -> <shape>, … }
 //! }
@@ -28,8 +29,7 @@
 //!     fields  { <name>: <shape>, … }
 //!     methods { … }
 //! }
-//! entity <PyName> native <path>
-//!        [ field <ident> | handle symbol_keyed(<map>) def <DefX> ] {
+//! entity <PyName> native <path> [ field <ident> ] {
 //!     extras  { <name>: <shape>, … }   // clone-handle only: build-time scalars
 //!     fields  { <name>: <shape>, … }
 //!     methods { … }
@@ -41,24 +41,23 @@
 //!
 //! `loc_from_node` emits a base `loc` getter resolving the location from the
 //! native's node id. `identity` emits `__eq__`/`__hash__` (`node`: native `==` +
-//! hash by node id; `identical`: `Type::identical` + `def_node_id`). `repr` emits
-//! `__repr__` (`<Alias Variant [ 'qualified'|'unqualified' name ]>`). A
-//! `leaf_enum` emits a `#[pyclass(eq, eq_int)]` mirror + `From<&native>`.
+//! hash by node id; `identical`: value equality + node-id hash via the carried
+//! `(eq_fn, node_id_method)` idents). `repr` emits `__repr__`
+//! (`<Alias Variant [ 'qualified'|'unqualified' name ]>`), resolving the name via
+//! the carried method ident. A `leaf_enum` emits a `#[pyclass(eq, eq_int)]` mirror
+//! + `From<&native>`.
 //!
-//! An `entity` is a standalone `#[pyclass(frozen)]` (not a union subclass). A
-//! `clone`-handle entity (default, or `field <ident>`) stores a native `Clone`;
-//! a `symbol_keyed(<map>)`-handle entity stores only its defining `Symbol`, looks
-//! the native value up in `data.analysis.<map>`, and gains the uniform
-//! `loc`/`symbol`/`definition`(→`Py<DefX>`)/`__eq__`/`__hash__` scaffolding plus a
-//! `build_<snake>` constructor and a `<snake>_by_symbol` resolver.
+//! An `entity` is a standalone `#[pyclass(frozen)]` (not a union subclass). It
+//! stores a native `Clone` (the default field `native`, or `field <ident>`); its
+//! field/method getters project that stored handle.
 //!
 //! `payloadkind` is `unit` (no data), `payload` (fields from a matching `payload`
 //! decl), or a bare `<shape>` (a single-value variant → one `value` getter).
-//! `shape` is the conversion vocabulary: `bool i128 f64 usize str node span type
-//! value symbol skip`, `leaf(<path>)`, `astdef(<Ident>)`,
-//! `rewrap(<Union>::<Variant>)`, `opt(<shape>)`, `list(<shape>)`, `dict(<shape>)`
-//! (string-keyed `dict[str, V]`), `map(<key_shape>, <value_shape>)` (a real
-//! `dict[K, V]`), `tuple(<shape>, …)`, `union(<Name>)`, `entity(<Name>)`.
+//! `shape` is the conversion vocabulary: `bool i128 f64 usize str node span
+//! skip`, `leaf(<path>)`, `astdef(<Ident>)`, `rewrap(<Union>::<Variant>)`,
+//! `opt(<shape>)`, `list(<shape>)`, `dict(<shape>)` (string-keyed `dict[str, V]`),
+//! `map(<key_shape>, <value_shape>)` (a real `dict[K, V]`), `tuple(<shape>, …)`,
+//! `union(<Name>)` (any closed union by its Python name), `entity(<Name>)`.
 //!
 //! # Additional sections / directives
 //!
@@ -71,15 +70,17 @@
 //!
 //! A `methods` entry's parameter list is comma-separated `<name>: <argkind>`
 //! pairs (plus the legacy bare `analysis` form). `argkind` ∈ `analysis` (the
-//! injected `&self.data.analysis`, not a Python param), `symbol` (a Python
-//! `Symbol` wrapper → borrowed `&fpp_analysis::semantics::Symbol`), and the
-//! scalars `i128`/`bool`/`str`/`usize`. A method with ≥1 real (non-`analysis`)
-//! param is emitted as a callable method; otherwise it is a `#[getter]` property.
+//! injected `&self.data.analysis`, not a Python param), `symbol` / `symbol_owned`
+//! (a Python `Symbol` wrapper feeding a borrowed `&Symbol` / an owned `Symbol`
+//! param), and the scalars `i128`/`bool`/`usize`/`str` (borrowed `&str`) /
+//! `string` (owned `String`). A method with ≥1 real (non-`analysis`) param is
+//! emitted as a callable method; otherwise it is a `#[getter]` property.
 //!
-//! An `entity` may carry an optional `identity <node|qualified_name|raw_handle>`
-//! directive (peer of the handle/field directives), emitting `__eq__`/`__hash__`
-//! in the clone-entity `#[pymethods]` block. Every clone-entity also gets a
-//! default `__repr__` (`<PyName>`).
+//! An `entity` may carry an optional
+//! `identity <node | qualified_name[(<method>)] | raw_handle>` directive (peer of
+//! the handle/field directives), emitting `__eq__`/`__hash__` in the clone-entity
+//! `#[pymethods]` block. Every clone-entity also gets a default `__repr__`
+//! (`<PyName>`).
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -142,20 +143,6 @@ fn rewrap_subclass<'a>(reg: &'a UnionReg, name: &str, variant: &Ident) -> &'a Id
         .unwrap_or_else(|| panic!("union `{name}` has no variant `{variant}`"))
 }
 
-/// A `Span`-backed detail materialized on access. These are not stored native
-/// fields — the wrapper resolves them from a span (or an `InterfaceInstance`) at
-/// access time.
-enum Materialize {
-    /// A `fpp_core::Span` → `Option<crate::ir_core::Loc>` (resolved location).
-    Loc,
-    /// A `fpp_core::Span` bridged to its `Spec*` AST node →
-    /// `Option<Py<crate::ast::SpecX>>` (the thin-element detail forwarder).
-    Spec(Ident),
-    /// A native `InterfaceInstance` → `Option<InstanceRef>` (the owning
-    /// component-instance / topology resolver).
-    Instance,
-}
-
 /// A field/method conversion shape: a native value → a Python object.
 enum Shape {
     Bool,
@@ -188,8 +175,6 @@ enum Shape {
     Map(Box<Shape>, Box<Shape>),
     /// A Rust tuple → a Python `tuple`, e.g. `(String, i128)`.
     Tuple(Vec<Shape>),
-    /// A `Span`-backed detail materialized on access (see [`Materialize`]).
-    Materialize(Materialize),
     /// A nested reflected struct/entity value → `Py<crate::sem::Wrapper>` via
     /// `Wrapper::build` (only valid for entities with no build-time extras).
     StructRef(Ident),
@@ -203,7 +188,6 @@ impl Shape {
             Shape::UnionRef(_) | Shape::RewrapRef(..) | Shape::AstDef(_) | Shape::StructRef(_) => {
                 true
             }
-            Shape::Materialize(m) => matches!(m, Materialize::Spec(_) | Materialize::Instance),
             Shape::Opt(s) | Shape::List(s) | Shape::Dict(s) => s.needs_py(),
             // Building the `PyDict` needs `py` regardless of key/value shapes.
             Shape::Map(_, _) => true,
@@ -254,11 +238,6 @@ impl Shape {
                 let tys = v.iter().map(|s| s.ty(reg));
                 quote!((#(#tys),*))
             }
-            Shape::Materialize(Materialize::Loc) => quote!(Option<crate::ir_core::Loc>),
-            Shape::Materialize(Materialize::Spec(id)) => {
-                quote!(Option<::pyo3::Py<crate::ast::#id>>)
-            }
-            Shape::Materialize(Materialize::Instance) => quote!(Option<crate::sem::InstanceRef>),
             Shape::StructRef(id) => quote!(::pyo3::Py<crate::sem::#id>),
             Shape::Skip => quote!(()),
         }
@@ -284,6 +263,10 @@ impl Shape {
             // `to_string` accepts both `&String` (owned fields) and `&str`
             // (method returns like `PortInstance::get_unqualified_name`).
             Shape::Str => quote!((#vref).to_string()),
+            // The dense id of a node. A node absent from the id table — one never
+            // recorded during the walk — yields `0`, conflating "unrecorded" with
+            // the node whose id is 0. Left as-is (the id type stays `u32`); every
+            // node reachable through the semantic layer is recorded in practice.
             Shape::Node => quote!(#data.ids.get(#vref).copied().unwrap_or(0)),
             // `#vref` is a `&Span`; clone the backing model, deref the `Copy` span.
             Shape::Span => {
@@ -333,6 +316,13 @@ impl Shape {
                 }
             }
             Shape::Leaf(p) => quote!(#p::from(#vref)),
+            // `.node_id` is read as a bare field (not `fpp_ast::AstNode::id()`)
+            // because this shape spans two kinds of native value unified only by
+            // that field: a real `#[ast]` node (`node_id` is the reserved field the
+            // macro injects, == `AstNode::id()`) and the `fpp_analysis`
+            // `DefModuleStub` bridge (its own `node_id: Node`, which does *not* impl
+            // `AstNode`). Field access also auto-derefs through an `Arc<DefX>`
+            // payload, which a fully-qualified trait call would not.
             Shape::AstDef(id) => quote! {
                 crate::model::Model::build(#model, py, #vref.node_id)?
                     .into_bound(py)
@@ -380,14 +370,6 @@ impl Shape {
                 });
                 quote!((#(#elems),*))
             }
-            // `#vref` is a `&Span`; dereference to the `Copy` `Span`.
-            Shape::Materialize(Materialize::Loc) => quote!(#data.loc_of_span(*#vref)),
-            Shape::Materialize(Materialize::Spec(id)) => {
-                quote!(crate::sem::build_spec::<crate::ast::#id>(&#data, #model, py, *#vref)?)
-            }
-            Shape::Materialize(Materialize::Instance) => {
-                quote!(crate::sem::instance_ref(&#data, #model, py, #vref)?)
-            }
             Shape::StructRef(id) => {
                 quote!(crate::sem::#id::build(#model, py, ::std::clone::Clone::clone(#vref))?)
             }
@@ -423,8 +405,12 @@ struct VariantDecl {
 enum ScalarArg {
     I128,
     Bool,
-    Str,
     Usize,
+    /// A borrowed `&str` native param, fed from an owned Python `String` via
+    /// `#n.as_str()`.
+    Str,
+    /// An owned `String` native param, fed the Python `String` by value (`#n`).
+    StringVal,
 }
 
 /// How a method parameter is supplied to the native call.
@@ -432,8 +418,10 @@ enum ArgKind {
     /// The injected `&Analysis` (context-dependent place-expr); NOT a Python
     /// parameter. Covers both the legacy bare `analysis` form and `<name>: analysis`.
     Analysis,
-    /// A Python `Symbol` wrapper → borrowed native `&fpp_analysis::semantics::Symbol`.
-    Symbol,
+    /// A Python `Symbol` wrapper feeding a native `Symbol` param. `borrowed` picks
+    /// the pass form: a borrowed `&Symbol` param takes `&#n.sym`; an owned `Symbol`
+    /// param takes a clone (`#n.sym.clone()`) — the wrapper only lends its `sym`.
+    Symbol { borrowed: bool },
     /// A Python scalar received directly.
     Scalar(ScalarArg),
 }
@@ -477,41 +465,45 @@ impl Handle {
         matches!(self, Handle::ArcType | Handle::Symbol)
     }
     /// The base struct field type storing the native handle. `native` is the
-    /// union's native enum path (used by the by-value `Clone` handle).
+    /// union's native enum path (from the DSL `native` clause); every handle
+    /// stores that path — Arc-wrapped for `ArcType`, by value otherwise. No
+    /// concrete `fpp_analysis` type name is baked in here.
     fn field_ty(self, native: &Path) -> TokenStream {
         match self {
-            Handle::ArcType => quote!(::std::sync::Arc<fpp_analysis::semantics::Type>),
-            Handle::Value => quote!(fpp_analysis::semantics::Value),
-            Handle::Symbol => quote!(fpp_analysis::semantics::Symbol),
-            Handle::Clone => quote!(#native),
+            Handle::ArcType => quote!(::std::sync::Arc<#native>),
+            Handle::Value | Handle::Symbol | Handle::Clone => quote!(#native),
         }
     }
 }
 
-/// A union's identity (`__eq__`/`__hash__`) directive.
-#[derive(Clone, Copy, PartialEq, Eq)]
+/// A union's identity (`__eq__`/`__hash__`) directive. The method identifiers are
+/// carried as DSL payloads (not hardcoded here) so a rename in `fpp_analysis`
+/// regenerates a still-correct call site.
 enum Identity {
     /// No generated identity — default PyO3 object identity.
     None,
     /// Native `==` + hash by node id (`accessor.node()` via `SymbolInterface`).
     Node,
-    /// The `Type` quirk: `Type::identical` + hash by `def_node_id`.
-    Identical,
+    /// Value equality + hash by node id via the carried `(eq_assoc_fn,
+    /// node_id_method)` idents: `Native::<eq>(&a, &b)` for `__eq__` and
+    /// `accessor.<node_id>()` for `__hash__` (the arc-shared `Type` quirk).
+    Identical(Ident, Ident),
 }
 
 /// A union's `__repr__` directive. All forms render `<Alias …>`; the `…` is the
 /// native variant discriminant name, optionally followed by a quoted qualified /
-/// unqualified name.
-#[derive(Clone, Copy, PartialEq, Eq)]
+/// unqualified name resolved via the carried method identifier.
 enum Repr {
     /// No generated repr — hand-written elsewhere.
     None,
     /// `<Alias Variant>`.
     Variant,
-    /// `<Alias Variant 'qualified_name'>`.
-    VariantQualified,
-    /// `<Alias Variant 'unqualified_name'>`.
-    VariantUnqualified,
+    /// `<Alias Variant 'qualified'>` — the `Ident` names the `Analysis` method
+    /// called as `self.data.analysis.<method>(&accessor)`.
+    VariantQualified(Ident),
+    /// `<Alias Variant 'unqualified'>` — the `Ident` names the accessor method
+    /// called as `accessor.<method>()`.
+    VariantUnqualified(Ident),
 }
 
 struct UnionDecl {
@@ -543,33 +535,24 @@ struct PayloadDecl {
     methods: Vec<MethodDecl>,
 }
 
-/// How a standalone `entity` item stores + reaches its native value.
+/// How a standalone `entity` item stores + reaches its native value: a
+/// `#[pyclass(frozen)]` holding a native `Clone` (+ any build-time extra scalars
+/// its parent supplies), *not* a union subclass. Field/method getters project the
+/// stored `field`; `extras` are plain stored scalars set by the `build`
+/// constructor.
 enum EntityHandle {
-    /// A `clone`-handle entity: a `#[pyclass(frozen)]` holding a native `Clone`
-    /// (+ any build-time extra scalars its parent supplies), *not* a union
-    /// subclass. Field/method getters project the stored `field`; `extras` are
-    /// plain stored scalars set by the `build` constructor.
     Clone { field: Ident },
-    /// A `symbol_keyed`-handle entity: a top-level entity keyed by an
-    /// `fpp_analysis` `Symbol` and looked up in an `Analysis` map. Stores
-    /// `{data, model, sym}`; `native()` = `data.analysis.<map>.get(&sym)`;
-    /// field/method getters
-    /// read `self.native().<field>` / call `self.native().<method>()`. Emits the
-    /// uniform `loc`/`symbol`/`definition`(concrete `Py<DefX>`)/`__eq__`/`__hash__`
-    /// plus a `build_<snake>` constructor and a `<snake>_by_symbol` resolver.
-    SymbolKeyed { map: Ident, def: Ident },
 }
 
-/// A clone-`entity`'s `__eq__`/`__hash__` directive. Only applies to the
-/// `clone`-handle shape (symbol-keyed entities carry their own node identity).
-#[derive(Clone, Copy, PartialEq, Eq)]
+/// A clone-`entity`'s `__eq__`/`__hash__` directive.
 enum EntityIdentity {
     /// No generated identity — default PyO3 object identity.
     None,
     /// Native `==` + hash by `data.ids[native.node()]` (native: `SymbolInterface`).
     Node,
-    /// `__eq__`/`__hash__` from `self.<field>.qualified_name()` (a `String`).
-    QualifiedName,
+    /// `__eq__`/`__hash__` from `self.<field>.<method>()` (a `String`); the carried
+    /// `Ident` names that method (e.g. `qualified_name`).
+    QualifiedName(Ident),
     /// Delegate to the native's `PartialEq`/`Hash` (native: `Copy + Hash + Eq`).
     RawHandle,
 }
@@ -630,11 +613,6 @@ struct Dsl {
 
 impl Parse for Shape {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        // `type` is a reserved keyword; the rest are plain idents.
-        if input.peek(Token![type]) {
-            input.parse::<Token![type]>()?;
-            return Ok(Shape::UnionRef("Type".into()));
-        }
         let kw: Ident = input.parse()?;
         let s = kw.to_string();
         Ok(match s.as_str() {
@@ -648,11 +626,6 @@ impl Parse for Shape {
             "str" => Shape::Str,
             "node" => Shape::Node,
             "span" => Shape::Span,
-            "value" => Shape::UnionRef("Value".into()),
-            "symbol" => Shape::UnionRef("Symbol".into()),
-            "port_instance" => Shape::UnionRef("PortInstance".into()),
-            "loc" => Shape::Materialize(Materialize::Loc),
-            "instance" => Shape::Materialize(Materialize::Instance),
             "skip" => Shape::Skip,
             "opt" | "list" | "dict" => {
                 let content;
@@ -688,11 +661,6 @@ impl Parse for Shape {
                 let content;
                 parenthesized!(content in input);
                 Shape::AstDef(content.parse()?)
-            }
-            "spec" => {
-                let content;
-                parenthesized!(content in input);
-                Shape::Materialize(Materialize::Spec(content.parse()?))
             }
             "entity" => {
                 let content;
@@ -742,17 +710,19 @@ impl Parse for MethodParam {
             let kind_id: Ident = input.parse()?;
             let kind = match kind_id.to_string().as_str() {
                 "analysis" => ArgKind::Analysis,
-                "symbol" => ArgKind::Symbol,
+                "symbol" => ArgKind::Symbol { borrowed: true },
+                "symbol_owned" => ArgKind::Symbol { borrowed: false },
                 "i128" => ArgKind::Scalar(ScalarArg::I128),
                 "bool" => ArgKind::Scalar(ScalarArg::Bool),
                 "str" => ArgKind::Scalar(ScalarArg::Str),
+                "string" => ArgKind::Scalar(ScalarArg::StringVal),
                 "usize" => ArgKind::Scalar(ScalarArg::Usize),
                 other => {
                     return Err(syn::Error::new(
                         kind_id.span(),
                         format!(
-                            "unknown arg kind `{other}` \
-                             (expected analysis/symbol/i128/bool/str/usize)"
+                            "unknown arg kind `{other}` (expected \
+                             analysis/symbol/symbol_owned/i128/bool/str/string/usize)"
                         ),
                     ));
                 }
@@ -918,7 +888,17 @@ impl Parse for UnionDecl {
             let mode: Ident = input.parse()?;
             match mode.to_string().as_str() {
                 "node" => Identity::Node,
-                "identical" => Identity::Identical,
+                // `identical(<eq_fn>, <node_id_method>)` — payload optional, with
+                // the historical `(identical, def_node_id)` default so an older
+                // (payload-free) `defs.rs` still parses.
+                "identical" => {
+                    let (eq_fn, node_id) = parse_ident_pair_payload(
+                        input,
+                        || format_ident!("identical"),
+                        || format_ident!("def_node_id"),
+                    )?;
+                    Identity::Identical(eq_fn, node_id)
+                }
                 other => {
                     return Err(syn::Error::new(
                         mode.span(),
@@ -934,8 +914,17 @@ impl Parse for UnionDecl {
             let mode: Ident = input.parse()?;
             match mode.to_string().as_str() {
                 "variant" => Repr::Variant,
-                "variant_qualified" => Repr::VariantQualified,
-                "variant_unqualified" => Repr::VariantUnqualified,
+                // `variant_qualified(<method>)` / `variant_unqualified(<method>)` —
+                // payload optional, defaulting to the historical method names so an
+                // older (payload-free) `defs.rs` still parses.
+                "variant_qualified" => Repr::VariantQualified(parse_ident_payload(
+                    input,
+                    || format_ident!("get_qualified_name"),
+                )?),
+                "variant_unqualified" => Repr::VariantUnqualified(parse_ident_payload(
+                    input,
+                    || format_ident!("get_unqualified_name"),
+                )?),
                 other => {
                     return Err(syn::Error::new(
                         mode.span(),
@@ -1005,28 +994,9 @@ impl Parse for EntityDecl {
         let py: Ident = input.parse()?;
         expect_kw(input, "native")?;
         let native: Path = input.parse()?;
-        // `handle symbol_keyed(<map>) def <DefX>` selects the symbol-keyed shape;
-        // otherwise an optional `field <ident>` names the clone handle's field.
-        let handle = if peek_kw(input, "handle") {
-            input.parse::<Ident>()?; // consume `handle`
-            let kind: Ident = input.parse()?;
-            match kind.to_string().as_str() {
-                "symbol_keyed" => {
-                    let content;
-                    parenthesized!(content in input);
-                    let map: Ident = content.parse()?;
-                    expect_kw(input, "def")?;
-                    let def: Ident = input.parse()?;
-                    EntityHandle::SymbolKeyed { map, def }
-                }
-                other => {
-                    return Err(syn::Error::new(
-                        kind.span(),
-                        format!("unknown entity handle `{other}` (expected `symbol_keyed`)"),
-                    ));
-                }
-            }
-        } else if peek_kw(input, "field") {
+        // An optional `field <ident>` names the clone handle's stored field (else
+        // the default `native`).
+        let handle = if peek_kw(input, "field") {
             input.parse::<Ident>()?; // consume `field`
             EntityHandle::Clone {
                 field: input.parse()?,
@@ -1042,7 +1012,12 @@ impl Parse for EntityDecl {
             let mode: Ident = input.parse()?;
             match mode.to_string().as_str() {
                 "node" => EntityIdentity::Node,
-                "qualified_name" => EntityIdentity::QualifiedName,
+                // `qualified_name(<method>)` — payload optional, defaulting to the
+                // historical `qualified_name` so an older `defs.rs` still parses.
+                "qualified_name" => EntityIdentity::QualifiedName(parse_ident_payload(
+                    input,
+                    || format_ident!("qualified_name"),
+                )?),
                 "raw_handle" => EntityIdentity::RawHandle,
                 other => {
                     return Err(syn::Error::new(
@@ -1166,6 +1141,41 @@ fn peek_kw(input: ParseStream, name: &str) -> bool {
             .parse::<Ident>()
             .map(|i| i == name)
             .unwrap_or(false)
+}
+
+/// Parse an optional `(<ident>)` directive payload. Absent → `default()`. Lets a
+/// directive carry the `fpp_analysis` method name it calls, while keeping the
+/// payload optional so a payload-free `defs.rs` still parses (back-compat).
+fn parse_ident_payload(
+    input: ParseStream,
+    default: impl FnOnce() -> Ident,
+) -> syn::Result<Ident> {
+    if input.peek(syn::token::Paren) {
+        let content;
+        parenthesized!(content in input);
+        content.parse()
+    } else {
+        Ok(default())
+    }
+}
+
+/// Parse an optional `(<ident>, <ident>)` directive payload. Absent → the two
+/// defaults. Same back-compat rationale as [`parse_ident_payload`].
+fn parse_ident_pair_payload(
+    input: ParseStream,
+    default_a: impl FnOnce() -> Ident,
+    default_b: impl FnOnce() -> Ident,
+) -> syn::Result<(Ident, Ident)> {
+    if input.peek(syn::token::Paren) {
+        let content;
+        parenthesized!(content in input);
+        let a: Ident = content.parse()?;
+        content.parse::<Token![,]>()?;
+        let b: Ident = content.parse()?;
+        Ok((a, b))
+    } else {
+        Ok((default_a(), default_b()))
+    }
 }
 
 impl Parse for Dsl {
@@ -1358,11 +1368,15 @@ fn method_arg_parts(
     for p in params {
         match &p.kind {
             ArgKind::Analysis => call.push(analysis_access.clone()),
-            ArgKind::Symbol => {
+            ArgKind::Symbol { borrowed } => {
                 has_py_param = true;
                 let n = &p.name;
                 sig.push(quote!(#n: ::pyo3::PyRef<'_, crate::sem::Symbol>));
-                call.push(quote!(&#n.sym));
+                if *borrowed {
+                    call.push(quote!(&#n.sym));
+                } else {
+                    call.push(quote!(::std::clone::Clone::clone(&#n.sym)));
+                }
             }
             ArgKind::Scalar(s) => {
                 has_py_param = true;
@@ -1372,6 +1386,7 @@ fn method_arg_parts(
                     ScalarArg::Bool => (quote!(bool), quote!(#n)),
                     ScalarArg::Usize => (quote!(usize), quote!(#n)),
                     ScalarArg::Str => (quote!(::std::string::String), quote!(#n.as_str())),
+                    ScalarArg::StringVal => (quote!(::std::string::String), quote!(#n)),
                 };
                 sig.push(quote!(#n: #ty));
                 call.push(pass);
@@ -1419,9 +1434,15 @@ fn emit_union_methods(u: &UnionDecl, reg: &UnionReg) -> Vec<TokenStream> {
         let vref = quote!((&__r));
         let expr = m.shape.expr(&vref, &model, &data, reg);
         let ty = m.shape.ty(reg);
+        // The native call may read the retained compiler context (annotations,
+        // `Node::span`), so it runs under `run_ref`. This enters the context only
+        // for the duration of the call/conversion; the conversion itself never
+        // re-enters `run_ref` (spans resolve lazily), so nesting cannot occur.
         let body = quote! {
-            let __r = #call;
-            Ok(#expr)
+            ::fpp_core::run_ref(&#data.ctx, || {
+                let __r = #call;
+                Ok(#expr)
+            })
         };
         getter_tokens(&Getter {
             name: mname.clone(),
@@ -1549,9 +1570,14 @@ fn emit_subclass_getters(
                 let vref = quote!((&__r));
                 let expr = m.shape.expr(&vref, &model, &data, reg);
                 let ty = m.shape.ty(reg);
+                // The native call may read the retained compiler context, so it
+                // runs under `run_ref` (see `emit_union_methods`).
                 let body = quote! {
                     match #scrut {
-                        #native::#variant(x) => { let __r = #call; Ok(#expr) },
+                        #native::#variant(x) => ::fpp_core::run_ref(&#data.ctx, || {
+                            let __r = #call;
+                            Ok(#expr)
+                        }),
                         _ => unreachable!(),
                     }
                 };
@@ -1595,7 +1621,7 @@ fn variant_match_pattern(native: &Path, v: &VariantDecl) -> TokenStream {
 /// Emit the private `sem_repr_kind` helper (the native variant discriminant name),
 /// used only by a generated `__repr__`. Empty when no repr is generated.
 fn emit_union_kind_helper(u: &UnionDecl) -> TokenStream {
-    if u.repr == Repr::None {
+    if matches!(u.repr, Repr::None) {
         return quote!();
     }
     let base = &u.py;
@@ -1622,7 +1648,7 @@ fn emit_union_kind_helper(u: &UnionDecl) -> TokenStream {
 fn emit_union_repr(u: &UnionDecl) -> TokenStream {
     let accessor = &u.accessor;
     let alias = u.alias.value();
-    match u.repr {
+    match &u.repr {
         Repr::None => quote!(),
         Repr::Variant => {
             let fmt = format!("<{alias} {{}}>");
@@ -1632,23 +1658,23 @@ fn emit_union_repr(u: &UnionDecl) -> TokenStream {
                 }
             }
         }
-        Repr::VariantQualified => {
+        Repr::VariantQualified(method) => {
             let fmt = format!("<{alias} {{}} '{{}}'>");
             quote! {
                 fn __repr__(&self) -> ::std::string::String {
                     format!(
                         #fmt,
                         self.sem_repr_kind(),
-                        self.data.analysis.get_qualified_name(&self.#accessor)
+                        self.data.analysis.#method(&self.#accessor)
                     )
                 }
             }
         }
-        Repr::VariantUnqualified => {
+        Repr::VariantUnqualified(method) => {
             let fmt = format!("<{alias} {{}} '{{}}'>");
             quote! {
                 fn __repr__(&self) -> ::std::string::String {
-                    format!(#fmt, self.sem_repr_kind(), self.#accessor.get_unqualified_name())
+                    format!(#fmt, self.sem_repr_kind(), self.#accessor.#method())
                 }
             }
         }
@@ -1660,7 +1686,7 @@ fn emit_union_identity(u: &UnionDecl) -> TokenStream {
     let base = &u.py;
     let accessor = &u.accessor;
     let native = &u.native;
-    match u.identity {
+    match &u.identity {
         Identity::None => quote!(),
         Identity::Node => quote! {
             fn __eq__(&self, other: &::pyo3::Bound<'_, ::pyo3::PyAny>) -> bool {
@@ -1673,17 +1699,17 @@ fn emit_union_identity(u: &UnionDecl) -> TokenStream {
                 self.data.ids.get(&self.#accessor.node()).copied().unwrap_or(0) as u64
             }
         },
-        Identity::Identical => quote! {
+        Identity::Identical(eq_fn, node_id) => quote! {
             fn __eq__(&self, other: &::pyo3::Bound<'_, ::pyo3::PyAny>) -> bool {
                 match other.downcast::<#base>() {
                     ::std::result::Result::Ok(o) => {
-                        #native::identical(&self.#accessor, &o.borrow().#accessor)
+                        #native::#eq_fn(&self.#accessor, &o.borrow().#accessor)
                     }
                     ::std::result::Result::Err(_) => false,
                 }
             }
             fn __hash__(&self) -> u64 {
-                match self.#accessor.def_node_id() {
+                match self.#accessor.#node_id() {
                     ::std::option::Option::Some(n) => {
                         self.data.ids.get(&n).copied().unwrap_or(0) as u64
                     }
@@ -1843,13 +1869,14 @@ fn emit_union(
     let ref_fn = format_ident!("{}_ref", snake_name);
     let build_fn = format_ident!("build_{}", snake_name);
     let native = &u.native;
+    // The native TYPE comes from the union's parsed `native` path (Fix A: no
+    // literal `fpp_analysis::semantics::*` — moving that module is a pure regen).
+    // The four handles differ only in STORAGE STRATEGY: Arc-wrapped, owned, or
+    // borrowed.
     let (ref_arg, build_arg) = match u.handle {
-        Handle::ArcType => (
-            quote!(ty: ::std::sync::Arc<fpp_analysis::semantics::Type>),
-            quote!(ty),
-        ),
-        Handle::Value => (quote!(v: &fpp_analysis::semantics::Value), quote!(v)),
-        Handle::Symbol => (quote!(s: fpp_analysis::semantics::Symbol), quote!(s)),
+        Handle::ArcType => (quote!(ty: ::std::sync::Arc<#native>), quote!(ty)),
+        Handle::Value => (quote!(v: &#native), quote!(v)),
+        Handle::Symbol => (quote!(s: #native), quote!(s)),
         Handle::Clone => (quote!(n: &#native), quote!(n)),
     };
     let ref_builder = quote! {
@@ -1868,20 +1895,12 @@ fn emit_union(
     } else {
         let (b_arg, owned, disc) = match u.handle {
             Handle::ArcType => (
-                quote!(ty: ::std::sync::Arc<fpp_analysis::semantics::Type>),
+                quote!(ty: ::std::sync::Arc<#native>),
                 quote!(ty.clone()),
                 quote!(&ty),
             ),
-            Handle::Value => (
-                quote!(v: &fpp_analysis::semantics::Value),
-                quote!(v.clone()),
-                quote!(v),
-            ),
-            Handle::Symbol => (
-                quote!(s: fpp_analysis::semantics::Symbol),
-                quote!(s.clone()),
-                quote!(&s),
-            ),
+            Handle::Value => (quote!(v: &#native), quote!(v.clone()), quote!(v)),
+            Handle::Symbol => (quote!(s: #native), quote!(s.clone()), quote!(&s)),
             Handle::Clone => (quote!(n: &#native), quote!(n.clone()), quote!(n)),
         };
         quote! {
@@ -1913,12 +1932,10 @@ fn emit_union(
     )
 }
 
-/// Emit a standalone `entity` item, dispatching on its storage handle. Returns
-/// `(definition, register_call)`.
+/// Emit a standalone `entity` item. Returns `(definition, register_call)`.
 fn emit_entity(e: &EntityDecl, reg: &UnionReg) -> (TokenStream, TokenStream) {
     match &e.handle {
         EntityHandle::Clone { field } => emit_entity_clone(e, field, reg),
-        EntityHandle::SymbolKeyed { map, def } => emit_entity_symbol_keyed(e, map, def, reg),
     }
 }
 
@@ -1926,7 +1943,7 @@ fn emit_entity(e: &EntityDecl, reg: &UnionReg) -> (TokenStream, TokenStream) {
 /// directive (empty when default identity). `field` is the stored native handle.
 fn emit_entity_identity(e: &EntityDecl, field: &Ident) -> Vec<TokenStream> {
     let py = &e.py;
-    match e.identity {
+    match &e.identity {
         EntityIdentity::None => Vec::new(),
         EntityIdentity::Node => vec![quote! {
             fn __eq__(&self, other: &::pyo3::Bound<'_, ::pyo3::PyAny>) -> bool {
@@ -1939,11 +1956,11 @@ fn emit_entity_identity(e: &EntityDecl, field: &Ident) -> Vec<TokenStream> {
                 self.data.ids.get(&self.#field.node()).copied().unwrap_or(0) as u64
             }
         }],
-        EntityIdentity::QualifiedName => vec![quote! {
+        EntityIdentity::QualifiedName(method) => vec![quote! {
             fn __eq__(&self, other: &::pyo3::Bound<'_, ::pyo3::PyAny>) -> bool {
                 match other.downcast::<#py>() {
                     ::std::result::Result::Ok(o) => {
-                        self.#field.qualified_name() == o.borrow().#field.qualified_name()
+                        self.#field.#method() == o.borrow().#field.#method()
                     }
                     ::std::result::Result::Err(_) => false,
                 }
@@ -1951,7 +1968,7 @@ fn emit_entity_identity(e: &EntityDecl, field: &Ident) -> Vec<TokenStream> {
             fn __hash__(&self) -> u64 {
                 use ::std::hash::{Hash as _, Hasher as _};
                 let mut __h = ::std::collections::hash_map::DefaultHasher::new();
-                self.#field.qualified_name().hash(&mut __h);
+                self.#field.#method().hash(&mut __h);
                 __h.finish()
             }
         }],
@@ -2005,18 +2022,13 @@ fn emit_entity_clone(e: &EntityDecl, field: &Ident, reg: &UnionReg) -> (TokenStr
         )));
     }
 
-    // Native fields: projected through the stored handle. A `spec(SpecX)` field
-    // bridges through the entity's `loc` span (the uniform Span->AST-node bridge).
+    // Native fields: projected through the stored handle.
     for f in &e.fields {
         if matches!(f.shape, Shape::Skip) {
             continue;
         }
         let n = &f.name;
-        let access = if matches!(f.shape, Shape::Materialize(Materialize::Spec(_))) {
-            quote!((&self.#field.loc))
-        } else {
-            quote!((&self.#field.#n))
-        };
+        let access = quote!((&self.#field.#n));
         let expr = f.shape.expr(&access, &model, &data, reg);
         getters.push(getter_tokens(&Getter::field(
             n.clone(),
@@ -2040,11 +2052,18 @@ fn emit_entity_clone(e: &EntityDecl, field: &Ident, reg: &UnionReg) -> (TokenStr
             quote!(self.#field.#mname(#(#call_args),*))
         };
         let expr = m.shape.expr(&quote!((&__r)), &model, &data, reg);
+        // The native call may read the retained compiler context, so it runs
+        // under `run_ref` (see `emit_union_methods`).
         getters.push(getter_tokens(&Getter {
             name: mname.clone(),
             shape_ty: m.shape.ty(reg),
             needs_py: m.shape.needs_py(),
-            body: quote! { let __r = #call; Ok(#expr) },
+            body: quote! {
+                ::fpp_core::run_ref(&#data.ctx, || {
+                    let __r = #call;
+                    Ok(#expr)
+                })
+            },
             via_super: false,
             extra_params: extra,
             is_method,
@@ -2098,189 +2117,6 @@ fn emit_entity_clone(e: &EntityDecl, field: &Ident, reg: &UnionReg) -> (TokenStr
         }
     };
     (def, quote!(m.add_class::<#py>()?;))
-}
-
-/// Emit a standalone `symbol_keyed`-handle entity: a top-level entity keyed by an
-/// `fpp_analysis` `Symbol` and looked up in an `Analysis` map.
-///
-/// Emits the pyclass `struct #py { data, model, sym }` (all `pub(crate)` so the
-/// hand-written escape hatches in `crate::sem::hand` can read them), a `native()`
-/// accessor into `data.analysis.<map>`, a `build_<snake>` constructor, a
-/// `<snake>_by_symbol` resolver, the uniform `loc`/`symbol`/`definition`
-/// (concrete `Py<DefX>`)/`__eq__`/`__hash__` getters, and one getter per
-/// mechanical `fields {}`/`methods {}` entry (projected through `native()`). The
-/// rich, non-mechanical getters (sorted maps, cross-layer resolvers, AST bridges)
-/// stay hand-written in `crate::sem::hand`.
-fn emit_entity_symbol_keyed(
-    e: &EntityDecl,
-    map: &Ident,
-    def: &Ident,
-    reg: &UnionReg,
-) -> (TokenStream, TokenStream) {
-    let py = &e.py;
-    let native = &e.native;
-    let model = quote!(&self.model);
-    let data = quote!(self.data);
-    let snake_name = snake(&py.to_string());
-    let build_fn = format_ident!("build_{}", snake_name);
-    let by_symbol_fn = format_ident!("{}_by_symbol", snake_name);
-    let expect_msg = format!("{} symbol is present in {}", py, quote!(#map));
-
-    let mut getters: Vec<TokenStream> = Vec::new();
-
-    // Uniform getters (identical for every symbol-keyed entity).
-    getters.push(quote! {
-        /// The source location of the definition.
-        #[getter]
-        fn loc(&self) -> ::std::option::Option<crate::ir_core::Loc> {
-            self.data.loc(self.sym.node())
-        }
-    });
-    getters.push(quote! {
-        /// The symbol that names this entity.
-        #[getter]
-        fn symbol(&self, py: ::pyo3::Python<'_>) -> ::pyo3::PyResult<crate::sem::SymbolRef> {
-            ::std::result::Result::Ok(crate::sem::SymbolRef(
-                crate::sem::build_symbol(&self.model, py, ::std::clone::Clone::clone(&self.sym))?
-                    .into_any(),
-            ))
-        }
-    });
-    getters.push(quote! {
-        /// The defining AST node.
-        #[getter]
-        fn definition(
-            &self,
-            py: ::pyo3::Python<'_>,
-        ) -> ::pyo3::PyResult<::pyo3::Py<crate::ast::#def>> {
-            ::std::result::Result::Ok(
-                crate::model::Model::build(&self.model, py, self.sym.node())?
-                    .into_bound(py)
-                    .into_any()
-                    .downcast_into::<crate::ast::#def>()?
-                    .unbind(),
-            )
-        }
-    });
-    getters.push(quote! {
-        fn __eq__(&self, other: &::pyo3::Bound<'_, ::pyo3::PyAny>) -> bool {
-            match other.downcast::<#py>() {
-                ::std::result::Result::Ok(o) => self.sym == o.borrow().sym,
-                ::std::result::Result::Err(_) => false,
-            }
-        }
-    });
-    getters.push(quote! {
-        fn __hash__(&self) -> u64 {
-            self.data.ids.get(&self.sym.node()).copied().unwrap_or(0) as u64
-        }
-    });
-    let repr_fmt = format!("<{py} '{{}}'>");
-    getters.push(quote! {
-        fn __repr__(&self) -> ::std::string::String {
-            format!(#repr_fmt, self.data.analysis.get_qualified_name(&self.sym))
-        }
-    });
-
-    // Mechanical field getters: project through `native()`.
-    for f in &e.fields {
-        if matches!(f.shape, Shape::Skip) {
-            continue;
-        }
-        let n = &f.name;
-        let access = quote!((&self.native().#n));
-        let expr = f.shape.expr(&access, &model, &data, reg);
-        getters.push(getter_tokens(&Getter::field(
-            n.clone(),
-            f.shape.ty(reg),
-            f.shape.needs_py(),
-            quote!(Ok(#expr)),
-        )));
-    }
-
-    // Mechanical method getters: `&self` accessors (or associated fns over the
-    // `&Native` returned by `native()`).
-    let analysis_access = quote!(&self.data.analysis);
-    for m in &e.methods {
-        if matches!(m.shape, Shape::Skip) {
-            continue;
-        }
-        let mname = &m.name;
-        let (extra, call_args, is_method) = method_arg_parts(&m.params, &analysis_access);
-        let call = if m.assoc {
-            quote!(#native::#mname(self.native() #(, #call_args)*))
-        } else {
-            quote!(self.native().#mname(#(#call_args),*))
-        };
-        let expr = m.shape.expr(&quote!((&__r)), &model, &data, reg);
-        getters.push(getter_tokens(&Getter {
-            name: mname.clone(),
-            shape_ty: m.shape.ty(reg),
-            needs_py: m.shape.needs_py(),
-            body: quote! { let __r = #call; Ok(#expr) },
-            via_super: false,
-            extra_params: extra,
-            is_method,
-        }));
-    }
-
-    let def_ts = quote! {
-        #[::pyo3_stub_gen::derive::gen_stub_pyclass]
-        #[::pyo3::pyclass(frozen)]
-        pub struct #py {
-            pub(crate) data: ::std::sync::Arc<crate::ir_core::ModelData>,
-            pub(crate) model: ::pyo3::Py<crate::model::Model>,
-            pub(crate) sym: fpp_analysis::semantics::Symbol,
-        }
-
-        impl #py {
-            /// The native analysis struct for this entity.
-            pub(crate) fn native(&self) -> &#native {
-                self.data.analysis.#map.get(&self.sym).expect(#expect_msg)
-            }
-        }
-
-        /// Build the entity wrapper for `sym`.
-        pub fn #build_fn(
-            model: &::pyo3::Py<crate::model::Model>,
-            py: ::pyo3::Python<'_>,
-            sym: fpp_analysis::semantics::Symbol,
-        ) -> ::pyo3::PyResult<::pyo3::Py<#py>> {
-            ::pyo3::Py::new(
-                py,
-                #py {
-                    data: model.borrow(py).data.clone(),
-                    model: model.clone_ref(py),
-                    sym,
-                },
-            )
-        }
-
-        /// Resolve `sym` to this entity iff it keys the analysis map.
-        #[allow(dead_code)]
-        pub(crate) fn #by_symbol_fn(
-            data: &::std::sync::Arc<crate::ir_core::ModelData>,
-            model: &::pyo3::Py<crate::model::Model>,
-            py: ::pyo3::Python<'_>,
-            sym: ::std::option::Option<&fpp_analysis::semantics::Symbol>,
-        ) -> ::pyo3::PyResult<::std::option::Option<::pyo3::Py<#py>>> {
-            match sym {
-                ::std::option::Option::Some(s) if data.analysis.#map.contains_key(s) => {
-                    ::std::result::Result::Ok(::std::option::Option::Some(
-                        #build_fn(model, py, ::std::clone::Clone::clone(s))?,
-                    ))
-                }
-                _ => ::std::result::Result::Ok(::std::option::Option::None),
-            }
-        }
-
-        #[::pyo3_stub_gen::derive::gen_stub_pymethods]
-        #[::pyo3::pymethods]
-        impl #py {
-            #(#getters)*
-        }
-    };
-    (def_ts, quote!(m.add_class::<#py>()?;))
 }
 
 /// Emit a leaf-enum mirror: the fieldless `#[pyclass(eq, eq_int)]` Python enum +
@@ -2359,11 +2195,18 @@ fn emit_analysis(a: &AnalysisDecl, reg: &UnionReg) -> (TokenStream, TokenStream)
             quote!(self.data.analysis.#mname(#(#call_args),*))
         };
         let expr = m.shape.expr(&quote!((&__r)), &model, &data, reg);
+        // The native call may read the retained compiler context, so it runs
+        // under `run_ref` (see `emit_union_methods`).
         getters.push(getter_tokens(&Getter {
             name: mname.clone(),
             shape_ty: m.shape.ty(reg),
             needs_py: m.shape.needs_py(),
-            body: quote! { let __r = #call; Ok(#expr) },
+            body: quote! {
+                ::fpp_core::run_ref(&#data.ctx, || {
+                    let __r = #call;
+                    Ok(#expr)
+                })
+            },
             via_super: false,
             extra_params: extra,
             is_method,
@@ -2463,6 +2306,15 @@ pub fn expand(input: TokenStream) -> TokenStream {
     }
 
     quote! {
+        // The single load-bearing `fpp_analysis` trait dependency of the generated
+        // code: the `.node()` accessor (called by the `loc_from_node` getter and by
+        // the `node` identity `__hash__`, on unions/entities and the symbol-keyed
+        // scaffolding) is a `SymbolInterface` trait method, so the trait must be in
+        // scope for method resolution. The method NAME `node` is not carried as a
+        // DSL payload: it is a stable trait method, and parameterizing it would not
+        // remove this import (a trait method needs its trait imported regardless of
+        // name). A rename of the trait or of `node` is a deliberate `fpp_analysis`
+        // change that updates this one line + the `.node()` call sites together.
         use fpp_analysis::semantics::SymbolInterface as _;
         use ::pyo3::prelude::*;
 

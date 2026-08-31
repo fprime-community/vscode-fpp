@@ -97,8 +97,8 @@ hand-written.
 maturin develop            # build + install the extension into the active venv
 pytest tests/              # run the test suite
 
-# Regenerate the checked-in AST declaration after an `fpp_ast` change:
-cargo run -p fpp_python --features bindgen --bin fpp_bindgen
+# Regenerate the checked-in declarations after an `fpp_ast`/`fpp_analysis` change:
+cargo run -p fpp_python --features bindgen --bin bindgen
 
 # Regenerate the type stub after changing the exposed API:
 cargo run -p fpp_python --no-default-features --features stubgen --bin stub_gen

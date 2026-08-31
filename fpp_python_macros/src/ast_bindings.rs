@@ -1,15 +1,16 @@
 //! The `fpp_ast_bindings!` function-like macro: expands a declarative mirror of
-//! the `fpp_ast` grammar (emitted by `codegen/fpp_bindgen` into
-//! `native/src/ast/defs.rs`) into the PyO3 AST-node wrappers + the recording walk.
+//! the `fpp_ast` grammar (emitted by the `bindgen` binary into
+//! `fpp_python/src/ast/defs.rs`) into the PyO3 AST-node wrappers + the recording walk.
 //!
 //! The DSL is parsed into a `Registry`/`Shape`/`Card` model; `emit_walk`/`emit_py`
 //! emit tokens parameterized only by `&Registry`. The macro never reads `fpp_ast`
 //! source — only its DSL tokens.
 //!
-//! A field's shape is a pure function of its (cardinality-stripped) type name +
-//! the block's category sets: `String`/`bool`/`LitString`/`Name`/`Span` are
-//! builtin scalars; a name in `leaves {…}` is a rendered leaf; a `kind` name is
-//! an inline kind-enum; a `node`/`union` name is a child; anything else is opaque.
+//! A field's shape is a pure function of its DSL type expression + the block's
+//! category sets: the `str(<field>)` form is a collapsed string leaf (its named
+//! sub-field cloned); `String`/`bool`/`Span` are builtin scalars; a name in
+//! `leaves {…}` is a rendered leaf; a `kind` name is an inline kind-enum; a
+//! `node`/`union` name is a child; anything else is opaque.
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -35,10 +36,12 @@ enum Shape {
     Bool,
     Leaf(String),
     LeafOpt(String),
-    Lit,
-    LitOpt,
+    /// A collapsed string leaf: the field's value is a named scalar sub-field
+    /// cloned to a `str` (e.g. `str(data)` -> `<field>.data.clone()`). The
+    /// accessor rides in the DSL so the macro never bakes in a field path.
+    StrLeaf(String),
+    StrLeafOpt(String),
     Skip,
-    Name,
     Child(Card, String),
     Kind(String),
 }
@@ -99,6 +102,14 @@ struct LeafEnumDef {
     variants: Vec<LeafVariant>,
 }
 
+/// The translation-unit root: the container type the walk enters, the field
+/// access reaching its member `Vec`, and the member union walked per element.
+struct RootDef {
+    container: String,
+    field: syn::Member,
+    member_union: String,
+}
+
 #[derive(Default)]
 struct Registry {
     node_structs: BTreeMap<String, StructDef>,
@@ -108,16 +119,21 @@ struct Registry {
     is_node: BTreeSet<String>,
     is_union: BTreeSet<String>,
     shadowed: BTreeSet<String>,
+    root: Option<RootDef>,
 }
 
 // ---------------------------------------------------------------------------
 // DSL parsing
 // ---------------------------------------------------------------------------
 
-/// A `[T]?` / `[T]` / `T?` / `T` type expression → (cardinality, type name).
+/// A `[T]?` / `[T]` / `T?` / `T` type expression, or the collapsed string-leaf
+/// form `str(<field>)` / `str(<field>)?`. `str_accessor` is `Some` for the
+/// leaf form, carrying the scalar sub-field to read (`ident` is then the `str`
+/// marker token and unused).
 struct TypeExpr {
     card: Card,
     ident: Ident,
+    str_accessor: Option<Ident>,
 }
 
 impl Parse for TypeExpr {
@@ -132,16 +148,42 @@ impl Parse for TypeExpr {
             } else {
                 Card::Vec
             };
-            Ok(TypeExpr { card, ident })
+            Ok(TypeExpr {
+                card,
+                ident,
+                str_accessor: None,
+            })
         } else {
             let ident: Ident = input.parse()?;
+            // `str(<field>)` — a collapsed string leaf reading the named scalar
+            // sub-field (e.g. `str(data)`), with an optional trailing `?`.
+            if ident == "str" && input.peek(syn::token::Paren) {
+                let content;
+                parenthesized!(content in input);
+                let accessor: Ident = content.parse()?;
+                let card = if input.peek(Token![?]) {
+                    input.parse::<Token![?]>()?;
+                    Card::Opt
+                } else {
+                    Card::One
+                };
+                return Ok(TypeExpr {
+                    card,
+                    ident,
+                    str_accessor: Some(accessor),
+                });
+            }
             let card = if input.peek(Token![?]) {
                 input.parse::<Token![?]>()?;
                 Card::Opt
             } else {
                 Card::One
             };
-            Ok(TypeExpr { card, ident })
+            Ok(TypeExpr {
+                card,
+                ident,
+                str_accessor: None,
+            })
         }
     }
 }
@@ -256,8 +298,34 @@ impl Parse for LeafEnumDecl {
     }
 }
 
+/// `root <Container>(<field>, <MemberUnion>)` — the walk entry point. `<field>`
+/// is the tuple index or field name reaching the member `Vec` (e.g. `0` for
+/// `TransUnit(Vec<ModuleMember>)`).
+struct RootDecl {
+    container: Ident,
+    field: syn::Member,
+    member_union: Ident,
+}
+
+impl Parse for RootDecl {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let container: Ident = input.parse()?;
+        let content;
+        parenthesized!(content in input);
+        let field: syn::Member = content.parse()?;
+        content.parse::<Token![,]>()?;
+        let member_union: Ident = content.parse()?;
+        Ok(RootDecl {
+            container,
+            field,
+            member_union,
+        })
+    }
+}
+
 /// The whole `fpp_ast_bindings!` body.
 struct Dsl {
+    root: Option<RootDecl>,
     leaves: Vec<LeafEnumDecl>,
     shadowed: Vec<Ident>,
     nodes: Vec<(Ident, Vec<FieldDecl>)>,
@@ -275,6 +343,7 @@ fn parse_ident_list(input: ParseStream) -> syn::Result<Vec<Ident>> {
 impl Parse for Dsl {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut dsl = Dsl {
+            root: None,
             leaves: Vec::new(),
             shadowed: Vec::new(),
             nodes: Vec::new(),
@@ -284,6 +353,7 @@ impl Parse for Dsl {
         while !input.is_empty() {
             let kw: Ident = input.parse()?;
             match kw.to_string().as_str() {
+                "root" => dsl.root = Some(input.parse()?),
                 "leaves" => {
                     let content;
                     braced!(content in input);
@@ -316,7 +386,7 @@ impl Parse for Dsl {
                     return Err(syn::Error::new(
                         kw.span(),
                         format!(
-                            "unknown section `{other}` (expected leaves/shadowed/node/union/kind)"
+                            "unknown section `{other}` (expected root/leaves/shadowed/node/union/kind)"
                         ),
                     ));
                 }
@@ -331,20 +401,13 @@ impl Parse for Dsl {
 // ---------------------------------------------------------------------------
 
 /// The shape of a field, from its cardinality + type name + the category sets.
+/// String leaves arrive as the DSL's `str(<field>)` form (see [`TypeExpr`]) and
+/// are resolved before this by-name step; a type name is a builtin scalar, a
+/// rendered leaf, an inline kind, or a child.
 fn classify(card: Card, name: &str, leaves: &BTreeSet<String>, kinds: &BTreeSet<String>) -> Shape {
     match name {
         "String" => Shape::Str,
         "bool" => Shape::Bool,
-        // `LitString` is only ever used as an ignored string-leaf (its `.data`),
-        // never a walked child, so it is always `Lit`.
-        "LitString" => {
-            if card == Card::Opt {
-                Shape::LitOpt
-            } else {
-                Shape::Lit
-            }
-        }
-        "Name" => Shape::Name,
         "Span" => Shape::Skip,
         n if leaves.contains(n) => {
             if card == Card::Opt {
@@ -384,10 +447,24 @@ fn build_registry(dsl: Dsl) -> Registry {
         is_node: dsl.nodes.iter().map(|(n, _)| n.to_string()).collect(),
         is_union: dsl.unions.iter().map(|(n, _)| n.to_string()).collect(),
         shadowed: dsl.shadowed.iter().map(|i| i.to_string()).collect(),
+        root: dsl.root.map(|r| RootDef {
+            container: r.container.to_string(),
+            field: r.field,
+            member_union: r.member_union.to_string(),
+        }),
         ..Registry::default()
     };
 
-    let field_shape = |ty: &TypeExpr| classify(ty.card, &ty.ident.to_string(), &leaves, &kinds_set);
+    let field_shape = |ty: &TypeExpr| {
+        if let Some(acc) = &ty.str_accessor {
+            return if ty.card == Card::Opt {
+                Shape::StrLeafOpt(acc.to_string())
+            } else {
+                Shape::StrLeaf(acc.to_string())
+            };
+        }
+        classify(ty.card, &ty.ident.to_string(), &leaves, &kinds_set)
+    };
 
     for (name, fields) in &dsl.nodes {
         let fields = fields
@@ -711,6 +788,22 @@ fn emit_walk(reg: &Registry) -> TokenStream {
         });
     }
 
+    // The walk entry point, from the `root` directive (defaulting to the
+    // `TransUnit(0, ModuleMember)` shape for a DSL that omits it).
+    let (root_container, root_field, root_member) = match &reg.root {
+        Some(r) => (
+            ast_ty(&r.container),
+            r.field.clone(),
+            r.member_union.clone(),
+        ),
+        None => (
+            ast_ty("TransUnit"),
+            syn::Member::Unnamed(syn::Index::from(0)),
+            "ModuleMember".to_string(),
+        ),
+    };
+    let root_member_walk = walk_fn_ident(&root_member);
+
     quote! {
         /// Which `fpp_ast` node a recorded pointer points at (drives wrapper
         /// construction in `construct`).
@@ -722,8 +815,8 @@ fn emit_walk(reg: &Registry) -> TokenStream {
 
         /// Walk a translation unit's members, recording each node's side-table
         /// facts and returning the root node handles (in source order).
-        pub fn walk_trans_unit(w: &mut Walker, tu: &fpp_ast::TransUnit) -> Vec<Node> {
-            tu.0.iter().map(|m| walk_module_member(w, m)).collect()
+        pub fn walk_trans_unit(w: &mut Walker, tu: &fpp_ast::#root_container) -> Vec<Node> {
+            tu.#root_field.iter().map(|m| #root_member_walk(w, m)).collect()
         }
 
         #(#fns)*
@@ -988,28 +1081,22 @@ fn emit_py(reg: &Registry) -> TokenStream {
             #[getter] fn post_annotation(&self) -> Vec<String> { self.data.post_anno(self.node) }
             /// The definition this use-site node resolves to (or None).
             #[getter] fn definition(&self, py: Python<'_>) -> PyResult<Option<crate::sem::SymbolRef>> {
-                let sym = match self.data.analysis.use_def_map.get(&self.node) {
-                    Some(s) if self.data.ids.contains_key(&s.node()) => Some(s.clone()),
-                    _ => None,
-                };
-                match sym {
-                    Some(s) => Ok(Some(crate::sem::SymbolRef(crate::sem::build_symbol(&self.model, py, s)?.into_any()))),
+                match self.data.use_def(self.node) {
+                    Some(s) => Ok(Some(crate::sem::SymbolRef(crate::sem::build_symbol(&self.model, py, s.clone())?.into_any()))),
                     None => Ok(None),
                 }
             }
             /// The resolved type of this node (or None).
             #[getter] fn resolved_type(&self, py: Python<'_>) -> PyResult<Option<crate::sem::TypeRef>> {
-                let ty = self.data.analysis.type_map.get(&self.node).cloned();
-                match ty {
+                match self.data.type_of(self.node) {
                     Some(ty) => Ok(Some(crate::sem::TypeRef(crate::sem::build_type(&self.model, py, ty)?.into_any()))),
                     None => Ok(None),
                 }
             }
             /// The resolved (constant-folded) value of this node (or None).
             #[getter] fn resolved_value(&self, py: Python<'_>) -> PyResult<Option<crate::sem::ValueRef>> {
-                let v = self.data.analysis.value_map.get(&self.node).cloned();
-                match v {
-                    Some(ref v) => Ok(Some(crate::sem::ValueRef(crate::sem::build_value(&self.model, py, v)?.into_any()))),
+                match self.data.value_of(self.node) {
+                    Some(v) => Ok(Some(crate::sem::ValueRef(crate::sem::build_value(&self.model, py, v)?.into_any()))),
                     None => Ok(None),
                 }
             }
@@ -1064,12 +1151,15 @@ fn emit_getter(
                 sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.clone()
             }
         },
-        Shape::Name | Shape::Lit => quote! {
-            #[getter] fn #fname(self_: PyRef<'_, Self>) -> String {
-                let sup = self_.as_super();
-                sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.data.clone()
+        Shape::StrLeaf(acc) => {
+            let acc = format_ident!("{}", acc);
+            quote! {
+                #[getter] fn #fname(self_: PyRef<'_, Self>) -> String {
+                    let sup = self_.as_super();
+                    sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.#acc.clone()
+                }
             }
-        },
+        }
         Shape::Leaf(l) => {
             let ety = format_ident!("{}", l);
             quote! {
@@ -1079,12 +1169,15 @@ fn emit_getter(
                 }
             }
         }
-        Shape::LitOpt => quote! {
-            #[getter] fn #fname(self_: PyRef<'_, Self>) -> Option<String> {
-                let sup = self_.as_super();
-                sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|v| v.data.clone())
+        Shape::StrLeafOpt(acc) => {
+            let acc = format_ident!("{}", acc);
+            quote! {
+                #[getter] fn #fname(self_: PyRef<'_, Self>) -> Option<String> {
+                    let sup = self_.as_super();
+                    sup.data.node_as::<fpp_ast::#node_ty>(sup.node).#fname.as_ref().map(|v| v.#acc.clone())
+                }
             }
-        },
+        }
         Shape::LeafOpt(l) => {
             let ety = format_ident!("{}", l);
             quote! {
@@ -1179,12 +1272,15 @@ fn kind_field_parts(
             quote!(),
             false,
         ),
-        Shape::Name | Shape::Lit => (
-            quote!(#[pyo3(get)] #fname: String),
-            quote!(#fname: #bind.data.clone()),
-            quote!(),
-            false,
-        ),
+        Shape::StrLeaf(acc) => {
+            let acc = format_ident!("{}", acc);
+            (
+                quote!(#[pyo3(get)] #fname: String),
+                quote!(#fname: #bind.#acc.clone()),
+                quote!(),
+                false,
+            )
+        }
         Shape::Leaf(l) => {
             let ety = format_ident!("{}", l);
             (
@@ -1194,12 +1290,15 @@ fn kind_field_parts(
                 false,
             )
         }
-        Shape::LitOpt => (
-            quote!(#[pyo3(get)] #fname: Option<String>),
-            quote!(#fname: #bind.as_ref().map(|v| v.data.clone())),
-            quote!(),
-            false,
-        ),
+        Shape::StrLeafOpt(acc) => {
+            let acc = format_ident!("{}", acc);
+            (
+                quote!(#[pyo3(get)] #fname: Option<String>),
+                quote!(#fname: #bind.as_ref().map(|v| v.#acc.clone())),
+                quote!(),
+                false,
+            )
+        }
         Shape::LeafOpt(l) => {
             let ety = format_ident!("{}", l);
             (
@@ -1296,7 +1395,6 @@ pub fn expand(input: TokenStream) -> TokenStream {
         use crate::ir_core::Loc;
         use crate::model::Model;
         use fpp_ast::AstNode as _;
-        use fpp_analysis::semantics::SymbolInterface;
         use fpp_core::Node;
         use pyo3::prelude::*;
         use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum, gen_stub_pymethods};

@@ -16,7 +16,7 @@ mod ast_bindings;
 mod sem_bindings;
 
 /// Expand a declarative mirror of the `fpp_ast` grammar (emitted by the
-/// `fpp_bindgen` binary into `fpp_python/src/ast/defs.rs`) into the PyO3 AST-node
+/// `bindgen` binary into `fpp_python/src/ast/defs.rs`) into the PyO3 AST-node
 /// wrappers + the recording walk. The DSL has `leaves {…}`, `shadowed {…}`,
 /// `node X { field: Type, … }`, `union X { Variant(Inner), … }`, and
 /// `kind X { … }` sections; cardinality is `T` / `T?` / `[T]` / `[T]?`. See
@@ -27,8 +27,7 @@ pub fn fpp_ast_bindings(input: TokenStream) -> TokenStream {
 }
 
 /// Expand a declarative mirror of the `fpp_analysis` semantic layer (emitted by
-/// `fpp_sem_bindgen` into `fpp_python/src/sem/defs.rs`, plus the hand-authored
-/// `fpp_python/src/sem/defs_manual.rs`) into the read-only PyO3 wrappers for the
+/// `bindgen` into `fpp_python/src/sem/defs.rs`) into the read-only PyO3 wrappers for the
 /// semantic data structures: the `Symbol`/`Type`/`Value` closed-union
 /// hierarchies, the entity structs (nested/thin + top-level symbol-keyed), their
 /// union `*Ref` newtypes + Python aliases, and the leaf-enum mirrors. See

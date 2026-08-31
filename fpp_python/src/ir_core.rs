@@ -12,7 +12,7 @@
 
 use crate::diagnostics::SharedEmitter;
 use crate::noderef::NodeRef;
-use fpp_analysis::semantics::Symbol;
+use fpp_analysis::semantics::{Symbol, SymbolInterface, Type, Value};
 use fpp_core::{Annotated, CompilerContext, Node, Spanned};
 use pyo3::prelude::*;
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
@@ -224,6 +224,31 @@ impl ModelData {
     /// Used to bridge a thin analysis element to its `Spec*` AST node.
     pub fn node_of_span(&self, span: fpp_core::Span) -> Option<Node> {
         self.nodes_by_span.get(&span).copied()
+    }
+
+    /// The definition symbol that use-site `node` resolves to, if the reference
+    /// resolves and its target node was recorded during the walk. The read into
+    /// the analysis use-def map lives here so its field name/value type are not
+    /// baked into the generated wrappers.
+    pub fn use_def(&self, node: Node) -> Option<&Symbol> {
+        match self.analysis.use_def_map.get(&node) {
+            Some(s) if self.ids.contains_key(&s.node()) => Some(s),
+            _ => None,
+        }
+    }
+
+    /// The resolved type of `node`, if the analysis recorded one. The read into
+    /// the analysis type map lives here so its field name/value type are not
+    /// baked into the generated wrappers.
+    pub fn type_of(&self, node: Node) -> Option<Arc<Type>> {
+        self.analysis.type_map.get(&node).cloned()
+    }
+
+    /// The resolved (constant-folded) value of `node`, if the analysis recorded
+    /// one. The read into the analysis value map lives here so its field
+    /// name/value type are not baked into the generated wrappers.
+    pub fn value_of(&self, node: Node) -> Option<&Value> {
+        self.analysis.value_map.get(&node)
     }
 
     /// The pre-annotations of `node` (resolved lazily against the live ctx).

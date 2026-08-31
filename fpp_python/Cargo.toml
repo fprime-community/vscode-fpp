@@ -33,38 +33,30 @@ name = "stub_gen"
 required-features = ["stubgen"]
 doc = false
 
-# Regenerates the checked-in AST declaration `src/ast/defs.rs` by parsing the
-# `fpp_ast` source with syn. Gated behind the `bindgen` feature so the wheel
-# build never compiles syn/serde_json (and so `cargo build --workspace` skips it):
-#   cargo run -p fpp_python --features bindgen --bin fpp_bindgen
+# Regenerates BOTH checked-in declarations: the AST mirror `src/ast/defs.rs` (by
+# parsing the `fpp_ast` source with syn) and the semantic mirror `src/sem/defs.rs`
+# (by reflecting `fpp_analysis` from nightly rustdoc JSON). One shared `fpp_ast`
+# partition backs both. Gated behind the `bindgen` feature so the wheel build never
+# compiles syn/serde_json/rustdoc-* (and so `cargo build --workspace` skips it):
+#   cargo run -p fpp_python --features bindgen --bin bindgen
 [[bin]]
-name = "fpp_bindgen"
-path = "src/bin/fpp_bindgen.rs"
-required-features = ["bindgen"]
-doc = false
-
-# Regenerates the checked-in semantic declaration `src/sem/defs.rs` by reflecting
-# the `fpp_analysis` semantic types (source parsed with syn). Same `bindgen` gate
-# as `fpp_bindgen`:
-#   cargo run -p fpp_python --features bindgen --bin fpp_sem_bindgen
-[[bin]]
-name = "fpp_sem_bindgen"
-path = "src/bin/fpp_sem_bindgen.rs"
+name = "bindgen"
+path = "src/bin/bindgen/main.rs"
 required-features = ["bindgen"]
 doc = false
 
 [features]
 # `extension-module` is on by default so `cargo build` / `maturin` produce the
-# import-only extension (the wheel). Both binaries are gated behind non-default
-# features so `cargo build --workspace` only ever builds the cdylib under the
-# default feature — never an executable that would fail to link (see the notes
-# on `[lib]` and `[[bin]] stub_gen`).
+# import-only extension (the wheel). Both binaries (`bindgen`, `stub_gen`) are
+# gated behind non-default features so `cargo build --workspace` only ever builds
+# the cdylib under the default feature — never an executable that would fail to
+# link (see the notes on `[lib]` and `[[bin]] stub_gen`).
 default = ["extension-module"]
 extension-module = ["pyo3/extension-module"]
-# Enables the `fpp_bindgen`/`fpp_sem_bindgen` declaration generators. `fpp_bindgen`
-# reflects `fpp_ast` with syn; `fpp_sem_bindgen` reflects `fpp_analysis` from
-# rustdoc JSON (rustdoc-json invokes nightly rustdoc; rustdoc-types is the typed
-# schema — pin the version whose FORMAT_VERSION matches the emitted JSON).
+# Enables the unified `bindgen` declaration generator: it reflects `fpp_ast` with
+# syn and `fpp_analysis` from rustdoc JSON (rustdoc-json invokes nightly rustdoc;
+# rustdoc-types is the typed schema — pin the version whose FORMAT_VERSION matches
+# the emitted JSON).
 bindgen = ["dep:syn", "dep:serde_json", "dep:rustdoc-json", "dep:rustdoc-types"]
 # Gate for the `stub_gen` binary (carries no deps; just excludes it from the
 # default `cargo build`). Build stub_gen with `--no-default-features --features stubgen`.
@@ -90,12 +82,14 @@ fpp_fs = { path = "../fpp_fs", version = "=0.0.0" }
 
 rustc-hash = "2"
 
-# Only used by the `fpp_bindgen` declaration generator (the `bindgen` feature).
+# Only used by the `bindgen` declaration generator (the `bindgen` feature). syn
+# parses the `fpp_ast` source; serde_json reads `cargo metadata` + rustdoc JSON.
 syn = { version = "2", features = ["full", "extra-traits", "visit"], optional = true }
 serde_json = { version = "1", optional = true }
 
-# Only used by the `fpp_sem_bindgen` declaration generator (the `bindgen` feature).
-# `rustdoc-types` 0.57.x has FORMAT_VERSION == 57, matching the JSON produced by
-# the pinned nightly rustdoc; the generator asserts this at startup.
+# Only used by the `bindgen` declaration generator (the `bindgen` feature) to
+# reflect `fpp_analysis`. `rustdoc-types` 0.57.x has FORMAT_VERSION == 57, matching
+# the JSON produced by the pinned nightly rustdoc; the generator asserts this at
+# startup.
 rustdoc-types = { version = "=0.57.0", optional = true }
 rustdoc-json = { version = "0.9", optional = true }
