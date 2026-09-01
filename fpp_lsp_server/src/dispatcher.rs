@@ -186,7 +186,8 @@ impl NotificationDispatcher<'_> {
         let params = match not.extract::<N::Params>(N::METHOD) {
             Ok(it) => it,
             Err(lsp_server::ExtractError::JsonError { method, error }) => {
-                panic!("Invalid request\nMethod: {method}\n error: {error}",)
+                tracing::error!(%method, %error, "failed to deserialize notification params, dropping");
+                return self;
             }
             Err(lsp_server::ExtractError::MethodMismatch(not)) => {
                 // Give the notification back to the dispatcher
