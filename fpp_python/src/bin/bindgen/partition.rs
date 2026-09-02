@@ -590,7 +590,11 @@ fn classify_one(
 /// dead-end.
 pub fn read_committed_shadowed(path: &Path) -> Option<BTreeSet<String>> {
     let text = std::fs::read_to_string(path).ok()?;
-    let Some(line) = text.lines().map(str::trim).find(|l| l.starts_with("shadowed")) else {
+    let Some(line) = text
+        .lines()
+        .map(str::trim)
+        .find(|l| l.starts_with("shadowed"))
+    else {
         return Some(BTreeSet::new());
     };
     let inner = match line.split_once('{').and_then(|(_, r)| r.split_once('}')) {

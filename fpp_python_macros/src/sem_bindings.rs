@@ -917,14 +917,14 @@ impl Parse for UnionDecl {
                 // `variant_qualified(<method>)` / `variant_unqualified(<method>)` —
                 // payload optional, defaulting to the historical method names so an
                 // older (payload-free) `defs.rs` still parses.
-                "variant_qualified" => Repr::VariantQualified(parse_ident_payload(
-                    input,
-                    || format_ident!("get_qualified_name"),
-                )?),
-                "variant_unqualified" => Repr::VariantUnqualified(parse_ident_payload(
-                    input,
-                    || format_ident!("get_unqualified_name"),
-                )?),
+                "variant_qualified" => Repr::VariantQualified(parse_ident_payload(input, || {
+                    format_ident!("get_qualified_name")
+                })?),
+                "variant_unqualified" => {
+                    Repr::VariantUnqualified(parse_ident_payload(input, || {
+                        format_ident!("get_unqualified_name")
+                    })?)
+                }
                 other => {
                     return Err(syn::Error::new(
                         mode.span(),
@@ -1014,10 +1014,11 @@ impl Parse for EntityDecl {
                 "node" => EntityIdentity::Node,
                 // `qualified_name(<method>)` — payload optional, defaulting to the
                 // historical `qualified_name` so an older `defs.rs` still parses.
-                "qualified_name" => EntityIdentity::QualifiedName(parse_ident_payload(
-                    input,
-                    || format_ident!("qualified_name"),
-                )?),
+                "qualified_name" => {
+                    EntityIdentity::QualifiedName(parse_ident_payload(input, || {
+                        format_ident!("qualified_name")
+                    })?)
+                }
                 "raw_handle" => EntityIdentity::RawHandle,
                 other => {
                     return Err(syn::Error::new(
@@ -1146,10 +1147,7 @@ fn peek_kw(input: ParseStream, name: &str) -> bool {
 /// Parse an optional `(<ident>)` directive payload. Absent → `default()`. Lets a
 /// directive carry the `fpp_analysis` method name it calls, while keeping the
 /// payload optional so a payload-free `defs.rs` still parses (back-compat).
-fn parse_ident_payload(
-    input: ParseStream,
-    default: impl FnOnce() -> Ident,
-) -> syn::Result<Ident> {
+fn parse_ident_payload(input: ParseStream, default: impl FnOnce() -> Ident) -> syn::Result<Ident> {
     if input.peek(syn::token::Paren) {
         let content;
         parenthesized!(content in input);

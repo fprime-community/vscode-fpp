@@ -701,10 +701,13 @@ impl Component {
         let id = id_opt.unwrap_or(self.default_tlm_channel_id);
         let mut channel = channel;
         channel.id = id;
-        let (map, next) =
-            add_element_to_id_map(&self.tlm_channel_map, id, channel.clone(), |t| t.loc, |t, id| {
-                t.id = id
-            })?;
+        let (map, next) = add_element_to_id_map(
+            &self.tlm_channel_map,
+            id,
+            channel.clone(),
+            |t| t.loc,
+            |t, id| t.id = id,
+        )?;
         let mut c = self.clone();
         c.tlm_channel_map = map;
         c.tlm_channel_name_map.insert(name, channel);
