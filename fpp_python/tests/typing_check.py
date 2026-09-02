@@ -5,25 +5,30 @@ so the checked-in `fpp_python/fpp_python.pyi` stub is validated against real cal
 sites. It exercises the new semantic surface: the `Analysis` root, its typed maps
 (`dict[Symbol, Component]`, `dict[int, Command]`), the `Type` / `CommandKind`
 union base+subclass hierarchies (narrowed with `isinstance`), the lazy `Span`
-handle, and the state-machine model.
+handle, the state-machine model, and the AST traversal surface (`AstNode.children`
+plus a `NodeVisitor` subclass overriding typed `visit_*` methods).
 """
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
 
 from fpp_python import (
     analyze,
     Analysis,
     Async,
+    AstNode,
     Command,
     CommandKind,
     Component,
+    DefComponent,
     DefConstant,
     IntegerKind,
     Model,
+    NodeVisitor,
     PrimitiveInt,
     Span,
+    SpecCommand,
     StateMachine,
     StateMachineSymbol,
     Symbol,
@@ -98,6 +103,37 @@ def analysis_detail(a: Analysis) -> int:
     return total
 
 
+class CommandCollector(NodeVisitor):
+    """A typed traversal: each overridden `visit_*` receives its concrete node
+    class, and `super().visit_<TypeName>(node)` continues into the children."""
+
+    def __init__(self) -> None:
+        self.components: list[str] = []
+        self.commands: list[str] = []
+
+    def visit_DefComponent(self, node: DefComponent) -> Any:
+        self.components.append(node.name)
+        return super().visit_DefComponent(node)
+
+    def visit_SpecCommand(self, node: SpecCommand) -> Any:
+        self.commands.append(node.name)
+        return super().visit_SpecCommand(node)
+
+    def generic_visit(self, node: AstNode) -> Any:
+        kids: list[AstNode] = node.children
+        for kid in kids:
+            assert kid.node_id >= 0
+        return super().generic_visit(node)
+
+
+def descendant_count(node: AstNode) -> int:
+    """`children` is the type-agnostic traversal primitive: `list[AstNode]`."""
+    total = 1
+    for child in node.children:
+        total += descendant_count(child)
+    return total
+
+
 def main() -> int:
     model: Model = analyze(SRC, uri="mem.fpp")
     if model.has_errors:
@@ -106,10 +142,13 @@ def main() -> int:
         return model.error_count
 
     node_id_sum = 0
+    visitor = CommandCollector()
     for node in model.ast():
-        node_id_sum += node.node_id
+        node_id_sum += node.node_id + descendant_count(node)
         if isinstance(node, DefConstant):
             constant_type_kind(node)
+        visitor.visit(node)
+    node_id_sum += len(visitor.components) + len(visitor.commands)
 
     analysis: Analysis = model.analysis
     sym: Optional[Symbol] = model.lookup("M.c")

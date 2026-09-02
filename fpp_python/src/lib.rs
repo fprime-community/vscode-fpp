@@ -12,8 +12,10 @@
 //! files: the AST-node wrappers + recording walk from `fpp_ast_bindings!` over
 //! [`crate::ast`], and the semantic wrappers from `fpp_sem_bindings!` over
 //! [`crate::sem`] (with `sem::hand` supplying `build_type`, the one escape hatch
-//! the macro cannot produce). Everything else is the hand-written core:
-//! `ir_core`, `lower_core`, `noderef`, `model`, and `diagnostics`.
+//! the macro cannot produce). The same AST macro also emits the typed `visit_*`
+//! methods of [`crate::visitor`]'s `NodeVisitor`, whose traversal logic is
+//! hand-written. Everything else is the hand-written core: `ir_core`,
+//! `lower_core`, `noderef`, `model`, `visitor`, and `diagnostics`.
 
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
@@ -27,6 +29,7 @@ mod lower_core;
 mod model;
 mod noderef;
 mod sem;
+mod visitor;
 
 use diagnostics::{Diagnostic, OwnedDiagnostic, SharedEmitter};
 use model::Model;
@@ -39,13 +42,11 @@ use model::Model;
 fn run_pipeline(uri: &str, content: String) -> (ir_core::ModelData, Vec<OwnedDiagnostic>) {
     let emitter = SharedEmitter::default();
     let mut ctx = fpp_core::CompilerContext::new(emitter.clone());
-    #[allow(clippy::type_complexity)]
-    let (tu, analysis, roots, ids, node_ptrs, by_qualified_name): (
+    let (tu, analysis, roots, tables, by_qualified_name): (
         fpp_ast::TransUnit,
         fpp_analysis::Analysis,
         Vec<fpp_core::Node>,
-        _,
-        _,
+        lower_core::WalkTables,
         _,
     ) = fpp_core::run(&mut ctx, || {
         let src = fpp_core::SourceFile::new(uri, content);
@@ -56,17 +57,18 @@ fn run_pipeline(uri: &str, content: String) -> (ir_core::ModelData, Vec<OwnedDia
         let _ = fpp_analysis::check_semantics(&mut analysis, vec![&ast]);
         let mut walker = lower_core::Walker::new();
         let roots = crate::ast::walk_trans_unit(&mut walker, &ast);
-        let (ids, node_ptrs) = walker.finish();
-        let by_qualified_name = lower_core::build_indexes(&analysis, &ids);
-        (ast, analysis, roots, ids, node_ptrs, by_qualified_name)
+        let tables = walker.finish();
+        let by_qualified_name = lower_core::build_indexes(&analysis, &tables.ids);
+        (ast, analysis, roots, tables, by_qualified_name)
     });
     let data = ir_core::ModelData {
         tu,
         analysis,
         ctx: std::sync::Arc::new(ctx),
         roots,
-        ids,
-        node_ptrs,
+        ids: tables.ids,
+        node_ptrs: tables.node_ptrs,
+        children: tables.children,
         by_qualified_name,
     };
     (data, emitter.take())
@@ -91,6 +93,7 @@ fn fpp_python(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Diagnostic>()?;
     m.add_class::<ir_core::Loc>()?;
     m.add_class::<ir_core::Span>()?;
+    m.add_class::<visitor::NodeVisitor>()?;
     ast::register(m)?;
     sem::register(m)?;
     Ok(())

@@ -79,9 +79,64 @@ Enum-valued fields are real Python enums (`IntegerKind`, `ComponentKind`,
   resolved analysis entities.
 
 Every AST node exposes `.node_id`, `.location`, `.pre_annotation` /
-`.post_annotation`, and — where applicable — `.definition` (the resolved
-symbol), `.resolved_type`, and `.resolved_value`. Node identity is stable:
-navigating to the same node twice returns the same Python object.
+`.post_annotation`, `.children`, and — where applicable — `.definition` (the
+resolved symbol), `.resolved_type`, and `.resolved_value`. Node identity is
+stable: navigating to the same node twice returns the same Python object.
+
+### Walking the AST
+
+`NodeVisitor` is the traversal counterpart of the compiler's `fpp_ast::Visitor`.
+Subclass it and override `visit_<TypeName>` for the node types you care about,
+where `<TypeName>` is the node's class name — the same string as
+`type(node).__name__`. Each override receives its concrete node class, so the
+fields you reach are fully typed.
+
+```python
+from fpp_python import NodeVisitor
+
+class Constants(NodeVisitor):
+    def __init__(self):
+        self.values = {}
+
+    def visit_DefConstant(self, node):
+        # `node` is a DefConstant, so `.name` and `.value` are typed; the
+        # folded value comes from the analysis.
+        self.values[node.name] = node.value.resolved_value
+        super().visit_DefConstant(node)      # keep descending
+
+consts = Constants()
+for root in model.ast():
+    consts.visit(root)
+
+# module M { constant width = 8   constant total = width * 4 }
+# -> {"width": 8, "total": 32}
+print({name: v.value for name, v in consts.values.items()})
+```
+
+Traversal is depth-first, pre-order, in source order, and **deep by default** —
+the inverse of the Rust trait, where recursion is opt-in via an explicit
+`node.walk(..)`. Here the base `visit_<TypeName>` walks the children for you, so:
+
+- Call `super().visit_<TypeName>(node)` to descend from an override; **omit it to
+  prune** that subtree.
+- Override `generic_visit(node)` to hook *every* node — it is the single funnel
+  each base `visit_<TypeName>` delegates to, and the analogue of the Rust trait's
+  `super_visit`. Returning from it without calling
+  `super().generic_visit(node)` makes the whole pass shallow.
+- Raise an exception to stop early; return values are not inspected.
+
+`node.children` is the same traversal as a plain `list[AstNode]`, for one-off
+queries that do not warrant a visitor class:
+
+```python
+kinds = [type(c).__name__ for c in component.children]
+```
+
+Children are the AST *nodes* reached through a node's fields: `kind` enums and
+member unions are transparent (an `Expr`'s children are the sub-expressions
+inside its `kind`), and fields the binding collapses to a plain value — such as a
+definition's `name` — are not children. Traversal is read-only; the parsed AST is
+immutable, so there is no counterpart to `fpp_ast::MutVisitor`.
 
 ## Development
 

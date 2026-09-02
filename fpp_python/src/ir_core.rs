@@ -194,6 +194,11 @@ pub struct ModelData {
     pub ids: FxHashMap<Node, u32>,
     /// Type-tag + raw pointer into `tu` per node.
     pub node_ptrs: FxHashMap<Node, NodeRef>,
+    /// Direct child nodes per node, in walk (source) order. Nodes with no
+    /// children are absent. Children are the *nodes* reached from a node's
+    /// fields: `kind` enums and union wrappers are transparent, so a node's
+    /// children are the nodes inside them, not the enum/union itself.
+    pub children: FxHashMap<Node, Vec<Node>>,
     /// Fully-qualified name -> symbol, for `Model.lookup`.
     pub by_qualified_name: FxHashMap<String, Symbol>,
 }
@@ -202,6 +207,11 @@ impl ModelData {
     /// The dense id assigned to `node` during the walk.
     pub fn id(&self, node: Node) -> u32 {
         self.ids[&node]
+    }
+
+    /// The direct child nodes of `node`, in walk (source) order.
+    pub fn children(&self, node: Node) -> &[Node] {
+        self.children.get(&node).map_or(&[], Vec::as_slice)
     }
 
     /// The resolved location of `node` (resolved lazily against the live ctx).

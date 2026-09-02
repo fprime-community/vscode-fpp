@@ -17,6 +17,17 @@ use fpp_analysis::semantics::Symbol;
 use fpp_core::Node;
 use rustc_hash::FxHashMap;
 
+/// The side-tables recorded by a completed walk, moved into
+/// [`crate::ir_core::ModelData`].
+pub struct WalkTables {
+    /// Dense id per node, assigned in walk pre-order.
+    pub ids: FxHashMap<Node, u32>,
+    /// Type-tag + raw pointer into the walked AST per node.
+    pub node_ptrs: FxHashMap<Node, NodeRef>,
+    /// Direct child nodes per node, in walk order. Childless nodes are absent.
+    pub children: FxHashMap<Node, Vec<Node>>,
+}
+
 /// Accumulates the side-tables while walking the AST. Ids are assigned in
 /// pre-order (first visit wins), matching source order.
 #[derive(Default)]
@@ -24,6 +35,7 @@ pub struct Walker {
     next: u32,
     ids: FxHashMap<Node, u32>,
     node_ptrs: FxHashMap<Node, NodeRef>,
+    children: FxHashMap<Node, Vec<Node>>,
 }
 
 impl Walker {
@@ -52,9 +64,26 @@ impl Walker {
         true
     }
 
+    /// Record `node`'s direct child nodes, in walk (source) order.
+    ///
+    /// Called once per node, right after its children have been walked. Ids that
+    /// were not themselves recorded are dropped: a union variant whose inner
+    /// type is not a walked node yields an id with no dense id or pointer, and
+    /// such a child could not be built into a wrapper.
+    pub fn set_children(&mut self, node: Node, mut children: Vec<Node>) {
+        children.retain(|c| self.ids.contains_key(c));
+        if !children.is_empty() {
+            self.children.insert(node, children);
+        }
+    }
+
     /// Consume the walker, yielding the recorded side-tables.
-    pub fn finish(self) -> (FxHashMap<Node, u32>, FxHashMap<Node, NodeRef>) {
-        (self.ids, self.node_ptrs)
+    pub fn finish(self) -> WalkTables {
+        WalkTables {
+            ids: self.ids,
+            node_ptrs: self.node_ptrs,
+            children: self.children,
+        }
     }
 }
 

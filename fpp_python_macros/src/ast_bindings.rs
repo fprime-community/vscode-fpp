@@ -1,6 +1,7 @@
 //! The `fpp_ast_bindings!` function-like macro: expands a declarative mirror of
 //! the `fpp_ast` grammar (emitted by the `bindgen` binary into
-//! `fpp_python/src/ast/defs.rs`) into the PyO3 AST-node wrappers + the recording walk.
+//! `fpp_python/src/ast/defs.rs`) into the PyO3 AST-node wrappers, the recording
+//! walk, and the typed `visit_*` methods of `crate::visitor::NodeVisitor`.
 //!
 //! The DSL is parsed into a `Registry`/`Shape`/`Card` model; `emit_walk`/`emit_py`
 //! emit tokens parameterized only by `&Registry`. The macro never reads `fpp_ast`
@@ -646,7 +647,7 @@ fn is_walkable(shape: &Shape) -> bool {
 fn child_walk_call(ty: &str, val: TokenStream, reg: &Registry) -> TokenStream {
     if reg.is_node.contains(ty) || reg.is_union.contains(ty) {
         let f = walk_fn_ident(ty);
-        quote!(#f(w, #val);)
+        quote!(__kids.push(#f(w, #val));)
     } else {
         quote!()
     }
@@ -671,7 +672,7 @@ fn walk_field_recurse(shape: &Shape, access: TokenStream, reg: &Registry) -> Tok
         },
         Shape::Kind(k) => {
             let f = walk_kind_fn_ident(k);
-            quote!(#f(w, &#access);)
+            quote!(#f(w, &#access, &mut __kids);)
         }
         _ => quote!(),
     }
@@ -696,7 +697,7 @@ fn walk_kind_recurse(shape: &Shape, bind: TokenStream, reg: &Registry) -> TokenS
         },
         Shape::Kind(k) => {
             let f = walk_kind_fn_ident(k);
-            quote!(#f(w, #bind);)
+            quote!(#f(w, #bind, __kids);)
         }
         _ => quote!(),
     }
@@ -718,13 +719,26 @@ fn emit_walk(reg: &Registry) -> TokenStream {
         let mut recs = Vec::new();
         for f in &def.fields {
             let fname = format_ident!("{}", f.name);
-            recs.push(walk_field_recurse(&f.shape, quote!(__node.#fname), reg));
+            let rec = walk_field_recurse(&f.shape, quote!(__node.#fname), reg);
+            if !rec.is_empty() {
+                recs.push(rec);
+            }
         }
+        // Childless nodes get no child list at all (absent == empty).
+        let body = if recs.is_empty() {
+            quote!()
+        } else {
+            quote! {
+                let mut __kids: Vec<Node> = Vec::new();
+                #(#recs)*
+                w.set_children(__nid, __kids);
+            }
+        };
         fns.push(quote! {
             pub fn #fnid(w: &mut Walker, __node: &fpp_ast::#ty) -> Node {
                 let __nid = fpp_ast::AstNode::id(__node);
                 if w.enter(__nid, NodeKind::#kind, __node as *const _ as *const ()) {
-                    #(#recs)*
+                    #body
                 }
                 __nid
             }
@@ -782,7 +796,7 @@ fn emit_walk(reg: &Registry) -> TokenStream {
             }
         }
         fns.push(quote! {
-            fn #fnid(w: &mut Walker, k: &fpp_ast::#ty) {
+            fn #fnid(w: &mut Walker, k: &fpp_ast::#ty, __kids: &mut Vec<Node>) {
                 match k { #(#arms)* }
             }
         });
@@ -835,6 +849,17 @@ fn stub_attrs(name: &str, reg: &Registry) -> (TokenStream, TokenStream) {
     }
 }
 
+fn emit_visitor_method(py_name: &str, param_ty: &proc_macro2::Ident) -> TokenStream {
+    let fn_id = format_ident!("visit_{}", snake(py_name));
+    let py_method = format!("visit_{}", py_name);
+    quote! {
+        #[pyo3(name = #py_method)]
+        fn #fn_id(slf: PyRef<'_, Self>, node: &Bound<'_, #param_ty>) -> PyResult<PyObject> {
+            NodeVisitor::delegate_to_generic_visit(slf, node.as_any())
+        }
+    }
+}
+
 fn single_field_name(shape: &Shape) -> proc_macro2::Ident {
     match shape {
         Shape::Child(Card::Vec, _) | Shape::Child(Card::OptVec, _) => format_ident!("elements"),
@@ -846,6 +871,7 @@ fn emit_py(reg: &Registry) -> TokenStream {
     let mut wrappers = Vec::new();
     let mut construct_arms = Vec::new();
     let mut register_calls = Vec::new();
+    let mut visitor_methods = Vec::new();
 
     for (name, def) in &reg.node_structs {
         let wid = format_ident!("{}", name);
@@ -853,6 +879,12 @@ fn emit_py(reg: &Registry) -> TokenStream {
         let kind = node_kind_ident(name);
         let (gsc, gsm) = stub_attrs(name, reg);
         register_calls.push(quote!(m.add_class::<#wid>()?;));
+        let param_ty = if reg.shadowed.contains(name) {
+            format_ident!("AstNode")
+        } else {
+            wid.clone()
+        };
+        visitor_methods.push(emit_visitor_method(name, &param_ty));
         construct_arms.push(quote! {
             Some(NodeKind::#kind) => Bound::new(py, PyClassInitializer::from(AstNode { data: data.clone(), model: model.clone_ref(py), node }).add_subclass(#wid))?.into_super().unbind()
         });
@@ -996,6 +1028,10 @@ fn emit_py(reg: &Registry) -> TokenStream {
         });
     }
 
+    // `Opaque` is the `construct` fallback wrapper — a visitable node like any
+    // other, so it gets a base method too (last, after the declared nodes).
+    visitor_methods.push(emit_visitor_method("Opaque", &format_ident!("Opaque")));
+
     let mut union_wrappers = Vec::new();
     for name in reg.unions.keys() {
         let members = union_node_members(name, reg);
@@ -1065,11 +1101,13 @@ fn emit_py(reg: &Registry) -> TokenStream {
         // `data` is the backing model data, captured once at construction (the same
         // `Arc` as `model.borrow(py).data`) and read directly by every getter —
         // mirroring the semantic-layer wrappers. `model` is kept only to build child
-        // wrappers via the memoizing `Model::build`.
+        // wrappers via the memoizing `Model::build`. All three are `pub(crate)` so
+        // `crate::visitor` can traverse from a `&Bound<AstNode>` (the class is
+        // `frozen`, so reading them needs no borrow flag).
         pub struct AstNode {
-            data: ::std::sync::Arc<crate::ir_core::ModelData>,
-            model: Py<Model>,
-            node: Node,
+            pub(crate) data: ::std::sync::Arc<crate::ir_core::ModelData>,
+            pub(crate) model: Py<Model>,
+            pub(crate) node: Node,
         }
 
         #[gen_stub_pymethods]
@@ -1077,6 +1115,10 @@ fn emit_py(reg: &Registry) -> TokenStream {
         impl AstNode {
             #[getter] fn node_id(&self) -> u32 { self.data.id(self.node) }
             #[getter] fn location(&self) -> Option<Loc> { self.data.loc(self.node) }
+            #[getter] fn children(&self, py: Python<'_>) -> PyResult<Vec<Py<AstNode>>> {
+                let kids: Vec<Node> = self.data.children(self.node).to_vec();
+                kids.into_iter().map(|c| Model::build(&self.model, py, c)).collect()
+            }
             #[getter] fn pre_annotation(&self) -> Vec<String> { self.data.pre_anno(self.node) }
             #[getter] fn post_annotation(&self) -> Vec<String> { self.data.post_anno(self.node) }
             /// The definition this use-site node resolves to (or None).
@@ -1115,6 +1157,12 @@ fn emit_py(reg: &Registry) -> TokenStream {
         #(#kind_wrappers)*
         #(#union_wrappers)*
         #(#leaf_defs)*
+
+        #[gen_stub_pymethods]
+        #[pymethods]
+        impl NodeVisitor {
+            #(#visitor_methods)*
+        }
 
         #[gen_stub_pyclass]
         #[pyclass(extends = AstNode, frozen)]
@@ -1394,6 +1442,7 @@ pub fn expand(input: TokenStream) -> TokenStream {
     quote! {
         use crate::ir_core::Loc;
         use crate::model::Model;
+        use crate::visitor::NodeVisitor;
         use fpp_ast::AstNode as _;
         use fpp_core::Node;
         use pyo3::prelude::*;
